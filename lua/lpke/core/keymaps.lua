@@ -58,9 +58,9 @@ helpers.keymap_set_multi({
   {'n', '<C-w>x', '<C-w>c', { desc = 'Close window' }},
   {'n', '<F2>/', '<C-w>c', { desc = 'Close window' }},
   {'nC', 'QQ', 'qa', { desc = 'Quit all (:qa)' }},
-  {'nC', 'QW', 'wqa', { desc = 'Write and quit all (:wqa)' }},
+  {'nC', 'QZ', 'wqa', { desc = 'Write and quit all (:wqa)' }},
   {'nC', '<C-w>QQ', 'lua require("auto-session").DisableAutoSave() ; vim.cmd("qa")', { desc = 'Quit all without auto-saving session (:qa)' }},
-  {'nC', '<C-w>QW', 'lua require("auto-session").DisableAutoSave() ; vim.cmd("wqa")', { desc = 'Write and quit all without auto-saving session (:wqa)' }},
+  {'nC', '<C-w>QZ', 'lua require("auto-session").DisableAutoSave() ; vim.cmd("wqa")', { desc = 'Write and quit all without auto-saving session (:wqa)' }},
   -- copy/pasting/rotating buffers
   {'nC', '<F2>y', 'lua Lpke_copy_buffer_id()', { desc = 'Yank current buffer details' }},
   {'nC', '<F2>p', 'lua Lpke_paste_buffer_id()', { desc = 'Paste yanked buffer details' }},

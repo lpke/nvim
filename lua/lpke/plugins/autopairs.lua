@@ -1,4 +1,9 @@
 local function config()
+  -- add autoclose functionality when selecting cmp items
+  local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+  local cmp = require('cmp')
+  cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
+
   require('nvim-autopairs').setup({
     disable_filetype = { 'TelescopePrompt', 'spectre_panel' },
     disable_in_macro = true,
@@ -27,5 +32,6 @@ end
 return {
   'windwp/nvim-autopairs',
   event = 'InsertEnter',
+  dependencies = { 'hrsh7th/nvim-cmp' },
   config = config,
 }
