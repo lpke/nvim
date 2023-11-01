@@ -9,12 +9,12 @@ function config()
   require('auto-session').setup({
     auto_session_enabled = true,
     auto_session_suppress_dirs = { '/', '~/', '~/Downloads' },
-    auto_session_root_dir = vim.fn.stdpath('data')..'/sessions/',
+    auto_session_root_dir = vim.fn.stdpath('data') .. '/sessions/',
     auto_session_enable_last_session = false, -- load last session for cwd if doesnt exist
     auto_save_enabled = true,
     auto_restore_enabled = true,
     auto_session_use_git_branch = true, -- differentiate by git branch name
-    bypass_session_save_file_types = {''}, -- dont auto-save when only buffer open is one of these file types
+    bypass_session_save_file_types = { '' }, -- dont auto-save when only buffer open is one of these file types
     log_level = 'error',
     cwd_change_handling = {
       restore_upcoming_session = false, -- enabling this causes me errors when swapping with telescope
@@ -29,13 +29,14 @@ function config()
       -- telescope picker options
       theme = 'vertical',
       theme_conf = {
+        initial_mode = 'normal',
         winblend = 0,
         border = true,
         previewer = false,
         layout_strategy = 'vertical',
         sorting_strategy = 'descending',
         layout_config = {
-          width = 140,
+          width = 100,
           height = 20,
         },
       },
@@ -48,7 +49,6 @@ function config()
   vim.cmd('cabbrev SD SessionDelete')
   vim.cmd('cabbrev Ss Autosession search')
   vim.cmd('cabbrev Sd Autosession delete')
-
 end
 
 return {

@@ -146,8 +146,7 @@ local function config()
         'less',
         'eruby',
       },
-      init_options = {
-      },
+      init_options = {},
     },
     lua_ls = {
       settings = { -- custom settings for lua

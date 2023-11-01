@@ -64,7 +64,7 @@ local function config()
 
   Lpke_show_cwd = true
   Lpke_full_path = true
-  Lpke_show_encoding = true
+  Lpke_show_encoding = false
   Lpke_show_diagnostics_vis = true
 
   -- custom component display
@@ -222,13 +222,6 @@ local function config()
           on_click = function()
             Lpke_show_encoding = not Lpke_show_encoding
             refresh()
-          end,
-          color = function()
-            local lsp_attached = vim.lsp.get_active_clients({ bufnr = 0 })[1]
-              ~= nil
-            if lsp_attached then
-              return { gui = 'bold' }
-            end
           end,
         },
         session_name_components[1],

@@ -72,6 +72,7 @@ local function config()
       winblend = 0,
       border = true,
       results_title = false,
+      wrap_results = false,
       dynamic_preview_title = true,
       scroll_strategy = 'limit',
       layout_strategy = 'horizontal',
@@ -79,7 +80,7 @@ local function config()
       entry_prefix = ' ',
       selection_caret = ' ',
       path_display = {
-        truncate = true,
+        'truncate',
       },
       layout_config = {
         horizontal = {
@@ -257,7 +258,7 @@ local function config()
             ['f'] = false,
             -- ['h'] = false,
             ['s'] = false,
-            ['<Esc>'] = false,
+            -- ['<Esc>'] = false,
 
             ['%'] = fb_actions.create,
             ['R'] = fb_actions.rename,
@@ -282,7 +283,7 @@ local function config()
             ['h'] = fb_actions.goto_parent_dir,
             ['l'] = actions.select_default,
             ['/'] = { 'i', type = 'command' },
-            ['<Esc><Esc>'] = { '<cmd>q!<CR>', type = 'command' },
+            -- ['<Esc><Esc>'] = { '<cmd>q!<CR>', type = 'command' },
           },
         },
       },
