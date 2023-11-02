@@ -169,7 +169,7 @@ local function config()
       lualine_a = {
         {
           zoom_status,
-          on_click = helpers.win_zoom_toggle,
+          on_click = Lpke_win_zoom_toggle,
           color = { bg = tc.irisfaded, fg = tc.base },
         },
         {

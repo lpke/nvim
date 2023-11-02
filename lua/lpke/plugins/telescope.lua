@@ -1,6 +1,7 @@
 local function config()
   local telescope = require('telescope')
   local actions = require('telescope.actions')
+  local action_state = require('telescope.actions.state')
   local fb_actions = require('telescope._extensions.file_browser.actions')
   local builtin = require('telescope.builtin')
   local helpers = require('lpke.core.helpers')
@@ -61,7 +62,10 @@ local function config()
     {'nC', '<BS>fgb', 'Telescope git_branches', { desc = 'Fuzzy find git branches' }},
     {'nC', '<BS>fgs', 'Telescope git_status', { desc = 'Fuzzy find git status' }},
     {'nC', '<BS>fgz', 'Telescope git_stash', { desc = 'Fuzzy find git stash' }},
-    {'nC', '<BS>d', 'Telescope file_browser path=%:p:h select_buffer=true', { desc = 'Open Telescope File Browser' }},
+    {'nC', '<BS>d', 'Telescope file_browser path=%:p:h select_buffer=true',
+      { desc = 'Open Telescope File Browser' }},
+    {'nC', '<BS>D', [[Telescope file_browser prompt_title=File\ Browser\ (depth:\ 5) path=%:p:h select_buffer=true depth=5 hidden=false]],
+      { desc = 'Open Telescope File Browser (depth: 5)' }},
   })
   -- stylua: ignore end
 
@@ -156,6 +160,24 @@ local function config()
           ['<S-Tab>'] = function(bufnr)
             actions.toggle_selection(bufnr)
             actions.move_selection_previous(bufnr)
+          end,
+          -- open find files picker for current path
+          ['<BS><BS>'] = function(bufnr)
+            local picker = action_state.get_current_picker(bufnr)
+            local path = picker.finder.path
+            if path then
+              print(path)
+              vim.cmd('Telescope find_files cwd=' .. path)
+            end
+          end,
+          -- open live grep picker for current path
+          ['<BS>/'] = function(bufnr)
+            local picker = action_state.get_current_picker(bufnr)
+            local path = picker.finder.path
+            if path then
+              print(path)
+              vim.cmd('Telescope live_grep cwd=' .. path)
+            end
           end,
         },
       },

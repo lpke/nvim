@@ -80,8 +80,8 @@ helpers.keymap_set_multi({
   {'nv', '<F2>H', '<C-w><<C-w><<C-w><', { desc = 'Decrease window width' }},
   {'nv', '<F2>L', '<C-w>><C-w>><C-w>>', { desc = 'Increase window width' }},
   -- zooming
-  {'n', '<C-w>s', helpers.win_zoom_toggle, { desc = '"Zoom" current window horizontally and vertically' }},
-  {'n', '<F2>s', helpers.win_zoom_toggle, { desc = 'Toggle current window "zoom" state' }},
+  {'nC', '<C-w>s', 'lua Lpke_win_zoom_toggle()', { desc = '"Zoom" current window horizontally and vertically' }},
+  {'nC', '<F2>s', 'lua Lpke_win_zoom_toggle()', { desc = 'Toggle current window "zoom" state' }},
   {'n', '<F2>;', '<C-w>=', { desc = 'Equalise split windows' }},
 
   -- tab control
