@@ -287,12 +287,13 @@ local function config()
             ['m'] = fb_actions.move,
             ['P'] = fb_actions.copy,
             ['D'] = function(bufnr)
-              fb_actions.remove(bufnr)
-              vim.api.nvim_feedkeys(
-                vim.api.nvim_replace_termcodes('y', true, false, true),
-                'n',
-                {}
-              )
+              local picker = action_state.get_current_picker(bufnr)
+              local path = picker.finder.path
+              local entryToDel = action_state.get_selected_entry(bufnr)
+              local pathToDel = entryToDel[1]
+              actions.move_selection_next(bufnr)
+              vim.cmd('!trash-put ' .. pathToDel)
+              vim.cmd('Telescope file_browser select_buffer=true path=' .. path)
             end,
             ['O'] = fb_actions.open,
             ['gh'] = fb_actions.goto_home_dir,
