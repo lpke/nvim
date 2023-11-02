@@ -66,6 +66,8 @@ local function config()
   Lpke_full_path = true
   Lpke_show_encoding = false
   Lpke_show_diagnostics_vis = true
+  Lpke_show_session = false
+  Lpke_show_git = false
 
   -- custom component display
   local zoom_status = function()
@@ -101,20 +103,46 @@ local function config()
       newfile = '[New]',
     },
   }
-  local session_name_components = {
+
+  local session_cond = function()
+    return Lpke_show_session
+  end
+  local session_components = {
     {
       function()
         return 'S:'
       end,
-      cond = helpers.session_in_cwd,
+      cond = session_cond,
       padding = { left = 1, right = 0 },
-      color = { fg = tc.mutedplus },
+      color = { fg = tc.mutedplus, bg = tc.overlaybump },
     },
     {
       session_name,
-      cond = helpers.session_in_cwd,
+      cond = session_cond,
       padding = { left = 0, right = 1 },
-      color = { gui = 'bold' },
+      color = { gui = 'bold', bg = tc.overlaybump },
+    },
+  }
+
+  local git_cond = function()
+    return Lpke_show_git
+  end
+  local git_components = {
+    {
+      'diff',
+      colored = true,
+      cond = git_cond,
+      diff_color = {
+        added = { fg = tc.foam },
+        modified = { fg = tc.rose },
+        removed = { fg = tc.love },
+      },
+      color = { bg = tc.overlaybump },
+    },
+    {
+      'branch',
+      cond = git_cond,
+      color = { fg = tc.textminus, bg = tc.overlaybump, gui = 'bold' },
     },
   }
 
@@ -156,6 +184,8 @@ local function config()
         },
       },
       lualine_b = {
+        session_components[1],
+        session_components[2],
         {
           cwd_folder,
           cond = function()
@@ -166,25 +196,17 @@ local function config()
             refresh()
           end,
           color = function()
-            local cwd = helpers.get_cwd_folder()
             local session = helpers.get_session_name()
-            if cwd == session then
+            if session then
               return { gui = 'bold', fg = tc.textminus }
-            elseif session then
-              return { gui = 'bold' }
             else
               return { gui = '' }
             end
           end,
         },
         filename,
-        {
-          'branch',
-          color = { gui = 'italic' },
-        },
       },
       lualine_c = {
-        'diff',
         {
           'diagnostics',
           symbols = {
@@ -224,12 +246,12 @@ local function config()
             refresh()
           end,
         },
-        session_name_components[1],
-        session_name_components[2],
       },
       lualine_y = {
         'progress',
         'location',
+        git_components[1],
+        git_components[2],
         -- diagnostic status
         {
           function()
@@ -242,7 +264,6 @@ local function config()
           end,
           on_click = function()
             Lpke_toggle_diagnostics()
-            -- refresh()
           end,
           color = function()
             local enabled = not vim.diagnostic.is_disabled()
@@ -292,7 +313,8 @@ local function config()
     { 'n', '<F2>D', function() Lpke_show_cwd = not Lpke_show_cwd refresh() end, }, -- toggle cwd
     { 'n', '<F2>F', function() Lpke_full_path = not Lpke_full_path refresh() end, }, -- toggle file path
     { 'n', '<F2>E', function() Lpke_show_encoding = not Lpke_show_encoding refresh() end, }, -- toggle encoding info
-    { 'n', '<F2>X', function() Lpke_show_diagnostics_vis = not Lpke_show_diagnostics_vis refresh() end, }, -- toggle diagnostics visibility
+    { 'n', '<F2>S', function() Lpke_show_session = not Lpke_show_session refresh() end, }, -- toggle session name
+    { 'n', '<F2>g', function() Lpke_show_git = not Lpke_show_git refresh() end, }, -- toggle git info
   })
   -- stylua: ignore end
 end

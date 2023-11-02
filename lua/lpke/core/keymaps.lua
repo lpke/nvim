@@ -22,7 +22,7 @@ helpers.keymap_set_multi({
   -- Toggle UI/features
   {'nvC!', '<F2>w', 'set wrap!', { desc = 'Toggle line wrap' }},
   {'nvC', '<F2>r', 'set relativenumber!', { desc = 'Toggle relative numbers' }},
-  {'n', '<F2>S', function() helpers.toggle_global_status() end,
+  {'n', '<F2>f', function() helpers.toggle_global_status() end,
     { desc = 'Toggle global status line' }},
   {'n!', '<F2>C', function() helpers.toggle_whitespace_hl(options.custom_opts.whitespace_hl) end,
     { desc = 'Toggle show whitespace' }},

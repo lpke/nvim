@@ -278,6 +278,7 @@ local function config()
             ['cd'] = fb_actions.change_cwd,
             [','] = fb_actions.toggle_browser,
             [';'] = fb_actions.toggle_hidden,
+            ['g;'] = fb_actions.toggle_respect_gitignore,
             ['v'] = fb_actions.toggle_all,
             ['uv'] = actions.drop_all,
             ['h'] = fb_actions.goto_parent_dir,
