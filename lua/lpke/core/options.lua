@@ -105,4 +105,16 @@ vim.cmd('autocmd FileType * set formatoptions-=ro')
 -- })
 
 
+--------------------------
+-- USER COMMANDS
+--------------------------
+
+vim.api.nvim_create_user_command('TrashRestore', Lpke_trash_restore, {})
+vim.api.nvim_create_user_command('T', Lpke_term, { nargs = '*' }) -- arg: full
+vim.api.nvim_create_user_command('Term', Lpke_term, { nargs = '*' }) -- arg: full
+vim.api.nvim_create_user_command('Terminal', Lpke_term, { nargs = '*' }) -- arg: full
+vim.api.nvim_create_user_command('R', Lpke_ranger, { nargs = '*' }) -- arg: full
+vim.api.nvim_create_user_command('Ranger', Lpke_ranger, { nargs = '*' }) -- arg: full
+
+
 return E

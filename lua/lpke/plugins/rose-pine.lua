@@ -65,6 +65,7 @@ local function config()
       EndOfBuffer = { fg = 'base' }, -- remove the `~`
       CursorLine = { bg = 'none' },
       CursorLineNr = { fg = ec.textminus },
+      FloatTitle = { fg = 'subtle', bg = 'surface' },
     },
   })
 

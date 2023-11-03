@@ -65,9 +65,10 @@ local function config()
   Lpke_show_cwd = true
   Lpke_full_path = true
   Lpke_show_encoding = false
-  Lpke_show_diagnostics_vis = true
   Lpke_show_session = false
-  Lpke_show_git = false
+  Lpke_show_git = true
+  Lpke_show_git_branch = false
+  Lpke_show_diagnostics = true
 
   -- custom component display
   local zoom_status = function()
@@ -113,35 +114,52 @@ local function config()
         return 'S:'
       end,
       cond = session_cond,
+      on_click = function()
+        Lpke_show_session = not Lpke_show_session
+        refresh()
+      end,
       padding = { left = 1, right = 0 },
       color = { fg = tc.mutedplus, bg = tc.overlaybump },
     },
     {
       session_name,
       cond = session_cond,
+      on_click = function()
+        Lpke_show_session = not Lpke_show_session
+        refresh()
+      end,
       padding = { left = 0, right = 1 },
-      color = { gui = 'bold', bg = tc.overlaybump },
+      color = { fg = tc.textminus, bg = tc.overlaybump, gui = 'bold' },
     },
   }
 
-  local git_cond = function()
-    return Lpke_show_git
-  end
   local git_components = {
     {
       'diff',
       colored = true,
-      cond = git_cond,
+      cond = function()
+        return Lpke_show_git
+      end,
       diff_color = {
         added = { fg = tc.foam },
         modified = { fg = tc.rose },
         removed = { fg = tc.love },
       },
+      on_click = function()
+        Lpke_show_git_branch = not Lpke_show_git_branch
+        refresh()
+      end,
       color = { bg = tc.overlaybump },
     },
     {
       'branch',
-      cond = git_cond,
+      cond = function()
+        return Lpke_show_git and Lpke_show_git_branch
+      end,
+      on_click = function()
+        Lpke_show_git_branch = not Lpke_show_git_branch
+        refresh()
+      end,
       color = { fg = tc.textminus, bg = tc.overlaybump, gui = 'bold' },
     },
   }
@@ -192,7 +210,7 @@ local function config()
             return Lpke_show_cwd
           end,
           on_click = function()
-            Lpke_show_cwd = not Lpke_show_cwd
+            Lpke_show_session = not Lpke_show_session
             refresh()
           end,
           color = function()
@@ -209,11 +227,14 @@ local function config()
       lualine_c = {
         {
           'diagnostics',
+          cond = function()
+            return Lpke_show_diagnostics
+          end,
           symbols = {
-            error = '■:',
-            warn = '▲:',
-            info = '◆:',
-            hint = '●:',
+            error = '', -- ■
+            warn = '', -- ▲
+            info = '', -- ◆
+            hint = '', -- ●
           },
         },
       },
@@ -249,7 +270,13 @@ local function config()
       },
       lualine_y = {
         'progress',
-        'location',
+        {
+          'location',
+          on_click = function()
+            Lpke_show_git = not Lpke_show_git
+            refresh()
+          end,
+        },
         git_components[1],
         git_components[2],
         -- diagnostic status
@@ -260,7 +287,7 @@ local function config()
           cond = function()
             local lsp_attached = vim.lsp.get_active_clients({ bufnr = 0 })[1]
               ~= nil
-            return Lpke_show_diagnostics_vis and lsp_attached
+            return lsp_attached
           end,
           on_click = function()
             Lpke_toggle_diagnostics()
@@ -314,7 +341,9 @@ local function config()
     { 'n', '<F2>F', function() Lpke_full_path = not Lpke_full_path refresh() end, }, -- toggle file path
     { 'n', '<F2>E', function() Lpke_show_encoding = not Lpke_show_encoding refresh() end, }, -- toggle encoding info
     { 'n', '<F2>S', function() Lpke_show_session = not Lpke_show_session refresh() end, }, -- toggle session name
-    { 'n', '<F2>g', function() Lpke_show_git = not Lpke_show_git refresh() end, }, -- toggle git info
+    { 'n', '<F2>G', function() Lpke_show_git = not Lpke_show_git refresh() end, }, -- toggle all git info
+    { 'n', '<F2>g', function() Lpke_show_git_branch = not Lpke_show_git_branch refresh() end, }, -- toggle git branch display
+    { 'n', '<F2>v', function() Lpke_show_diagnostics = not Lpke_show_diagnostics refresh() end, }, -- toggle diagnostics display
   })
   -- stylua: ignore end
 end

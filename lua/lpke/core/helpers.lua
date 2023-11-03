@@ -216,4 +216,15 @@ function E.cwd_has_git()
   return vim.fn.glob('.git/') ~= ''
 end
 
+-- stop currently focused terminal
+function E.stop_term()
+  vim.fn.jobstop(vim.b.terminal_job_id)
+  vim.cmd('sleep 100m')
+  vim.api.nvim_feedkeys(
+    vim.api.nvim_replace_termcodes('<Esc>', true, true, true),
+    'n',
+    false
+  )
+end
+
 return E

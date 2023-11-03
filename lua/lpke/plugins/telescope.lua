@@ -2,6 +2,7 @@ local function config()
   local telescope = require('telescope')
   local actions = require('telescope.actions')
   local action_state = require('telescope.actions.state')
+  local action_utils = require('telescope.actions.utils')
   local fb_actions = require('telescope._extensions.file_browser.actions')
   local builtin = require('telescope.builtin')
   local helpers = require('lpke.core.helpers')
@@ -20,6 +21,12 @@ local function config()
   helpers.set_hl('TelescopePromptTitle', { fg = tc.base, bg = tc.iris })
   helpers.set_hl( 'TelescopePromptCounter', { fg = tc.mutedplus, bg = tc.overlaybump })
   helpers.set_hl('TelescopeMatching', { fg = tc.iris, bold = true })
+  helpers.set_hl('TelescopeResultsDiffChange', { fg = tc.rose })
+  helpers.set_hl('TelescopeResultsDiffAdd', { fg = tc.foam })
+  helpers.set_hl('TelescopeResultsDiffDelete', { fg = tc.love })
+  helpers.set_hl('TelescopeResultsDiffUntracked', { fg = tc.irisfaded })
+  helpers.set_hl('TelescopeMultiSelection', { fg = tc.gold })
+  helpers.set_hl('TelescopeMultiIcon', { fg = tc.goldfaded })
   -- stylua: ignore end
 
   -- custom pickers
@@ -286,14 +293,36 @@ local function config()
             ['R'] = fb_actions.rename,
             ['m'] = fb_actions.move,
             ['P'] = fb_actions.copy,
-            ['D'] = function(bufnr)
-              local picker = action_state.get_current_picker(bufnr)
-              local path = picker.finder.path
-              local entryToDel = action_state.get_selected_entry(bufnr)
-              local pathToDel = entryToDel[1]
-              actions.move_selection_next(bufnr)
-              vim.cmd('!trash-put ' .. pathToDel)
-              vim.cmd('Telescope file_browser select_buffer=true path=' .. path)
+            -- delete to trash
+            ['dD'] = function(bufnr)
+              local picker_path =
+                action_state.get_current_picker(bufnr).finder.path
+              local selection_paths = {}
+              action_utils.map_selections(bufnr, function(entry)
+                table.insert(selection_paths, entry[1])
+              end)
+              if #selection_paths == 0 then
+                -- delete highlighted entry
+                local selected_path = action_state.get_selected_entry(bufnr)[1]
+                vim.cmd('!trash ' .. selected_path)
+              else
+                -- delete selected entries
+                for _, v in ipairs(selection_paths) do
+                  vim.cmd('!trash ' .. v)
+                end
+              end
+              vim.cmd('Telescope file_browser path=' .. picker_path)
+            end,
+            -- delete permanently
+            ['dX'] = function(bufnr)
+              fb_actions.remove(bufnr)
+            end,
+            -- 'undo' delete (open trash restore for current dir)
+            ['ud'] = function(bufnr)
+              local picker_path =
+                action_state.get_current_picker(bufnr).finder.path
+              actions.close(bufnr)
+              Lpke_trash_restore(picker_path)
             end,
             ['O'] = fb_actions.open,
             ['gh'] = fb_actions.goto_home_dir,

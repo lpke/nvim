@@ -19,6 +19,15 @@ helpers.keymap_set_multi({
   {'nC', '<BS>ii', 'Inspect', { desc = 'Inspect highlight group under cursor' }},
   {'c', '<Esc>', '<C-c>', { desc = 'Exit with ctrl+c' }},
 
+  -- terminal
+  {'nC', '<BS>t', 'Term', { desc = 'Open a floating terminal window' }},
+  {'nC', '<BS>T', 'Term full', { desc = 'Open a floating terminal window (fullscreen)' }},
+  {'nC', '<BS>r', 'Ranger', { desc = 'Open a floating ranger window' }},
+  {'nC', '<BS>R', 'Ranger full', { desc = 'Open a floating ranger window (fullscreen)' }},
+  {'t', '<F2>;', '<C-\\><C-n>', { desc = 'Enter vim normal mode from terminal' }},
+  {'t', '<F2>:', '<C-\\><C-n>:', { desc = 'Enter vim cmd-line from terminal' }},
+  {'t', '<F2>/', helpers.stop_term, { desc = 'Kill and close active terminal' }},
+
   -- Toggle UI/features
   {'nvC!', '<F2>w', 'set wrap!', { desc = 'Toggle line wrap' }},
   {'nvC', '<F2>r', 'set relativenumber!', { desc = 'Toggle relative numbers' }},
