@@ -14,7 +14,6 @@ helpers.keymap_set_multi({
   {'ic', '<F2><CR>', ''}, -- used for cmp completion
 
   -- High-level maps
-  {'n', '<BS>e', vim.cmd.Ex, { desc = 'Open netrw' }},
   {'nviC', '<C-s>', 'w', { desc = 'Save buffer' }},
   {'nC', '<BS>ii', 'Inspect', { desc = 'Inspect highlight group under cursor' }},
   {'c', '<Esc>', '<C-c>', { desc = 'Exit with ctrl+c' }},
