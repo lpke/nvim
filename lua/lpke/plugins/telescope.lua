@@ -193,8 +193,8 @@ local function config()
               vim.cmd('Telescope live_grep cwd=' .. path)
             end
           end,
-          -- toggle file/preview window for the open picker
-          ['<F2>o'] = actions_layout.toggle_preview,
+          ['<F2>o'] = actions_layout.toggle_preview, -- toggle file/preview window for open picker
+          ['<F2>O'] = actions_layout.toggle_mirror, -- mirror layout for open picker
         },
       },
     },
@@ -223,6 +223,22 @@ local function config()
           '--glob=!**/yarn.lock',
           '--glob=!**/package-lock.json',
         },
+      },
+      git_status = {
+        initial_mode = 'normal',
+      },
+      git_bcommits = {
+        initial_mode = 'normal',
+        prompt_title = 'File Commits',
+      },
+      git_commits = {
+        initial_mode = 'normal',
+      },
+      git_branches = {
+        initial_mode = 'normal',
+      },
+      git_stash = {
+        initial_mode = 'normal',
       },
       buffers = {
         initial_mode = 'normal',

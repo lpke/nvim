@@ -1,12 +1,13 @@
 local function config()
   local helpers = require('lpke.core.helpers')
+  local fb = require('telescope').extensions.file_browser
 
   -- stylua: ignore start
   -- keymaps
   helpers.keymap_set_multi({
-    { 'nC', '<BS>d', 'Telescope file_browser path=%:p:h select_buffer=true',
+    { 'nC', '<BS>d', [[execute 'Telescope file_browser path=' . substitute(expand('%:p:h'), 'oil://', '', '') . ' select_buffer=true']],
       { desc = 'Open Telescope File Browser' }},
-    { 'nC', '<BS>D', [[Telescope file_browser prompt_title=File\ Browser\ (depth:\ 5) path=%:p:h select_buffer=true depth=5 hidden=false]],
+    { 'nC', '<BS>D', [[execute 'Telescope file_browser prompt_title=File\ Browser\ (depth:\ 5) path=' . substitute(expand('%:p:h'), 'oil://', '', '') . ' select_buffer=true depth=5 hidden=false']],
       { desc = 'Open Telescope File Browser (depth: 5)' }},
   })
 end

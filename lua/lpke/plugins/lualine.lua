@@ -86,10 +86,19 @@ local function config()
     'filename',
     path = 1,
     fmt = function(str)
-      -- only show filename when: toggled off OR not a normal buffer
+      -- only show filename when: toggled off OR an accepted buffer
       local normal_buffer = vim.bo.buftype == ''
-      return (Lpke_full_path and normal_buffer) and str
-        or helpers.get_path_tail(str)
+      local oil_buffer = vim.bo.filetype == 'oil'
+      local accepted_buffer = normal_buffer or oil_buffer
+      if Lpke_full_path and accepted_buffer then
+        if oil_buffer and string.match(str, '^oil://') then
+          return str:gsub('oil://', '')
+        else
+          return str
+        end
+      else
+        return helpers.get_path_tail(str)
+      end
     end,
     on_click = function()
       Lpke_full_path = not Lpke_full_path
