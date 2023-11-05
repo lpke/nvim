@@ -3,7 +3,11 @@ local function config()
   local helpers = require('lpke.core.helpers')
 
   helpers.keymap_set_multi({
-    {'nC', '<BS>e', 'Oil', { desc = 'Open oil file browser' }},
+    -- open in current window
+    {'nC', '<BS>s', 'Oil', { desc = 'Open Oil File Browser' }},
+    -- open in a new split
+    {'nC', '<F2>>', 'vsplit | Oil', { desc = 'Open Oil File Browser (v split)' }},
+    {'nC', '<F2><', 'split | Oil', { desc = 'Open Oil File Browser (h split)' }},
   })
 
   oil.setup({

@@ -3,6 +3,7 @@ local function config()
   local actions = require('telescope.actions')
   local actions_state = require('telescope.actions.state')
   local actions_utils = require('telescope.actions.utils')
+  local actions_layout = require('telescope.actions.layout')
   local builtin = require('telescope.builtin')
 
   local fb_actions = require('telescope._extensions.file_browser.actions')
@@ -15,15 +16,15 @@ local function config()
   -- stylua: ignore start
   -- theme
   helpers.set_hl('TelescopeBorder', { fg = tc.surface, bg = tc.surface })
-  helpers.set_hl( 'TelescopePromptBorder', { fg = tc.overlaybump, bg = tc.overlaybump })
+  helpers.set_hl('TelescopePromptBorder', { fg = tc.overlaybump, bg = tc.overlaybump })
   helpers.set_hl('TelescopePromptNormal', { fg = tc.text, bg = tc.overlaybump })
-  helpers.set_hl( 'TelescopePromptPrefix', { fg = tc.textminus, bg = tc.overlaybump })
-  helpers.set_hl( 'TelescopeSelectionCaret', { fg = tc.textminus, bg = tc.surface })
+  helpers.set_hl('TelescopePromptPrefix', { fg = tc.textminus, bg = tc.overlaybump })
+  helpers.set_hl('TelescopeSelectionCaret', { fg = tc.textminus, bg = tc.surface })
   helpers.set_hl('TelescopeSelection', { fg = tc.text, bg = tc.overlaybump })
   helpers.set_hl('TelescopeResultsTitle', { fg = tc.base, bg = tc.pine })
   helpers.set_hl('TelescopePreviewTitle', { fg = tc.base, bg = tc.growth })
   helpers.set_hl('TelescopePromptTitle', { fg = tc.base, bg = tc.iris })
-  helpers.set_hl( 'TelescopePromptCounter', { fg = tc.mutedplus, bg = tc.overlaybump })
+  helpers.set_hl('TelescopePromptCounter', { fg = tc.mutedplus, bg = tc.overlaybump })
   helpers.set_hl('TelescopeMatching', { fg = tc.iris, bold = true })
   helpers.set_hl('TelescopeResultsDiffChange', { fg = tc.rose })
   helpers.set_hl('TelescopeResultsDiffAdd', { fg = tc.foam })
@@ -45,34 +46,39 @@ local function config()
     builtin.grep_string({ search = vim.fn.getreg('"') })
   end
   local function grep_custom()
-    builtin.grep_string({ search = vim.fn.input('Grep > ') })
+    builtin.grep_string({ search = vim.fn.input('Grep: ') })
   end
 
   -- stylua: ignore start
   -- mappings to access telescope
   helpers.keymap_set_multi({
+    {'nC', '<BS><leader>', 'Telescope resume', { desc = 'Resume previous Telescope search' }},
+    -- files
     {'nC', '<BS><BS>', 'Telescope find_files', { desc = 'Fuzzy find files in cwd' }},
     {'n', '<BS>ff', find_git_files, { desc = 'Fuzzy find git files in cwd (or cwd if not git)' }},
-    {'nC', '<BS>/', 'Telescope live_grep', { desc = 'Find string in cwd' } },
+    {'nC', '<BS>fr', 'Telescope oldfiles', { desc = 'Fuzzy find recent files' }},
+    -- grep
     {'nC', '<leader>/', 'Telescope current_buffer_fuzzy_find', { desc = 'Fuzzy find in current file' }},
+    {'nC', '<BS>/', 'Telescope live_grep', { desc = 'Find string in cwd' } },
     {'n', '<BS>fp', grep_yanked, { desc = 'Find pasted string in cwd' } },
     {'n', '<BS>fi', grep_custom, { desc = 'Find input string in cwd' } },
     {'nC', '<BS>fw', 'Telescope grep_string', { desc = 'Find string under cursor in cwd' }},
-    {'nC', '<BS><leader>', 'Telescope resume initial_mode=normal', { desc = 'Resume previous Telescope search' }},
-    {'nC', '<BS>fr', 'Telescope oldfiles', { desc = 'Fuzzy find recent files' }},
-    {'nC', '<BS>fj', 'Telescope jumplist', { desc = 'Fuzzy find jumplist' } },
+    -- git
+    {'nC', '<BS>gg', 'Telescope git_status', { desc = 'Fuzzy find git status' }},
+    {'nC', '<leader>gc', 'Telescope git_bcommits', { desc = 'Fuzzy find buffer git commits' }},
+    {'nC', '<BS>gc', 'Telescope git_commits', { desc = 'Fuzzy find git commits' }},
+    {'nC', '<BS>gb', 'Telescope git_branches', { desc = 'Fuzzy find git branches' }},
+    {'nC', '<BS>gs', 'Telescope git_stash', { desc = 'Fuzzy find git stash' }},
+    -- treesitter
+    {'nC', '<leader>fs', 'Telescope treesitter', { desc = 'Fuzzy find treesitter symbols in file' }},
+    -- vim
     {'nC', '<BS>fb', 'Telescope buffers', { desc = 'Fuzzy find buffers' } },
     {'nC', "<BS>f'", 'Telescope registers', { desc = 'Fuzzy find registers' }},
     {'nC', '<BS>fm', 'Telescope marks', { desc = 'Fuzzy find marks' } },
-    {'nC', '<BS>fl', 'Telescope highlights', { desc = 'Fuzzy find highlights' }},
+    {'nC', '<BS>fj', 'Telescope jumplist', { desc = 'Fuzzy find jumplist' } },
     {'nC', '<BS>fk', 'Telescope keymaps', { desc = 'Fuzzy find keymaps' } },
+    {'nC', '<BS>fl', 'Telescope highlights', { desc = 'Fuzzy find highlights' }},
     {'nC', '<BS>fh', 'Telescope help_tags', { desc = 'Fuzzy find help tags' }},
-    {'nC', '<BS>fs', 'Telescope treesitter', { desc = 'Fuzzy find treesitter symbols' }},
-    {'nC', '<BS>fgc', 'Telescope git_commits', { desc = 'Fuzzy find git commits' }},
-    {'nC', '<BS>fgf', 'Telescope git_bcommits', { desc = 'Fuzzy find buffer git commits' }},
-    {'nC', '<BS>fgb', 'Telescope git_branches', { desc = 'Fuzzy find git branches' }},
-    {'nC', '<BS>fgs', 'Telescope git_status', { desc = 'Fuzzy find git status' }},
-    {'nC', '<BS>fgz', 'Telescope git_stash', { desc = 'Fuzzy find git stash' }},
   })
   -- stylua: ignore end
 
@@ -137,6 +143,7 @@ local function config()
           ['<C-k>'] = actions.preview_scrolling_up,
           -- ['<C-h>'] = actions.preview_scrolling_left,
           -- ['<C-l>'] = actions.preview_scrolling_right,
+          ['<F2>o'] = actions_layout.toggle_preview,
         },
         n = {
           ['u'] = { '<cmd>undo<cr>', type = 'command' }, -- didn't work by default
@@ -186,10 +193,15 @@ local function config()
               vim.cmd('Telescope live_grep cwd=' .. path)
             end
           end,
+          -- toggle file/preview window for the open picker
+          ['<F2>o'] = actions_layout.toggle_preview,
         },
       },
     },
     pickers = {
+      resume = {
+        initial_mode = 'normal',
+      },
       find_files = {
         hidden = true,
         -- needed to exclude some files & dirs from general search
@@ -211,6 +223,18 @@ local function config()
           '--glob=!**/yarn.lock',
           '--glob=!**/package-lock.json',
         },
+      },
+      buffers = {
+        initial_mode = 'normal',
+        mappings = {
+          n = {
+            ['dD'] = actions.delete_buffer,
+          },
+        },
+      },
+      treesitter = {
+        initial_mode = 'normal',
+        sorting_strategy = 'ascending',
       },
     },
     extensions = {

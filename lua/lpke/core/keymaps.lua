@@ -18,6 +18,22 @@ helpers.keymap_set_multi({
   {'nC', '<BS>ii', 'Inspect', { desc = 'Inspect highlight group under cursor' }},
   {'c', '<Esc>', '<C-c>', { desc = 'Exit with ctrl+c' }},
 
+  -- Tweaks/extensions of native functionality
+  {'nv', '<leader>y', '"*y', { desc = 'Global yank' }},
+  {'nv', '<leader>d', '"_d', { desc = 'Delete without copy' }},
+  {'nv', 'gg', 'gg0', { desc = 'Go to very start of buffer' }},
+  {'nv', 'G', 'G$', { desc = 'Go to very end of buffer' }},
+  {'n', 'Y', 'y$', { desc = 'Yank to end of line' }},
+  {'n', 'J', 'mzJ`z', { desc = 'Join lines (without moving cursor)' }},
+  {'n', 'gJ', 'mzgJ`z', { desc = 'Join lines without modification (without moving cursor)' }},
+  {'n', '<leader>J', 'mzgJi<Space><Esc>diW`z', { desc = 'Join lines without any spaces (without moving cursor)' }},
+  {'n', '<leader>o', 'o<Esc>', { desc = 'New line below (remain in normal mode)' }},
+  {'n', '<leader>O', 'O<Esc>', { desc = 'New line above (remain in normal mode)' }},
+  {'nv', '=*', 'mzgg=G`z', { desc = 'Indent entire file' }},
+  {'nv', '=_', '==', { desc = 'Indent current line or selection only' }},
+  {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],
+    { desc = 'Replace selected text with the eval() version of itself' }},
+
   -- terminal
   {'nC', '<BS>t', 'Term', { desc = 'Open a floating terminal window' }},
   {'nC', '<BS>T', 'Term full', { desc = 'Open a floating terminal window (fullscreen)' }},
@@ -38,19 +54,6 @@ helpers.keymap_set_multi({
   -- Fold management
   {'nv', 'zo', 'za', { desc = 'Toggle fold under cursor' }},
   {'nv', 'zO', 'zA', { desc = 'Toggle all nested folds under cursor' }},
-
-  {'nv', '<leader>y', '"*y', { desc = 'Global yank' }},
-  {'nv', '<leader>d', '"_d', { desc = 'Delete without copy' }},
-  {'nv', 'gg', 'gg0', { desc = 'Go to very start of buffer' }},
-  {'nv', 'G', 'G$', { desc = 'Go to very end of buffer' }},
-  {'n', 'Y', 'y$', { desc = 'Yank to end of line' }},
-  {'n', 'J', 'mzJ`z', { desc = 'Join lines (without moving cursor)' }},
-  {'n', 'gJ', 'mzgJ`z', { desc = 'Join lines without modification (without moving cursor)' }},
-  {'n', '<leader>J', 'mzgJi<Space><Esc>diW`z', { desc = 'Join lines without any spaces (without moving cursor)' }},
-  {'nv', '=*', 'mzgg=G`z', { desc = 'Indent entire file' }},
-  {'nv', '=_', '==', { desc = 'Indent current line or selection only' }},
-  {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],
-    { desc = 'Replace selected text with the eval() version of itself' }},
 
   -- buffer navigation
   {'nviC', '<F2><Down>', 'bnext', { desc = 'Next buffer' }},
@@ -96,6 +99,8 @@ helpers.keymap_set_multi({
   -- creation / deletion
   {'nC', '<C-w>c', 'tabnew', { desc = 'Create a new tab (blank file)' }},
   {'nC', '<C-w>C', 'tab split', { desc = 'Create a new tab (clone current buffer)' }},
+  {'nC', '<C-w>n', 'tabnew', { desc = 'Create a new tab (blank file)' }},
+  {'nC', '<C-w>N', 'tab split', { desc = 'Create a new tab (clone current buffer)' }},
   {'nC', '<C-w>&', 'tabclose', { desc = 'Close current tab' }},
   {'nC', '<F2>n', 'tabnew', { desc = 'Create a new tab (blank file)' }},
   -- navigating
