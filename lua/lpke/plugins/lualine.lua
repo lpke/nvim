@@ -91,8 +91,8 @@ local function config()
       local oil_buffer = vim.bo.filetype == 'oil'
       local accepted_buffer = normal_buffer or oil_buffer
       if Lpke_full_path and accepted_buffer then
-        if oil_buffer and string.match(str, '^oil://') then
-          return str:gsub('oil://', '')
+        if oil_buffer and string.match(str, '^oi?l?:?//') then
+          return str:gsub('^oi?l?:?//', '')
         else
           return str
         end
