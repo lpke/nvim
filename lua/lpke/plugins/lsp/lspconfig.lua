@@ -19,28 +19,28 @@ local function config()
   local tc = Lpke_theme_colors
 
   local function set_diagnostic_hl()
-    helpers.set_hl('DiagnosticUnnecessary', { fg = tc.subtleplus })
-    helpers.set_hl('DiagnosticUnderlineHint', { bg = tc.irisbg })
-    helpers.set_hl('DiagnosticUnderlineInfo', { bg = tc.foambg })
-    helpers.set_hl('DiagnosticUnderlineWarn', { bg = tc.goldbg })
-    helpers.set_hl('DiagnosticUnderlineError', { bg = tc.lovebg })
-    helpers.set_hl('DiagnosticUnderlineOk', { bg = tc.growthbg })
+    helpers.set_hl('DiagnosticUnnecessary', {})
+    helpers.set_hl('DiagnosticUnderlineHint', {})
+    helpers.set_hl('DiagnosticUnderlineInfo', {})
+    helpers.set_hl('DiagnosticUnderlineWarn', {})
+    helpers.set_hl('DiagnosticUnderlineError', {})
+    helpers.set_hl('DiagnosticUnderlineOk', {})
   end
 
   -- toggle LSP diagnostic highlighting globally
-  Lpke_diagnostics_hl_enabled = true
+  Lpke_diagnostics_hl_enabled = false
   function Lpke_toggle_diagnostics_hl()
     local enabled = Lpke_diagnostics_hl_enabled
     if enabled then
-      helpers.set_hl('DiagnosticUnnecessary', {})
-      helpers.set_hl('DiagnosticUnderlineHint', {})
-      helpers.set_hl('DiagnosticUnderlineInfo', {})
-      helpers.set_hl('DiagnosticUnderlineWarn', {})
-      helpers.set_hl('DiagnosticUnderlineError', {})
-      helpers.set_hl('DiagnosticUnderlineOk', {})
+      set_diagnostic_hl()
       Lpke_diagnostics_hl_enabled = false
     else
-      set_diagnostic_hl()
+      helpers.set_hl('DiagnosticUnnecessary', { fg = tc.subtleplus })
+      helpers.set_hl('DiagnosticUnderlineHint', { bg = tc.irisbg })
+      helpers.set_hl('DiagnosticUnderlineInfo', { bg = tc.foambg })
+      helpers.set_hl('DiagnosticUnderlineWarn', { bg = tc.goldbg })
+      helpers.set_hl('DiagnosticUnderlineError', { bg = tc.lovebg })
+      helpers.set_hl('DiagnosticUnderlineOk', { bg = tc.growthbg })
       Lpke_diagnostics_hl_enabled = true
     end
     pcall(function()

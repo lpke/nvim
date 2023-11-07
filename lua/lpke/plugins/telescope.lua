@@ -175,6 +175,7 @@ local function config()
             actions.toggle_selection(bufnr)
             actions.move_selection_previous(bufnr)
           end,
+          ['v'] = actions.toggle_all,
           -- open find files picker for current path
           ['<BS><BS>'] = function(bufnr)
             local picker = actions_state.get_current_picker(bufnr)

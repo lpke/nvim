@@ -1,12 +1,14 @@
-function config()
-  local keymaps = {
-    { 'n', '<BS>n', require('auto-session.session-lens').search_session }, -- open sessio'N's in telescope
-    { 'nC', '<BS>N', 'SessionSave' }, -- save 'N'ew session
-  }
-  require('lpke.core.helpers').keymap_set_multi(keymaps)
+local function config()
+  local auto_session = require('auto-session')
+  local session_lens = require('auto-session.session-lens')
+  local helpers = require('lpke.core.helpers')
 
-  -- options
-  require('auto-session').setup({
+  -- keymaps
+  helpers.keymap_set_multi({
+    { 'n', '<BS>n', session_lens.search_session, { desc = 'Open session picker in Telescope' } },
+  })
+
+  auto_session.setup({
     auto_session_enabled = true,
     auto_session_suppress_dirs = { '/', '~/', '~/Downloads' },
     auto_session_root_dir = vim.fn.stdpath('data') .. '/sessions/',
@@ -37,7 +39,12 @@ function config()
         sorting_strategy = 'descending',
         layout_config = {
           width = 100,
-          height = 20,
+          height =20,
+        },
+        mappings = {
+          n = {
+            -- ['dD'] = function(bufnr) session_lens.delete_session(bufnr) end,
+          },
         },
       },
     },
