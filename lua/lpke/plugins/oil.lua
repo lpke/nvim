@@ -2,6 +2,7 @@ local function config()
   local oil = require('oil')
   local helpers = require('lpke.core.helpers')
 
+  -- stylua: ignore start
   helpers.keymap_set_multi({
     -- open in current window
     {'nC', '<BS>s', 'Oil', { desc = 'Open Oil File Browser' }},
@@ -9,6 +10,7 @@ local function config()
     {'nC', '<F2>>', 'vsplit | Oil', { desc = 'Open Oil File Browser (v split)' }},
     {'nC', '<F2><', 'split | Oil', { desc = 'Open Oil File Browser (h split)' }},
   })
+  -- stylua: ignore end
 
   oil.setup({
     -- Oil will take over directory buffers (e.g. `vim .` or `:e src/`)

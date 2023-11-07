@@ -28,10 +28,16 @@ end
 Lpke_zoomed = {} -- stores whether tab group/s are in a 'zoomed' state or not
 Lpke_zoom_previous = {} -- stores state of previous window layouts
 Lpke_zoom_count = {} -- stores number of number of windows at time of last zoom
-function Lpke_zoomed_reset_state(equalise)
-  Lpke_zoomed = {}
-  Lpke_zoom_previous = {}
-  Lpke_zoom_count = {}
+function Lpke_zoomed_reset_state(equalise, tab_group)
+  if not tab_group then
+    Lpke_zoomed = {}
+    Lpke_zoom_previous = {}
+    Lpke_zoom_count = {}
+  else
+    Lpke_zoomed[tab_group] = false
+    Lpke_zoom_previous[tab_group] = nil
+    Lpke_zoom_count[tab_group] = nil
+  end
   if equalise then
     vim.cmd('wincmd =')
   end
@@ -44,19 +50,23 @@ function Lpke_win_zoom_toggle()
     if Lpke_zoomed[cur_tab] then
       local wins = vim.api.nvim_tabpage_list_wins(cur_tab)
       if #wins >= Lpke_zoom_count[cur_tab] then
-        -- restore the previous layout
-        for _, win_info in ipairs(Lpke_zoom_previous[cur_tab]) do
-          local win = win_info.win
-          vim.api.nvim_set_current_win(win)
-          vim.cmd(string.format('resize %d', win_info.height))
-          vim.cmd(string.format('vertical resize %d', win_info.width))
+        -- restore the previous layout (loop twice, because it fixes a bug)
+        for i = 1, 2 do
+          for _, win_info in ipairs(Lpke_zoom_previous[cur_tab]) do
+            local win = win_info.win
+            vim.api.nvim_win_set_height(win, win_info.height)
+            vim.api.nvim_win_set_width(win, win_info.width)
+            vim.api.nvim_win_call(win, function()
+              vim.cmd('normal! zH') -- scroll left
+            end)
+          end
         end
-        Lpke_zoomed_reset_state()
+        Lpke_zoomed_reset_state(false, cur_tab)
       else
         print(
           'Un-Zoom: Could not restore previous sizing: Less windows than expected.'
         )
-        Lpke_zoomed_reset_state(true)
+        Lpke_zoomed_reset_state(true, cur_tab)
       end
     else
       -- save layout and zoom current window

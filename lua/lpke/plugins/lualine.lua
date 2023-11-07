@@ -197,7 +197,7 @@ local function config()
         {
           zoom_status,
           on_click = Lpke_win_zoom_toggle,
-          color = { bg = tc.irisfaded, fg = tc.base },
+          color = { bg = tc.iris, fg = tc.base },
         },
         {
           'mode',
