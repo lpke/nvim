@@ -92,6 +92,20 @@ vim.g.netrw_banner = 0
 -- disable next line auto-comment
 vim.cmd('autocmd FileType * set formatoptions-=ro')
 
+-- toggle diagnostics when going enter/leave insert mode
+vim.api.nvim_create_autocmd("InsertEnter", {
+  pattern = "*",
+  callback = function()
+    Lpke_toggle_diagnostics()
+  end
+})
+vim.api.nvim_create_autocmd("InsertLeave", {
+  pattern = "*",
+  callback = function()
+    Lpke_toggle_diagnostics()
+  end
+})
+
 -- remember folds
 -- vim.api.nvim_create_autocmd({"BufWinLeave"}, {
 --   pattern = {"*.*"},

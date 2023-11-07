@@ -3,9 +3,9 @@ Lpke_diagnostics_enabled_initial = true
 function Lpke_toggle_diagnostics()
   local enabled = not vim.diagnostic.is_disabled()
   if enabled then
-    vim.diagnostic.disable()
+    pcall(vim.diagnostic.disable)
   else
-    vim.diagnostic.enable()
+    pcall(vim.diagnostic.enable)
   end
   pcall(function()
     require('lualine').refresh()
@@ -18,6 +18,36 @@ local function config()
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
 
+  local function set_diagnostic_hl()
+    helpers.set_hl('DiagnosticUnnecessary', { fg = tc.subtleplus })
+    helpers.set_hl('DiagnosticUnderlineHint', { bg = tc.irisbg })
+    helpers.set_hl('DiagnosticUnderlineInfo', { bg = tc.foambg })
+    helpers.set_hl('DiagnosticUnderlineWarn', { bg = tc.goldbg })
+    helpers.set_hl('DiagnosticUnderlineError', { bg = tc.lovebg })
+    helpers.set_hl('DiagnosticUnderlineOk', { bg = tc.growthbg })
+  end
+
+  -- toggle LSP diagnostic highlighting globally
+  Lpke_diagnostics_hl_enabled = true
+  function Lpke_toggle_diagnostics_hl()
+    local enabled = Lpke_diagnostics_hl_enabled
+    if enabled then
+      helpers.set_hl('DiagnosticUnnecessary', {})
+      helpers.set_hl('DiagnosticUnderlineHint', {})
+      helpers.set_hl('DiagnosticUnderlineInfo', {})
+      helpers.set_hl('DiagnosticUnderlineWarn', {})
+      helpers.set_hl('DiagnosticUnderlineError', {})
+      helpers.set_hl('DiagnosticUnderlineOk', {})
+      Lpke_diagnostics_hl_enabled = false
+    else
+      set_diagnostic_hl()
+      Lpke_diagnostics_hl_enabled = true
+    end
+    pcall(function()
+      require('lualine').refresh()
+    end)
+  end
+
   -- stylua: ignore start
   -- theme
   helpers.set_hl('LspInfoTitle', { fg = tc.growth })
@@ -29,12 +59,7 @@ local function config()
   helpers.set_hl('DiagnosticVirtualTextHint', { fg = tc.irisfaded, italic = true })
   helpers.set_hl('DiagnosticVirtualTextInfo', { fg = tc.foamfaded, italic = true })
   helpers.set_hl('DiagnosticVirtualTextOk', { fg = tc.growth, italic = true })
-  helpers.set_hl('DiagnosticUnnecessary', { fg = tc.subtleplus })
-  helpers.set_hl('DiagnosticUnderlineHint', { bg = tc.irisbg })
-  helpers.set_hl('DiagnosticUnderlineInfo', { bg = tc.foambg })
-  helpers.set_hl('DiagnosticUnderlineWarn', { bg = tc.goldbg })
-  helpers.set_hl('DiagnosticUnderlineError', { bg = tc.lovebg })
-  helpers.set_hl('DiagnosticUnderlineOk', { bg = tc.growthbg })
+  set_diagnostic_hl()
 
   -- when a language server attaches to a buffer...
   local on_attach = function(client, bufnr)
@@ -50,7 +75,8 @@ local function config()
     helpers.keymap_set_multi({
       -- info/toggle/reload
       {'nC', '<BS>ip', 'LspInfo', opts('Open LSP info window')},
-      {'nv', '<F2>d', Lpke_toggle_diagnostics, opts('Toggle diagnostics visibility in current buffer')},
+      {'nv', '<F2>d', Lpke_toggle_diagnostics, opts('Toggle diagnostics visibility globally')},
+      {'nv', '<F2>v', Lpke_toggle_diagnostics_hl, opts('Toggle diagnostics highlighting globally')},
       {'nC', '<leader>R', 'LspRestart', opts('Restart LSP')},
 
       -- smart actions

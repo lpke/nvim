@@ -9,6 +9,7 @@ local modes = {
   { 'V-LINE', 'V-L' },
   { 'V-BLOCK', 'V-B' },
   { 'REPLACE', 'REP' },
+  { 'V-REPLACE', 'V-R' },
   { 'COMMAND', 'CMD' },
   { 'TERMINAL', 'TER' },
   { 'O-PENDING', 'O-P' },
@@ -346,13 +347,13 @@ local function config()
   -- stylua: ignore start
   -- keymaps when using lualine
   helpers.keymap_set_multi({
-    { 'n', '<F2>D', function() Lpke_show_cwd = not Lpke_show_cwd refresh() end, }, -- toggle cwd
-    { 'n', '<F2>F', function() Lpke_full_path = not Lpke_full_path refresh() end, }, -- toggle file path
-    { 'n', '<F2>E', function() Lpke_show_encoding = not Lpke_show_encoding refresh() end, }, -- toggle encoding info
-    { 'n', '<F2>S', function() Lpke_show_session = not Lpke_show_session refresh() end, }, -- toggle session name
-    { 'n', '<F2>G', function() Lpke_show_git = not Lpke_show_git refresh() end, }, -- toggle all git info
-    { 'n', '<F2>g', function() Lpke_show_git_branch = not Lpke_show_git_branch refresh() end, }, -- toggle git branch display
-    { 'n', '<F2>v', function() Lpke_show_diagnostics = not Lpke_show_diagnostics refresh() end, }, -- toggle diagnostics display
+    { 'n', '<F2>D', function() Lpke_show_cwd = not Lpke_show_cwd refresh() end, { desc = 'Toggle cwd in Lualine' }},
+    { 'n', '<F2>F', function() Lpke_full_path = not Lpke_full_path refresh() end, { desc = 'Toggle file path in Lualine' }},
+    { 'n', '<F2>E', function() Lpke_show_encoding = not Lpke_show_encoding refresh() end, { desc = 'Toggle encoding info in Lualine' }},
+    { 'n', '<F2>S', function() Lpke_show_session = not Lpke_show_session refresh() end, { desc = 'Toggle session name in Lualine' }},
+    { 'n', '<F2>G', function() Lpke_show_git = not Lpke_show_git refresh() end, { desc = 'Toggle all git info in Lualine' }},
+    { 'n', '<F2>V', function() Lpke_show_diagnostics = not Lpke_show_diagnostics refresh() end, { desc = 'Toggle diagnostics display in Lualine' }},
+    { 'n', '<F2>g', function() Lpke_show_git_branch = not Lpke_show_git_branch refresh() end, { desc = 'Toggle git branch display in Lualine' }},
   })
   -- stylua: ignore end
 end
