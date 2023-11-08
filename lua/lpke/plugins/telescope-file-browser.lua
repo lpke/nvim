@@ -100,8 +100,8 @@ local function telescope_settings(
         ['P'] = fb_actions.copy,
         -- delete to trash
         ['dD'] = function(bufnr)
-          local picker_path =
-            actions_state.get_current_picker(bufnr).finder.path
+          local picker = actions_state.get_current_picker(bufnr)
+          local path = picker.finder.path
           local selection_paths = {}
           actions_utils.map_selections(bufnr, function(entry)
             table.insert(selection_paths, entry[1])
@@ -116,7 +116,7 @@ local function telescope_settings(
               vim.cmd('!trash ' .. v)
             end
           end
-          vim.cmd('Telescope file_browser path=' .. picker_path)
+          vim.cmd('Telescope file_browser path=' .. path)
         end,
         -- delete permanently
         ['dX'] = function(bufnr)

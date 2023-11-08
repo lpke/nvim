@@ -1,10 +1,14 @@
 local helpers = require('lpke.core.helpers')
 local options = require('lpke.core.options')
 local keymap_set = helpers.keymap_set
--- SYNTAX: {'<modes><R=rec,E=expr,C=:,!=sil,D=delete>', <lhs>, <rhs>, <desc>, {opts}}
+
+--[[  SYNTAX: {'<modes><R=rec,E=expr,C=:,!=sil,D=delete>', <lhs>, <rhs>, <desc>, {opts}}
+
+      NOTE:   I have '<M-[key]>' mapped to '<F2>[key]' in alacritty.
+              This is because terminals treat <Alt> and <Esc> as the same key, and I
+              don't want accidental <Esc> triggers when using my keybinds. ]]
 
 vim.g.mapleader = ' '
-
 -- stylua: ignore start
 helpers.keymap_set_multi({
   -- removals
@@ -14,11 +18,15 @@ helpers.keymap_set_multi({
   {'ic', '<F2><CR>', ''}, -- used for cmp completion
 
   -- High-level maps
+  {'i', '<S-Tab>', '<Esc><<I', { desc = 'Unindent' }},
   {'nviC', '<C-s>', 'w', { desc = 'Save buffer' }},
   {'nC', '<BS>ii', 'Inspect', { desc = 'Inspect highlight group under cursor' }},
   {'c', '<Esc>', '<C-c>', { desc = 'Exit with ctrl+c' }},
 
   -- Tweaks/extensions of native functionality
+  {'nv', '<C-k>', '6k', { desc = 'Move up 6 lines' }},
+  {'nv', '<C-j>', '6j', { desc = 'Move down 6 lines' }},
+  {'nv', '<C-j>', '6j', { desc = 'Move down 6 lines' }},
   {'nv', '<leader>y', '"*y', { desc = 'Global yank' }},
   {'nv', '<leader>d', '"_d', { desc = 'Delete without copy' }},
   {'nv', 'gg', 'gg0', { desc = 'Go to very start of buffer' }},
@@ -62,8 +70,8 @@ helpers.keymap_set_multi({
 
   -- window control
   -- creation / deletion
-  {'nvC', '<C-w>|', 'vsplit', { desc = 'Split window horizontally' }},
-  {'nvC', '<C-w>_', 'split', { desc = 'Split window vertically' }},
+  {'nvC', '<C-w>.', 'vsplit', { desc = 'Split window horizontally' }},
+  {'nvC', '<C-w>,', 'split', { desc = 'Split window vertically' }},
   {'nvC', '<F2>.', 'vsplit', { desc = 'Split window horizontally' }},
   {'nvC', '<F2>,', 'split', { desc = 'Split window vertically' }},
   {'n', '<C-w>x', '<C-w>c', { desc = 'Close window' }},
@@ -108,6 +116,11 @@ helpers.keymap_set_multi({
   {'nv', '<C-w><Left>', 'gT', { desc = 'Previous Tab (left)' }},
   {'nviC', '<F2><Right>', 'tabnext', { desc = 'Next Tab (right)' }},
   {'nviC', '<F2><Left>', 'tabprevious', { desc = 'Previous Tab (left)' }},
+  -- moving
+  {'nC', '<C-w>g<Right>', 'tabmove +1', { desc = 'Move Tab Right' }},
+  {'nC', '<C-w>g<Left>', 'tabmove -1', { desc = 'Move Tab Left' }},
+  {'nC', '<M-S-Right>', 'tabmove +1', { desc = 'Move Tab Right' }},
+  {'nC', '<M-S-Left>', 'tabmove -1', { desc = 'Move Tab Left' }},
 
   -- arrow-key scrolling
   {'nv', '<Down>', '4<C-e>', { desc = 'Scroll down (4 lines)' }},
@@ -116,8 +129,6 @@ helpers.keymap_set_multi({
   {'nv', '<S-Left>', '6zh', { desc = 'Scroll left (6 columns)' }},
 
   -- center cursor when down/up page
-  {'nv', '<C-k>', 'M4kzz', { desc = 'Move up 4 lines (center cursor)' }},
-  {'nv', '<C-j>', 'M4jzz', { desc = 'Move down 4 lines (center cursor)' }},
   {'nv', '<C-u>', 'M<C-u>zz', { desc = 'Move up half a screen (center cursor)' }},
   {'nv', '<C-d>', 'M<C-d>zz', { desc = 'Move down half a screen (center cursor)' }},
   {'nv', '<C-Up>', 'Mkzz', { desc = 'Move up 1 line (center cursor)' }},

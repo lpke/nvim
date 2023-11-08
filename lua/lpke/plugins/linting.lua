@@ -14,15 +14,18 @@ local function config()
 
   local lint_augroup = vim.api.nvim_create_augroup('lint', { clear = true })
   local function setup_lint_autocmds()
-    vim.api.nvim_create_autocmd(
-      { 'BufEnter', 'BufWritePost', 'InsertLeave', 'FocusGained', 'TextChanged' },
-      {
-        group = lint_augroup,
-        callback = function()
-          vim.defer_fn(lint.try_lint, 100)
-        end,
-      }
-    )
+    vim.api.nvim_create_autocmd({
+      'BufEnter',
+      'BufWritePost',
+      'InsertLeave',
+      'FocusGained',
+      'TextChanged',
+    }, {
+      group = lint_augroup,
+      callback = function()
+        vim.defer_fn(lint.try_lint, 100)
+      end,
+    })
   end
 
   local function clear_lint_autocmds()

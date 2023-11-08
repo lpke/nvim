@@ -1,7 +1,40 @@
 -- toggle LSP diagnostics globally
 Lpke_diagnostics_enabled_initial = true
-function Lpke_toggle_diagnostics()
+Lpke_diagnostics_enabled_prev = nil
+function Lpke_toggle_diagnostics(choice)
+  -- getting and storing current state
   local enabled = not vim.diagnostic.is_disabled()
+  Lpke_diagnostics_enabled_prev = enabled
+
+  -- manual choice
+  if choice ~= nil then
+    if choice == false then
+      pcall(vim.diagnostic.disable)
+    elseif choice == true then
+      pcall(vim.diagnostic.enable)
+    elseif choice == 'prev' then
+      if Lpke_diagnostics_enabled_prev == true then
+        pcall(vim.diagnostic.enable)
+      else
+        pcall(vim.diagnostic.disable)
+      end
+    else
+      print(
+        'Diagnostics toggle: invalid argument:'
+          .. ' `'
+          .. tostring(choice)
+          .. '` ('
+          .. type(choice)
+          .. ')'
+      )
+    end
+    pcall(function()
+      require('lualine').refresh()
+    end)
+    return
+  end
+
+  -- toggle based on previous state
   if enabled then
     pcall(vim.diagnostic.disable)
   else
@@ -65,9 +98,9 @@ local function config()
   local on_attach = function(client, bufnr)
     -- respect the initial setting
     if Lpke_diagnostics_enabled_initial then
-      vim.diagnostic.enable()
+      Lpke_toggle_diagnostics(true)
     else
-      vim.diagnostic.disable()
+      Lpke_toggle_diagnostics(false)
     end
 
     -- set keybinds (Lazy sync required to remove old bindings)

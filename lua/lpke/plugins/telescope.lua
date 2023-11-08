@@ -130,13 +130,14 @@ local function config()
         '--glob=!**/package-lock.json',
         '--glob=!**/lazy-lock.json',
       },
+
       mappings = {
         i = {
+          -- OPENING FILES
           ['<CR>'] = actions.select_default,
           ['<F2>.'] = actions.file_vsplit,
           ['<F2>,'] = actions.file_split,
           ['<F2>n'] = actions.file_tab,
-          ['<C-q>'] = actions.send_selected_to_qflist + actions.open_qflist,
           ['<C-d>'] = actions.preview_scrolling_down,
           ['<C-u>'] = actions.preview_scrolling_up,
           ['<C-j>'] = actions.preview_scrolling_down,
@@ -144,13 +145,28 @@ local function config()
           -- ['<C-h>'] = actions.preview_scrolling_left,
           -- ['<C-l>'] = actions.preview_scrolling_right,
           ['<F2>o'] = actions_layout.toggle_preview,
+          -- SELECTIONS
+          ['<Tab>'] = function(bufnr)
+            actions.toggle_selection(bufnr)
+            actions.move_selection_next(bufnr)
+          end,
+          ['<S-Tab>'] = function(bufnr)
+            actions.toggle_selection(bufnr)
+            actions.move_selection_previous(bufnr)
+          end,
+          ['<C-v>'] = actions.toggle_all,
+          -- QUICKFIX LIST
+          ['<C-q>'] = actions.smart_add_to_qflist,
         },
         n = {
+          -- HACKS/FIXES
           ['u'] = { '<cmd>undo<cr>', type = 'command' }, -- didn't work by default
+          -- OPENING FILES
           ['<CR>'] = actions.select_default,
           ['<F2>.'] = actions.file_vsplit,
           ['<F2>,'] = actions.file_split,
           ['<F2>n'] = actions.file_tab,
+          -- RESULTS NAVIGATION
           ['<Up>'] = function(bufnr)
             helpers.repeat_function(actions.move_selection_previous, bufnr, 4)
           end,
@@ -163,10 +179,15 @@ local function config()
           ['J'] = function(bufnr)
             helpers.repeat_function(actions.move_selection_next, bufnr, 20)
           end,
+          -- PREVIEW SCROLLING
           ['<C-j>'] = actions.preview_scrolling_down,
           ['<C-k>'] = actions.preview_scrolling_up,
           -- ['<C-h>'] = actions.preview_scrolling_left,
           -- ['<C-l>'] = actions.preview_scrolling_right,
+          -- LAYOUT CONTROL
+          ['<F2>o'] = actions_layout.toggle_preview,
+          ['<F2>O'] = actions_layout.toggle_mirror,
+          -- SELECTIONS
           ['<Tab>'] = function(bufnr)
             actions.toggle_selection(bufnr)
             actions.move_selection_next(bufnr)
@@ -176,8 +197,13 @@ local function config()
             actions.move_selection_previous(bufnr)
           end,
           ['v'] = actions.toggle_all,
-          -- open find files picker for current path
-          ['<BS><BS>'] = function(bufnr)
+          ['V'] = actions.select_all,
+          ['uv'] = actions.drop_all,
+          -- QUICKFIX LIST
+          ['q'] = actions.smart_add_to_qflist,
+          ['Q'] = actions.smart_send_to_qflist,
+          -- SUB-PICKER SEARCHING
+          ['<BS><BS>'] = function(bufnr) -- find files (current path)
             local picker = actions_state.get_current_picker(bufnr)
             local path = picker.finder.path
             if path then
@@ -185,8 +211,7 @@ local function config()
               vim.cmd('Telescope find_files cwd=' .. path)
             end
           end,
-          -- open live grep picker for current path
-          ['<BS>/'] = function(bufnr)
+          ['<BS>/'] = function(bufnr) -- live grep (current path)
             local picker = actions_state.get_current_picker(bufnr)
             local path = picker.finder.path
             if path then
@@ -194,11 +219,10 @@ local function config()
               vim.cmd('Telescope live_grep cwd=' .. path)
             end
           end,
-          ['<F2>o'] = actions_layout.toggle_preview, -- toggle file/preview window for open picker
-          ['<F2>O'] = actions_layout.toggle_mirror, -- mirror layout for open picker
         },
       },
     },
+
     pickers = {
       resume = {
         initial_mode = 'normal',
@@ -254,6 +278,7 @@ local function config()
         sorting_strategy = 'ascending',
       },
     },
+
     extensions = {
       -- :h telescope-file-browser.picker
       file_browser = fb_settings(

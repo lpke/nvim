@@ -60,7 +60,6 @@ E.vim_opts = {
 }
 helpers.set_options(E.vim_opts)
 
-
 --------------------------
 -- GLOBAL VARIABLES
 --------------------------
@@ -84,7 +83,6 @@ end
 -- netrw
 vim.g.netrw_banner = 0
 
-
 --------------------------
 -- AUTOCOMMANDS
 --------------------------
@@ -93,17 +91,22 @@ vim.g.netrw_banner = 0
 vim.cmd('autocmd FileType * set formatoptions-=ro')
 
 -- toggle diagnostics when going enter/leave insert mode
-vim.api.nvim_create_autocmd("InsertEnter", {
-  pattern = "*",
+Lpke_diagnostics_insert_disabled = nil
+vim.api.nvim_create_autocmd('InsertEnter', {
+  pattern = '*',
   callback = function()
-    Lpke_toggle_diagnostics()
-  end
+    Lpke_diagnostics_insert_disabled = true
+    Lpke_toggle_diagnostics(false)
+  end,
 })
-vim.api.nvim_create_autocmd("InsertLeave", {
-  pattern = "*",
+vim.api.nvim_create_autocmd('InsertLeave', {
+  pattern = '*',
   callback = function()
-    Lpke_toggle_diagnostics()
-  end
+    if Lpke_diagnostics_insert_disabled then
+      Lpke_toggle_diagnostics(Lpke_diagnostics_enabled_prev)
+      Lpke_diagnostics_insert_disabled = false
+    end
+  end,
 })
 
 -- remember folds
@@ -118,7 +121,6 @@ vim.api.nvim_create_autocmd("InsertLeave", {
 --   command = "silent! loadview"
 -- })
 
-
 --------------------------
 -- USER COMMANDS
 --------------------------
@@ -129,6 +131,5 @@ vim.api.nvim_create_user_command('Term', Lpke_term, { nargs = '*' }) -- arg: ful
 vim.api.nvim_create_user_command('Terminal', Lpke_term, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('R', Lpke_ranger, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('Ranger', Lpke_ranger, { nargs = '*' }) -- arg: full
-
 
 return E
