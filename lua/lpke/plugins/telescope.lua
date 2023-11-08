@@ -138,10 +138,16 @@ local function config()
           ['<F2>.'] = actions.file_vsplit,
           ['<F2>,'] = actions.file_split,
           ['<F2>n'] = actions.file_tab,
+          -- RESULTS NAVIGATION
+          ['<C-j>'] = function(bufnr)
+            helpers.repeat_function(actions.move_selection_next, bufnr, 8)
+          end,
+          ['<C-k>'] = function(bufnr)
+            helpers.repeat_function(actions.move_selection_previous, bufnr, 8)
+          end,
+          -- PREVIEW SCROLLING
           ['<C-d>'] = actions.preview_scrolling_down,
           ['<C-u>'] = actions.preview_scrolling_up,
-          ['<C-j>'] = actions.preview_scrolling_down,
-          ['<C-k>'] = actions.preview_scrolling_up,
           -- ['<C-h>'] = actions.preview_scrolling_left,
           -- ['<C-l>'] = actions.preview_scrolling_right,
           ['<F2>o'] = actions_layout.toggle_preview,
@@ -166,24 +172,30 @@ local function config()
           ['<F2>.'] = actions.file_vsplit,
           ['<F2>,'] = actions.file_split,
           ['<F2>n'] = actions.file_tab,
-          -- RESULTS NAVIGATION
-          ['<Up>'] = function(bufnr)
-            helpers.repeat_function(actions.move_selection_previous, bufnr, 4)
-          end,
+          -- RESULTS MOVEMENT
           ['<Down>'] = function(bufnr)
             helpers.repeat_function(actions.move_selection_next, bufnr, 4)
           end,
-          ['K'] = function(bufnr)
-            helpers.repeat_function(actions.move_selection_previous, bufnr, 20)
+          ['<Up>'] = function(bufnr)
+            helpers.repeat_function(actions.move_selection_previous, bufnr, 4)
+          end,
+          ['<C-j>'] = function(bufnr)
+            helpers.repeat_function(actions.move_selection_next, bufnr, 8)
+          end,
+          ['<C-k>'] = function(bufnr)
+            helpers.repeat_function(actions.move_selection_previous, bufnr, 8)
           end,
           ['J'] = function(bufnr)
             helpers.repeat_function(actions.move_selection_next, bufnr, 20)
           end,
+          ['K'] = function(bufnr)
+            helpers.repeat_function(actions.move_selection_previous, bufnr, 20)
+          end,
           -- PREVIEW SCROLLING
-          ['<C-j>'] = actions.preview_scrolling_down,
-          ['<C-k>'] = actions.preview_scrolling_up,
-          -- ['<C-h>'] = actions.preview_scrolling_left,
-          -- ['<C-l>'] = actions.preview_scrolling_right,
+          ['<C-d>'] = actions.preview_scrolling_down,
+          ['<C-u>'] = actions.preview_scrolling_up,
+          -- ['<C-h>'] = actions.preview_scrolling_left, -- uncomment when released
+          -- ['<C-l>'] = actions.preview_scrolling_right, -- uncomment when released
           -- LAYOUT CONTROL
           ['<F2>o'] = actions_layout.toggle_preview,
           ['<F2>O'] = actions_layout.toggle_mirror,

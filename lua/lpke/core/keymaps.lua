@@ -24,9 +24,6 @@ helpers.keymap_set_multi({
   {'c', '<Esc>', '<C-c>', { desc = 'Exit with ctrl+c' }},
 
   -- Tweaks/extensions of native functionality
-  {'nv', '<C-k>', '6k', { desc = 'Move up 6 lines' }},
-  {'nv', '<C-j>', '6j', { desc = 'Move down 6 lines' }},
-  {'nv', '<C-j>', '6j', { desc = 'Move down 6 lines' }},
   {'nv', '<leader>y', '"*y', { desc = 'Global yank' }},
   {'nv', '<leader>d', '"_d', { desc = 'Delete without copy' }},
   {'nv', 'gg', 'gg0', { desc = 'Go to very start of buffer' }},
@@ -39,6 +36,11 @@ helpers.keymap_set_multi({
   {'n', '<leader>O', 'O<Esc>', { desc = 'New line above (remain in normal mode)' }},
   {'nv', '=*', 'mzgg=G`z', { desc = 'Indent entire file' }},
   {'nv', '=_', '==', { desc = 'Indent current line or selection only' }},
+  {'nv', '<C-k>', '8k', { desc = 'Move up 8 lines' }},
+  {'nv', '<C-j>', '8j', { desc = 'Move down 8 lines' }},
+  {'nv', 'ze', 'zz8<C-e>', { desc = 'Centre cursor 8 lines above middle' }},
+
+  -- jank
   {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],
     { desc = 'Replace selected text with the eval() version of itself' }},
 
@@ -131,8 +133,8 @@ helpers.keymap_set_multi({
   -- center cursor when down/up page
   {'nv', '<C-u>', 'M<C-u>zz', { desc = 'Move up half a screen (center cursor)' }},
   {'nv', '<C-d>', 'M<C-d>zz', { desc = 'Move down half a screen (center cursor)' }},
-  {'nv', '<C-Up>', 'Mkzz', { desc = 'Move up 1 line (center cursor)' }},
-  {'nv', '<C-Down>', 'Mjzz', { desc = 'Move down 1 line (center cursor)' }},
+  {'nv', '<C-Up>', 'M4kzz', { desc = 'Move up 4 line (center cursor)' }},
+  {'nv', '<C-Down>', 'M4jzz', { desc = 'Move down 4 line (center cursor)' }},
 
   -- center cursor when searching
   {'n', 'n', 'nzzzv', { desc = 'Next search result (center cursor)' }},
