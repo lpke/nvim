@@ -19,6 +19,7 @@ local function telescope_settings(
   actions_state,
   actions_utils
 )
+  local helpers = require('lpke.core.helpers')
   return {
     initial_mode = 'normal',
     sorting_strategy = 'ascending',
@@ -64,8 +65,10 @@ local function telescope_settings(
         ['<C-s>'] = false,
         ['<bs>'] = false,
 
-        ['<S-CR>'] = fb_actions.create_from_prompt,
+        -- NAVIGATION
         ['<BS>'] = fb_actions.backspace,
+
+        -- OPEN
         ['<CR>'] = function(bufnr)
           actions.select_default(bufnr)
           vim.api.nvim_feedkeys(
@@ -74,6 +77,9 @@ local function telescope_settings(
             false
           )
         end,
+
+        -- CREATE
+        ['<S-CR>'] = fb_actions.create_from_prompt,
       },
 
       n = {
@@ -93,13 +99,40 @@ local function telescope_settings(
         ['s'] = false,
         -- ['<Esc>'] = false,
 
-        [',,'] = fb_actions.create,
+        -- NAVIGATION
+        ['gh'] = fb_actions.goto_home_dir,
+        ['gd'] = fb_actions.goto_cwd,
+        ['cd'] = fb_actions.change_cwd,
+
+        -- NAV / OPENING
+        ['l'] = actions.select_default,
+        ['h'] = fb_actions.goto_parent_dir,
+
+        -- SEARCHING
+        ['/'] = { 'i', type = 'command' }, -- 'search'
+
+        -- CREATE / RENAME
         ['<'] = fb_actions.create,
         ['R'] = fb_actions.rename,
+
+        -- MOVE
         ['m'] = fb_actions.move,
         ['P'] = fb_actions.copy,
-        -- delete to trash
-        ['dD'] = function(bufnr)
+
+        -- OPEN
+        ['O'] = fb_actions.open,
+
+        -- VIEW
+        [','] = fb_actions.toggle_browser,
+        ['g.'] = fb_actions.toggle_hidden,
+        ['g,'] = fb_actions.toggle_respect_gitignore,
+
+        -- SELECTION
+        ['V'] = actions.select_all,
+        ['uv'] = actions.drop_all,
+
+        -- DELETE
+        ['dD'] = function(bufnr) -- delete to trash
           local picker = actions_state.get_current_picker(bufnr)
           local path = picker.finder.path
           local selection_paths = {}
@@ -118,30 +151,15 @@ local function telescope_settings(
           end
           vim.cmd('Telescope file_browser path=' .. path)
         end,
-        -- delete permanently
-        ['dX'] = function(bufnr)
+        ['dX'] = function(bufnr) -- delete permanently
           fb_actions.remove(bufnr)
         end,
-        -- 'undo' delete (open trash restore for current dir)
-        ['ud'] = function(bufnr)
+        ['ud'] = function(bufnr) -- 'undo' delete
           local picker_path =
             actions_state.get_current_picker(bufnr).finder.path
           actions.close(bufnr)
           Lpke_trash_restore(picker_path)
         end,
-        ['O'] = fb_actions.open,
-        ['gh'] = fb_actions.goto_home_dir,
-        ['gd'] = fb_actions.goto_cwd,
-        ['cd'] = fb_actions.change_cwd,
-        [','] = fb_actions.toggle_browser,
-        ['g.'] = fb_actions.toggle_hidden,
-        ['g,'] = fb_actions.toggle_respect_gitignore,
-        ['v'] = fb_actions.toggle_all,
-        ['uv'] = actions.drop_all,
-        ['h'] = fb_actions.goto_parent_dir,
-        ['l'] = actions.select_default,
-        ['/'] = { 'i', type = 'command' },
-        -- ['<Esc><Esc>'] = { '<cmd>q!<CR>', type = 'command' },
       },
     },
   }

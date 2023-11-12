@@ -75,8 +75,10 @@ local function config()
     {'nC', '<leader>fs', 'Telescope treesitter', { desc = 'Fuzzy find treesitter symbols in file' }},
     -- vim
     {'nC', '<BS>fb', 'Telescope buffers', { desc = 'Fuzzy find buffers' } },
-    {'nC', "<BS>f'", 'Telescope registers', { desc = 'Fuzzy find registers' }},
+    {'nC', '<BS>l', 'Telescope quickfix', { desc = 'Open quickfix list' } },
+    {'nC', '<BS>L', 'Telescope quickfixhistory', { desc = 'Open quickfix list history' } },
     {'nC', '<BS>fm', 'Telescope marks', { desc = 'Fuzzy find marks' } },
+    {'nC', "<BS>f'", 'Telescope registers', { desc = 'Fuzzy find registers' }},
     {'nC', '<BS>fj', 'Telescope jumplist', { desc = 'Fuzzy find jumplist' } },
     {'nC', '<BS>fk', 'Telescope keymaps', { desc = 'Fuzzy find keymaps' } },
     {'nC', '<BS>fl', 'Telescope highlights', { desc = 'Fuzzy find highlights' }},
@@ -140,6 +142,7 @@ local function config()
           ['<F2>.'] = actions.file_vsplit,
           ['<F2>,'] = actions.file_split,
           ['<F2>n'] = actions.file_tab,
+
           -- RESULTS NAVIGATION
           ['<C-j>'] = function(bufnr)
             helpers.repeat_function(actions.move_selection_next, bufnr, 8)
@@ -147,12 +150,14 @@ local function config()
           ['<C-k>'] = function(bufnr)
             helpers.repeat_function(actions.move_selection_previous, bufnr, 8)
           end,
+
           -- PREVIEW SCROLLING
           ['<C-d>'] = actions.preview_scrolling_down,
           ['<C-u>'] = actions.preview_scrolling_up,
           -- ['<C-h>'] = actions.preview_scrolling_left,
           -- ['<C-l>'] = actions.preview_scrolling_right,
           ['<F2>o'] = actions_layout.toggle_preview,
+
           -- SELECTIONS
           ['<Tab>'] = function(bufnr)
             actions.toggle_selection(bufnr)
@@ -163,17 +168,20 @@ local function config()
             actions.move_selection_previous(bufnr)
           end,
           ['<C-v>'] = actions.toggle_all,
+
           -- QUICKFIX LIST
           ['<C-q>'] = actions.smart_add_to_qflist,
         },
         n = {
           -- HACKS/FIXES
           ['u'] = { '<cmd>undo<cr>', type = 'command' }, -- didn't work by default
+
           -- OPENING FILES
           ['<CR>'] = actions.select_default,
           ['<F2>.'] = actions.file_vsplit,
           ['<F2>,'] = actions.file_split,
           ['<F2>n'] = actions.file_tab,
+
           -- RESULTS MOVEMENT
           ['<Down>'] = function(bufnr)
             helpers.repeat_function(actions.move_selection_next, bufnr, 4)
@@ -187,6 +195,7 @@ local function config()
           ['K'] = function(bufnr)
             helpers.repeat_function(actions.move_selection_previous, bufnr, 20)
           end,
+
           -- PREVIEW SCROLLING
           ['<C-d>'] = actions.preview_scrolling_down,
           ['<C-u>'] = actions.preview_scrolling_up,
@@ -194,9 +203,11 @@ local function config()
           ['<C-k>'] = actions.preview_scrolling_up,
           -- ['<C-h>'] = actions.preview_scrolling_left, -- uncomment when released
           -- ['<C-l>'] = actions.preview_scrolling_right, -- uncomment when released
+
           -- LAYOUT CONTROL
           ['<F2>o'] = actions_layout.toggle_preview,
           ['<F2>O'] = actions_layout.toggle_mirror,
+
           -- SELECTIONS
           ['<Tab>'] = function(bufnr)
             actions.toggle_selection(bufnr)
@@ -206,12 +217,25 @@ local function config()
             actions.toggle_selection(bufnr)
             actions.move_selection_previous(bufnr)
           end,
-          ['v'] = actions.toggle_all,
+          ['v'] = function(bufnr)
+            fb_actions.toggle_all(bufnr)
+            helpers.refresh_picker(bufnr)
+          end,
           ['V'] = actions.select_all,
           ['uv'] = actions.drop_all,
+
           -- QUICKFIX LIST
           ['q'] = actions.smart_add_to_qflist,
           ['Q'] = actions.smart_send_to_qflist,
+
+          -- DELETE
+          ['dD'] = function(bufnr) -- handle 'delete' actions if cant be done in picker-scope
+            local picker = actions_state.get_current_picker(bufnr)
+            if picker.prompt_title == 'Sessions' then -- delete session
+              session_actions.delete_session(bufnr)
+            end
+          end,
+
           -- SUB-PICKER SEARCHING
           ['<BS><BS>'] = function(bufnr) -- find files (current path)
             local picker = actions_state.get_current_picker(bufnr)
@@ -227,13 +251,6 @@ local function config()
             if path then
               print(path)
               vim.cmd('Telescope live_grep cwd=' .. path)
-            end
-          end,
-          ['dD'] = function(bufnr) -- handle 'delete' actions if cant be done in picker-scope
-            local picker = actions_state.get_current_picker(bufnr)
-            if picker.prompt_title == 'Sessions' then
-              -- delete session (plugin doesnt provide picker-specific keymap config)
-              session_actions.delete_session(bufnr)
             end
           end,
         },

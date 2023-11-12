@@ -227,4 +227,27 @@ function E.stop_term()
   )
 end
 
+-- refresh a telescope picker and optionally remember selection location
+function E.refresh_picker(bufnr, remember, selection_defer_time)
+  selection_defer_time = selection_defer_time or 5
+  if remember == nil then
+    remember = true
+  end
+  local ok, result = pcall(function()
+    local actions_state = require('telescope.actions.state')
+    local picker = actions_state.get_current_picker(bufnr)
+    local index = picker._selection_row
+    picker:refresh()
+    if remember then
+      vim.defer_fn(function()
+        picker:set_selection(index)
+      end, selection_defer_time)
+    end
+  end)
+
+  if not ok then
+    print('Error refreshing picker: ' .. result)
+  end
+end
+
 return E
