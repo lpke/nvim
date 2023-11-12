@@ -47,7 +47,7 @@ local function telescope_settings(
     use_fd = true,
     git_status = true,
     mappings = {
-      ['i'] = {
+      i = {
         -- disabling defaults
         ['<A-c>'] = false,
         ['<A-r>'] = false,
@@ -76,7 +76,7 @@ local function telescope_settings(
         end,
       },
 
-      ['n'] = {
+      n = {
         -- disabling defaults
         ['c'] = false,
         ['r'] = false,

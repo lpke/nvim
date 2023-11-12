@@ -5,7 +5,12 @@ local function config()
 
   -- keymaps
   helpers.keymap_set_multi({
-    { 'n', '<BS>n', session_lens.search_session, { desc = 'Open session picker in Telescope' } },
+    {
+      'n',
+      '<BS>n',
+      session_lens.search_session,
+      { desc = 'Open session picker in Telescope' },
+    },
   })
 
   auto_session.setup({
@@ -39,12 +44,7 @@ local function config()
         sorting_strategy = 'descending',
         layout_config = {
           width = 100,
-          height =20,
-        },
-        mappings = {
-          n = {
-            -- ['dD'] = function(bufnr) session_lens.delete_session(bufnr) end,
-          },
+          height = 20,
         },
       },
     },

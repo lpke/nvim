@@ -38,7 +38,7 @@ helpers.keymap_set_multi({
   {'nv', '=_', '==', { desc = 'Indent current line or selection only' }},
   {'nv', '<C-k>', '8k', { desc = 'Move up 8 lines' }},
   {'nv', '<C-j>', '8j', { desc = 'Move down 8 lines' }},
-  {'nv', 'ze', 'zz8<C-e>', { desc = 'Centre cursor 8 lines above middle' }},
+  {'nv', 'ze', 'zt8<C-y>', { desc = 'Centre cursor 8 lines below zt' }},
 
   -- jank
   {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],

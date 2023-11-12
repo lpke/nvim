@@ -10,6 +10,8 @@ local function config()
   local fb_settings =
     require('lpke.plugins.telescope-file-browser').telescope_settings
 
+  local session_actions = require('auto-session.session-lens.actions')
+
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
 
@@ -179,12 +181,6 @@ local function config()
           ['<Up>'] = function(bufnr)
             helpers.repeat_function(actions.move_selection_previous, bufnr, 4)
           end,
-          ['<C-j>'] = function(bufnr)
-            helpers.repeat_function(actions.move_selection_next, bufnr, 8)
-          end,
-          ['<C-k>'] = function(bufnr)
-            helpers.repeat_function(actions.move_selection_previous, bufnr, 8)
-          end,
           ['J'] = function(bufnr)
             helpers.repeat_function(actions.move_selection_next, bufnr, 20)
           end,
@@ -194,6 +190,8 @@ local function config()
           -- PREVIEW SCROLLING
           ['<C-d>'] = actions.preview_scrolling_down,
           ['<C-u>'] = actions.preview_scrolling_up,
+          ['<C-j>'] = actions.preview_scrolling_down,
+          ['<C-k>'] = actions.preview_scrolling_up,
           -- ['<C-h>'] = actions.preview_scrolling_left, -- uncomment when released
           -- ['<C-l>'] = actions.preview_scrolling_right, -- uncomment when released
           -- LAYOUT CONTROL
@@ -231,6 +229,13 @@ local function config()
               vim.cmd('Telescope live_grep cwd=' .. path)
             end
           end,
+          ['dD'] = function(bufnr) -- handle 'delete' actions if cant be done in picker-scope
+            local picker = actions_state.get_current_picker(bufnr)
+            if picker.prompt_title == 'Sessions' then
+              -- delete session (plugin doesnt provide picker-specific keymap config)
+              session_actions.delete_session(bufnr)
+            end
+          end,
         },
       },
     },
@@ -263,19 +268,28 @@ local function config()
       },
       git_status = {
         initial_mode = 'normal',
+        sorting_strategy = 'ascending',
       },
       git_bcommits = {
         initial_mode = 'normal',
+        sorting_strategy = 'ascending',
         prompt_title = 'File Commits',
       },
       git_commits = {
         initial_mode = 'normal',
+        sorting_strategy = 'ascending',
       },
       git_branches = {
         initial_mode = 'normal',
+        sorting_strategy = 'ascending',
       },
       git_stash = {
         initial_mode = 'normal',
+        sorting_strategy = 'ascending',
+      },
+      treesitter = {
+        initial_mode = 'normal',
+        sorting_strategy = 'ascending',
       },
       buffers = {
         initial_mode = 'normal',
@@ -285,7 +299,11 @@ local function config()
           },
         },
       },
-      treesitter = {
+      marks = {
+        initial_mode = 'normal',
+        sorting_strategy = 'ascending',
+      },
+      jumplist = {
         initial_mode = 'normal',
         sorting_strategy = 'ascending',
       },
