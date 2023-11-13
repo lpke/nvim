@@ -395,3 +395,29 @@ function Lpke_trash_restore(dir)
 
   return float
 end
+
+-- unload inactive buffers (any not in use)
+function Lpke_clean_buffers()
+  local active_bufs = {}
+
+  -- save all active bufs by iterating over all windows in each tab
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      active_bufs[buf] = true
+    end
+  end
+
+  -- unload buffers that are not in active_bufs
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if not active_bufs[buf] then
+      -- dont unload if buffer has unsaved changes
+      local modifiable = vim.api.nvim_buf_get_option(buf, 'modifiable')
+      local modified = vim.api.nvim_buf_get_option(buf, 'modified')
+      if (modifiable and not modified) or not modifiable then
+        vim.api.nvim_buf_delete(buf, { force = false, unload = false })
+      end
+    end
+  end
+end
+

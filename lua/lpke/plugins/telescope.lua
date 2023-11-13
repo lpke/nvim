@@ -351,6 +351,10 @@ local function config()
         mappings = {
           n = {
             ['dD'] = actions.delete_buffer,
+            ['dX'] = function()
+              Lpke_clean_buffers()
+              builtin.buffers()
+            end
           },
         },
       },
