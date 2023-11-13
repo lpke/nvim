@@ -9,7 +9,6 @@ local function config()
   local fb_actions = require('telescope._extensions.file_browser.actions')
   local fb_settings =
     require('lpke.plugins.telescope-file-browser').telescope_settings
-
   local session_actions = require('auto-session.session-lens.actions')
 
   local helpers = require('lpke.core.helpers')
@@ -35,6 +34,36 @@ local function config()
   helpers.set_hl('TelescopeMultiSelection', { fg = tc.gold })
   helpers.set_hl('TelescopeMultiIcon', { fg = tc.goldfaded })
   -- stylua: ignore end
+
+  -- custom mapping functions
+  local function remove_selected_from_qflist(bufnr)
+    local picker = actions_state.get_current_picker(bufnr)
+    local qflist = vim.fn.getqflist()
+    local selections = {}
+    actions_utils.map_selections(bufnr, function(entry)
+      table.insert(selections, entry)
+    end)
+    local function qflist_remove(target)
+      for i, item in ipairs(qflist) do
+        if item.bufnr == target.bufnr and item.lnum == target.lnum then
+          table.remove(qflist, i)
+          break
+        end
+      end
+    end
+    if #selections == 0 then
+      -- remove highlighted entry
+      local selection = actions_state.get_selected_entry(bufnr)
+      qflist_remove(selection)
+    else
+      -- remove multi-selected entries
+      for _, v in ipairs(selections) do
+        qflist_remove(v)
+      end
+    end
+    vim.fn.setqflist(qflist)
+    helpers.refresh_picker(bufnr)
+  end
 
   -- custom pickers
   local function find_git_files()
@@ -231,13 +260,25 @@ local function config()
 
           -- QUICKFIX LIST
           ['q'] = actions.smart_send_to_qflist,
-          ['Q'] = actions.smart_add_to_qflist,
+          ['aq'] = actions.smart_add_to_qflist,
+          ['h'] = function(bufnr) -- handle 'up a level' actions if cant be done in picker-scope
+            local picker = actions_state.get_current_picker(bufnr)
+            if picker.prompt_title == 'Quickfix' then -- open quickfixhistory
+              builtin.quickfixhistory()
+            end
+          end,
 
           -- DELETE
           ['dD'] = function(bufnr) -- handle 'delete' actions if cant be done in picker-scope
             local picker = actions_state.get_current_picker(bufnr)
             if picker.prompt_title == 'Sessions' then -- delete session
               session_actions.delete_session(bufnr)
+            end
+          end,
+          ['dd'] = function(bufnr)
+            local picker = actions_state.get_current_picker(bufnr)
+            if picker.prompt_title == 'Quickfix' then -- remove qflist items
+              remove_selected_from_qflist(bufnr)
             end
           end,
 
@@ -308,14 +349,17 @@ local function config()
       quickfix = {
         mappings = {
           n = {
-            -- ['dd'] = actions.delete_buffer,
+            ['dd'] = remove_selected_from_qflist,
+            ['h'] = function()
+              builtin.quickfixhistory()
+            end,
           },
         },
       },
       quickfixhistory = {
         mappings = {
           n = {
-            -- ['dd'] = actions.delete_buffer,
+            ['l'] = actions.select_default,
           },
         },
       },

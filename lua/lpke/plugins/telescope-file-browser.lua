@@ -141,7 +141,7 @@ local function telescope_settings(
             local selected_path = actions_state.get_selected_entry(bufnr)[1]
             vim.cmd('!trash ' .. selected_path)
           else
-            -- delete selected entries
+            -- delete multi-selected entries
             for _, v in ipairs(selection_paths) do
               vim.cmd('!trash ' .. v)
             end
