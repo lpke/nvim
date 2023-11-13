@@ -7,6 +7,12 @@ local function config()
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
 
+  -- stylua: ignore start
+  -- theme
+  helpers.set_hl('HarpoonTitle', { link = 'FloatTitle' })
+  helpers.set_hl('HarpoonBorder', { link = 'FloatBorder' })
+  helpers.set_hl('HarpoonWindow', { link = 'NormalFloat' })
+
   helpers.keymap_set_multi({
     { 'n', '<CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
     { 'n', '<F2>a', harpoon_mark.add_file, { desc = 'Harpoon: Mark file' } },
@@ -35,6 +41,7 @@ local function config()
     { 'n', '<BS>8', function() harpoon_ui.nav_file(8) end, { desc = 'Harpoon: Go to file 8' } },
     { 'n', '<BS>9', function() harpoon_ui.nav_file(9) end, { desc = 'Harpoon: Go to file 9' } },
   })
+  -- stylua: ignore end
 
   harpoon.setup({
     -- sets the marks upon calling `toggle` on the ui, instead of require `:w`
@@ -59,6 +66,11 @@ local function config()
     tabline = false,
     tabline_prefix = '   ',
     tabline_suffix = '   ',
+
+    menu = {
+      width = 80,
+      height = 20,
+    },
   })
 end
 
