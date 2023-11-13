@@ -37,14 +37,14 @@ local function config()
       theme = 'vertical',
       theme_conf = {
         initial_mode = 'normal',
+        sorting_strategy = 'ascending',
         winblend = 0,
         border = true,
         previewer = false,
         layout_strategy = 'vertical',
-        sorting_strategy = 'descending',
         layout_config = {
-          width = 100,
-          height = 20,
+          width = 140,
+          height = 26,
         },
       },
     },

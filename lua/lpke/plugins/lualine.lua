@@ -289,6 +289,24 @@ local function config()
         },
         git_components[1],
         git_components[2],
+        -- linter status
+        {
+          function()
+            return 'T'
+          end,
+          cond = function()
+            local linter_for_ft = require('lint').linters_by_ft[vim.bo.filetype]
+            return linter_for_ft and true or false
+          end,
+          on_click = function()
+            Lpke_toggle_linting()
+          end,
+          color = function()
+            local enabled = Lpke_linting_enabled
+            return enabled and { bg = tc.overlayplus, fg = tc.text }
+              or { bg = tc.overlaybump, fg = tc.lovefaded }
+          end,
+        },
         -- diagnostic status
         {
           function()
