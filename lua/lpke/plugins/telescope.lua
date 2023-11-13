@@ -63,6 +63,7 @@ local function config()
     end
     vim.fn.setqflist(qflist)
     helpers.refresh_picker(bufnr)
+    builtin.quickfix()
   end
 
   -- custom pickers
@@ -201,7 +202,10 @@ local function config()
           ['<C-v>'] = actions.toggle_all,
 
           -- QUICKFIX LIST
-          ['<C-q>'] = actions.smart_send_to_qflist,
+          ['<C-q>'] = function(bufnr)
+            actions.smart_send_to_qflist(bufnr)
+            builtin.quickfix()
+          end,
         },
         n = {
           -- HACKS/FIXES
@@ -259,8 +263,14 @@ local function config()
           ['uv'] = actions.drop_all,
 
           -- QUICKFIX LIST
-          ['q'] = actions.smart_send_to_qflist,
-          ['aq'] = actions.smart_add_to_qflist,
+          ['q'] = function(bufnr)
+            actions.smart_send_to_qflist(bufnr)
+            builtin.quickfix()
+          end,
+          ['aq'] = function(bufnr)
+            actions.smart_add_to_qflist(bufnr)
+            builtin.quickfix()
+          end,
           ['h'] = function(bufnr) -- handle 'up a level' actions if cant be done in picker-scope
             local picker = actions_state.get_current_picker(bufnr)
             if picker.prompt_title == 'Quickfix' then -- open quickfixhistory
@@ -362,6 +372,18 @@ local function config()
             ['l'] = actions.select_default,
           },
         },
+      },
+      keymaps = {
+        initial_mode = 'insert',
+        sorting_strategy = 'descending',
+      },
+      highlights = {
+        initial_mode = 'insert',
+        sorting_strategy = 'descending',
+      },
+      help_tags = {
+        initial_mode = 'insert',
+        sorting_strategy = 'descending',
       },
     },
 
