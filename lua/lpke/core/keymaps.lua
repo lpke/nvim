@@ -39,6 +39,9 @@ helpers.keymap_set_multi({
   {'nv', '<C-k>', '8k', { desc = 'Move up 8 lines' }},
   {'nv', '<C-j>', '8j', { desc = 'Move down 8 lines' }},
   {'nv', 'ze', 'zt8<C-y>', { desc = 'Centre cursor 8 lines below zt' }},
+  {'nC', '<BS>L', 'botright copen', { desc = 'Open quick fix list' }},
+  {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.'), 'text': getline('.')}], 'a')",
+    { desc = 'Add current file/position to quick fix list' }},
 
   -- jank
   {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],

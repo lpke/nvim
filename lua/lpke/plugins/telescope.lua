@@ -106,7 +106,6 @@ local function config()
     -- vim
     {'nC', '<BS>fb', 'Telescope buffers', { desc = 'Fuzzy find buffers' } },
     {'nC', '<BS>l', 'Telescope quickfix', { desc = 'Open quickfix list' } },
-    {'nC', '<BS>L', 'Telescope quickfixhistory', { desc = 'Open quickfix list history' } },
     {'nC', '<BS>fm', 'Telescope marks', { desc = 'Fuzzy find marks' } },
     {'nC', "<BS>f'", 'Telescope registers', { desc = 'Fuzzy find registers' }},
     {'nC', '<BS>fj', 'Telescope jumplist', { desc = 'Fuzzy find jumplist' } },
