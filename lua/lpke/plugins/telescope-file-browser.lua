@@ -108,9 +108,6 @@ local function telescope_settings(
         ['l'] = actions.select_default,
         ['h'] = fb_actions.goto_parent_dir,
 
-        -- SEARCHING
-        ['/'] = { 'i', type = 'command' }, -- 'search'
-
         -- CREATE / RENAME
         ['<'] = fb_actions.create,
         ['R'] = fb_actions.rename,

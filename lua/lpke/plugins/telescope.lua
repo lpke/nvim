@@ -89,6 +89,8 @@ local function config()
   -- options
   telescope.setup({
     defaults = {
+      initial_mode = 'normal',
+      sorting_strategy = 'ascending',
       -- display
       winblend = 0,
       border = true,
@@ -170,7 +172,7 @@ local function config()
           ['<C-v>'] = actions.toggle_all,
 
           -- QUICKFIX LIST
-          ['<C-q>'] = actions.smart_add_to_qflist,
+          ['<C-q>'] = actions.smart_send_to_qflist,
         },
         n = {
           -- HACKS/FIXES
@@ -181,6 +183,9 @@ local function config()
           ['<F2>.'] = actions.file_vsplit,
           ['<F2>,'] = actions.file_split,
           ['<F2>n'] = actions.file_tab,
+
+          -- SEARCHING
+          ['/'] = { 'i', type = 'command' },
 
           -- RESULTS MOVEMENT
           ['<Down>'] = function(bufnr)
@@ -225,8 +230,8 @@ local function config()
           ['uv'] = actions.drop_all,
 
           -- QUICKFIX LIST
-          ['q'] = actions.smart_add_to_qflist,
-          ['Q'] = actions.smart_send_to_qflist,
+          ['q'] = actions.smart_send_to_qflist,
+          ['Q'] = actions.smart_add_to_qflist,
 
           -- DELETE
           ['dD'] = function(bufnr) -- handle 'delete' actions if cant be done in picker-scope
@@ -258,10 +263,9 @@ local function config()
     },
 
     pickers = {
-      resume = {
-        initial_mode = 'normal',
-      },
       find_files = {
+        initial_mode = 'insert',
+        sorting_strategy = 'descending',
         hidden = true,
         -- needed to exclude some files & dirs from general search
         -- when not included or specified in .gitignore
@@ -283,46 +287,37 @@ local function config()
           '--glob=!**/package-lock.json',
         },
       },
-      git_status = {
-        initial_mode = 'normal',
-        sorting_strategy = 'ascending',
+      live_grep = {
+        initial_mode = 'insert',
+        sorting_strategy = 'descending',
+      },
+      current_buffer_fuzzy_find = {
+        initial_mode = 'insert',
+        sorting_strategy = 'descending',
       },
       git_bcommits = {
-        initial_mode = 'normal',
-        sorting_strategy = 'ascending',
         prompt_title = 'File Commits',
       },
-      git_commits = {
-        initial_mode = 'normal',
-        sorting_strategy = 'ascending',
-      },
-      git_branches = {
-        initial_mode = 'normal',
-        sorting_strategy = 'ascending',
-      },
-      git_stash = {
-        initial_mode = 'normal',
-        sorting_strategy = 'ascending',
-      },
-      treesitter = {
-        initial_mode = 'normal',
-        sorting_strategy = 'ascending',
-      },
       buffers = {
-        initial_mode = 'normal',
         mappings = {
           n = {
-            ['dD'] = actions.delete_buffer,
+            ['dd'] = actions.delete_buffer,
           },
         },
       },
-      marks = {
-        initial_mode = 'normal',
-        sorting_strategy = 'ascending',
+      quickfix = {
+        mappings = {
+          n = {
+            -- ['dd'] = actions.delete_buffer,
+          },
+        },
       },
-      jumplist = {
-        initial_mode = 'normal',
-        sorting_strategy = 'ascending',
+      quickfixhistory = {
+        mappings = {
+          n = {
+            -- ['dd'] = actions.delete_buffer,
+          },
+        },
       },
     },
 

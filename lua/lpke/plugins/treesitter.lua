@@ -8,12 +8,6 @@ local function config()
   require('nvim-treesitter.install').compilers = { 'clang' }
   helpers.clear_last_message('All parsers are up-to-date!') -- clear annoying message on startup
 
-  -- temp
-  if true == 'string true' then
-    print(false .. 'hello')
-    print(123)
-  end
-
   require('nvim-treesitter.configs').setup({
     -- stylua: ignore start
     ensure_installed = {
