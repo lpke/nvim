@@ -282,11 +282,7 @@ local function config()
             local picker = actions_state.get_current_picker(bufnr)
             if picker.prompt_title == 'Sessions' then -- delete session
               session_actions.delete_session(bufnr)
-            end
-          end,
-          ['dd'] = function(bufnr)
-            local picker = actions_state.get_current_picker(bufnr)
-            if picker.prompt_title == 'Quickfix' then -- remove qflist items
+            elseif picker.prompt_title == 'Quickfix' then -- remove qflist items
               remove_selected_from_qflist(bufnr)
             end
           end,
@@ -313,6 +309,9 @@ local function config()
     },
 
     pickers = {
+      resume = {
+        initial_mode = 'normal',
+      },
       find_files = {
         initial_mode = 'insert',
         sorting_strategy = 'descending',
@@ -351,14 +350,14 @@ local function config()
       buffers = {
         mappings = {
           n = {
-            ['dd'] = actions.delete_buffer,
+            ['dD'] = actions.delete_buffer,
           },
         },
       },
       quickfix = {
         mappings = {
           n = {
-            ['dd'] = remove_selected_from_qflist,
+            ['dD'] = remove_selected_from_qflist,
             ['h'] = function()
               builtin.quickfixhistory()
             end,
