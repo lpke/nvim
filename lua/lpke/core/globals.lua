@@ -24,6 +24,12 @@ function Lpke_paste_buffer_id()
   end
 end
 
+-- close current window but save info (so it can be quickly restored)
+function Lpke_close_win()
+  Lpke_copy_buffer_id()
+  vim.api.nvim_win_close(0, false)
+end
+
 -- window 'zoom' toggling (with per tab support)
 Lpke_zoomed = {} -- stores whether tab group/s are in a 'zoomed' state or not
 Lpke_zoom_previous = {} -- stores state of previous window layouts

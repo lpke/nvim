@@ -14,8 +14,10 @@ E.custom_opts = {
 --------------------------
 
 E.vim_opts = {
-  --backup = false, -- no backups
-  --swapfile = false, -- don't create a swapfile
+  backup = false, -- no backups (using persistent undo instead)
+  swapfile = false, -- don't create a swapfile (using persistent undo instead)
+  undodir = os.getenv('HOME') .. '/.local/share/nvim/undo', -- where undo files are saved
+  undofile = true, -- use persistent undo (persists sessions)
   clipboard = '', -- setting this to anything else will make pasting very slow on WSL
   cmdheight = 1, -- set height of command-line to 1
   conceallevel = 0, -- show text normally

@@ -23,7 +23,8 @@ helpers.keymap_set_multi({
   {'nviC', '<C-s>', 'w', { desc = 'Save buffer' }},
   {'nC', '<BS>ii', 'Inspect', { desc = 'Inspect highlight group under cursor' }},
   {'nC', '<BS>iI', 'InspectTree', { desc = 'Open parsed syntax tree' }},
-  {'c', '<Esc>', '<C-c>', { desc = 'Exit with ctrl+c' }},
+  {'c', '<Esc>', '<C-c>', { desc = 'Exit cmd-line with ctrl+c' }},
+  {'i', '<C-c>', '<Esc>', { desc = 'Exit insert mode with ctrl+c, but still trigger `InsertLeave` autocmds' }},
 
   -- Tweaks/extensions of native functionality
   {'nv', '<leader>y', '"*y', { desc = 'Global yank' }},
@@ -81,8 +82,8 @@ helpers.keymap_set_multi({
   {'nvC', '<C-w>,', 'split', { desc = 'Split window vertically' }},
   {'nvC', '<F2>.', 'vsplit', { desc = 'Split window horizontally' }},
   {'nvC', '<F2>,', 'split', { desc = 'Split window vertically' }},
-  {'n', '<C-w>x', '<C-w>c', { desc = 'Close window' }},
-  {'n', '<F2>/', '<C-w>c', { desc = 'Close window' }},
+  {'n', '<C-w>x', Lpke_close_win, { desc = 'Close window (yank info)' }},
+  {'n', '<F2>/', Lpke_close_win, { desc = 'Close window (yank info)' }},
   {'nC', 'QQ', 'qa', { desc = 'Quit all (:qa)' }},
   {'nC', 'QZ', 'wqa', { desc = 'Write and quit all (:wqa)' }},
   {'nC', '<C-w>QQ', 'lua require("auto-session").DisableAutoSave() ; vim.cmd("qa")', { desc = 'Quit all without auto-saving session (:qa)' }},
