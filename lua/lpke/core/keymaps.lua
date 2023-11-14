@@ -22,6 +22,7 @@ helpers.keymap_set_multi({
   {'i', '<S-Tab>', '<Esc><<I', { desc = 'Unindent' }},
   {'nviC', '<C-s>', 'w', { desc = 'Save buffer' }},
   {'nC', '<BS>ii', 'Inspect', { desc = 'Inspect highlight group under cursor' }},
+  {'nC', '<BS>iI', 'InspectTree', { desc = 'Open parsed syntax tree' }},
   {'c', '<Esc>', '<C-c>', { desc = 'Exit with ctrl+c' }},
 
   -- Tweaks/extensions of native functionality
