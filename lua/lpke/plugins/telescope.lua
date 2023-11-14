@@ -183,7 +183,7 @@ local function config()
           ['<C-u>'] = actions.preview_scrolling_up,
           -- ['<C-h>'] = actions.preview_scrolling_left,
           -- ['<C-l>'] = actions.preview_scrolling_right,
-          ['<F2>o'] = actions_layout.toggle_preview,
+          ['<F2>p'] = actions_layout.toggle_preview,
 
           -- SELECTIONS
           ['<Tab>'] = function(bufnr)
@@ -238,7 +238,7 @@ local function config()
           -- ['<C-l>'] = actions.preview_scrolling_right, -- uncomment when released
 
           -- LAYOUT CONTROL
-          ['<F2>o'] = actions_layout.toggle_preview,
+          ['<F2>p'] = actions_layout.toggle_preview,
           ['<F2>O'] = actions_layout.toggle_mirror,
 
           -- SELECTIONS

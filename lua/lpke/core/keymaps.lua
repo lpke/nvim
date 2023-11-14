@@ -89,7 +89,7 @@ helpers.keymap_set_multi({
   -- copy/pasting/rotating buffers
   {'nC', '<F2>y', 'lua Lpke_copy_buffer_id()', { desc = 'Yank current buffer details' }},
   {'nC', '<F2>p', 'lua Lpke_paste_buffer_id()', { desc = 'Paste yanked buffer details' }},
-  {'n', '<F2>o', '<C-w>r', { desc = 'Rotate windows in current split' }},
+  {'n', '<F2>O', '<C-w>r', { desc = 'Rotate windows in current split' }},
   -- navigation
   {'nv', '<F2>h', '<C-w>h', { desc = 'Focus window left' }},
   {'nv', '<F2>j', '<C-w>j', { desc = 'Focus window down' }},

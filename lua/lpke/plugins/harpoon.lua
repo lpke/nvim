@@ -28,8 +28,11 @@ local function config()
     { 'n', '<CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
     { 'n', '<leader><CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
     { 'nC', '<BS><CR>', 'Telescope harpoon marks', { desc = 'Harpoon: Telescope marks' } },
-    { 'n', '<F2>u', harpoon_ui.nav_prev, { desc = 'Harpoon: Previous mark' } },
-    { 'n', '<F2>i', harpoon_ui.nav_next, { desc = 'Harpoon: Next mark' } },
+    { 'n', '<F2>u', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },
+    { 'n', '<F2>i', function() harpoon_ui.nav_file(2) end, { desc = 'Harpoon: Go to file 2' } },
+    { 'n', '<F2>o', function() harpoon_ui.nav_file(3) end, { desc = 'Harpoon: Go to file 3' } },
+    { 'n', '<F2>U', harpoon_ui.nav_prev, { desc = 'Harpoon: Go to previous file' } },
+    { 'n', '<F2>I', harpoon_ui.nav_next, { desc = 'Harpoon: Go to next file' } },
 
     { 'n', '<F2>a', add_file, { desc = 'Harpoon: Mark current file' } },
     { 'n', '<F2>x', rm_file, { desc = 'Harpoon: Remove current file' } },
