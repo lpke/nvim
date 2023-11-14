@@ -4,6 +4,20 @@ local function config()
   local harpoon_mark = require('harpoon.mark')
   local helpers = require('lpke.core.helpers')
 
+  local function add_file()
+    harpoon_mark.add_file()
+    pcall(function()
+      require('lualine').refresh()
+    end)
+  end
+
+  local function rm_file()
+    harpoon_mark.rm_file()
+    pcall(function()
+      require('lualine').refresh()
+    end)
+  end
+
   -- stylua: ignore start
   -- theme
   helpers.set_hl('HarpoonTitle', { link = 'FloatTitle' })
@@ -12,12 +26,13 @@ local function config()
 
   helpers.keymap_set_multi({
     { 'n', '<CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
+    { 'n', '<leader><CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
     { 'nC', '<BS><CR>', 'Telescope harpoon marks', { desc = 'Harpoon: Telescope marks' } },
     { 'n', '<F2>u', harpoon_ui.nav_prev, { desc = 'Harpoon: Previous mark' } },
     { 'n', '<F2>i', harpoon_ui.nav_next, { desc = 'Harpoon: Next mark' } },
 
-    { 'n', '<F2>a', harpoon_mark.add_file, { desc = 'Harpoon: Mark file' } },
-    { 'n', '<F2>x', harpoon_mark.rm_file, { desc = 'Harpoon: Remove current file' } },
+    { 'n', '<F2>a', add_file, { desc = 'Harpoon: Mark current file' } },
+    { 'n', '<F2>x', rm_file, { desc = 'Harpoon: Remove current file' } },
     { 'n', '<F2>1', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },
     { 'n', '<F2>2', function() harpoon_ui.nav_file(2) end, { desc = 'Harpoon: Go to file 2' } },
     { 'n', '<F2>3', function() harpoon_ui.nav_file(3) end, { desc = 'Harpoon: Go to file 3' } },
@@ -27,11 +42,10 @@ local function config()
     { 'n', '<F2>7', function() harpoon_ui.nav_file(7) end, { desc = 'Harpoon: Go to file 7' } },
     { 'n', '<F2>8', function() harpoon_ui.nav_file(8) end, { desc = 'Harpoon: Go to file 8' } },
     { 'n', '<F2>9', function() harpoon_ui.nav_file(9) end, { desc = 'Harpoon: Go to file 9' } },
-    { 'n', '<F2>a', harpoon_mark.add_file, { desc = 'Harpoon: Mark file' } },
 
     -- adding <BS> version in case I'm confined to a normal keyboard
-    { 'n', '<BS>a', harpoon_mark.add_file, { desc = 'Harpoon: Mark file' } },
-    { 'n', '<BS>x', harpoon_mark.rm_file, { desc = 'Harpoon: Remove current file' } },
+    { 'n', '<BS>a', add_file, { desc = 'Harpoon: Mark current file' } },
+    { 'n', '<BS>x', rm_file, { desc = 'Harpoon: Remove current file' } },
     { 'n', '<BS>1', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },
     { 'n', '<BS>2', function() harpoon_ui.nav_file(2) end, { desc = 'Harpoon: Go to file 2' } },
     { 'n', '<BS>3', function() harpoon_ui.nav_file(3) end, { desc = 'Harpoon: Go to file 3' } },

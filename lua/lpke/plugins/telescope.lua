@@ -38,35 +38,28 @@ local function config()
   -- custom mapping functions
   local function remove_selected_from_qflist(bufnr)
     local qflist = vim.fn.getqflist()
-    local selections = {}
-    actions_utils.map_selections(bufnr, function(entry)
-      table.insert(selections, entry)
-    end)
-    local function qflist_remove(target)
+    helpers.telescope_sel_foreach(bufnr, function(sel)
       for i, item in ipairs(qflist) do
-        if item.bufnr == target.bufnr and item.lnum == target.lnum then
+        if item.bufnr == sel.bufnr and item.lnum == sel.lnum then
           table.remove(qflist, i)
           break
         end
       end
-    end
-    if #selections == 0 then
-      -- remove highlighted entry
-      local selection = actions_state.get_selected_entry(bufnr)
-      qflist_remove(selection)
-    else
-      -- remove multi-selected entries
-      for _, v in ipairs(selections) do
-        qflist_remove(v)
-      end
-    end
+    end)
     vim.fn.setqflist(qflist)
     helpers.refresh_picker(bufnr)
     builtin.quickfix()
   end
 
   local function remove_selected_from_harpoon(bufnr)
-    print(bufnr)
+    helpers.telescope_sel_foreach(bufnr, function(sel)
+      local filename = sel.value.filename and sel.value.filename or sel.filename
+      require('harpoon.mark').rm_file(filename)
+    end)
+    vim.cmd('Telescope harpoon marks')
+    pcall(function()
+      require('lualine').refresh()
+    end)
   end
 
   -- custom pickers
