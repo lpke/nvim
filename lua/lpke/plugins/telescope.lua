@@ -271,6 +271,12 @@ local function config()
               actions_state.get_current_picker(bufnr).prompt_title
             if prompt_title == 'Quickfix' then -- open quickfixhistory
               builtin.quickfixhistory()
+            else
+              vim.api.nvim_feedkeys(
+                vim.api.nvim_replace_termcodes('h', true, false, true),
+                'n',
+                false
+              )
             end
           end,
 
