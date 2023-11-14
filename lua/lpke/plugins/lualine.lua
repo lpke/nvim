@@ -78,17 +78,13 @@ local function config()
     local tab_zoomed = (Lpke_zoomed[cur_tab] == true)
     return tab_zoomed and '▣' or ''
   end
-  local session_name = function()
-    return helpers.formatted_session_name()
-  end
   local cwd_folder = helpers.get_cwd_folder
-  local harpoon_index = function()
-    return require('harpoon.mark').get_current_index() .. ':'
-  end
 
   -- custom component tables
   local harpoon = {
-    harpoon_index,
+    function()
+      return require('harpoon.mark').get_current_index()
+    end,
     cond = function()
       local index = require('harpoon.mark').get_current_index()
       return (index and Lpke_show_harpoon) and true or false
@@ -103,13 +99,7 @@ local function config()
   local filename = {
     'filename',
     path = 1,
-    padding = { left = 0, right = 1 },
     fmt = function(str)
-      -- add left padding when no harpoon index
-      local h_index = require('harpoon.mark').get_current_index()
-      if (not h_index) or not Lpke_show_harpoon then
-        str = ' ' .. str
-      end
       -- only show filename when: toggled off OR an accepted buffer
       local normal_buffer = vim.bo.buftype == ''
       local oil_buffer = vim.bo.filetype == 'oil'
@@ -155,7 +145,9 @@ local function config()
       color = { fg = tc.mutedplus, bg = tc.overlaybump },
     },
     {
-      session_name,
+      function()
+        return helpers.get_session_name()
+      end,
       cond = session_cond,
       on_click = function()
         Lpke_show_session = not Lpke_show_session

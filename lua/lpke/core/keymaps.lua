@@ -15,7 +15,6 @@ helpers.keymap_set_multi({
   {'n', ' ', ''}, -- no space after <leader>
   {'n', '<BS>', ''}, -- no BS after <BS>
   {'n', 'Q', ''}, -- use @@ instead
-  {'n', '<Tab>', ''}, -- no file jumping?
   {'ic', '<F2><CR>', ''}, -- used for cmp completion
 
   -- High-level maps

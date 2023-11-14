@@ -188,16 +188,6 @@ function E.session_in_cwd()
   return session and not (cwd == session)
 end
 
--- format current session name for status line
-function E.formatted_session_name(symbol)
-  local session = E.get_session_name()
-  if session and symbol then
-    return symbol .. session
-  else
-    return session
-  end
-end
-
 -- call a function `count` times - for multiple args, use a table
 function E.repeat_function(func, args, count)
   if type(args) == 'table' then
