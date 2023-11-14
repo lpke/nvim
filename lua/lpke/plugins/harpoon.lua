@@ -2,10 +2,7 @@ local function config()
   local harpoon = require('harpoon')
   local harpoon_ui = require('harpoon.ui')
   local harpoon_mark = require('harpoon.mark')
-  local harpoon_term = require('harpoon.term')
-  local harpoon_cmd_ui = require('harpoon.cmd-ui')
   local helpers = require('lpke.core.helpers')
-  local tc = Lpke_theme_colors
 
   -- stylua: ignore start
   -- theme
@@ -15,6 +12,10 @@ local function config()
 
   helpers.keymap_set_multi({
     { 'n', '<CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
+    { 'nC', '<BS><CR>', 'Telescope harpoon marks', { desc = 'Harpoon: Telescope marks' } },
+    { 'n', '<F2>u', harpoon_ui.nav_prev, { desc = 'Harpoon: Previous mark' } },
+    { 'n', '<F2>i', harpoon_ui.nav_next, { desc = 'Harpoon: Next mark' } },
+
     { 'n', '<F2>a', harpoon_mark.add_file, { desc = 'Harpoon: Mark file' } },
     { 'n', '<F2>x', harpoon_mark.rm_file, { desc = 'Harpoon: Remove current file' } },
     { 'n', '<F2>1', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },
@@ -57,7 +58,7 @@ local function config()
     tmux_autoclose_windows = false,
 
     -- filetypes that you want to prevent from adding to the harpoon list menu
-    excluded_filetypes = { 'harpoon' },
+    excluded_filetypes = { 'harpoon', 'oil' },
 
     -- set marks specific to each git branch inside git repository
     mark_branch = false,

@@ -250,4 +250,24 @@ function E.refresh_picker(bufnr, remember, selection_defer_time)
   end
 end
 
+-- iterate over selection/s in a telescope picker
+function E.telescope_sel_foreach(bufnr, func)
+  local actions_state = require('telescope.actions.state')
+  local actions_utils = require('telescope.actions.utils')
+
+  local selections = {}
+  actions_utils.map_selections(bufnr, function(entry)
+    table.insert(selections, entry)
+  end)
+
+  if #selections == 0 then
+    local selection = actions_state.get_selected_entry(bufnr)
+    func(selection)
+  else
+    for _, v in ipairs(selections) do
+      func(v)
+    end
+  end
+end
+
 return E

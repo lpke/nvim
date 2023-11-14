@@ -64,6 +64,7 @@ local function config()
   }
 
   Lpke_show_cwd = true
+  Lpke_show_harpoon = true
   Lpke_full_path = true
   Lpke_show_encoding = false
   Lpke_show_session = false
@@ -81,19 +82,41 @@ local function config()
     return helpers.formatted_session_name()
   end
   local cwd_folder = helpers.get_cwd_folder
+  local harpoon_index = function()
+    return require('harpoon.mark').get_current_index() .. ':'
+  end
 
   -- custom component tables
+  local harpoon = {
+    harpoon_index,
+    cond = function()
+      local index = require('harpoon.mark').get_current_index()
+      return (index and Lpke_show_harpoon) and true or false
+    end,
+    on_click = function()
+      Lpke_show_harpoon = not Lpke_show_harpoon
+      refresh()
+    end,
+    padding = { left = 1, right = 0 },
+    color = { fg = tc.mutedplus },
+  }
   local filename = {
     'filename',
     path = 1,
+    padding = { left = 0, right = 1 },
     fmt = function(str)
+      -- add left padding when no harpoon index
+      local h_index = require('harpoon.mark').get_current_index()
+      if (not h_index) or not Lpke_show_harpoon then
+        str = ' ' .. str
+      end
       -- only show filename when: toggled off OR an accepted buffer
       local normal_buffer = vim.bo.buftype == ''
       local oil_buffer = vim.bo.filetype == 'oil'
       local accepted_buffer = normal_buffer or oil_buffer
       if Lpke_full_path and accepted_buffer then
-        if oil_buffer and string.match(str, '^oi?l?:?//') then
-          return str:gsub('^oi?l?:?//', '')
+        if oil_buffer and string.match(str, '^ ?oi?l?:?//') then
+          return str:gsub('^ ?oi?l?:?//', '')
         else
           return str
         end
@@ -232,6 +255,7 @@ local function config()
             end
           end,
         },
+        harpoon,
         filename,
       },
       lualine_c = {
@@ -347,7 +371,7 @@ local function config()
     inactive_sections = {
       lualine_a = {},
       lualine_b = {},
-      lualine_c = { filename },
+      lualine_c = { harpoon, filename },
       lualine_x = { 'location' },
       lualine_y = {},
       lualine_z = {},
@@ -365,13 +389,14 @@ local function config()
   -- stylua: ignore start
   -- keymaps when using lualine
   helpers.keymap_set_multi({
-    { 'n', '<F2>D', function() Lpke_show_cwd = not Lpke_show_cwd refresh() end, { desc = 'Toggle cwd in Lualine' }},
-    { 'n', '<F2>F', function() Lpke_full_path = not Lpke_full_path refresh() end, { desc = 'Toggle file path in Lualine' }},
-    { 'n', '<F2>E', function() Lpke_show_encoding = not Lpke_show_encoding refresh() end, { desc = 'Toggle encoding info in Lualine' }},
-    { 'n', '<F2>S', function() Lpke_show_session = not Lpke_show_session refresh() end, { desc = 'Toggle session name in Lualine' }},
-    { 'n', '<F2>G', function() Lpke_show_git = not Lpke_show_git refresh() end, { desc = 'Toggle all git info in Lualine' }},
-    { 'n', '<F2>V', function() Lpke_show_diagnostics = not Lpke_show_diagnostics refresh() end, { desc = 'Toggle diagnostics display in Lualine' }},
-    { 'n', '<F2>g', function() Lpke_show_git_branch = not Lpke_show_git_branch refresh() end, { desc = 'Toggle git branch display in Lualine' }},
+    { 'n', '<F2>D', function() Lpke_show_cwd = not Lpke_show_cwd refresh() end, { desc = 'Lualine: Toggle cwd' }},
+    { 'n', '<F2>A', function() Lpke_show_harpoon = not Lpke_show_harpoon refresh() end, { desc = 'Lualine: Toggle harpoon index' }},
+    { 'n', '<F2>F', function() Lpke_full_path = not Lpke_full_path refresh() end, { desc = 'Lualine: Toggle file path' }},
+    { 'n', '<F2>E', function() Lpke_show_encoding = not Lpke_show_encoding refresh() end, { desc = 'Lualine: Toggle encoding info' }},
+    { 'n', '<F2>S', function() Lpke_show_session = not Lpke_show_session refresh() end, { desc = 'Lualine: Toggle session name' }},
+    { 'n', '<F2>G', function() Lpke_show_git = not Lpke_show_git refresh() end, { desc = 'Lualine: Toggle all git info' }},
+    { 'n', '<F2>V', function() Lpke_show_diagnostics = not Lpke_show_diagnostics refresh() end, { desc = 'Lualine: Toggle diagnostics display' }},
+    { 'n', '<F2>g', function() Lpke_show_git_branch = not Lpke_show_git_branch refresh() end, { desc = 'Lualine: Toggle git branch display' }},
   })
   -- stylua: ignore end
 end

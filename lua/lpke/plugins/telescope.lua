@@ -37,7 +37,6 @@ local function config()
 
   -- custom mapping functions
   local function remove_selected_from_qflist(bufnr)
-    local picker = actions_state.get_current_picker(bufnr)
     local qflist = vim.fn.getqflist()
     local selections = {}
     actions_utils.map_selections(bufnr, function(entry)
@@ -64,6 +63,10 @@ local function config()
     vim.fn.setqflist(qflist)
     helpers.refresh_picker(bufnr)
     builtin.quickfix()
+  end
+
+  local function remove_selected_from_harpoon(bufnr)
+    print(bufnr)
   end
 
   -- custom pickers
@@ -266,24 +269,28 @@ local function config()
             actions.smart_send_to_qflist(bufnr)
             builtin.quickfix()
           end,
-          ['aq'] = function(bufnr)
+          ['QF'] = function(bufnr)
             actions.smart_add_to_qflist(bufnr)
             builtin.quickfix()
           end,
           ['h'] = function(bufnr) -- handle 'up a level' actions if cant be done in picker-scope
-            local picker = actions_state.get_current_picker(bufnr)
-            if picker.prompt_title == 'Quickfix' then -- open quickfixhistory
+            local prompt_title =
+              actions_state.get_current_picker(bufnr).prompt_title
+            if prompt_title == 'Quickfix' then -- open quickfixhistory
               builtin.quickfixhistory()
             end
           end,
 
           -- DELETE
           ['dD'] = function(bufnr) -- handle 'delete' actions if cant be done in picker-scope
-            local picker = actions_state.get_current_picker(bufnr)
-            if picker.prompt_title == 'Sessions' then -- delete session
+            local prompt_title =
+              actions_state.get_current_picker(bufnr).prompt_title
+            if prompt_title == 'Sessions' then -- delete session
               session_actions.delete_session(bufnr)
-            elseif picker.prompt_title == 'Quickfix' then -- remove qflist items
+            elseif prompt_title == 'Quickfix' then -- remove qflist items
               remove_selected_from_qflist(bufnr)
+            elseif prompt_title == 'harpoon marks' then -- remove harpoon
+              remove_selected_from_harpoon(bufnr)
             end
           end,
 
@@ -354,23 +361,31 @@ local function config()
             ['dX'] = function()
               Lpke_clean_buffers()
               builtin.buffers()
-            end
+            end,
           },
         },
       },
       quickfix = {
         mappings = {
           n = {
-            ['dD'] = remove_selected_from_qflist,
+            ['q'] = function(bufnr)
+              actions.close(bufnr)
+              vim.cmd('botright copen')
+            end,
             ['h'] = function()
               builtin.quickfixhistory()
             end,
+            ['dD'] = remove_selected_from_qflist,
           },
         },
       },
       quickfixhistory = {
         mappings = {
           n = {
+            ['q'] = function(bufnr)
+              actions.close(bufnr)
+              vim.cmd('botright copen')
+            end,
             ['l'] = actions.select_default,
           },
         },
@@ -404,6 +419,7 @@ local function config()
   telescope.load_extension('session-lens')
   telescope.load_extension('fzf')
   telescope.load_extension('file_browser')
+  telescope.load_extension('harpoon')
 end
 
 return {
