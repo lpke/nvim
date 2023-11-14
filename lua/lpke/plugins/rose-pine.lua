@@ -2,10 +2,11 @@
 -- recipes:         https://github.com/rose-pine/neovim/wiki/Recipes
 
 -- Extra colors
--- Shades: base | surface | overlay | overlayplus | muted | subtle | subtleplus | textminus | text
+-- Shades: base | surface | overlay | overlaybump | overlayplus | mutedminus | muted | subtle | subtleplus | textminus | text
 local ec = {
   textminus = '#c0bcd2',
   subtleplus = '#a7a3bd',
+  mutedminus = '#5c5874',
   mutedplus = '#7e799a',
   overlaybump = '#2f2b45',
   overlayplus = '#3c3852',
