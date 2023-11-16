@@ -67,6 +67,9 @@ local function config()
       CursorLine = { bg = 'none' },
       CursorLineNr = { fg = ec.textminus },
       FloatTitle = { fg = 'subtle', bg = 'surface' },
+      TabLineFill = { bg = 'surface' }, -- Non-text area
+      TabLine = { fg = 'subtle', bg = 'surface' }, -- Un-selected tab
+      TabLineSel = { fg = ec.textminus, bg = ec.overlaybump }, -- Selected tab
     },
   })
 

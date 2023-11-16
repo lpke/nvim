@@ -7,6 +7,12 @@ local helpers = require('lpke.core.helpers')
 
 E.custom_opts = {
   whitespace_hl = 'NvimInternalError', -- the `:highlight` style to use when toggling whitespace chars
+  symbols = {
+    modified = '●',
+    readonly = '',
+    unnamed = '[No Name]',
+    newfile = '[New]',
+  },
 }
 
 --------------------------
@@ -59,6 +65,7 @@ E.vim_opts = {
   statusline = ' %f %m %= %l:%c ', -- TODO: add percent, other useful stuff
   sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions',
   timeoutlen = 4000, -- timeout when waiting for next key in a keymap
+  tabline = '%!v:lua.Lpke_tabline()',
 }
 helpers.set_options(E.vim_opts)
 

@@ -1,4 +1,5 @@
 local options = require('lpke.core.options')
+local symbols = options.custom_opts.symbols
 local helpers = require('lpke.core.helpers')
 
 -- mappings for display
@@ -121,10 +122,10 @@ local function config()
     shorting_target = 40,
     icons_enabled = true,
     symbols = {
-      modified = '●',
-      readonly = '',
-      unnamed = '[No Name]',
-      newfile = '[New]',
+      modified = symbols.modified,
+      readonly = symbols.readonly,
+      unnamed = symbols.unnamed,
+      newfile = symbols.newfile,
     },
   }
 
