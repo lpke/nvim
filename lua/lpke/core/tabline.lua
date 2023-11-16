@@ -39,23 +39,27 @@ function Lpke_tabline()
     local file_dir = helpers.get_path_tail(file_path)
     local file_path_short = file_path:gsub('([^/%w]?[^/])[^/]*/', '%1/')
 
-    local tab_title = file_dir:sub(1, 1) .. '/' .. file_name .. '.' .. file_ext
-    local cur_ignore_modified = false
-
-    -- handle special cases
+    -- handle tab title
+    local tab_title = ''
     if file_type == 'oil' then
-      tab_title = 'oil:' .. file_path_short
-      cur_ignore_modified = true
+      tab_title = file_path_short
     elseif file_type == 'harpoon' then
       tab_title = 'harpoon'
-      cur_ignore_modified = true
     elseif file_type == 'TelescopePrompt' then
       tab_title = 'telescope'
-      cur_ignore_modified = true
-    end
-
-    if file_name == '' then
-      file_name = symbols.unnamed
+    elseif file_type == 'undotree' then
+      tab_title = 'undotree'
+    elseif file_type == 'diff' then
+      tab_title = 'diff'
+    elseif file_name == '' then
+      tab_title = symbols.unnamed
+    else
+      local max_fn_len = 20
+      if #file_name > max_fn_len then
+        file_name = file_name:sub(1, (max_fn_len - 4))
+          .. '…'
+      end
+      tab_title = file_name .. ((file_ext ~= '') and ('.' .. file_ext) or '')
     end
 
     -- handle modified
