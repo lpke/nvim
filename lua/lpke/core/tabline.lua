@@ -10,9 +10,11 @@ function Lpke_tabline()
   -- iterate over each tab page
   for tab_index, tab_id in ipairs(tabs) do
     -- handle vars
-    local hl_var = (tab_index == cur_tab_index) and '%#TabLineSel#'
+    local is_active = tab_index == cur_tab_index
+    local hl_var = is_active and '%#TabLineSel#'
       or '%#TabLine#'
     local tab_var = '%' .. tab_index .. 'T'
+    -- local mod_hl_var = 
 
     -- collect info
     -- string.match(str, '^ ?oi?l?:?//') then
@@ -56,15 +58,15 @@ function Lpke_tabline()
     else
       local max_fn_len = 20
       if #file_name > max_fn_len then
-        file_name = file_name:sub(1, (max_fn_len - 4))
-          .. '…'
+        file_name = file_name:sub(1, (max_fn_len - 4)) .. '…'
       end
       tab_title = file_name .. ((file_ext ~= '') and ('.' .. file_ext) or '')
     end
 
     -- handle modified
-    local windows = vim.api.nvim_tabpage_list_wins(tab_id)
+    local cur_modified = vim.api.nvim_buf_get_option(cur_bufnr, 'modified')
     local has_modified = false
+    local windows = vim.api.nvim_tabpage_list_wins(tab_id)
     for _, win in ipairs(windows) do
       local buf = vim.api.nvim_win_get_buf(win)
       local is_modified = vim.api.nvim_buf_get_option(buf, 'modified')
@@ -74,15 +76,21 @@ function Lpke_tabline()
       end
     end
 
+    -- TODO: check locked / unmodifiable?
+    -- local is_locked = vim.api.nvim_buf_get_option(buf, 'modified')
+
     -- add this tab to string
     tabline = tabline
       .. hl_var
       .. tab_var
       .. ' '
       .. tab_title
-      .. (has_modified and (' ' .. symbols.modified) or '')
+      -- .. mod_hl_var
+      .. (has_modified and (' ' .. (cur_modified and symbols.modified or '+')) or '')
       .. ' '
   end
+
+
 
   -- fill remaining space and reset tab number
   tabline = tabline .. '%#TabLineFill#%T'
