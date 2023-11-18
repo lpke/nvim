@@ -11,10 +11,12 @@ function Lpke_tabline()
   for tab_index, tab_id in ipairs(tabs) do
     -- handle vars
     local is_active = tab_index == cur_tab_index
-    local hl_var = is_active and '%#TabLineSel#'
-      or '%#TabLine#'
+    local hl_var = is_active and '%#TabLineSel#' or '%#TabLine#'
     local tab_var = '%' .. tab_index .. 'T'
-    -- local mod_hl_var = 
+    local mod_hl_var = is_active and '%#LpkeTabLineModSel#'
+      or '%#LpkeTabLineMod#'
+    local readonly_hl_var = is_active and '%#LpkeTabLineReadonlySel#'
+      or '%#LpkeTabLineReadonly#'
 
     -- collect info
     -- string.match(str, '^ ?oi?l?:?//') then
@@ -38,8 +40,25 @@ function Lpke_tabline()
     if file_path == '.' then
       file_path = cwd_folder
     end
-    local file_dir = helpers.get_path_tail(file_path)
     local file_path_short = file_path:gsub('([^/%w]?[^/])[^/]*/', '%1/')
+
+    -- handle modified
+    local cur_modified = vim.api.nvim_buf_get_option(cur_bufnr, 'modified')
+      and (file_type ~= 'TelescopePrompt')
+    local has_modified = cur_modified
+    local windows = vim.api.nvim_tabpage_list_wins(tab_id)
+    if not cur_modified then
+      for _, win in ipairs(windows) do
+        local buf = vim.api.nvim_win_get_buf(win)
+        local is_modified = vim.api.nvim_buf_get_option(buf, 'modified')
+        local is_telescope = vim.api.nvim_buf_get_option(buf, 'filetype')
+          == 'TelescopePrompt'
+        if is_modified and not is_telescope then
+          has_modified = true
+          break
+        end
+      end
+    end
 
     -- handle tab title
     local tab_title = ''
@@ -63,21 +82,8 @@ function Lpke_tabline()
       tab_title = file_name .. ((file_ext ~= '') and ('.' .. file_ext) or '')
     end
 
-    -- handle modified
-    local cur_modified = vim.api.nvim_buf_get_option(cur_bufnr, 'modified')
-    local has_modified = false
-    local windows = vim.api.nvim_tabpage_list_wins(tab_id)
-    for _, win in ipairs(windows) do
-      local buf = vim.api.nvim_win_get_buf(win)
-      local is_modified = vim.api.nvim_buf_get_option(buf, 'modified')
-      if is_modified then
-        has_modified = true
-        break
-      end
-    end
-
-    -- TODO: check locked / unmodifiable?
-    -- local is_locked = vim.api.nvim_buf_get_option(buf, 'modified')
+    -- handle readonly
+    local cur_readonly = vim.api.nvim_buf_get_option(cur_bufnr, 'readonly')
 
     -- add this tab to string
     tabline = tabline
@@ -85,12 +91,12 @@ function Lpke_tabline()
       .. tab_var
       .. ' '
       .. tab_title
-      -- .. mod_hl_var
+      .. readonly_hl_var
+      .. (cur_readonly and (' ' .. symbols.readonly) or '')
+      .. mod_hl_var
       .. (has_modified and (' ' .. (cur_modified and symbols.modified or '+')) or '')
       .. ' '
   end
-
-
 
   -- fill remaining space and reset tab number
   tabline = tabline .. '%#TabLineFill#%T'

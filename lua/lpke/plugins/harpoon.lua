@@ -25,8 +25,9 @@ local function config()
   helpers.set_hl('HarpoonWindow', { link = 'NormalFloat' })
 
   helpers.keymap_set_multi({
-    { 'n', '<leader><BS>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
-    { 'nC', '<leader><CR>', 'Telescope harpoon marks', { desc = 'Harpoon: Telescope marks' } },
+    { 'n', '<CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
+    { 'n', '<leader><CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
+    { 'nC', '<BS><CR>', 'Telescope harpoon marks', { desc = 'Harpoon: Telescope marks' } },
     { 'n', '<F2>u', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },
     { 'n', '<F2>i', function() harpoon_ui.nav_file(2) end, { desc = 'Harpoon: Go to file 2' } },
     { 'n', '<F2>o', function() harpoon_ui.nav_file(3) end, { desc = 'Harpoon: Go to file 3' } },
