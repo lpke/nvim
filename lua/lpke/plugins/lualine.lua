@@ -225,6 +225,12 @@ local function config()
             Lpke_show_cwd = not Lpke_show_cwd
             refresh()
           end,
+          color = function()
+            local reg_rec = vim.fn.reg_recording()
+            if reg_rec ~= '' then
+              return { fg = tc.love, gui = 'bold' }
+            end
+          end,
         },
       },
       lualine_b = {
