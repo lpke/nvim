@@ -103,12 +103,15 @@ local function config()
 
     -- keymaps - editor
     mapping = {
+      ['<F2>,'] = cmp.mapping.complete(),
+
       -- completion menu
       ['<Up>'] = cmp.mapping.select_prev_item(),
       ['<Down>'] = cmp.mapping.select_next_item(),
       ['<C-p>'] = cmp.mapping.select_prev_item(),
       ['<C-n>'] = cmp.mapping.select_next_item(),
-      ['<F2>,'] = cmp.mapping.complete(),
+      ['<F2>p'] = cmp.mapping.select_prev_item(),
+      ['<F2>n'] = cmp.mapping.select_next_item(),
 
       -- preview/'docs' window
       ['<C-k>'] = cmp.mapping.scroll_docs(-4),
@@ -167,39 +170,27 @@ local function config()
   -- CMP SETUP: COMMAND-LINE
   local cmdline_mapping = {
     ['<F2>,'] = { c = cmp.mapping.complete() },
+
+    -- completion menu
     ['<Tab>'] = {
-      c = function()
-        if cmp.visible() then
-          cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
+      c = cmp_mapping('v', cmp.select_next_item, function()
+        local cmd_type = vim.fn.getcmdtype()
+        if (cmd_type == '/') or (cmd_type == '?') then
+          cmp.complete()
         else
-          if vim.fn.getcmdtype() == '/' then
-            cmp.complete()
-          else
-            vim.api.nvim_feedkeys(
-              vim.api.nvim_replace_termcodes('<Tab>', true, true, true),
-              'tn',
-              true
-            )
-          end
+          Lpke_feedkeys('<Tab>', 'tn')
         end
-      end,
+      end),
     },
     ['<S-Tab>'] = {
-      c = function()
-        if cmp.visible() then
-          cmp.select_prev_item({ behavior = cmp.SelectBehavior.Insert })
-        else
-          vim.api.nvim_feedkeys(
-            vim.api.nvim_replace_termcodes('<S-Tab>', true, true, true),
-            'tn',
-            true
-          )
-        end
-      end,
+      c = cmp_mapping('v', cmp.select_prev_item, function()
+        Lpke_feedkeys('<S-Tab>', 'tn')
+      end),
     },
-    -- completion menu
     ['<C-n>'] = { c = cmp_mapping('v', cmp.select_next_item) },
     ['<C-p>'] = { c = cmp_mapping('v', cmp.select_prev_item) },
+    ['<F2>j'] = { c = cmp_mapping('v', cmp.select_next_item) },
+    ['<F2>k'] = { c = cmp_mapping('v', cmp.select_prev_item) },
     -- preview/'docs' window
     ['<C-k>'] = {
       c = cmp_mapping('vd', function()

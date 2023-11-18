@@ -1,3 +1,12 @@
+-- quick shorthands for manually feeding keys
+function Lpke_rep_termcodes(str)
+	return vim.api.nvim_replace_termcodes(str, true, true, true)
+end
+
+function Lpke_feedkeys(key, mode)
+	vim.api.nvim_feedkeys(Lpke_rep_termcodes(key), mode, true)
+end
+
 -- copy current buffer id and position
 Lpke_copied_buffer_info = {}
 function Lpke_copy_buffer_id()
