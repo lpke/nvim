@@ -44,8 +44,6 @@ local function config()
     delete_to_trash = true,
     -- Skip the confirmation popup for simple operations
     skip_confirm_for_simple_edits = false,
-    -- Change this to customize the command used when deleting to trash
-    trash_command = 'trash-put',
     -- Selecting a new/moved/renamed file or directory will prompt you to save changes first
     prompt_save_on_select_new_entry = true,
     -- Oil will automatically delete hidden buffers after this delay
@@ -74,6 +72,7 @@ local function config()
       ['gs'] = 'actions.change_sort',
       ['gx'] = 'actions.open_external',
       ['g.'] = 'actions.toggle_hidden',
+      ['g\\'] = 'actions.toggle_trash',
     },
     -- Set to false to disable all of the above keymaps
     use_default_keymaps = true,
