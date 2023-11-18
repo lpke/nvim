@@ -75,7 +75,12 @@ local function config()
 
   -- keymaps - general
   helpers.keymap_set_multi({
-    {'ni', '<F2>m', Lpke_toggle_auto_cmp, { desc = 'Toggle automatic cmp menu display when typing' }},
+    {
+      'ni',
+      '<F2>m',
+      Lpke_toggle_auto_cmp,
+      { desc = 'Toggle automatic cmp menu display when typing' },
+    },
   })
 
   -- CMP SETUP: GENERAL/INSERT
@@ -161,6 +166,37 @@ local function config()
 
   -- CMP SETUP: COMMAND-LINE
   local cmdline_mapping = {
+    ['<F2>,'] = { c = cmp.mapping.complete() },
+    ['<Tab>'] = {
+      c = function()
+        if cmp.visible() then
+          cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
+        else
+          if vim.fn.getcmdtype() == '/' then
+            cmp.complete()
+          else
+            vim.api.nvim_feedkeys(
+              vim.api.nvim_replace_termcodes('<Tab>', true, true, true),
+              'tn',
+              true
+            )
+          end
+        end
+      end,
+    },
+    ['<S-Tab>'] = {
+      c = function()
+        if cmp.visible() then
+          cmp.select_prev_item({ behavior = cmp.SelectBehavior.Insert })
+        else
+          vim.api.nvim_feedkeys(
+            vim.api.nvim_replace_termcodes('<S-Tab>', true, true, true),
+            'tn',
+            true
+          )
+        end
+      end,
+    },
     -- completion menu
     ['<C-n>'] = { c = cmp_mapping('v', cmp.select_next_item) },
     ['<C-p>'] = { c = cmp_mapping('v', cmp.select_prev_item) },
@@ -186,14 +222,14 @@ local function config()
   cmp.setup.cmdline({ '/', '?' }, {
     mapping = cmdline_mapping,
     sources = {
-      { name = 'buffer', keyword_length = 5 },
+      { name = 'buffer', keyword_length = 3 },
     },
   })
   cmp.setup.cmdline(':', {
     mapping = cmdline_mapping,
     sources = cmp.config.sources({
       { name = 'path' },
-      { name = 'cmdline' },
+      { name = 'cmdline', keyword_length = 3 },
     }),
   })
 end
@@ -204,6 +240,7 @@ return {
   dependencies = {
     'hrsh7th/cmp-buffer', -- source for text in buffer
     'hrsh7th/cmp-path', -- source for file system paths
+    'hrsh7th/cmp-cmdline', -- source for cmdline : suggestions
     'L3MON4D3/LuaSnip', -- snippet engine
     'saadparwaiz1/cmp_luasnip', -- snippet autocompletion
   },
