@@ -9,6 +9,27 @@ function Lpke_feedkeys(key, mode)
   vim.api.nvim_feedkeys(Lpke_rep_termcodes(key), mode, true)
 end
 
+-- precursor to Lpke_yank_buf_name, global reg default
+function Lpke_yank_buf_name_global(cmd)
+  Lpke_yank_buf_name(cmd, true)
+end
+-- precursor to Lpke_yank_buf_name, local reg default
+function Lpke_yank_buf_name_local(cmd)
+  Lpke_yank_buf_name(cmd, false)
+end
+-- yank current buf name (path) to specified register (used for user command: `YP`/`Yp`)
+function Lpke_yank_buf_name(cmd, global)
+  local buf_name = helpers.get_buf_name(0, true)
+  if cmd.args and (cmd.args ~= '') then
+    vim.fn.setreg(cmd.args, buf_name)
+  elseif global then
+    vim.fn.setreg('*', buf_name)
+    vim.fn.setreg('+', buf_name)
+  else
+    vim.fn.setreg('"', buf_name)
+  end
+end
+
 -- copy current buffer id and position
 Lpke_copied_buffer_info = {}
 function Lpke_copy_buffer_id()
