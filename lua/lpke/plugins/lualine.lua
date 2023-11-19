@@ -14,6 +14,8 @@ local modes = {
   { 'COMMAND', 'CMD' },
   { 'TERMINAL', 'TER' },
   { 'O-PENDING', 'O-P' },
+  { 'SELECT', 'SEL' },
+  { 'S-LINE', 'S-L' },
 }
 local filetypes = {
   { 'javascript', 'js' },
@@ -108,7 +110,7 @@ local function config()
       if Lpke_full_path and accepted_buffer then
         if oil_buffer then
           local rel_path = helpers.transform_path(
-            str,
+            helpers.get_buf_name(0),
             { include_filename = false, cwd_name = false }
           )
           return rel_path
