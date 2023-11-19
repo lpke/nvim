@@ -265,6 +265,16 @@ function E.remove_protocol(str)
   return str:gsub('^.*://', '')
 end
 
+-- get buf name (current if omitted), which is usually the path
+function E.get_buf_name(bufnr, remove_protocol)
+  bufnr = bufnr or 0
+  local raw_buf_name = vim.api.nvim_buf_get_name(bufnr)
+  local buf_name = remove_protocol and E.remove_protocol(raw_buf_name)
+    or raw_buf_name
+  return buf_name
+end
+
+
 -- shorten a path (eg `plugins/lsp/test.lua` to `p/l/test.lua`)
 function E.shorten_path(path)
   return path:gsub('([^/%w]?[^/])[^/]*/', '%1/')

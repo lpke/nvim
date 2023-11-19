@@ -1,3 +1,5 @@
+local helpers = require('lpke.core.helpers')
+
 -- quick shorthands for manually feeding keys
 function Lpke_rep_termcodes(str)
   return vim.api.nvim_replace_termcodes(str, true, true, true)
@@ -5,11 +7,6 @@ end
 
 function Lpke_feedkeys(key, mode)
   vim.api.nvim_feedkeys(Lpke_rep_termcodes(key), mode, true)
-end
-
--- print full path of current buffer
-function Lpke_path()
-  print(vim.fn.expand('%:p'))
 end
 
 -- copy current buffer id and position

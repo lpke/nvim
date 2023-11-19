@@ -264,7 +264,7 @@ local function config()
             return '[Trash]'
           end,
           cond = function()
-            local file_path = vim.api.nvim_buf_get_name(0)
+            local file_path = helpers.get_buf_name(0)
             local oil_trash = not not string.match(file_path, '^oil%-trash://')
             return oil_trash
           end,
