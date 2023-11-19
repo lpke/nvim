@@ -76,6 +76,7 @@ local function config()
       LpkeTabLineModSel = { fg = 'subtle', bg = ec.overlaybump, bold = true },
       LpkeTabLineReadonly = { fg = ec.mutedminus, bg = 'surface' },
       LpkeTabLineReadonlySel = { fg = 'muted', bg = ec.overlaybump },
+      LpkeTabLineClose = { fg = ec.overlayplus, bg = 'surface' },
     },
   })
 

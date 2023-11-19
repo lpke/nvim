@@ -93,8 +93,8 @@ function Lpke_tabline()
       .. ' '
   end
 
-  -- fill remaining space and reset tab number
-  tabline = tabline .. '%#TabLineFill#%T'
+  -- fill remaining space, reset tab number, add close button
+  tabline = tabline .. '%#TabLineFill#%T%=%#LpkeTabLineClose#%999X✖ '
 
   return tabline
 end
