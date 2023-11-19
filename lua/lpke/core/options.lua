@@ -149,8 +149,18 @@ vim.api.nvim_create_user_command('P', function()
   print(helpers.get_buf_name())
 end, {})
 vim.api.nvim_create_user_command(
+  'PathY',
+  Lpke_yank_buf_name_global,
+  { nargs = '*' } -- arg: <register>
+)
+vim.api.nvim_create_user_command(
   'PY',
   Lpke_yank_buf_name_global,
+  { nargs = '*' } -- arg: <register>
+)
+vim.api.nvim_create_user_command(
+  'Pathy',
+  Lpke_yank_buf_name_local,
   { nargs = '*' } -- arg: <register>
 )
 vim.api.nvim_create_user_command(
