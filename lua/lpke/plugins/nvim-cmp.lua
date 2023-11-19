@@ -220,8 +220,11 @@ local function config()
     mapping = cmdline_mapping,
     sources = cmp.config.sources({
       { name = 'path' },
-      { name = 'cmdline', keyword_length = 3 },
+      { name = 'cmdline' },
     }),
+    completion = {
+      autocomplete = false,
+    },
   })
 end
 

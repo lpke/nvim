@@ -142,5 +142,7 @@ vim.api.nvim_create_user_command('Terminal', Lpke_term, { nargs = '*' }) -- arg:
 vim.api.nvim_create_user_command('R', Lpke_ranger, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('Ranger', Lpke_ranger, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('Bclean', Lpke_clean_buffers, {})
+vim.api.nvim_create_user_command('Path', Lpke_path, {})
+vim.api.nvim_create_user_command('P', Lpke_path, {})
 
 return E

@@ -101,13 +101,17 @@ local function config()
     'filename',
     path = 1,
     fmt = function(str)
-      -- only show filename when: toggled off OR an accepted buffer
+      -- whether to include path with filename
       local normal_buffer = vim.bo.buftype == ''
       local oil_buffer = vim.bo.filetype == 'oil'
       local accepted_buffer = normal_buffer or oil_buffer
       if Lpke_full_path and accepted_buffer then
-        if oil_buffer and string.match(str, '^ ?oi?l?:?//') then
-          return str:gsub('^ ?oi?l?:?//', '')
+        if oil_buffer then
+          local rel_path = helpers.transform_path(
+            str,
+            { include_filename = false, cwd_name = false }
+          )
+          return rel_path
         else
           return str
         end
@@ -255,6 +259,18 @@ local function config()
           end,
         },
         harpoon,
+        {
+          function()
+            return '[Trash]'
+          end,
+          cond = function()
+            local file_path = vim.api.nvim_buf_get_name(0)
+            local oil_trash = not not string.match(file_path, '^oil%-trash://')
+            return oil_trash
+          end,
+          padding = { left = 1, right = 0 },
+          color = { fg = tc.love },
+        },
         filename,
       },
       lualine_c = {

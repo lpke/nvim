@@ -260,4 +260,48 @@ function E.telescope_sel_foreach(bufnr, func)
   end
 end
 
+-- remove the protocol (eg `oil://` or `oil-trash://`) from a string
+function E.remove_protocol(str)
+  return str:gsub('^.*://', '')
+end
+
+-- shorten a path (eg `plugins/lsp/test.lua` to `p/l/test.lua`)
+function E.shorten_path(path)
+  return path:gsub('([^/%w]?[^/])[^/]*/', '%1/')
+end
+
+-- transform full path string to a configurable relative path
+function E.transform_path(full_path, opts)
+  full_path = E.remove_protocol(full_path)
+  opts = opts or {}
+  local default_opts = {
+    include_filename = true,
+    dir_tail_slash = true,
+    cwd_name = true,
+    shorten = false,
+  }
+  opts = E.combine_tables(default_opts, opts)
+
+  local mods = ':p:~:.' .. (opts.include_filename and '' or ':h')
+  local rel_path = vim.fn.fnamemodify(full_path, mods)
+
+  if opts.cwd_name and rel_path == '.' then
+    rel_path = E.get_cwd_folder()
+  end
+
+  if opts.shorten then
+    rel_path = E.shorten_path(rel_path)
+  end
+
+  if
+    opts.dir_tail_slash
+    and not opts.include_filename
+    and (string.sub(rel_path, -1) ~= '/')
+  then
+    rel_path = rel_path .. '/'
+  end
+
+  return rel_path
+end
+
 return E

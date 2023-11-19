@@ -19,28 +19,19 @@ function Lpke_tabline()
       or '%#LpkeTabLineReadonly#'
 
     -- collect info
-    -- string.match(str, '^ ?oi?l?:?//') then
-    -- str:gsub('^ ?oi?l?:?//', '')
     local win_id = vim.api.nvim_tabpage_get_win(tab_id)
     local cur_bufnr = vim.api.nvim_win_get_buf(win_id)
-    local cur_bufname = vim.api.nvim_buf_get_name(cur_bufnr)
+    local cur_bufname =
+      helpers.remove_protocol(vim.api.nvim_buf_get_name(cur_bufnr))
     local file_type = vim.api.nvim_buf_get_option(cur_bufnr, 'filetype')
 
-    -- handle oil paths
-    local is_oil = file_type == 'oil'
-    if is_oil then
-      cur_bufname = cur_bufname:gsub('^oi?l?:?//', '')
-    end
-
     -- parse path into segments
-    local cwd_folder = helpers.get_cwd_folder()
-    local file_path = vim.fn.fnamemodify(cur_bufname, ':p:~:.:h')
+    local file_path = helpers.transform_path(
+      cur_bufname,
+      { include_filename = false, dir_tail_slash = false }
+    )
     local file_name = vim.fn.fnamemodify(cur_bufname, ':t:r')
     local file_ext = vim.fn.fnamemodify(cur_bufname, ':e')
-    if file_path == '.' then
-      file_path = cwd_folder
-    end
-    local file_path_short = file_path:gsub('([^/%w]?[^/])[^/]*/', '%1/')
 
     -- handle modified
     local cur_modified = vim.api.nvim_buf_get_option(cur_bufnr, 'modified')
@@ -63,7 +54,11 @@ function Lpke_tabline()
     -- handle tab title
     local tab_title = ''
     if file_type == 'oil' then
-      tab_title = file_path_short
+      local unaltered_path = vim.api.nvim_buf_get_name(cur_bufnr)
+      local oil_trash = string.match(unaltered_path, '^oil%-trash://')
+      tab_title = (oil_trash and 'T:' or '')
+        .. helpers.shorten_path(file_path)
+        .. '/'
     elseif file_type == 'harpoon' then
       tab_title = 'harpoon'
     elseif file_type == 'TelescopePrompt' then
