@@ -88,9 +88,12 @@ helpers.keymap_set_multi({
   {'nC', '<C-w>QQ', 'lua require("auto-session").DisableAutoSave() ; vim.cmd("qa")', { desc = 'Quit all without auto-saving session (:qa)' }},
   {'nC', '<C-w>QZ', 'lua require("auto-session").DisableAutoSave() ; vim.cmd("wqa")', { desc = 'Write and quit all without auto-saving session (:wqa)' }},
   -- copy/pasting/rotating buffers
-  {'nC', '<F2>y', 'lua Lpke_copy_buffer_id()', { desc = 'Yank current buffer details' }},
-  {'nC', '<F2>p', 'lua Lpke_paste_buffer_id()', { desc = 'Paste yanked buffer details' }},
+  {'nC', '<F2>y', 'lua Lpke_copy_buffer()', { desc = 'Yank current buffer details' }},
+  {'nC', '<F2>p', 'lua Lpke_paste_buffer()', { desc = 'Paste yanked buffer details' }},
   {'n', '<F2>O', '<C-w>r', { desc = 'Rotate windows in current split' }},
+  -- copy/pasting layout
+  {'nC', '<F2>Y', 'lua Lpke_copy_layout()', { desc = 'Yank current tab layout' }},
+  {'nC', '<F2>P', 'lua Lpke_paste_layout()', { desc = 'Paste current tab layout' }},
   -- navigation
   {'nv', '<F2>h', '<C-w>h', { desc = 'Focus window left' }},
   {'nv', '<F2>j', '<C-w>j', { desc = 'Focus window down' }},

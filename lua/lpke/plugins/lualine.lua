@@ -118,7 +118,11 @@ local function config()
           return str
         end
       else
-        return helpers.get_path_tail(str)
+        if oil_buffer then
+          return helpers.get_path_tail(helpers.get_buf_name(0))
+        else
+          return helpers.get_path_tail(str)
+        end
       end
     end,
     on_click = function()

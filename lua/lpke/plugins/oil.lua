@@ -1,5 +1,6 @@
 local function config()
   local oil = require('oil')
+  -- local actions = require('oil.actions')
   local helpers = require('lpke.core.helpers')
 
   -- stylua: ignore start
@@ -20,9 +21,9 @@ local function config()
     -- See :help oil-columns
     columns = {
       -- 'icon',
-      -- "permissions",
-      -- "size",
-      -- "mtime",
+      -- 'permissions',
+      -- 'size',
+      -- 'mtime',
     },
     -- Buffer-local options to use for oil buffers
     buf_options = {
@@ -43,7 +44,7 @@ local function config()
     -- Send deleted files to the trash instead of permanently deleting them (:help oil-trash)
     delete_to_trash = true,
     -- Skip the confirmation popup for simple operations
-    skip_confirm_for_simple_edits = false,
+    skip_confirm_for_simple_edits = true,
     -- Selecting a new/moved/renamed file or directory will prompt you to save changes first
     prompt_save_on_select_new_entry = true,
     -- Oil will automatically delete hidden buffers after this delay
@@ -56,36 +57,46 @@ local function config()
     -- it will use the mapping at require("oil.actions").<name>
     -- Set to `false` to remove a keymap
     -- See :help oil-actions for a list of all available actions
+    use_default_keymaps = false,
     keymaps = {
       ['g?'] = 'actions.show_help',
+      ['<C-c>'] = 'actions.close',
+      ['<C-l>'] = 'actions.refresh',
+      -- navigation
       ['<CR>'] = 'actions.select',
+      ['-'] = 'actions.parent',
+      ['gd'] = 'actions.open_cwd',
+      ['gh'] = {
+        callback = function()
+          oil.open('~/')
+        end,
+        desc = 'Open oil in the home (~/) folder',
+        mode = 'n',
+      },
+      -- view/toggles
+      ['<F2>p'] = 'actions.preview',
+      ['gs'] = 'actions.change_sort',
+      ['g.'] = 'actions.toggle_hidden',
+      ['g\\'] = 'actions.toggle_trash',
+      -- new window
       ['<F2>.'] = 'actions.select_vsplit',
       ['<F2>,'] = 'actions.select_split',
       ['<F2>n'] = 'actions.select_tab',
-      ['<F2>p'] = 'actions.preview',
-      ['<C-c>'] = 'actions.close',
-      ['<C-l>'] = 'actions.refresh',
-      ['-'] = 'actions.parent',
-      ['gd'] = 'actions.open_cwd',
-      ['`'] = 'actions.cd',
-      ['~'] = 'actions.tcd',
-      ['gs'] = 'actions.change_sort',
-      ['gx'] = 'actions.open_external',
-      ['g.'] = 'actions.toggle_hidden',
-      ['g\\'] = 'actions.toggle_trash',
+      -- disabled defaults
+      -- ['`'] = 'actions.cd',
+      -- ['~'] = 'actions.tcd',
+      -- ['gx'] = 'actions.open_external',
     },
-    -- Set to false to disable all of the above keymaps
-    use_default_keymaps = true,
     view_options = {
       -- Show files and directories that start with "."
-      show_hidden = false,
+      show_hidden = true,
       -- This function defines what is considered a "hidden" file
-      is_hidden_file = function(name, bufnr)
+      is_hidden_file = function(name) -- (name, bufnr)
         return vim.startswith(name, '.')
       end,
       -- This function defines what will never be shown, even when `show_hidden` is set
-      is_always_hidden = function(name, bufnr)
-        return false
+      is_always_hidden = function(name) -- (name, bufnr)
+        return name == '..'
       end,
       sort = {
         -- sort order can be "asc" or "desc"
