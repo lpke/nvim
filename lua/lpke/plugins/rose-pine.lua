@@ -72,6 +72,8 @@ local function config()
       TabLineSel = { fg = ec.textminus, bg = ec.overlaybump }, -- Selected tab
 
       -- custom highlight groups
+      LpkeTabLineZoom = { fg = ec.irisfaded, bg = 'surface' },
+      LpkeTabLineZoomSel = { fg = 'iris', bg = ec.overlaybump },
       LpkeTabLineMod = { fg = ec.mutedminus, bg = 'surface', bold = true },
       LpkeTabLineModSel = { fg = 'subtle', bg = ec.overlaybump, bold = true },
       LpkeTabLineReadonly = { fg = ec.mutedminus, bg = 'surface' },

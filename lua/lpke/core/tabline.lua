@@ -17,12 +17,15 @@ function Lpke_tabline()
       or '%#LpkeTabLineMod#'
     local readonly_hl_var = is_active and '%#LpkeTabLineReadonlySel#'
       or '%#LpkeTabLineReadonly#'
+    local zoom_hl_var = is_active and '%#LpkeTabLineZoomSel#'
+      or '%#LpkeTabLineZoom#'
 
     -- collect info
     local win_id = vim.api.nvim_tabpage_get_win(tab_id)
     local cur_bufnr = vim.api.nvim_win_get_buf(win_id)
     local cur_bufname = helpers.get_buf_name(cur_bufnr, true)
     local file_type = vim.api.nvim_buf_get_option(cur_bufnr, 'filetype')
+    local tab_zoomed = Lpke_zoomed[tab_id]
 
     -- parse path into segments
     local file_path = helpers.transform_path(
@@ -81,9 +84,11 @@ function Lpke_tabline()
 
     -- add this tab to string
     tabline = tabline
-      .. hl_var
       .. tab_var
+      .. zoom_hl_var
       .. ' '
+      .. (tab_zoomed and '▣ ' or '')
+      .. hl_var
       .. tab_title
       .. readonly_hl_var
       .. (cur_readonly and (' ' .. symbols.readonly) or '')
