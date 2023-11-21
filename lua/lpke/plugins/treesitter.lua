@@ -33,9 +33,6 @@ local function config()
       enable = true,
       disable = {},
     },
-    context_commentstring = {
-      enable = true,
-    },
     autopairs = {
       enable = true,
     },
@@ -62,7 +59,6 @@ return {
   'nvim-treesitter/nvim-treesitter',
   dependencies = {
     'nvim-treesitter/nvim-treesitter-textobjects',
-    'JoosepAlviste/nvim-ts-context-commentstring',
   },
   config = config,
 }
