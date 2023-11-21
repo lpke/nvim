@@ -25,8 +25,9 @@ local filetypes = {
 }
 
 local function config()
+  local lualine = require('lualine')
   local tc = Lpke_theme_colors
-  local refresh = require('lualine').refresh
+  local refresh = lualine.refresh
 
   local custom_theme = {
     normal = {
@@ -72,7 +73,7 @@ local function config()
   Lpke_show_encoding = false
   Lpke_show_session = false
   Lpke_show_git = true
-  Lpke_show_git_branch = false
+  Lpke_show_git_branch = true
   Lpke_show_diagnostics = true
 
   -- custom component display
@@ -271,7 +272,7 @@ local function config()
     },
   }
 
-  require('lualine').setup({
+  lualine.setup({
     options = {
       icons_enabled = false,
       theme = custom_theme,
