@@ -11,11 +11,11 @@ local function config()
   helpers.set_hl('UndotreeTimestamp', { link = 'Comment' })
   helpers.set_hl('UndotreeSavedBig', { fg = tc.love, bold = true })
   helpers.set_hl('UndotreeSavedSmall', { fg = tc.love })
-  -- stylua: ignore end
 
   helpers.keymap_set_multi({
     { 'nC', '<leader>u', 'UndotreeToggle', { desc = 'Undotree: Open undo tree' } },
   })
+  -- stylua: ignore end
 
   -- options
   vim.g.undotree_SetFocusWhenToggle = 1
