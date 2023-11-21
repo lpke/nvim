@@ -21,19 +21,19 @@ local function config()
 
     mappings = {
       n = {
-        ["<Esc>"] = "Close",
-        ["<CR>"] = "Confirm",
+        ['<Esc>'] = 'Close',
+        ['<CR>'] = 'Confirm',
       },
       i = {
-        ["<C-c>"] = "Close",
-        ["<CR>"] = "Confirm",
-        ["<Up>"] = "HistoryPrev",
-        ["<Down>"] = "HistoryNext",
+        ['<C-c>'] = 'Close',
+        ['<CR>'] = 'Confirm',
+        ['<Up>'] = 'HistoryPrev',
+        ['<Down>'] = 'HistoryNext',
       },
     },
 
     nui = {
-      position = "0%", -- appears at start of cursor pos
+      position = '0%', -- appears at start of cursor pos
     },
   })
 end
