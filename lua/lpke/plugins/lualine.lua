@@ -73,7 +73,7 @@ local function config()
   Lpke_show_encoding = false
   Lpke_show_session = false
   Lpke_show_git = true
-  Lpke_show_git_branch = true
+  Lpke_show_git_branch = false
   Lpke_show_diagnostics = true
 
   -- custom component display
