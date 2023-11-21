@@ -23,7 +23,8 @@ function Lpke_tabline()
     -- collect info
     local win_id = vim.api.nvim_tabpage_get_win(tab_id)
     local cur_bufnr = vim.api.nvim_win_get_buf(win_id)
-    local cur_bufname = helpers.get_buf_name(cur_bufnr, true)
+    local raw_cur_bufname = helpers.get_buf_name(cur_bufnr)
+    local cur_bufname = helpers.remove_protocol(raw_cur_bufname)
     local file_type = vim.api.nvim_buf_get_option(cur_bufnr, 'filetype')
     local tab_zoomed = Lpke_zoomed[tab_id]
 
@@ -55,12 +56,27 @@ function Lpke_tabline()
 
     -- handle tab title
     local tab_title = ''
+    local cur_git_term = (string.match(raw_cur_bufname, '^term://'))
+      and (helpers.get_path_tail(raw_cur_bufname) == 'git')
+    local cur_git = (file_type == 'fugitive')
+      or (file_type == 'git')
+      or (file_type == 'gitui')
+      or (file_type == 'gitcommit')
+      or (file_type == 'gitmerge')
+      or (file_type == 'gitrebase')
+      or (string.match(raw_cur_bufname, '^fugitive://'))
+      or cur_git_term
     if file_type == 'oil' then
-      local unaltered_path = helpers.get_buf_name(cur_bufnr)
-      local oil_trash = string.match(unaltered_path, '^oil%-trash://')
+      local oil_trash = string.match(raw_cur_bufname, '^oil%-trash://')
       tab_title = (oil_trash and 'T:' or '')
         .. helpers.shorten_path(file_path)
         .. '/'
+    elseif cur_git or cur_git_term then
+      if cur_git_term then
+        tab_title = 'G:terminal'
+      else
+        tab_title = 'G:' .. helpers.shorten_path(file_path)
+      end
     elseif file_type == 'harpoon' then
       tab_title = 'harpoon'
     elseif file_type == 'TelescopePrompt' then
@@ -81,6 +97,7 @@ function Lpke_tabline()
 
     -- handle readonly
     local cur_readonly = vim.api.nvim_buf_get_option(cur_bufnr, 'readonly')
+      or (not vim.api.nvim_buf_get_option(cur_bufnr, 'modifiable'))
 
     -- add this tab to string
     tabline = tabline

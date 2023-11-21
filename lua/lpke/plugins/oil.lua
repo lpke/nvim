@@ -7,9 +7,9 @@ local function config()
   helpers.keymap_set_multi({
     -- open in current window
     {'nC', '<BS>s', 'Oil', { desc = 'Open Oil File Browser' }},
-    -- open in a new split
-    {'nC', '<F2>>', 'vsplit | Oil', { desc = 'Open Oil File Browser (v split)' }},
-    {'nC', '<F2><', 'split | Oil', { desc = 'Open Oil File Browser (h split)' }},
+    -- open in a new split (neovim-wide)
+    {'nC', '<F2>>', 'vsplit | Oil', { desc = 'Open Oil File Browser at current location (v split)' }},
+    {'nC', '<F2><', 'split | Oil', { desc = 'Open Oil File Browser at current location (h split)' }},
   })
   -- stylua: ignore end
 
@@ -82,6 +82,36 @@ local function config()
       ['<F2>.'] = 'actions.select_vsplit',
       ['<F2>,'] = 'actions.select_split',
       ['<F2>n'] = 'actions.select_tab',
+      -- override default bind for this to keep oil at same dir when splitting from within oil
+      ['<F2>>'] = {
+        callback = function()
+          vim.cmd('vsplit')
+        end,
+        desc = 'Open Oil File Browser (v split)',
+        mode = 'n',
+      },
+      ['<F2><'] = {
+        callback = function()
+          vim.cmd('split')
+        end,
+        desc = 'Open Oil File Browser (h split)',
+        mode = 'n',
+      },
+      -- yanking
+      ['yd'] = {
+        callback = function()
+          print('yd')
+        end,
+        desc = 'Yank the path of the current directory',
+        mode = 'n',
+      },
+      ['yp'] = {
+        callback = function()
+          print('yp')
+        end,
+        desc = 'Yank the path of the currently selected item',
+        mode = 'n',
+      },
       -- disabled defaults
       -- ['`'] = 'actions.cd',
       -- ['~'] = 'actions.tcd',

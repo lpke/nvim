@@ -99,27 +99,72 @@ local function config()
     padding = { left = 1, right = 0 },
     color = { fg = tc.mutedplus },
   }
+
+  local git = {
+    function()
+      return '[Git]'
+    end,
+    cond = function()
+      local raw_bufname = helpers.get_buf_name(0)
+      local git_buffer = not not (
+        (vim.bo.filetype == 'fugitive')
+        or (vim.bo.filetype == 'git')
+        or (vim.bo.filetype == 'gitui')
+        or (vim.bo.filetype == 'gitcommit')
+        or (vim.bo.filetype == 'gitmerge')
+        or (vim.bo.filetype == 'gitrebase')
+        or (string.match(raw_bufname, '^fugitive://'))
+        or (
+          string.match(raw_bufname, '^term://')
+          and (helpers.get_path_tail(raw_bufname) == 'git')
+        )
+      )
+      return git_buffer
+    end,
+    padding = { left = 1, right = 0 },
+    color = { fg = tc.foam },
+  }
+
+  local oil_trash = {
+    function()
+      return '[Trash]'
+    end,
+    cond = function()
+      local file_path = helpers.get_buf_name(0)
+      local oil_trash = not not string.match(file_path, '^oil%-trash://')
+      return oil_trash
+    end,
+    padding = { left = 1, right = 0 },
+    color = { fg = tc.love },
+  }
+
   local filename = {
     'filename',
     path = 1,
     fmt = function(str)
-      -- whether to include path with filename
+      local raw_bufname = helpers.get_buf_name(0)
       local normal_buffer = vim.bo.buftype == ''
       local oil_buffer = vim.bo.filetype == 'oil'
-      local accepted_buffer = normal_buffer or oil_buffer
+      local fugitive_buffer = (vim.bo.filetype == 'fugitive')
+        or (string.match(raw_bufname, '^fugitive://'))
+      local accepted_buffer = normal_buffer or oil_buffer or fugitive_buffer
       if Lpke_full_path and accepted_buffer then
         if oil_buffer then
           local rel_path = helpers.transform_path(
-            helpers.get_buf_name(0),
+            raw_bufname,
             { include_filename = false, cwd_name = false }
           )
+          return rel_path
+        elseif fugitive_buffer then
+          local rel_path =
+            helpers.transform_path(raw_bufname, { cwd_name = false })
           return rel_path
         else
           return str
         end
       else
-        if oil_buffer then
-          return helpers.get_path_tail(helpers.get_buf_name(0))
+        if oil_buffer or fugitive_buffer then
+          return helpers.get_path_tail(raw_bufname)
         else
           return helpers.get_path_tail(str)
         end
@@ -129,6 +174,7 @@ local function config()
       Lpke_full_path = not Lpke_full_path
       refresh()
     end,
+    file_status = false, -- handled as a seperate component
     shorting_target = 40,
     icons_enabled = true,
     symbols = {
@@ -137,6 +183,31 @@ local function config()
       unnamed = symbols.unnamed,
       newfile = symbols.newfile,
     },
+  }
+
+  local readonly = {
+    function()
+      return symbols.readonly
+    end,
+    cond = function()
+      local is_readonly = vim.api.nvim_buf_get_option(0, 'readonly')
+        or (not vim.api.nvim_buf_get_option(0, 'modifiable'))
+      return is_readonly
+    end,
+    padding = { left = 0, right = 1 },
+    color = { fg = tc.muted },
+  }
+
+  local modified = {
+    function()
+      return symbols.modified
+    end,
+    cond = function()
+      local is_modified = vim.api.nvim_buf_get_option(0, 'modified')
+      return is_modified
+    end,
+    padding = { left = 0, right = 1 },
+    color = { fg = tc.subtleplus },
   }
 
   local session_cond = function()
@@ -265,19 +336,11 @@ local function config()
           end,
         },
         harpoon,
-        {
-          function()
-            return '[Trash]'
-          end,
-          cond = function()
-            local file_path = helpers.get_buf_name(0)
-            local oil_trash = not not string.match(file_path, '^oil%-trash://')
-            return oil_trash
-          end,
-          padding = { left = 1, right = 0 },
-          color = { fg = tc.love },
-        },
+        git,
+        oil_trash,
         filename,
+        readonly,
+        modified,
       },
       lualine_c = {
         {
@@ -392,7 +455,14 @@ local function config()
     inactive_sections = {
       lualine_a = {},
       lualine_b = {},
-      lualine_c = { harpoon, filename },
+      lualine_c = {
+        harpoon,
+        git,
+        oil_trash,
+        filename,
+        readonly,
+        modified,
+      },
       lualine_x = { 'location' },
       lualine_y = {},
       lualine_z = {},

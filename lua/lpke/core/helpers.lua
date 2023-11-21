@@ -163,7 +163,7 @@ end
 
 -- get last segment of a path
 function E.get_path_tail(str)
-  return str:match('([^/]+/?)$')
+  return str:match('([^/]+/?/?)$')
 end
 
 -- get cwd folder name
