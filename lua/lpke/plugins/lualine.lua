@@ -114,6 +114,7 @@ local function config()
         or (vim.bo.filetype == 'gitcommit')
         or (vim.bo.filetype == 'gitmerge')
         or (vim.bo.filetype == 'gitrebase')
+        or (vim.bo.filetype == 'gitconfig')
         or (string.match(raw_bufname, '^fugitive://'))
         or (
           string.match(raw_bufname, '^term://')
