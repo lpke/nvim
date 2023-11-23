@@ -331,9 +331,9 @@ local function config()
           color = function()
             local session = helpers.get_session_name()
             if session then
-              return { gui = 'bold', fg = tc.textminus }
+              return { fg = tc.textminus, gui = 'bold' }
             else
-              return { gui = '' }
+              return { fg = tc.textminus, gui = '' }
             end
           end,
         },
