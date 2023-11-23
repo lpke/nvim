@@ -73,6 +73,19 @@ local function config()
         desc = 'Open oil in the home (~/) folder',
         mode = 'n',
       },
+      -- cd
+      ['cdc'] = 'actions.cd',
+      ['cdt'] = 'actions.tcd',
+      ['cdl'] = {
+        callback = function()
+          local cur_dir = oil.get_current_dir()
+          if cur_dir then
+            vim.cmd('lcd ' .. cur_dir)
+          end
+        end,
+        desc = ':lcd to the current oil directory (window scoped)',
+        mode = 'n',
+      },
       -- view/toggles
       ['<F2>p'] = 'actions.preview',
       ['gs'] = 'actions.change_sort',
@@ -113,8 +126,6 @@ local function config()
         mode = 'n',
       },
       -- disabled defaults
-      -- ['`'] = 'actions.cd',
-      -- ['~'] = 'actions.tcd',
       -- ['gx'] = 'actions.open_external',
     },
     view_options = {
