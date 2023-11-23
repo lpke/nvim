@@ -3,15 +3,12 @@ local function config()
   local session_lens = require('auto-session.session-lens')
   local helpers = require('lpke.core.helpers')
 
+  -- stylua: ignore start
   -- keymaps
   helpers.keymap_set_multi({
-    {
-      'n',
-      '<BS>n',
-      session_lens.search_session,
-      { desc = 'Open session picker in Telescope' },
-    },
+    {'n', '<BS>n', session_lens.search_session, { desc = 'Open session picker in Telescope' }},
   })
+  -- stylua: ignore end
 
   auto_session.setup({
     auto_session_enabled = true,

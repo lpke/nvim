@@ -1,7 +1,16 @@
 local function config()
   local oil = require('oil')
-  -- local actions = require('oil.actions')
   local helpers = require('lpke.core.helpers')
+
+  local function cd(cmd)
+    local cur_dir = oil.get_current_dir()
+    if cur_dir then
+      vim.cmd(cmd .. ' ' .. cur_dir)
+      pcall(function()
+        require('lualine').refresh()
+      end)
+    end
+  end
 
   -- stylua: ignore start
   helpers.keymap_set_multi({
@@ -74,14 +83,23 @@ local function config()
         mode = 'n',
       },
       -- cd
-      ['cdc'] = 'actions.cd',
-      ['cdt'] = 'actions.tcd',
+      ['cdc'] = {
+        callback = function()
+          cd('cd')
+        end,
+        desc = ':cd to the current oil directory (changes whole session)',
+        mode = 'n',
+      },
+      ['cdt'] = {
+        callback = function()
+          cd('tcd')
+        end,
+        desc = ':tcd to the current oil directory (tab scoped)',
+        mode = 'n',
+      },
       ['cdl'] = {
         callback = function()
-          local cur_dir = oil.get_current_dir()
-          if cur_dir then
-            vim.cmd('lcd ' .. cur_dir)
-          end
+          cd('lcd')
         end,
         desc = ':lcd to the current oil directory (window scoped)',
         mode = 'n',
