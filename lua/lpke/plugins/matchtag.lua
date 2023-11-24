@@ -14,7 +14,7 @@ local function config()
 
   -- options
   vim.g.vim_matchtag_enable_by_default = 0
-  vim.g.vim_matchtag_highlight_cursor_on = 1
+  vim.g.vim_matchtag_highlight_cursor_on = 0
   vim.g.vim_matchtag_timeout = 50
   vim.g.vim_matchtag_disable_cache = 0
   vim.g.vim_matchtag_debug = 0
