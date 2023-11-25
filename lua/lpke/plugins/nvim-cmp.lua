@@ -90,7 +90,7 @@ local function config()
       completeopt = 'menu,menuone,noselect,preview',
     },
     performance = {
-      debounce = 500,
+      debounce = 200,
     },
     window = {
       documentation = {
