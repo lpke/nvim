@@ -121,6 +121,7 @@ helpers.keymap_set_multi({
   {'nC', '<C-w>N', 'tab split', { desc = 'Create a new tab (clone current buffer)' }},
   {'nC', '<C-w>&', 'tabclose', { desc = 'Close current tab' }},
   {'nC', '<F2>n', 'tabnew', { desc = 'Create a new tab (blank file)' }},
+  {'nC', '<F2>N', 'tab split', { desc = 'Create a new tab (clone current buffer)' }},
   -- navigating
   {'nv', '<C-w><Right>', 'gt', { desc = 'Next Tab (right)' }},
   {'nv', '<C-w><Left>', 'gT', { desc = 'Previous Tab (left)' }},
