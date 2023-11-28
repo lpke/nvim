@@ -222,6 +222,11 @@ if helpers.is_wsl then
     { desc = 'Paste from * register (converting to unix line endings)' }})
   keymap_set({'nv!', '"+p', function() helpers.paste_unix('+') end,
     { desc = 'Paste from + register (converting to unix line endings)' }})
+  keymap_set({'nv!', '<leader>p', function() helpers.paste_unix('*') end,
+    { desc = 'Paste from * register (converting to unix line endings)' }})
+else
+  keymap_set({'nv', '<leader>p', '"*p', { desc = 'Global paste' }})
+
 end
 -- stylua: ignore end
 

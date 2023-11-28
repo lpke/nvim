@@ -70,6 +70,7 @@ end
 function E.paste_unix(register)
   local content = vim.fn.getreg(register)
   local fixed_content = vim.fn.substitute(content, '\r\n', '\n', 'g')
+  fixed_content = fixed_content:gsub('\n$', '')
   vim.fn.setreg(register, fixed_content)
   vim.cmd('normal! "' .. register .. 'p')
 end
