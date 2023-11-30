@@ -1,7 +1,19 @@
 Lpke_auto_cmp = true
 
+local function deprio(kind)
+  return function(e1, e2)
+    if e1:get_kind() == kind then
+      return false
+    end
+    if e2:get_kind() == kind then
+      return true
+    end
+  end
+end
+
 local function config()
   local cmp = require('cmp')
+  local types = require('cmp.types')
   local luasnip = require('luasnip')
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
@@ -11,7 +23,7 @@ local function config()
     if not Lpke_auto_cmp then
       cmp.setup({
         completion = {
-          autocomplete = { require('cmp.types').cmp.TriggerEvent.TextChanged },
+          autocomplete = { types.cmp.TriggerEvent.TextChanged },
         },
       })
       Lpke_auto_cmp = true
@@ -126,10 +138,19 @@ local function config()
     -- autocompletion suggestion sources (in order of priority)
     sources = cmp.config.sources({
       { name = 'nvim_lsp', keyword_length = 3 }, -- LSP
-      { name = 'luasnip' }, -- snippets
+      { name = 'luasnip', keyword_length = 5 }, -- snippets
       { name = 'path' }, -- file system paths
       { name = 'buffer', keyword_length = 5 }, -- text within current buffer
     }),
+
+    -- autocompletion suggestion sorting
+    sorting = {
+      comparators = {
+        deprio(types.lsp.CompletionItemKind.Snippet),
+        -- deprio(types.lsp.CompletionItemKind.Text),
+        -- deprio(types.lsp.CompletionItemKind.Keyword),
+      },
+    },
 
     -- handle snippets
     snippet = {
@@ -144,6 +165,7 @@ local function config()
         -- name
         vim_item.kind = ' '
           .. helpers.map_string(vim_item.kind, {
+            { 'Snippet', 'Snip' },
             { 'Function', 'Func' },
             { 'Constructor', 'Constr' },
             { 'Variable', 'Var' },
