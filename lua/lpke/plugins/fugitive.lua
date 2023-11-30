@@ -12,7 +12,6 @@ local function toggle_git_fugitive(new_tab)
     if
       (filetype == 'fugitive')
       and (bufname:match('^fugitive://'))
-      and (bufname:match('%.git/*$') ~= nil)
     then
       fugitive_open = true
       fugitive_win = win
