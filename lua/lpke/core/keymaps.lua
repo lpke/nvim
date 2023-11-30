@@ -34,8 +34,8 @@ helpers.keymap_set_multi({
   {'n', 'J', 'mzJ`z', { desc = 'Join lines (without moving cursor)' }},
   {'n', 'gJ', 'mzgJ`z', { desc = 'Join lines without modification (without moving cursor)' }},
   {'n', '<leader>J', 'mzgJi<Space><Esc>diW`z', { desc = 'Join lines without any spaces (without moving cursor)' }},
-  {'n', '<leader>o', 'o<Esc>', { desc = 'New line below (remain in normal mode)' }},
-  {'n', '<leader>O', 'O<Esc>', { desc = 'New line above (remain in normal mode)' }},
+  {'n', 'go', 'o<Esc>', { desc = 'New line below (remain in normal mode)' }},
+  {'n', 'gO', 'O<Esc>', { desc = 'New line above (remain in normal mode)' }},
   {'nv', '=*', 'mzgg=G`z', { desc = 'Indent entire file' }},
   {'nv', '=_', '==', { desc = 'Indent current line or selection only' }},
   {'nv', '<C-k>', '8k', { desc = 'Move up 8 lines' }},
@@ -61,7 +61,7 @@ helpers.keymap_set_multi({
   -- Toggle UI/features
   {'nvC!', '<F2>w', 'set wrap!', { desc = 'Toggle line wrap' }},
   {'nvC', '<F2>r', 'set relativenumber!', { desc = 'Toggle relative numbers' }},
-  {'n', '<F2>f', function() helpers.toggle_global_status() end,
+  {'n', '<F2>e', function() helpers.toggle_global_status() end,
     { desc = 'Toggle global status line' }},
   {'n!', '<F2>C', function() helpers.toggle_whitespace_hl(options.custom_opts.whitespace_hl) end,
     { desc = 'Toggle show whitespace' }},
@@ -225,6 +225,8 @@ if helpers.is_wsl then
     { desc = 'Paste from + register (converting to unix line endings)' }})
   keymap_set({'nv!', '<leader>p', function() helpers.paste_unix('*') end,
     { desc = 'Paste from * register (converting to unix line endings)' }})
+  keymap_set({'nv!', '<leader>P', function() helpers.paste_unix('*', true) end,
+    { desc = 'Paste to line above from * register (converting to unix line endings)' }})
 else
   keymap_set({'nv', '<leader>p', '"*p', { desc = 'Global paste' }})
 

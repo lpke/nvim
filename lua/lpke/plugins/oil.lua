@@ -16,6 +16,7 @@ local function config()
   helpers.keymap_set_multi({
     -- open in current window
     {'nC', '<BS>s', 'Oil', { desc = 'Open Oil File Browser' }},
+    {'nC', '-', 'Oil', { desc = 'Open Oil File Browser' }},
     -- open in a new split (neovim-wide)
     {'nC', '<F2>>', 'vsplit | Oil', { desc = 'Open Oil File Browser at current location (v split)' }},
     {'nC', '<F2><', 'split | Oil', { desc = 'Open Oil File Browser at current location (h split)' }},

@@ -67,12 +67,12 @@ function E.keymap_set_multi(keymaps)
 end
 
 -- pastes from register with unix line endings
-function E.paste_unix(register)
+function E.paste_unix(register, above)
   local content = vim.fn.getreg(register)
   local fixed_content = vim.fn.substitute(content, '\r\n', '\n', 'g')
   fixed_content = fixed_content:gsub('\n$', '')
   vim.fn.setreg(register, fixed_content)
-  vim.cmd('normal! "' .. register .. 'p')
+  vim.cmd('normal! "' .. register .. (above and 'P' or 'p'))
 end
 
 -- getter and setters for highlight colors
@@ -274,7 +274,6 @@ function E.get_buf_name(bufnr, remove_protocol)
     or raw_buf_name
   return buf_name
 end
-
 
 -- shorten a path (eg `plugins/lsp/test.lua` to `p/l/test.lua`)
 function E.shorten_path(path)

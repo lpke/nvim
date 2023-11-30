@@ -1,14 +1,16 @@
 local helpers = require('lpke.core.helpers')
 
 local function config()
+  local ts_install = require('nvim-treesitter.install')
+  local ts_configs = require('nvim-treesitter.configs')
   local tc = Lpke_theme_colors
 
   -- update/install parsers
-  pcall(require('nvim-treesitter.install').update({ with_sync = true }))
-  require('nvim-treesitter.install').compilers = { 'clang' }
+  pcall(ts_install.update({ with_sync = true }))
+  ts_install.compilers = { 'clang' }
   helpers.clear_last_message('All parsers are up-to-date!') -- clear annoying message on startup
 
-  require('nvim-treesitter.configs').setup({
+  ts_configs.setup({
     -- stylua: ignore start
     ensure_installed = {
       'vimdoc', 'vim', 'luadoc', 'lua', 'javascript', 'jsdoc', 'typescript',
@@ -53,6 +55,9 @@ local function config()
     '@lsp.typemod.function.defaultLibrary.lua',
     { link = '@function.builtin' }
   )
+
+  -- filetype customisation
+  vim.treesitter.language.register('markdown', 'mdx')
 end
 
 return {
