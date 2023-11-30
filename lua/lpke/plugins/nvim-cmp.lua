@@ -83,6 +83,7 @@ local function config()
   helpers.set_hl('CmpItemKindMethod', { fg = tc.iris, italic = true })
   helpers.set_hl('CmpItemKindClass', { fg = tc.pine, italic = true })
   helpers.set_hl('CmpItemKindVariable', { fg = tc.textminus, italic = true })
+  helpers.set_hl('CmpItemKindField', { fg = tc.subtle, italic = true })
   helpers.set_hl('CmpItemKindInterface', { fg = tc.foam, italic = true })
 
   -- keymaps - general
@@ -143,12 +144,21 @@ local function config()
       { name = 'buffer', keyword_length = 5 }, -- text within current buffer
     }),
 
+    -- suggestion matching settings
+    matching = {
+      disallow_fuzzy_matching = true,
+      disallow_fullfuzzy_matching = true,
+      disallow_partial_fuzzy_matching = true,
+      disallow_partial_matching = false,
+      disallow_prefix_unmatching = true,
+    },
+
     -- autocompletion suggestion sorting
     sorting = {
       comparators = {
         deprio(types.lsp.CompletionItemKind.Snippet),
-        -- deprio(types.lsp.CompletionItemKind.Text),
-        -- deprio(types.lsp.CompletionItemKind.Keyword),
+        deprio(types.lsp.CompletionItemKind.Text),
+        deprio(types.lsp.CompletionItemKind.Keyword),
       },
     },
 
@@ -169,6 +179,7 @@ local function config()
             { 'Function', 'Func' },
             { 'Constructor', 'Constr' },
             { 'Variable', 'Var' },
+            { 'Keyword', 'Keywd' },
             { 'Interface', 'Interf' },
             { 'Property', 'Prop' },
             { 'Reference', 'Ref' },
