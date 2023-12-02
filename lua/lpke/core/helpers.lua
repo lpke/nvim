@@ -15,11 +15,18 @@ function E.safe_call(func, silent, fallback)
   end
 end
 
+-- combines two tables (newTable takes priority) without mutating defaultTable
 function E.combine_tables(defaultTable, newTable)
-  for k, v in pairs(newTable) do
-    defaultTable[k] = v
+  local combinedTable = {}
+  -- copy defaultTable into combinedTable
+  for k, v in pairs(defaultTable) do
+    combinedTable[k] = v
   end
-  return defaultTable
+  -- merge newTable into combinedTable
+  for k, v in pairs(newTable) do
+    combinedTable[k] = v
+  end
+  return combinedTable
 end
 
 -- convert my options table into vim.opt.<key> = <value>

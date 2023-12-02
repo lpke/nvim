@@ -45,10 +45,25 @@ function Lpke_toggle_diagnostics(choice)
   end)
 end
 
+-- shared emmet options for multiple filetypes
+local emmet_opts_global = {
+  ['bem.enabled'] = false,
+  ['output.selfClosingStyle'] = 'xhtml',
+  ['output.attributeQuotes'] = 'double',
+}
+
+local emmet_opts_jsx = {
+  ['jsx.enabled'] = true,
+  ['markup.attributes'] = {
+    class = 'className',
+  },
+}
+
 local function config()
   local lspconfig = require('lspconfig')
   local cmp_nvim_lsp = require('cmp_nvim_lsp')
   local helpers = require('lpke.core.helpers')
+  local tables = helpers.combine_tables
   local tc = Lpke_theme_colors
 
   local function set_diagnostic_hl()
@@ -195,8 +210,10 @@ local function config()
         'html',
         'htmx',
         'pug',
-        'typescriptreact',
+        'jsx',
         'javascriptreact',
+        'tsx',
+        'typescriptreact',
         'vue',
         'svelte',
         'css',
@@ -205,7 +222,38 @@ local function config()
         'less',
         'eruby',
       },
-      init_options = {},
+      init_options = {
+        html = {
+          options = emmet_opts_global,
+        },
+        pug = {
+          options = emmet_opts_global,
+        },
+        xml = {
+          options = emmet_opts_global,
+        },
+        xsl = {
+          options = emmet_opts_global,
+        },
+        js = {
+          options = tables(emmet_opts_global, emmet_opts_jsx),
+        },
+        jsx = {
+          options = tables(emmet_opts_global, emmet_opts_jsx),
+        },
+        svelte = {
+          options = emmet_opts_global,
+        },
+        vue = {
+          options = emmet_opts_global,
+        },
+        slim = {
+          options = emmet_opts_global,
+        },
+        haml = {
+          options = emmet_opts_global,
+        },
+      },
     },
     lua_ls = {
       settings = { -- custom settings for lua
