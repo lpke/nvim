@@ -1,20 +1,12 @@
-local ls = require('luasnip')
-local s = ls.snippet
-local sn = ls.snippet_node
-local t = ls.text_node
-local i = ls.insert_node
-local f = ls.function_node
-local d = ls.dynamic_node
-local fmt = require('luasnip.extras.fmt').fmt
-local fmta = require('luasnip.extras.fmt').fmta
-local rep = require('luasnip.extras').rep
+local h = require('lpke.snippets.helpers')
+---@diagnostic disable-next-line: unused-local
+local snip, ls, s, sn, t, t_, i, f, d, fmt, fmta, rep =
+  h.snip, h.ls, h.s, h.sn, h.t, h.t_, h.i, h.f, h.d, h.fmt, h.fmta, h.rep
 
 return {
-  s({
+  snip({
     trig = 'cl',
     name = '"Console Log"',
     dscr = 'Print using Lpke_print',
-  }, {
-    t([[Lpke_print()]]),
-  }),
+  }, 'Lpke_print($0)'),
 }

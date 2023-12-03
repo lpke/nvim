@@ -5,15 +5,22 @@ local function config()
 
   -- stylua: ignore start
   helpers.keymap_set_multi({
-    {'i', '<C-l>', ls.expand, { desc = 'Luasnip: Expand snippet' }},
-    -- {'i!', '<C-l>', function() ls.jump(1) end, { desc = 'Luasnip: Jump forward in snippet' }},
-    -- {'i!', '<C-h>', function() ls.jump(-1) end, { desc = 'Luasnip: Jump backward in snippet' }},
+    {'i', '<Tab>', function()
+      local snippet_expanded = ls.expand()
+      if snippet_expanded ~= true then
+        Lpke_feedkeys('<Tab>', 'tn')
+      end
+    end, { desc = 'Luasnip: Expand snippet' }},
+    {'inv!', [[<F2>']], function() pcall(function() ls.jump(1) end) end,
+      { desc = 'Luasnip: Jump forward in snippet' }},
+    {'inv!', [[<F2>"]], function() pcall(function() ls.jump(-1) end) end,
+      { desc = 'Luasnip: Jump backward in snippet' }},
   })
   -- stylua: ignore end
 
   ls.config.set_config({
     enable_autosnippets = true,
-    store_selection_keys = '<Tab>',
+    -- store_selection_keys = '<Tab>',
   })
 
   ls.add_snippets(nil, snippets)
