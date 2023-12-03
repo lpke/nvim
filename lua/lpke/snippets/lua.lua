@@ -10,7 +10,15 @@ return {
     trig = 'cl',
     name = '"Console Log"',
     dscr = 'Print using Lpke_print',
-  }, fmta('Lpke_print(<>)', { i(0) })),
-  s(']]', fmt('[[<>]]', { d(1, sel_b) })),
-  s('test2', t('hello'), { condition = exp_conds.line_begin }),
+  }, fmt('Lpke_print(<>)', { i(0) })),
+  s({
+    trig = ']]',
+    name = 'Convert to [[]]',
+    dscr = 'Replace quotes surrounding selection with multiline string syntax',
+  }, fmt('[[<>]]', { d(1, sel_q) })),
+  s({
+    trig = 'q]]',
+    name = 'Wrap with [[]]',
+    dscr = 'Wrap selection with [[]], preserving surroudning quotes',
+  }, fmt('[[<>]]', { d(1, sel) })),
 }

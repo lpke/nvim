@@ -35,8 +35,8 @@ end
 
 -- `sel`, but removes surrounding brackets from the selection
 local sel_b = function(_, parent)
-  local b_regex_open = '[\\(\\[\\{\\<]'
-  local b_regex_close = '[\\)\\]\\}\\>]'
+  local b_regex_open = '[%(%[%{%<]'
+  local b_regex_close = '[%)%]%}%>]'
   local selection = parent.snippet.env.LS_SELECT_RAW
   if #selection > 0 then
     selection[1] =
