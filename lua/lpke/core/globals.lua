@@ -546,3 +546,35 @@ function Lpke_clean_buffers()
     end
   end
 end
+
+-- get all active buffers (in use/visible)
+function Lpke_get_active_bufs()
+  local active_bufs = {}
+  -- save all active bufs by iterating over all windows in each tab
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      active_bufs[buf] = true
+    end
+  end
+  return active_bufs
+end
+
+-- run a function silently (temporarily suppresses all logs)
+Lpke_vim_notify = vim.notify
+function Lpke_silent(func)
+  local ok, result = pcall(function()
+    Lpke_vim_notify = vim.notify
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.notify = function() end
+    func()
+    vim.notify = Lpke_vim_notify
+  end)
+  if not ok then
+    print(
+      'Error running function silently. Reverting notify function. Error: '
+        .. result
+    )
+    vim.notify = Lpke_vim_notify
+  end
+end

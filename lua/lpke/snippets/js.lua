@@ -69,6 +69,51 @@ return {
     ),
     { condition = exp_conds.line_begin }
   ),
+  s(
+    {
+      trig = 'fori',
+      name = 'Numeric for loop',
+    },
+    fmt(
+      [[
+        for (let i = <>; i << <>; i<>) {
+          <>
+        }
+      ]],
+      { i(1, '0'), i(2, '.length'), i(3, '++'), i(4) }
+    ),
+    { condition = exp_conds.line_begin }
+  ),
+  s(
+    {
+      trig = 'forof',
+      name = 'Iterable for loop',
+    },
+    fmt(
+      [[
+        for (let <> of <><>) {
+          <>
+        }
+      ]],
+      { i(1, '[k, v]'), i(2, 'Object.entries()'), i(3), i(4) }
+    ),
+    { condition = exp_conds.line_begin }
+  ),
+  s(
+    {
+      trig = 'forin',
+      name = 'Iterable for loop',
+    },
+    fmt(
+      [[
+        for (let <> in <>) {
+          <>
+        }
+      ]],
+      { i(1, 'key'), i(2), i(3) }
+    ),
+    { condition = exp_conds.line_begin }
+  ),
   s({
     trig = 'cl',
     name = 'Console Log',

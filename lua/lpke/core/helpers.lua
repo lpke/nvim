@@ -15,16 +15,14 @@ function E.safe_call(func, silent, fallback)
   end
 end
 
--- combines two tables (new_table takes priority) without mutating default_table
-function E.combine_tables(default_table, new_table)
+-- merges all tables provided as args (later tables take priority)
+function E.merge_tables(...)
   local combined_table = {}
-  -- copy defaultTable into combinedTable
-  for k, v in pairs(default_table) do
-    combined_table[k] = v
-  end
-  -- merge newTable into combinedTable
-  for k, v in pairs(new_table) do
-    combined_table[k] = v
+  -- iterate over all provided tables
+  for _, tbl in ipairs({ ... }) do
+    for key, value in pairs(tbl) do
+      combined_table[key] = value
+    end
   end
   return combined_table
 end
@@ -51,7 +49,7 @@ end
 -- parses a table containing custom keymap args and sets or deletes the keymap
 function E.keymap_set(keymap)
   local mode, lhs, rhs, opts = table.unpack(keymap)
-  opts = E.combine_tables({ noremap = true }, opts or {})
+  opts = E.merge_tables({ noremap = true }, opts or {})
   local modes = {}
   local delete_only = false
 
@@ -309,7 +307,7 @@ function E.transform_path(full_path, opts)
     cwd_name = true,
     shorten = false,
   }
-  opts = E.combine_tables(default_opts, opts)
+  opts = E.merge_tables(default_opts, opts)
 
   local mods = ':p:~:.' .. (opts.include_filename and '' or ':h')
   local rel_path = vim.fn.fnamemodify(full_path, mods)

@@ -399,6 +399,36 @@ local function config()
         },
         git_components[1],
         git_components[2],
+        -- copilot status
+        {
+          function()
+            return 'C'
+          end,
+          cond = function()
+            local should_attach = require('copilot.util').should_attach()
+            local is_disabled = require('copilot.client').is_disabled()
+            local buf_attached = require('copilot.client').buf_is_attached()
+            local enabled = not not ((not is_disabled) and buf_attached)
+            return (should_attach or enabled) and true or false
+          end,
+          on_click = function()
+            Lpke_toggle_copilot()
+          end,
+          color = function()
+            local should_attach = require('copilot.util').should_attach()
+            local is_disabled = require('copilot.client').is_disabled()
+            local buf_attached = require('copilot.client').buf_is_attached()
+            local enabled = not not ((not is_disabled) and buf_attached)
+
+            if (not should_attach) and enabled then
+              return { bg = tc.overlayplus, fg = tc.subtleplus }
+            elseif enabled then
+              return { bg = tc.overlayplus, fg = tc.text }
+            else
+              return { bg = tc.overlaybump, fg = tc.lovefaded }
+            end
+          end,
+        },
         -- linter status
         {
           function()

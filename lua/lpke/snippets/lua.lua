@@ -69,6 +69,36 @@ return {
     ),
     { condition = exp_conds.line_begin }
   ),
+  s(
+    {
+      trig = 'fori',
+      name = 'Numeric for loop',
+    },
+    fmt(
+      [[
+        for i = 1, <> do
+          <>
+        end
+      ]],
+      { i(1), i(2) }
+    ),
+    { condition = exp_conds.line_begin }
+  ),
+  s(
+    {
+      trig = 'forp',
+      name = 'Table iteration for loop',
+    },
+    fmt(
+      [[
+        for k, v in <>pairs(<>) do
+          <>
+        end
+      ]],
+      { i(1, 'i'), i(2), i(3) }
+    ),
+    { condition = exp_conds.line_begin }
+  ),
   s({
     trig = 'cl',
     name = '"Console Log"',

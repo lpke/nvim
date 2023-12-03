@@ -64,7 +64,7 @@ local function config()
   local lspconfig = require('lspconfig')
   local cmp_nvim_lsp = require('cmp_nvim_lsp')
   local helpers = require('lpke.core.helpers')
-  local tables = helpers.combine_tables
+  local tables = helpers.merge_tables
   local tc = Lpke_theme_colors
 
   local function set_diagnostic_hl()

@@ -63,7 +63,7 @@ helpers.keymap_set_multi({
   {'nvC', '<F2>r', 'set relativenumber!', { desc = 'Toggle relative numbers' }},
   {'n', '<F2>e', function() helpers.toggle_global_status() end,
     { desc = 'Toggle global status line' }},
-  {'n!', '<F2>C', function() helpers.toggle_whitespace_hl(options.custom_opts.whitespace_hl) end,
+  {'n!', '<F2>W', function() helpers.toggle_whitespace_hl(options.custom_opts.whitespace_hl) end,
     { desc = 'Toggle show whitespace' }},
 
   -- Fold management
