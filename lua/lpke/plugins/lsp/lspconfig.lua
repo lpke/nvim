@@ -55,7 +55,8 @@ local emmet_opts_global = {
 local emmet_opts_jsx = {
   ['jsx.enabled'] = true,
   ['markup.attributes'] = {
-    class = 'className',
+    ['class'] = 'className',
+    ['for'] = 'htmlFor',
   },
 }
 
