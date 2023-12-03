@@ -1,12 +1,50 @@
 -- stylua: ignore start
 local h = require('lpke.snippets.helpers')
 ---@diagnostic disable-next-line: unused-local
-local ls, s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_q, sel_b, exp_conds =
-  h.ls, h.s, h.sn, h.t, h.t_, h.i, h.f, h.d, h.rep, h.fmtc, h.fmta, h.fmt, h.sel, h.sel_q, h.sel_b, h.exp_conds
+local ls, s, _s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_q, sel_b, exp_conds =
+  h.ls, h.s, h._s, h.sn, h.t, h.t_, h.i, h.f, h.d, h.rep, h.fmtc, h.fmta, h.fmt, h.sel, h.sel_q, h.sel_b, h.exp_conds
 -- stylua: ignore end
 
-return {
-  s(
+return { -- lua
+  _s(
+    {
+      trig = 'snipps',
+      name = 'Luasnip single line snippet',
+    },
+    fmt(
+      [[
+        s({
+          trig = '<>',
+          name = '<>',
+        }, fmt('<>', { i(1) })<>),
+      ]],
+      { i(1), i(2), i(3), i(4, ', { condition = exp_conds.line_begin }') }
+    )
+  ),
+  _s(
+    {
+      trig = 'snippm',
+      name = 'Luasnip multiline snippet',
+    },
+    fmt(
+      [==[
+        s(
+          {
+            trig = '<>',
+            name = '<>',
+          },
+          fmt(
+            [[
+              <> 
+            ]]
+          ),
+          <>
+        ),
+      ]==],
+      { i(1), i(2), i(3), i(4, '{ condition = exp_conds.line_begin }') }
+    )
+  ),
+  _s(
     {
       trig = 'ff',
       name = 'Function',
@@ -18,10 +56,9 @@ return {
         end
       ]],
       { i(1), i(2), i(3) }
-    ),
-    { condition = exp_conds.line_begin }
+    )
   ),
-  s(
+  _s(
     {
       trig = 'if',
       name = 'If statement',
@@ -33,10 +70,9 @@ return {
         end
       ]],
       { i(1), i(2) }
-    ),
-    { condition = exp_conds.line_begin }
+    )
   ),
-  s(
+  _s(
     {
       trig = '/if',
       name = 'If statement',
@@ -49,10 +85,9 @@ return {
         end
       ]],
       { i(1), i(2) }
-    ),
-    { condition = exp_conds.line_begin }
+    )
   ),
-  s(
+  _s(
     {
       trig = 'ifel',
       name = 'If Else statement',
@@ -66,10 +101,9 @@ return {
         end
       ]],
       { i(1), i(2), i(3) }
-    ),
-    { condition = exp_conds.line_begin }
+    )
   ),
-  s(
+  _s(
     {
       trig = 'fori',
       name = 'Numeric for loop',
@@ -81,10 +115,9 @@ return {
         end
       ]],
       { i(1), i(2) }
-    ),
-    { condition = exp_conds.line_begin }
+    )
   ),
-  s(
+  _s(
     {
       trig = 'forp',
       name = 'Table iteration for loop',
@@ -96,18 +129,17 @@ return {
         end
       ]],
       { i(1, 'i'), i(2), i(3) }
-    ),
-    { condition = exp_conds.line_begin }
+    )
   ),
   s({
     trig = 'cl',
     name = '"Console Log"',
   }, fmt('print(<>)', { i(1) })),
-  s({
+  _s({
     trig = '/cl',
     name = '"Console Log"',
     snippetType = 'autosnippet',
-  }, fmt('print(<>)', { i(1) }), { condition = exp_conds.line_begin }),
+  }, fmt('print(<>)', { i(1) })),
   s({
     trig = 'cll',
     name = 'Lpke "Console Log"',

@@ -9,6 +9,26 @@ local rep = require('luasnip.extras').rep -- repeat insert node (multi-cursor)
 local fmtc = require('luasnip.extras.fmt').fmt -- default delimeter: {} (curly)
 local fmta = require('luasnip.extras.fmt').fmta -- default delimeter: <> (angled)
 local exp_conds = require('luasnip.extras.expand_conditions')
+local helpers = require('lpke.core.helpers')
+
+-- `s()` that adds `{ condition = exp_conds.line_begin }` by default
+local function _s(params, nodes, opts)
+  nodes = nodes or {}
+  opts = opts or {}
+  opts = helpers.merge_tables({ condition = exp_conds.line_begin }, opts)
+  return s(params, nodes, opts)
+end
+
+-- `t()` that creates a new line
+local function t_()
+  return t({ '', '' })
+end
+
+-- `fmta()` with optional second arg
+local function fmt(str, nodes, opts)
+  nodes = nodes or {}
+  return fmta(str, nodes, opts)
+end
 
 -- use with a `d(1, sel)` node to a `fmt` to fill insert with selection
 -- (selection is set with <Tab> in visual mode)
@@ -47,22 +67,12 @@ local sel_b = function(_, parent)
   end
 end
 
--- text node helper for creating an empty new line
-local function t_()
-  return t({ '', '' })
-end
-
--- same as luasnip `fmta` but no optional second arg
-local function fmt(str, nodes, opts)
-  nodes = nodes or {}
-  return fmta(str, nodes, opts)
-end
-
 return {
   -- require('luasnip')
   ls = ls,
   -- require('luasnip').snippet
   s = s,
+  _s = _s,
   -- require('luasnip').snippet_node
   sn = sn,
   -- require('luasnip').text_node
