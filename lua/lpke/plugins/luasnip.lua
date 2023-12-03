@@ -20,7 +20,7 @@ local function config()
 
   ls.config.set_config({
     enable_autosnippets = true,
-    -- store_selection_keys = '<Tab>',
+    store_selection_keys = '<Tab>',
   })
 
   ls.add_snippets(nil, snippets)
