@@ -13,12 +13,12 @@ return { -- lua
     },
     fmt(
       [[
-        s({
+        <>s({
           trig = '<>',
           name = '<>',
-        }, fmt('<>', { i(1) })<>),
+        }, fmt('<>', { i(1)<> })<>),
       ]],
-      { i(1), i(2), i(3), i(4, ', { condition = exp_conds.line_begin }') }
+      { i(1, '_'), i(2), i(3), i(4), i(5), i(6) }
     )
   ),
   _s(
@@ -28,7 +28,7 @@ return { -- lua
     },
     fmt(
       [==[
-        s(
+        <>s(
           {
             trig = '<>',
             name = '<>',
@@ -36,12 +36,12 @@ return { -- lua
           fmt(
             [[
               <> 
-            ]]
-          ),
-          <>
+            ]],
+            { i(1)<> }
+          ),<>
         ),
       ]==],
-      { i(1), i(2), i(3), i(4, '{ condition = exp_conds.line_begin }') }
+      { i(1, '_'), i(2), i(3), i(4), i(5), i(6) }
     )
   ),
   _s(
