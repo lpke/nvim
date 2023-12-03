@@ -15,18 +15,30 @@ function E.safe_call(func, silent, fallback)
   end
 end
 
--- combines two tables (newTable takes priority) without mutating defaultTable
-function E.combine_tables(defaultTable, newTable)
-  local combinedTable = {}
+-- combines two tables (new_table takes priority) without mutating default_table
+function E.combine_tables(default_table, new_table)
+  local combined_table = {}
   -- copy defaultTable into combinedTable
-  for k, v in pairs(defaultTable) do
-    combinedTable[k] = v
+  for k, v in pairs(default_table) do
+    combined_table[k] = v
   end
   -- merge newTable into combinedTable
-  for k, v in pairs(newTable) do
-    combinedTable[k] = v
+  for k, v in pairs(new_table) do
+    combined_table[k] = v
   end
-  return combinedTable
+  return combined_table
+end
+
+-- concatenates all tables provided as args (in order)
+function E.concat_tables(...)
+  local result_table = {}
+  -- iterate over all provided tables
+  for _, tbl in ipairs({ ... }) do
+    for _, item in ipairs(tbl) do
+      table.insert(result_table, item)
+    end
+  end
+  return result_table
 end
 
 -- convert my options table into vim.opt.<key> = <value>

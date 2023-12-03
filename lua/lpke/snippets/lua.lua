@@ -72,12 +72,16 @@ return {
   s({
     trig = 'cl',
     name = '"Console Log"',
-  }, fmt('Lpke_print(<>)', { i(1) })),
+  }, fmt('print(<>)', { i(1) })),
   s({
     trig = '/cl',
     name = '"Console Log"',
     snippetType = 'autosnippet',
-  }, fmt('Lpke_print(<>)', { i(1) }), { condition = exp_conds.line_begin }),
+  }, fmt('print(<>)', { i(1) }), { condition = exp_conds.line_begin }),
+  s({
+    trig = 'cll',
+    name = 'Lpke "Console Log"',
+  }, fmt('Lpke_print(<>)', { i(1) })),
   s({
     trig = ']]',
     name = 'Convert to [[]]',
