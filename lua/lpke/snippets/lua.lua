@@ -6,11 +6,78 @@ local ls, s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_q, sel_b, exp_co
 -- stylua: ignore end
 
 return {
+  s(
+    {
+      trig = 'ff',
+      name = 'Function',
+    },
+    fmt(
+      [[
+        local function <>(<>)
+          <>
+        end
+      ]],
+      { i(1), i(2), i(3) }
+    ),
+    { condition = exp_conds.line_begin }
+  ),
+  s(
+    {
+      trig = 'if',
+      name = 'If statement',
+    },
+    fmt(
+      [[
+        if <> then
+          <>
+        end
+      ]],
+      { i(1), i(2) }
+    ),
+    { condition = exp_conds.line_begin }
+  ),
+  s(
+    {
+      trig = '/if',
+      name = 'If statement',
+      snippetType = 'autosnippet',
+    },
+    fmt(
+      [[
+        if <> then
+          <>
+        end
+      ]],
+      { i(1), i(2) }
+    ),
+    { condition = exp_conds.line_begin }
+  ),
+  s(
+    {
+      trig = 'ifel',
+      name = 'If Else statement',
+    },
+    fmt(
+      [[
+        if <> then
+          <>
+        else
+          <>
+        end
+      ]],
+      { i(1), i(2), i(3) }
+    ),
+    { condition = exp_conds.line_begin }
+  ),
   s({
     trig = 'cl',
     name = '"Console Log"',
-    dscr = 'Print using Lpke_print',
-  }, fmt('Lpke_print(<>)', { i(0) })),
+  }, fmt('Lpke_print(<>)', { i(1) })),
+  s({
+    trig = '/cl',
+    name = '"Console Log"',
+    snippetType = 'autosnippet',
+  }, fmt('Lpke_print(<>)', { i(1) }), { condition = exp_conds.line_begin }),
   s({
     trig = ']]',
     name = 'Convert to [[]]',
