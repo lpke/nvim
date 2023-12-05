@@ -120,4 +120,18 @@ return { -- js
     name = 'Console Log',
     snippetType = 'autosnippet',
   }, fmt('console.log(<>)', { i(1) })),
+  _s(
+    {
+      trig = '/**',
+      name = 'JSDoc comment',
+    },
+    fmt(
+      [[
+        /**
+         * <>
+         */
+      ]],
+      { i(1) }
+    )
+  ),
 }

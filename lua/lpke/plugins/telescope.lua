@@ -389,6 +389,10 @@ local function config()
           },
         },
       },
+      registers = {
+        initial_mode = 'insert',
+        sorting_strategy = 'descending',
+      },
       keymaps = {
         initial_mode = 'insert',
         sorting_strategy = 'descending',
