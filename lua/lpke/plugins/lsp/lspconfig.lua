@@ -191,7 +191,14 @@ local function config()
   -- server = { ...setup table }
   local servers = {
     html = {},
-    tsserver = {},
+    tsserver = {
+      init_options = {
+        preferences = {
+          importModuleSpecifierPreference = 'non-relative', -- use absolute/non-relative import paths if possible
+          importModuleSpecifierEnding = 'minimal', -- shorten path ending if possible (omit `.ts` etc)
+        },
+      },
+    },
     cssls = {},
     tailwindcss = {},
     jsonls = {
