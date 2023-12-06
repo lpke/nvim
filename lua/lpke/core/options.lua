@@ -46,6 +46,7 @@ E.vim_opts = {
   tabstop = 2, -- maximum width of an actual tab character
   softtabstop = 2, -- number of spaces a tab counts for during editing operations
   shiftwidth = 2, -- the size of code indents
+  textwidth = 80, -- width that `gw/gq` will target when wrapping text
   expandtab = true, -- always expand tab to spaces
   smarttab = true, -- tab inserts whitespace only to the next predefined tab stop
   shiftround = true, -- when indenting, stop at next shiftwidth (don't end up in between stops)
@@ -55,7 +56,7 @@ E.vim_opts = {
   smartindent = true, -- so should this.
   scrolloff = 6, -- minumum number of lines to keep above/below cursor
   sidescrolloff = 6, -- minumum number of char columns to keep left/right of cursor
-  --equalalways = false, -- all windows are made the same size after opening or closing
+  equalalways = false, -- dont force windows to be equal after opening/closing
   ignorecase = true, -- ignore case of letters when searching (see also \c)
   smartcase = true, -- dont ignore case if search contains capitals (see also \C)
   cursorline = false, -- render cursor line background/line number highlights (slower)
@@ -65,6 +66,7 @@ E.vim_opts = {
   listchars = [[tab:» ,trail:·,nbsp:·,extends:>,precedes:<]], -- whitespace chars to show when `list` option is toggled on
   statusline = ' %f %m %= %l:%c ', -- TODO: add percent, other useful stuff
   sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions',
+  formatoptions = 'jql', -- see `:help fo-table` (I removed 'c' to disable auto-wrap, use gw motion instead)
   timeoutlen = 4000, -- timeout when waiting for next key in a keymap
   tabline = '%!v:lua.Lpke_tabline()',
 }
@@ -98,7 +100,7 @@ vim.g.netrw_banner = 0
 --------------------------
 
 -- disable next line auto-comment
-vim.cmd('autocmd FileType * set formatoptions-=ro')
+vim.cmd('autocmd FileType * set formatoptions-=cro')
 
 -- toggle diagnostics when going enter/leave insert mode
 Lpke_diagnostics_insert_disabled = nil
