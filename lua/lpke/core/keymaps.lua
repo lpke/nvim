@@ -45,9 +45,13 @@ helpers.keymap_set_multi({
   {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.'), 'text': getline('.')}], 'a')",
     { desc = 'Add current file/position to quick fix list' }},
 
-  -- jank
+  -- glorified macros
   {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],
     { desc = 'Replace selected text with the eval() version of itself' }},
+  {'n', '<leader>%', [[mmyiwj^lvat<Esc>o</<Esc>pA><Esc>kV'mj><Esc>`m]],
+    { desc = 'Wrap html element below with matching tag under cursor' }},
+  {'v', '<leader>%', [[mmyj^lvat<Esc>o</<Esc>pA><Esc>kV'mj><Esc>`m]],
+    { desc = 'Wrap html element below with matching tag of selected text' }},
 
   -- terminal
   {'nC', '<BS>t', 'Term', { desc = 'Open a floating terminal window' }},
