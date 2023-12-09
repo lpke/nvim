@@ -11,7 +11,7 @@ return {
   lua = require('lpke.snippets.lua'),
   html = html,
   javascript = js,
-  typescript = ct(js, ts),
-  javascriptreact = ct(html, js, jsx),
-  typescriptreact = ct(html, js, ts, jsx, tsx),
+  typescript = ct(ts, js),
+  javascriptreact = ct(jsx, js, html),
+  typescriptreact = ct(tsx, jsx, ts, js, html),
 }

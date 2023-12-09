@@ -6,4 +6,12 @@ local ls, s, _s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_q, sel_b, ex
 -- stylua: ignore end
 
 return { -- all
+  s({
+    trig = '{}',
+    name = 'Inline object',
+  }, fmt('{ <> }', { i(1) })),
+  s({
+    trig = '[]',
+    name = 'Inline array',
+  }, fmt('[ <> ]', { i(1) })),
 }

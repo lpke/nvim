@@ -6,4 +6,42 @@ local ls, s, _s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_q, sel_b, ex
 -- stylua: ignore end
 
 return { -- tsreact
+  _s(
+    {
+      trig = 'rfc',
+      name = 'React function component',
+    },
+    fmt(
+      [[
+        type <>Props = {<>};
+        
+        export <> function <>(<>) {
+          return (
+            <<div>><><</div>>
+          );
+        }
+      ]],
+      { rep(2), i(4), i(1, 'default'), i(2), i(3, '{}'), rep(2) }
+    )
+  ),
+  _s(
+    {
+      trig = 'rfcc',
+      name = 'React function component (arrow)',
+    },
+    fmt(
+      [[
+        type <>Props = {<>};
+        
+        const <> = (<>) =>> {
+          return (
+            <<div>><><</div>>
+          );
+        };
+
+        export default <>;
+      ]],
+      { rep(1), i(3), i(1), i(2, '{}'), rep(1), rep(1) }
+    )
+  ),
 }

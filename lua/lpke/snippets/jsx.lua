@@ -12,6 +12,22 @@ return { -- jsreact
   }, fmt("import <> from '<>';", { i(1, '{  }'), i(2) })),
   _s(
     {
+      trig = 'rfc',
+      name = 'React function component',
+    },
+    fmt(
+      [[
+        export <> function <>(<>) {
+          return (
+            <<div>><><</div>>
+          );
+        }
+      ]],
+      { i(1, 'default'), i(2), i(3, '{}'), rep(2) }
+    )
+  ),
+  _s(
+    {
       trig = 'ue',
       name = 'useEffect',
     },
