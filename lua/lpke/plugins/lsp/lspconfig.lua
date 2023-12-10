@@ -221,7 +221,7 @@ local function config()
 
     -- typescript
     if diag.source == 'typescript' then
-      local esldiag = helpers.arr_filter(ldiag, function(item)
+      local esldiag = helpers.arr_filter((ldiag or {}), function(item)
         if type(item) ~= 'table' then
           return false
         end
