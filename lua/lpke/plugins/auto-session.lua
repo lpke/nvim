@@ -33,7 +33,7 @@ local function config()
       -- telescope picker options
       theme = 'vertical',
       theme_conf = {
-        initial_mode = 'insert',
+        initial_mode = 'normal',
         sorting_strategy = 'ascending',
         winblend = 0,
         border = true,

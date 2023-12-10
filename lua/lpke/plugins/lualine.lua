@@ -109,6 +109,7 @@ local function config()
       local raw_bufname = helpers.get_buf_name(0)
       local git_buffer = not not (
         (vim.bo.filetype == 'fugitive')
+        or (vim.bo.filetype == 'fugitiveblame')
         or (vim.bo.filetype == 'git')
         or (vim.bo.filetype == 'gitui')
         or (vim.bo.filetype == 'gitcommit')
@@ -148,6 +149,7 @@ local function config()
       local normal_buffer = vim.bo.buftype == ''
       local oil_buffer = vim.bo.filetype == 'oil'
       local fugitive_buffer = (vim.bo.filetype == 'fugitive')
+        or (vim.bo.filetype == 'fugitiveblame')
         or (string.match(raw_bufname, '^fugitive://'))
       local accepted_buffer = normal_buffer or oil_buffer or fugitive_buffer
       if Lpke_full_path and accepted_buffer then

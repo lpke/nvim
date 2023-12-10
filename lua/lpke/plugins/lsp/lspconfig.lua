@@ -216,6 +216,13 @@ local function config()
       vim.lsp.handlers.signature_help,
       { border = 'rounded' }
     ),
+    -- ensure that signs are sorted in sign column (errors on top)
+    ['textDocument/publishDiagnostics'] = vim.lsp.with(
+      vim.lsp.diagnostic.on_publish_diagnostics,
+      {
+        severity_sort = true,
+      }
+    ),
   }
 
   -- configure LSP servers
