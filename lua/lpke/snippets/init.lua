@@ -1,4 +1,4 @@
-local ct = require('lpke.core.helpers').concat_tables
+local ct = require('lpke.core.helpers').concat_arrs
 
 local html = require('lpke.snippets.html')
 local js = require('lpke.snippets.js')

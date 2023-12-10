@@ -27,8 +27,8 @@ function E.merge_tables(...)
   return combined_table
 end
 
--- concatenates all tables provided as args (in order)
-function E.concat_tables(...)
+-- concatenates all arrays (itables) provided as args (in order)
+function E.concat_arrs(...)
   local result_table = {}
   -- iterate over all provided tables
   for _, tbl in ipairs({ ... }) do
@@ -39,8 +39,19 @@ function E.concat_tables(...)
   return result_table
 end
 
+-- filter array (ipairs table) non-destructively
+function E.arr_filter(arr, func)
+  local filtered_arr = {}
+  for index, item in ipairs(arr) do
+    if func(item, index) then
+      table.insert(filtered_arr, item)
+    end
+  end
+  return filtered_arr
+end
+
 -- filter array in place (https://stackoverflow.com/questions/49709998/how-to-filter-a-lua-array-inplace)
-function E.filter_arr(arr, func)
+function E.arr_filter_inplace(arr, func)
   local new_index = 1
   local size_orig = #arr
   for old_index, v in ipairs(arr) do
