@@ -206,7 +206,19 @@ local function config()
     },
   })
 
-  -- can be overwritten per language
+  -- diagnostics filter
+  local function filter_diagnostics(diag) -- diag.source, diag.message, diag.code
+    -- lua
+    if string.match(diag.source, '^[Ll]ua.*') then
+      if string.match(diag.message, 'Unused local `_.+`.') then
+        return false
+      end
+    end
+
+    return true
+  end
+
+  -- can be overwritten per language (these will be merged in initially)
   local handlers = {
     ['textDocument/hover'] = vim.lsp.with(
       vim.lsp.handlers.hover,
@@ -216,10 +228,14 @@ local function config()
       vim.lsp.handlers.signature_help,
       { border = 'rounded' }
     ),
-    -- ensure that signs are sorted in sign column (errors on top)
     ['textDocument/publishDiagnostics'] = vim.lsp.with(
-      vim.lsp.diagnostic.on_publish_diagnostics,
+      -- injecting custom code to allow filtering/control of diagnostic messages
+      function(a, params, client_id, c, conf)
+        helpers.filter_arr(params.diagnostics, filter_diagnostics) -- custom part
+        vim.lsp.diagnostic.on_publish_diagnostics(a, params, client_id, c, conf) -- default part
+      end,
       {
+        -- ensure that signs are sorted in sign column (errors on top)
         severity_sort = true,
       }
     ),
@@ -326,7 +342,7 @@ local function config()
   for lsp, conf in pairs(servers) do
     conf.capabilities = conf.capabilities or capabilities
     conf.on_attach = conf.on_attach or on_attach
-    conf.handlers = conf.handlers or handlers
+    conf.handlers = helpers.merge_tables(handlers, (conf.handlers or {}))
     lspconfig[lsp].setup(conf)
   end
 end

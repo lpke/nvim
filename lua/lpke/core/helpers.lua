@@ -39,6 +39,21 @@ function E.concat_tables(...)
   return result_table
 end
 
+-- filter array in place (https://stackoverflow.com/questions/49709998/how-to-filter-a-lua-array-inplace)
+function E.filter_arr(arr, func)
+  local new_index = 1
+  local size_orig = #arr
+  for old_index, v in ipairs(arr) do
+    if func(v, old_index) then
+      arr[new_index] = v
+      new_index = new_index + 1
+    end
+  end
+  for i = new_index, size_orig do
+    arr[i] = nil
+  end
+end
+
 -- convert my options table into vim.opt.<key> = <value>
 function E.set_options(options)
   for k, v in pairs(options) do
