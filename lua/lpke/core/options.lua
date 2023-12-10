@@ -137,6 +137,7 @@ vim.api.nvim_create_autocmd('InsertLeave', {
 -- USER COMMANDS
 --------------------------
 
+-- stylua: ignore start
 vim.api.nvim_create_user_command('TrashRestore', Lpke_trash_restore, {})
 vim.api.nvim_create_user_command('T', Lpke_term, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('Term', Lpke_term, { nargs = '*' }) -- arg: full
@@ -144,31 +145,10 @@ vim.api.nvim_create_user_command('Terminal', Lpke_term, { nargs = '*' }) -- arg:
 vim.api.nvim_create_user_command('R', Lpke_ranger, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('Ranger', Lpke_ranger, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('Bclean', Lpke_clean_buffers, {})
-vim.api.nvim_create_user_command('Path', function()
-  print(helpers.get_buf_name())
-end, {})
-vim.api.nvim_create_user_command('P', function()
-  print(helpers.get_buf_name())
-end, {})
-vim.api.nvim_create_user_command(
-  'PathY',
-  Lpke_yank_buf_name_global,
-  { nargs = '*' } -- arg: <register>
-)
-vim.api.nvim_create_user_command(
-  'PY',
-  Lpke_yank_buf_name_global,
-  { nargs = '*' } -- arg: <register>
-)
-vim.api.nvim_create_user_command(
-  'Pathy',
-  Lpke_yank_buf_name_local,
-  { nargs = '*' } -- arg: <register>
-)
-vim.api.nvim_create_user_command(
-  'Py',
-  Lpke_yank_buf_name_local,
-  { nargs = '*' } -- arg: <register>
-)
+vim.api.nvim_create_user_command('Path', function() print(helpers.get_buf_name()) end, {})
+vim.api.nvim_create_user_command('P', function() print(helpers.get_buf_name()) end, {})
+vim.api.nvim_create_user_command('YP', function(cmd) Lpke_yank_buf_name(cmd, true) end, { nargs = '*' }) -- arg: <register>
+vim.api.nvim_create_user_command('Yp', function(cmd) Lpke_yank_buf_name(cmd, false) end, { nargs = '*' }) -- arg: <register>
+-- stylua: ignore end
 
 return E

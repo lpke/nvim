@@ -4,29 +4,34 @@ local helpers = require('lpke.core.helpers')
 function Lpke_rep_termcodes(str)
   return vim.api.nvim_replace_termcodes(str, true, true, true)
 end
-
 function Lpke_feedkeys(key, mode)
   vim.api.nvim_feedkeys(Lpke_rep_termcodes(key), mode, true)
 end
 
--- precursor to Lpke_yank_buf_name, global reg default
-function Lpke_yank_buf_name_global(cmd)
-  Lpke_yank_buf_name(cmd, true)
+-- yanks contents into desired register/s
+function Lpke_yank(contents, registers)
+  if type(registers) ~= 'string' then
+    vim.fn.setreg('"', contents)
+    if type(registers) == 'boolean' then
+      vim.fn.setreg('*', contents)
+      vim.fn.setreg('+', contents)
+    end
+  else
+    for i = 1, #registers do
+      local reg = registers:sub(i, i)
+      vim.fn.setreg(reg, contents)
+    end
+  end
+  return contents
 end
--- precursor to Lpke_yank_buf_name, local reg default
-function Lpke_yank_buf_name_local(cmd)
-  Lpke_yank_buf_name(cmd, false)
-end
+
 -- yank current buf name (path) to specified register (used for user command: `YP`/`Yp`)
 function Lpke_yank_buf_name(cmd, global)
   local buf_name = helpers.get_buf_name(0, true)
   if cmd.args and (cmd.args ~= '') then
-    vim.fn.setreg(cmd.args, buf_name)
-  elseif global then
-    vim.fn.setreg('*', buf_name)
-    vim.fn.setreg('+', buf_name)
+    Lpke_yank(buf_name, cmd.args)
   else
-    vim.fn.setreg('"', buf_name)
+    Lpke_yank(buf_name, global)
   end
 end
 

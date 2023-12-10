@@ -132,14 +132,18 @@ local function config()
       -- yanking
       ['yd'] = {
         callback = function()
-          print('yd')
+          local dir = oil.get_current_dir()
+          Lpke_yank(dir, '"*+')
         end,
         desc = 'Yank the path of the current directory',
         mode = 'n',
       },
       ['yp'] = {
         callback = function()
-          print('yp')
+          local dir = oil.get_current_dir()
+          local name = oil.get_cursor_entry().name
+          local path = dir .. name
+          Lpke_yank(path, '"*+')
         end,
         desc = 'Yank the path of the currently selected item',
         mode = 'n',
