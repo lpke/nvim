@@ -117,7 +117,7 @@ local function config()
   end
 
   -- toggle LSP diagnostic virtual text globally
-  Lpke_diagnostics_virtual_text_enabled = true
+  Lpke_diagnostics_virtual_text_enabled = false
   function Lpke_toggle_diagnostics_virtual_text()
     local enabled = Lpke_diagnostics_virtual_text_enabled
     if enabled then
@@ -137,7 +137,7 @@ local function config()
   helpers.set_hl('DiagnosticOk', { fg = tc.growth })
   helpers.set_hl('DiagnosticSignOk', { fg = tc.growth })
   helpers.set_hl('DiagnosticFloatingOk', { fg = tc.growth })
-  show_diagnostic_virtual_text()
+  dim_diagnostic_virtual_text()
   hide_diagnostic_hl()
 
   -- when a language server attaches to a buffer...
