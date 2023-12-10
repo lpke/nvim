@@ -67,13 +67,37 @@ local function config()
   local tables = helpers.merge_tables
   local tc = Lpke_theme_colors
 
-  local function set_diagnostic_hl()
+  -- stylua: ignore start
+  local function hide_diagnostic_hl()
     helpers.set_hl('DiagnosticUnnecessary', {})
+    helpers.set_hl('DiagnosticUnderlineOk', {})
     helpers.set_hl('DiagnosticUnderlineHint', {})
     helpers.set_hl('DiagnosticUnderlineInfo', {})
     helpers.set_hl('DiagnosticUnderlineWarn', {})
     helpers.set_hl('DiagnosticUnderlineError', {})
-    helpers.set_hl('DiagnosticUnderlineOk', {})
+  end
+  local function show_diagnostic_hl()
+    helpers.set_hl('DiagnosticUnnecessary', { fg = tc.subtleplus })
+    helpers.set_hl('DiagnosticUnderlineOk', { bg = tc.growthbg })
+    helpers.set_hl('DiagnosticUnderlineHint', { bg = tc.irisbg })
+    helpers.set_hl('DiagnosticUnderlineInfo', { bg = tc.foambg })
+    helpers.set_hl('DiagnosticUnderlineWarn', { bg = tc.goldbg })
+    helpers.set_hl('DiagnosticUnderlineError', { bg = tc.lovebg })
+  end
+
+  local function dim_diagnostic_virtual_text()
+    helpers.set_hl('DiagnosticVirtualTextOk', { fg = tc.growthbg, italic = true })
+    helpers.set_hl('DiagnosticVirtualTextHint', { fg = tc.irisbg, italic = true })
+    helpers.set_hl('DiagnosticVirtualTextInfo', { fg = tc.foambg, italic = true })
+    helpers.set_hl('DiagnosticVirtualTextWarn', { fg = tc.goldbg, italic = true })
+    helpers.set_hl('DiagnosticVirtualTextError', { fg = tc.lovebg, italic = true })
+  end
+  local function show_diagnostic_virtual_text()
+    helpers.set_hl('DiagnosticVirtualTextOk', { fg = tc.growth, italic = true })
+    helpers.set_hl('DiagnosticVirtualTextHint', { fg = tc.irisfaded, italic = true })
+    helpers.set_hl('DiagnosticVirtualTextInfo', { fg = tc.foamfaded, italic = true })
+    helpers.set_hl('DiagnosticVirtualTextWarn', { fg = tc.goldfaded, italic = true })
+    helpers.set_hl('DiagnosticVirtualTextError', { fg = tc.lovefaded, italic = true })
   end
 
   -- toggle LSP diagnostic highlighting globally
@@ -81,15 +105,10 @@ local function config()
   function Lpke_toggle_diagnostics_hl()
     local enabled = Lpke_diagnostics_hl_enabled
     if enabled then
-      set_diagnostic_hl()
+      hide_diagnostic_hl()
       Lpke_diagnostics_hl_enabled = false
     else
-      helpers.set_hl('DiagnosticUnnecessary', { fg = tc.subtleplus })
-      helpers.set_hl('DiagnosticUnderlineHint', { bg = tc.irisbg })
-      helpers.set_hl('DiagnosticUnderlineInfo', { bg = tc.foambg })
-      helpers.set_hl('DiagnosticUnderlineWarn', { bg = tc.goldbg })
-      helpers.set_hl('DiagnosticUnderlineError', { bg = tc.lovebg })
-      helpers.set_hl('DiagnosticUnderlineOk', { bg = tc.growthbg })
+      show_diagnostic_hl()
       Lpke_diagnostics_hl_enabled = true
     end
     pcall(function()
@@ -97,21 +116,32 @@ local function config()
     end)
   end
 
-  -- stylua: ignore start
+  -- toggle LSP diagnostic virtual text globally
+  Lpke_diagnostics_virtual_text_enabled = true
+  function Lpke_toggle_diagnostics_virtual_text()
+    local enabled = Lpke_diagnostics_virtual_text_enabled
+    if enabled then
+      dim_diagnostic_virtual_text()
+      Lpke_diagnostics_virtual_text_enabled = false
+    else
+      show_diagnostic_virtual_text()
+      Lpke_diagnostics_virtual_text_enabled = true
+    end
+    pcall(function()
+      require('lualine').refresh()
+    end)
+  end
+
   -- theme
   helpers.set_hl('LspInfoTitle', { fg = tc.growth })
   helpers.set_hl('DiagnosticOk', { fg = tc.growth })
   helpers.set_hl('DiagnosticSignOk', { fg = tc.growth })
   helpers.set_hl('DiagnosticFloatingOk', { fg = tc.growth })
-  helpers.set_hl('DiagnosticVirtualTextError', { fg = tc.lovefaded, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextWarn', { fg = tc.goldfaded, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextHint', { fg = tc.irisfaded, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextInfo', { fg = tc.foamfaded, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextOk', { fg = tc.growth, italic = true })
-  set_diagnostic_hl()
+  show_diagnostic_virtual_text()
+  hide_diagnostic_hl()
 
   -- when a language server attaches to a buffer...
-  local on_attach = function(client, bufnr)
+  local on_attach = function(_, bufnr) -- client, bufnr
     -- respect the initial setting
     if Lpke_diagnostics_enabled_initial then
       Lpke_toggle_diagnostics(true)
@@ -125,7 +155,8 @@ local function config()
       -- info/toggle/reload
       {'nC', '<BS>ip', 'LspInfo', opts('Open LSP info window')},
       {'nv', '<F2>d', Lpke_toggle_diagnostics, opts('Toggle diagnostics visibility globally')},
-      {'nv', '<F2>v', Lpke_toggle_diagnostics_hl, opts('Toggle diagnostics highlighting globally')},
+      {'nv', '<F2>v', Lpke_toggle_diagnostics_virtual_text, opts('Toggle diagnostics virtual text brightness globally')},
+      {'nv', '<F2>V', Lpke_toggle_diagnostics_hl, opts('Toggle diagnostics highlighting globally')},
       {'nC', '<leader>R', 'LspRestart', opts('Restart LSP')},
 
       -- smart actions

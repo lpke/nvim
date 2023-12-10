@@ -518,7 +518,6 @@ local function config()
     { 'n', '<F2>E', function() Lpke_show_encoding = not Lpke_show_encoding refresh() end, { desc = 'Lualine: Toggle encoding info' }},
     { 'n', '<F2>S', function() Lpke_show_session = not Lpke_show_session refresh() end, { desc = 'Lualine: Toggle session name' }},
     { 'n', '<F2>G', function() Lpke_show_git = not Lpke_show_git refresh() end, { desc = 'Lualine: Toggle all git info' }},
-    { 'n', '<F2>V', function() Lpke_show_diagnostics = not Lpke_show_diagnostics refresh() end, { desc = 'Lualine: Toggle diagnostics display' }},
     { 'n', '<F2>g', function() Lpke_show_git_branch = not Lpke_show_git_branch refresh() end, { desc = 'Lualine: Toggle git branch display' }},
   })
   -- stylua: ignore end
