@@ -137,7 +137,7 @@ local function config()
   helpers.set_hl('DiagnosticOk', { fg = tc.growth })
   helpers.set_hl('DiagnosticSignOk', { fg = tc.growth })
   helpers.set_hl('DiagnosticFloatingOk', { fg = tc.growth })
-  dim_diagnostic_virtual_text()
+  show_diagnostic_virtual_text()
   hide_diagnostic_hl()
 
   -- when a language server attaches to a buffer...
