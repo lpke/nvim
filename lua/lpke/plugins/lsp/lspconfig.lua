@@ -117,7 +117,7 @@ local function config()
   end
 
   -- toggle LSP diagnostic virtual text globally
-  Lpke_diagnostics_virtual_text_enabled = false
+  Lpke_diagnostics_virtual_text_enabled = true
   function Lpke_toggle_diagnostics_virtual_text()
     local enabled = Lpke_diagnostics_virtual_text_enabled
     if enabled then
