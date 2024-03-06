@@ -75,7 +75,7 @@ return { -- jsreact
   s({
     trig = 'cn',
     name = 'JSX className',
-  }, fmt('className=')),
+  }, fmt('className="<>"', { i(1) })),
   s({
     trig = '}}',
     name = 'Template literal expression',
