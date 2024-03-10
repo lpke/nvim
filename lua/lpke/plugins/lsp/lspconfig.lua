@@ -64,7 +64,7 @@ local function config()
   local lspconfig = require('lspconfig')
   local cmp_nvim_lsp = require('cmp_nvim_lsp')
   local helpers = require('lpke.core.helpers')
-  local tables = helpers.merge_tables
+  local merge_tables = helpers.merge_tables
   local tc = Lpke_theme_colors
 
   -- stylua: ignore start
@@ -320,10 +320,10 @@ local function config()
           options = emmet_opts_global,
         },
         js = {
-          options = tables(emmet_opts_global, emmet_opts_jsx),
+          options = merge_tables(emmet_opts_global, emmet_opts_jsx),
         },
         jsx = {
-          options = tables(emmet_opts_global, emmet_opts_jsx),
+          options = merge_tables(emmet_opts_global, emmet_opts_jsx),
         },
         svelte = {
           options = emmet_opts_global,
