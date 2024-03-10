@@ -43,6 +43,7 @@ local function config()
   -- highlight customisations
   helpers.set_hl('@none', { fg = tc.textminus })
   helpers.set_hl('@variable', { italic = false, fg = tc.text })
+  helpers.set_hl('@function.builtin', { italic = false, fg = tc.love })
   helpers.set_hl('@property', { italic = false, fg = tc.foam })
   helpers.set_hl('@parameter', { italic = false, fg = tc.iris })
   helpers.set_hl('@tag.attribute', { italic = true, fg = tc.iris })

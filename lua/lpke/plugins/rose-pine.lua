@@ -27,39 +27,60 @@ local function config()
   require('rose-pine').setup({
     variant = 'main', -- main, moon, dawn
     dark_variant = 'main',
+    dim_inactive_windows = false,
+    extend_background_behind_borders = true,
     bold_vert_split = false,
-    dim_nc_background = false,
-    disable_background = true,
-    disable_float_background = false,
-    disable_italics = false,
+
+    enable = {
+      terminal = true,
+    },
+
+    styles = {
+      bold = false,
+      italic = true,
+      transparency = false,
+    },
 
     groups = {
-      background = 'base',
-      background_nc = '_experimental_nc',
+      border = 'highlight_med',
       panel = 'surface',
       panel_nc = 'base',
-      border = 'highlight_med',
-      comment = 'muted',
-      link = 'iris',
-      punctuation = 'subtle',
 
-      error = 'love',
+      link = 'iris',
+
       hint = 'iris',
       info = 'foam',
       warn = 'gold',
+      error = 'love',
 
-      headings = {
-        h1 = 'iris',
-        h2 = 'foam',
-        h3 = 'rose',
-        h4 = 'gold',
-        h5 = 'pine',
-        h6 = 'foam',
-      },
+      note = 'pine',
+      todo = 'rose',
+
+      h1 = 'iris',
+      h2 = 'foam',
+      h3 = 'rose',
+      h4 = 'gold',
+      h5 = 'pine',
+      h6 = 'foam',
+
+      git_add = 'foam',
+      git_change = 'rose',
+      git_delete = 'love',
+      git_dirty = 'rose',
+      git_ignore = 'muted',
+      git_merge = 'iris',
+      git_rename = 'pine',
+      git_stage = 'iris',
+      git_text = 'rose',
+      git_untracked = 'subtle',
     },
 
     -- vim highlight groups (inspect under cursor with `:Inspect`)
     highlight_groups = {
+      Normal = { bg = 'none' },
+      NormalNC = { bg = 'none' },
+      VertSplit = { bg = 'none' },
+      Comment = { fg = 'muted' },
       ColorColumn = { bg = 'rose' },
       StatusLine = { fg = 'subtle', bg = 'overlay' },
       StatusLineNC = { fg = 'subtle', bg = 'surface' },
@@ -69,7 +90,7 @@ local function config()
       FloatTitle = { fg = 'subtle', bg = 'surface' },
       TabLineFill = { bg = 'surface' }, -- Non-text area
       TabLine = { fg = 'subtle', bg = 'surface' }, -- Un-selected tab
-      TabLineSel = { fg = ec.textminus, bg = ec.overlaybump }, -- Selected tab
+      TabLineSel = { fg = ec.textminus, bg = ec.overlaybump, bold = false }, -- Selected tab
 
       -- custom highlight groups
       LpkeTabLineZoom = { fg = ec.irisfaded, bg = 'surface' },
