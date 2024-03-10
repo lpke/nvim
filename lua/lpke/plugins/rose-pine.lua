@@ -98,5 +98,5 @@ return {
   lazy = false,
   priority = 1000,
   config = config,
-  commit = '92762f4fa2144c05db760ea254f4c399a56a7ef5', -- before transparency changes
+  -- commit = '92762f4fa2144c05db760ea254f4c399a56a7ef5', -- before transparency changes
 }
