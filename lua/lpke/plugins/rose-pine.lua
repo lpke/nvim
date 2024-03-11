@@ -11,6 +11,8 @@ local ec = {
   overlaybump = '#2f2b45',
   overlayplus = '#3c3852',
   growth = '#64a6a5',
+  growthminus = '#9fc6c6',
+  irisminus = '#9979c3',
   lovefaded = '#b25774',
   goldfaded = '#ba9360',
   irisfaded = '#9580b2',
@@ -47,14 +49,13 @@ local function config()
       panel_nc = 'base',
 
       link = 'iris',
+      note = 'pine',
+      todo = 'rose',
 
       hint = 'iris',
       info = 'foam',
       warn = 'gold',
       error = 'love',
-
-      note = 'pine',
-      todo = 'rose',
 
       h1 = 'iris',
       h2 = 'foam',
@@ -91,6 +92,11 @@ local function config()
       TabLineFill = { bg = 'surface' }, -- Non-text area
       TabLine = { fg = 'subtle', bg = 'surface' }, -- Un-selected tab
       TabLineSel = { fg = ec.textminus, bg = ec.overlaybump, bold = false }, -- Selected tab
+
+      -- vim syntax highlight groups (inherited in treesitter config file for `@` groups)
+      Keyword = { fg = 'pine', italic = true },
+      Type = { fg = ec.growth },
+      Tag = { fg = ec.growth },
 
       -- custom highlight groups
       LpkeTabLineZoom = { fg = ec.irisfaded, bg = 'surface' },

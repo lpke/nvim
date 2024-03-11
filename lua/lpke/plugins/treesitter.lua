@@ -39,31 +39,33 @@ local function config()
     },
   })
 
-  -- highlight customisations
-  helpers.set_hl('@none', { fg = tc.textminus })
-  helpers.set_hl('@variable', { italic = false, fg = tc.text })
-  helpers.set_hl('@function.builtin', { italic = false, fg = tc.love })
-  helpers.set_hl('@property', { italic = false, fg = tc.foam })
-  helpers.set_hl('@parameter', { italic = false, fg = tc.iris })
-  helpers.set_hl('@tag.attribute', { italic = true, fg = tc.iris })
-  helpers.set_hl('Keyword', { italic = true, fg = tc.pine })
-  helpers.set_hl('@keyword', { italic = true, fg = tc.pine })
-  helpers.set_hl('@keyword.import', { italic = true, fg = tc.pine })
-  helpers.set_hl('@keyword.conditional', { italic = true, fg = tc.pine })
-  helpers.set_hl('@keyword.conditional.ternary', { italic = true, fg = tc.pine })
-  helpers.set_hl('@keyword.repeat', { italic = true, fg = tc.pine })
-  helpers.set_hl('@keyword.exception', { italic = true, fg = tc.pine })
-  helpers.set_hl('@keyword.return', { italic = true, fg = tc.pine })
-  helpers.set_hl('@include', { italic = true, fg = tc.pine })
-  helpers.set_hl('@number', { fg = tc.iris })
-  helpers.set_hl('@constructor', { fg = tc.growth })
-  helpers.set_hl('@type', { fg = tc.growth })
-  helpers.set_hl(
-    '@lsp.typemod.function.defaultLibrary.lua',
-    { link = '@function.builtin' }
-  )
-
   -- stylua: ignore start
+  -- highlight customisations (top-level groups found in rose-pine config file)
+  helpers.set_hl('@none', { fg = tc.textminus })
+  helpers.set_hl('@number', { fg = tc.irisminus })
+  helpers.set_hl('@constructor', { fg = tc.growth })
+  helpers.set_hl('@property', { italic = false, fg = tc.foam })
+  helpers.set_hl('@function.builtin', { italic = false, fg = tc.love })
+  helpers.set_hl('@lsp.typemod.function.defaultLibrary.lua', { link = '@function.builtin' })
+  helpers.set_hl('@variable', { italic = false, fg = tc.text })
+  helpers.set_hl('@parameter', { italic = false, fg = tc.iris })
+  helpers.set_hl('@variable.parameter', { link = '@parameter' })
+  helpers.set_hl('@keyword', { link = 'Keyword' })
+  helpers.set_hl('@keyword.import', { link = 'Keyword' })
+  helpers.set_hl('@keyword.conditional', { link = 'Keyword' })
+  helpers.set_hl('@keyword.conditional.ternary', { link = 'Keyword' })
+  helpers.set_hl('@keyword.repeat', { link = 'Keyword' })
+  helpers.set_hl('@keyword.exception', { link = 'Keyword' })
+  helpers.set_hl('@keyword.return', { link = 'Keyword' })
+  helpers.set_hl('@include', { link = 'Keyword' })
+  helpers.set_hl('@type', { link = 'Type' })
+  helpers.set_hl('@type.builtin', { link = 'Type' })
+  helpers.set_hl('@type.builtin.typescript', { link = 'Type' })
+  helpers.set_hl('@tag', { link = 'Tag' })
+  helpers.set_hl('@tag.tsx', { link = 'Tag' }) -- custom components
+  helpers.set_hl('@tag.builtin.tsx', { fg = tc.growthminus }) -- html elements
+  helpers.set_hl('@tag.attribute', { fg = tc.iris, italic = true })
+
   helpers.keymap_set_multi({
     {'nC', '<leader>t', 'Inspect', { desc = 'Treesitter: Inspect highlight group under cursor (:Inspect)' }},
     {'nC', '<leader>T', 'InspectTree', { desc = 'Treesitter: Open parsed syntax tree (:InspectTree)' }},
