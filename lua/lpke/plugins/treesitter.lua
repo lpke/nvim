@@ -1,6 +1,5 @@
-local helpers = require('lpke.core.helpers')
-
 local function config()
+  local helpers = require('lpke.core.helpers')
   local ts_install = require('nvim-treesitter.install')
   local ts_configs = require('nvim-treesitter.configs')
   local tc = Lpke_theme_colors
@@ -47,7 +46,14 @@ local function config()
   helpers.set_hl('@property', { italic = false, fg = tc.foam })
   helpers.set_hl('@parameter', { italic = false, fg = tc.iris })
   helpers.set_hl('@tag.attribute', { italic = true, fg = tc.iris })
+  helpers.set_hl('Keyword', { italic = true, fg = tc.pine })
   helpers.set_hl('@keyword', { italic = true, fg = tc.pine })
+  helpers.set_hl('@keyword.import', { italic = true, fg = tc.pine })
+  helpers.set_hl('@keyword.conditional', { italic = true, fg = tc.pine })
+  helpers.set_hl('@keyword.conditional.ternary', { italic = true, fg = tc.pine })
+  helpers.set_hl('@keyword.repeat', { italic = true, fg = tc.pine })
+  helpers.set_hl('@keyword.exception', { italic = true, fg = tc.pine })
+  helpers.set_hl('@keyword.return', { italic = true, fg = tc.pine })
   helpers.set_hl('@include', { italic = true, fg = tc.pine })
   helpers.set_hl('@number', { fg = tc.iris })
   helpers.set_hl('@constructor', { fg = tc.growth })
@@ -56,6 +62,13 @@ local function config()
     '@lsp.typemod.function.defaultLibrary.lua',
     { link = '@function.builtin' }
   )
+
+  -- stylua: ignore start
+  helpers.keymap_set_multi({
+    {'nC', '<leader>t', 'Inspect', { desc = 'Treesitter: Inspect highlight group under cursor (:Inspect)' }},
+    {'nC', '<leader>T', 'InspectTree', { desc = 'Treesitter: Open parsed syntax tree (:InspectTree)' }},
+  })
+  -- stylua: ignore end
 
   -- filetype customisation
   vim.treesitter.language.register('markdown', 'mdx')

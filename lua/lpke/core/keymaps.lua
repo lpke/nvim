@@ -20,8 +20,6 @@ helpers.keymap_set_multi({
   -- High-level maps
   {'i', '<S-Tab>', '<Esc><<I', { desc = 'Unindent' }},
   {'nvi', '<C-s>', function() vim.cmd('w'); pcall(function() require('lualine').refresh() end) end, { desc = 'Save buffer' }},
-  {'nC', '<BS>ii', 'Inspect', { desc = 'Inspect highlight group under cursor' }},
-  {'nC', '<BS>iI', 'InspectTree', { desc = 'Open parsed syntax tree' }},
   {'c', '<Esc>', '<C-c>', { desc = 'Exit cmd-line with ctrl+c' }},
   {'i', '<C-c>', '<Esc>', { desc = 'Exit insert mode with ctrl+c, but still trigger `InsertLeave` autocmds' }},
 
