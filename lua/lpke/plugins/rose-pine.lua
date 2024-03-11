@@ -12,6 +12,7 @@ local ec = {
   overlayplus = '#3c3852',
   growth = '#64a6a5',
   growthminus = '#9fc6c6',
+  irisplus = '#dcc2ff',
   irisminus = '#9979c3',
   lovefaded = '#b25774',
   goldfaded = '#ba9360',
@@ -92,6 +93,9 @@ local function config()
       TabLineFill = { bg = 'surface' }, -- Non-text area
       TabLine = { fg = 'subtle', bg = 'surface' }, -- Un-selected tab
       TabLineSel = { fg = ec.textminus, bg = ec.overlaybump, bold = false }, -- Selected tab
+      CurSearch = { fg = 'base', bg = ec.irisplus },
+      IncSearch = { link = 'CurSearch' },
+      Substitute = { fg = 'base', bg = 'love' },
 
       -- vim syntax highlight groups (inherited in treesitter config file for `@` groups)
       Keyword = { fg = 'pine', italic = true },
