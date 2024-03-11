@@ -96,6 +96,7 @@ local function config()
       CurSearch = { fg = 'base', bg = ec.irisplus },
       IncSearch = { link = 'CurSearch' },
       Substitute = { fg = 'base', bg = 'love' },
+      MatchParen = { fg = ec.growth, bg = ec.growthminus, blend = 15 },
 
       -- vim syntax highlight groups (inherited in treesitter config file for `@` groups)
       Keyword = { fg = 'pine', italic = true },
