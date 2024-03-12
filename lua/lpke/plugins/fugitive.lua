@@ -43,6 +43,7 @@ local function config()
   helpers.keymap_set_multi({
     {'nv', '<leader>i', function() Lpke_toggle_git_fugitive(true) end, { desc = 'Git: Toggle fugitive window (new tab)' }},
     {'nv', '<leader>I', Lpke_toggle_git_fugitive, { desc = 'Git: Toggle fugitive window' }},
+    {'nC', '<leader>gb', 'Git blame', { desc = 'Git: Open blame panel' }},
   })
   -- stylua: ignore end
 end
