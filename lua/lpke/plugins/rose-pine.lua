@@ -102,6 +102,7 @@ local function config()
       Keyword = { fg = 'pine', italic = true },
       Type = { fg = ec.growth },
       Tag = { fg = ec.growth },
+      Structure = { fg = ec.growth },
 
       -- custom highlight groups
       LpkeTabLineZoom = { fg = ec.irisfaded, bg = 'surface' },
