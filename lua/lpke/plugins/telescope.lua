@@ -52,6 +52,13 @@ local function config()
     builtin.quickfix()
   end
 
+  local function force_delete_selected_bufs(bufnr)
+    helpers.telescope_sel_foreach(bufnr, function(sel)
+      vim.api.nvim_buf_delete(sel.bufnr, { force = true })
+    end)
+    builtin.buffers()
+  end
+
   local function remove_selected_from_harpoon(bufnr)
     helpers.telescope_sel_foreach(bufnr, function(sel)
       local filename = sel.value.filename and sel.value.filename or sel.filename
@@ -358,6 +365,7 @@ local function config()
         mappings = {
           n = {
             ['dD'] = actions.delete_buffer,
+            ['dxD'] = force_delete_selected_bufs,
             ['dX'] = function()
               Lpke_clean_buffers()
               builtin.buffers()
