@@ -207,6 +207,8 @@ local function config()
   })
 
   -- diagnostics filter
+  -- TODO: this does not seem to include `eslint-lsp` diagnostics - need to add
+  -- this wherever that can be as well
   local function filter_diagnostics(diag) -- diag.source, diag.message, diag.code
     -- current line diagnostics (not including `diag`)
     local ldiag =
@@ -225,7 +227,7 @@ local function config()
         if type(item) ~= 'table' then
           return false
         end
-        return item.source == 'eslint_d'
+        return item.source == 'eslint_d' -- deprecated: `eslint_d` linter replaced with `eslint-lsp` (mason)
       end)
 
       -- handle TS/eslint diagnostic double-ups
@@ -272,6 +274,17 @@ local function config()
         preferences = {
           importModuleSpecifierPreference = 'non-relative', -- use absolute/non-relative import paths if possible
           importModuleSpecifierEnding = 'minimal', -- shorten path ending if possible (omit `.ts` etc)
+        },
+      },
+    },
+    -- defaults: https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#eslint
+    eslint = {
+      settings = {
+        rulesCustomizations = {
+          {
+            rule = '*no-unused-vars',
+            severity = 'off',
+          },
         },
       },
     },

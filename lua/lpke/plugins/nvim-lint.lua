@@ -5,10 +5,11 @@ local function config()
   local helpers = require('lpke.core.helpers')
 
   lint.linters_by_ft = {
-    javascript = { 'eslint_d' },
-    typescript = { 'eslint_d' },
-    javascriptreact = { 'eslint_d' },
-    typescriptreact = { 'eslint_d' },
+    -- uncomment if you want to use `eslint_d` instead of `eslint-lsp`:
+    -- javascript = { 'eslint_d' },
+    -- typescript = { 'eslint_d' },
+    -- javascriptreact = { 'eslint_d' },
+    -- typescriptreact = { 'eslint_d' },
     python = { 'pylint' },
   }
 

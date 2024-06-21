@@ -431,7 +431,7 @@ local function config()
             end
           end,
         },
-        -- linter status
+        -- linter status (only for "linters" - see mason <BS>im -> Linter)
         {
           function()
             return 'T'

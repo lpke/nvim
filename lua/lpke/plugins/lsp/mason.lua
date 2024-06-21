@@ -35,7 +35,7 @@ local function config()
   mason_tool_installer.setup({
     ensure_installed = {
       'prettier',
-      'eslint_d', -- js linter
+      'eslint-lsp', -- (updated from `eslint_d`)
       'stylua', -- lua formatter
       'isort', -- python formatter
       'black', -- python formatter
