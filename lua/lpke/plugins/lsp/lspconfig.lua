@@ -285,6 +285,10 @@ local function config()
             rule = '*no-unused-vars',
             severity = 'off',
           },
+          {
+            rule = 'prettier/prettier',
+            severity = 'warn',
+          },
         },
       },
     },
