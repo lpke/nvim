@@ -3,20 +3,20 @@ Lpke_diagnostics_enabled_initial = true
 Lpke_diagnostics_enabled_prev = nil
 function Lpke_toggle_diagnostics(choice)
   -- getting and storing current state
-  local enabled = not vim.diagnostic.is_disabled()
+  local enabled = vim.diagnostic.is_enabled()
   Lpke_diagnostics_enabled_prev = enabled
 
   -- manual choice
   if choice ~= nil then
     if choice == false then
-      pcall(vim.diagnostic.disable)
+      pcall(vim.diagnostic.enable, false)
     elseif choice == true then
       pcall(vim.diagnostic.enable)
     elseif choice == 'prev' then
       if Lpke_diagnostics_enabled_prev == true then
         pcall(vim.diagnostic.enable)
       else
-        pcall(vim.diagnostic.disable)
+        pcall(vim.diagnostic.enable, false)
       end
     else
       print(
@@ -36,7 +36,7 @@ function Lpke_toggle_diagnostics(choice)
 
   -- toggle based on previous state
   if enabled then
-    pcall(vim.diagnostic.disable)
+    pcall(vim.diagnostic.enable, false)
   else
     pcall(vim.diagnostic.enable)
   end
@@ -252,9 +252,9 @@ local function config()
     ),
     ['textDocument/publishDiagnostics'] = vim.lsp.with(
       -- injecting custom code to allow filtering/control of diagnostic messages
-      function(a, params, client_id, c, conf)
-        helpers.arr_filter_inplace(params.diagnostics, filter_diagnostics) -- custom part
-        vim.lsp.diagnostic.on_publish_diagnostics(a, params, client_id, c, conf) -- default part
+      function(err, result, context, conf)
+        helpers.arr_filter_inplace(result.diagnostics, filter_diagnostics) -- custom part
+        vim.lsp.diagnostic.on_publish_diagnostics(err, result, context, conf) -- default part
       end,
       {
         -- ensure that signs are sorted in sign column (errors on top)
