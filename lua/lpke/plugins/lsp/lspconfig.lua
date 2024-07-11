@@ -282,6 +282,10 @@ local function config()
       settings = {
         rulesCustomizations = {
           {
+            rule = '*exhaustive-deps',
+            severity = 'off',
+          },
+          {
             rule = '*no-unused-vars',
             severity = 'off',
           },
