@@ -9,7 +9,7 @@ local function config()
   local fb_actions = require('telescope._extensions.file_browser.actions')
   local fb_settings =
     require('lpke.plugins.telescope-file-browser').telescope_settings
-  local session_actions = require('auto-session.session-lens.actions')
+  -- local session_actions = require('auto-session.session-lens.actions')
 
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
@@ -293,7 +293,7 @@ local function config()
             local prompt_title =
               actions_state.get_current_picker(bufnr).prompt_title
             if prompt_title == 'Sessions' then -- delete session
-              session_actions.delete_session(bufnr)
+              -- session_actions.delete_session(bufnr)
             elseif prompt_title == 'Quickfix' then -- remove qflist items
               remove_selected_from_qflist(bufnr)
             elseif prompt_title == 'harpoon marks' then -- remove harpoon
@@ -428,7 +428,7 @@ local function config()
   })
 
   -- extensions
-  telescope.load_extension('session-lens')
+  -- telescope.load_extension('session-lens')
   telescope.load_extension('fzf')
   telescope.load_extension('file_browser')
   telescope.load_extension('harpoon')
