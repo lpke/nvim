@@ -1,3 +1,16 @@
+-- workaround since breaking change where this can't be accessed with:
+-- require('auto-session.session-lens.actions').delete_session()
+local function delete_session(bufnr)
+  local auto_session = require('auto-session')
+  local action_state = require('telescope.actions.state')
+  local current_picker = action_state.get_current_picker(bufnr)
+  current_picker:delete_selection(function(selection)
+    if selection then
+      auto_session.DeleteSessionFile(selection.path, selection.display())
+    end
+  end)
+end
+
 local function config()
   local telescope = require('telescope')
   local actions = require('telescope.actions')
@@ -9,7 +22,6 @@ local function config()
   local fb_actions = require('telescope._extensions.file_browser.actions')
   local fb_settings =
     require('lpke.plugins.telescope-file-browser').telescope_settings
-  -- local session_actions = require('auto-session.session-lens.actions')
 
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
@@ -293,7 +305,7 @@ local function config()
             local prompt_title =
               actions_state.get_current_picker(bufnr).prompt_title
             if prompt_title == 'Sessions' then -- delete session
-              -- session_actions.delete_session(bufnr)
+              delete_session(bufnr)
             elseif prompt_title == 'Quickfix' then -- remove qflist items
               remove_selected_from_qflist(bufnr)
             elseif prompt_title == 'harpoon marks' then -- remove harpoon
@@ -428,7 +440,6 @@ local function config()
   })
 
   -- extensions
-  -- telescope.load_extension('session-lens')
   telescope.load_extension('fzf')
   telescope.load_extension('file_browser')
   telescope.load_extension('harpoon')
