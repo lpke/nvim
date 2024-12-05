@@ -269,7 +269,7 @@ local function config()
   -- server = { ...setup table }
   local servers = {
     html = {},
-    ts_ls = {
+    ts_ls = { -- formerly: `tsserver`
       init_options = {
         preferences = {
           importModuleSpecifierPreference = 'non-relative', -- use absolute/non-relative import paths if possible

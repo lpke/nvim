@@ -21,7 +21,7 @@ local function config()
       'html',
       'cssls',
       'tailwindcss',
-      'ts_ls',
+      'ts_ls', -- formerly: `tsserver`
       'jsonls',
       'graphql',
       'lua_ls',
