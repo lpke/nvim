@@ -287,11 +287,12 @@ local function config()
       },
       ignore_focus = {},
       always_divide_middle = false,
-      globalstatus = false,
+      -- FIXME: this should be false, but it's a workaround to a flicker bug
+      globalstatus = true,
       refresh = {
-        statusline = 1000,
-        tabline = 1000,
-        winbar = 1000,
+        statusline = 100,
+        tabline = 100,
+        winbar = 100,
       },
     },
     sections = {
