@@ -43,8 +43,10 @@ local function config()
       big = 15,
     },
 
-    useDefaultKeymaps = false,
-    disabledKeymaps = {},
+    keymaps = {
+      useDefaults = false,
+      disabledDefaults = {},
+    },
   })
 end
 
