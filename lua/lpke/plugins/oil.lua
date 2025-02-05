@@ -73,7 +73,34 @@ local function config()
       ['<C-c>'] = 'actions.close',
       ['<C-l>'] = 'actions.refresh',
       -- navigation
-      ['<CR>'] = 'actions.select',
+      ['<CR>'] = {
+        callback = function()
+          if vim.env.IN_VSCODE then
+            local dir = oil.get_current_dir()
+            local entry = oil.get_cursor_entry()
+            if entry then
+              local fullpath = dir .. entry.name
+              vim.fn.jobstart({ 'cursor', '-r', fullpath })
+            end
+          else
+            oil.select()
+          end
+        end,
+        desc = 'Open file normally, or run "cursor -r" if IN_VSCODE is set',
+        mode = 'n',
+      },
+      ['<leader><CR>'] = {
+        callback = function()
+          local dir = oil.get_current_dir()
+          local entry = oil.get_cursor_entry()
+          if entry then
+            local fullpath = dir .. entry.name
+            vim.fn.jobstart({ 'cursor', '-r', fullpath })
+          end
+        end,
+        desc = 'Run "cursor -r" on selected entry',
+        mode = 'n',
+      },
       ['-'] = 'actions.parent',
       ['gd'] = 'actions.open_cwd',
       ['gh'] = {
