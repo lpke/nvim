@@ -135,6 +135,7 @@ local function config()
       },
       -- view/toggles
       ['<F2>p'] = 'actions.preview',
+      ['<A-p>'] = 'actions.preview',
       ['gs'] = 'actions.change_sort',
       ['g.'] = 'actions.toggle_hidden',
       ['g\\'] = 'actions.toggle_trash',
