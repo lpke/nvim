@@ -13,7 +13,11 @@ local function config()
     end, { desc = 'Luasnip: Expand snippet' }},
     {'inv!', [[<F2>']], function() pcall(function() ls.jump(1) end) end,
       { desc = 'Luasnip: Jump forward in snippet' }},
+    {'inv!', [[<A-'>]], function() pcall(function() ls.jump(1) end) end,
+      { desc = 'Luasnip: Jump forward in snippet' }},
     {'inv!', [[<F2>"]], function() pcall(function() ls.jump(-1) end) end,
+      { desc = 'Luasnip: Jump backward in snippet' }},
+    {'inv!', [[<A-">]], function() pcall(function() ls.jump(-1) end) end,
       { desc = 'Luasnip: Jump backward in snippet' }},
   })
   -- stylua: ignore end

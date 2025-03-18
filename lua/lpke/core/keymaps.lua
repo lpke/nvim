@@ -16,6 +16,7 @@ helpers.keymap_set_multi({
   {'n', '<BS>', ''}, -- no BS after <BS>
   {'n', 'Q', ''}, -- use @@ instead
   {'ic', '<F2><CR>', ''}, -- used for cmp completion
+  {'ic', '<A-<CR>>', ''}, -- used for cmp completion
 
   -- High-level maps
   {'i', '<S-Tab>', '<Esc><<I', { desc = 'Unindent' }},
@@ -57,17 +58,24 @@ helpers.keymap_set_multi({
   {'nC', '<BS>r', 'Ranger', { desc = 'Open a floating ranger window' }},
   {'nC', '<BS>R', 'Ranger full', { desc = 'Open a floating ranger window (fullscreen)' }},
   {'t', '<F2>;', '<C-\\><C-n>', { desc = 'Enter vim normal mode from terminal' }},
+  {'t', '<A-;>', '<C-\\><C-n>', { desc = 'Enter vim normal mode from terminal' }},
   {'t', '<F2>:', '<C-\\><C-n>:', { desc = 'Enter vim cmd-line from terminal' }},
+  {'t', '<A-:>', '<C-\\><C-n>:', { desc = 'Enter vim cmd-line from terminal' }},
   {'t', '<F2>/', helpers.stop_term, { desc = 'Kill and close active terminal' }},
+  {'t', '<A-/>', helpers.stop_term, { desc = 'Kill and close active terminal' }},
 
   -- Toggle UI/features
   {'nvC!', '<F2>w', 'set wrap!', { desc = 'Toggle line wrap' }},
+  {'nvC!', '<A-w>', 'set wrap!', { desc = 'Toggle line wrap' }},
   {'nvC', '<F2>r', 'set relativenumber!', { desc = 'Toggle relative numbers' }},
+  {'nvC', '<A-r>', 'set relativenumber!', { desc = 'Toggle relative numbers' }},
   -- FIXME: disabled due to lualine bug requiring me to set `globalstatue = true`
   -- {'n', '<F2>e', function() helpers.toggle_global_status() end,
   --   { desc = 'Toggle global status line' }},
   {'n!', '<F2>W', function() helpers.toggle_whitespace_hl(options.custom_opts.whitespace_hl) end,
-    { desc = 'Toggle show whitespace' }},
+    { desc = 'Toggle visible whitespace' }},
+  {'n!', '<A-W>', function() helpers.toggle_whitespace_hl(options.custom_opts.whitespace_hl) end,
+    { desc = 'Toggle visible whitespace' }},
 
   -- Fold management
   {'nv', 'zo', 'za', { desc = 'Toggle fold under cursor' }},
@@ -75,8 +83,11 @@ helpers.keymap_set_multi({
 
   -- buffer navigation
   {'nviC', '<F2><Down>', 'bnext', { desc = 'Next buffer' }},
+  {'nviC', '<A-<Down>>', 'bnext', { desc = 'Next buffer' }},
   {'nviC', '<F2><Up>', 'bprev', { desc = 'Previous buffer' }},
+  {'nviC', '<A-<Up>>', 'bprev', { desc = 'Previous buffer' }},
   {'nvC', '<F2><BS>', 'bdelete', { desc = 'Delete buffer' }},
+  {'nvC', '<A-<BS>>', 'bdelete', { desc = 'Delete buffer' }},
 
   -- window control
   -- creation / deletion
@@ -94,11 +105,16 @@ helpers.keymap_set_multi({
   {'nC', '<C-w>QZ', 'lua require("auto-session").DisableAutoSave() ; vim.cmd("wqa")', { desc = 'Write and quit all without auto-saving session (:wqa)' }},
   -- copy/pasting/rotating buffers
   {'nC', '<F2>y', 'lua Lpke_copy_buffer()', { desc = 'Yank current buffer details' }},
+  {'nC', '<A-y>', 'lua Lpke_copy_buffer()', { desc = 'Yank current buffer details' }},
   {'nC', '<F2>p', 'lua Lpke_paste_buffer()', { desc = 'Paste yanked buffer details' }},
+  {'nC', '<A-p>', 'lua Lpke_paste_buffer()', { desc = 'Paste yanked buffer details' }},
   {'n', '<F2>O', '<C-w>r', { desc = 'Rotate windows in current split' }},
+  {'n', '<A-O>', '<C-w>r', { desc = 'Rotate windows in current split' }},
   -- copy/pasting layout
   {'nC', '<F2>Y', 'lua Lpke_copy_layout()', { desc = 'Yank current tab layout' }},
+  {'nC', '<A-Y>', 'lua Lpke_copy_layout()', { desc = 'Yank current tab layout' }},
   {'nC', '<F2>P', 'lua Lpke_paste_layout()', { desc = 'Paste current tab layout' }},
+  {'nC', '<A-P>', 'lua Lpke_paste_layout()', { desc = 'Paste current tab layout' }},
   -- navigation
   {'nv', '<F2>h', '<C-w>h', { desc = 'Focus window left' }},
   {'nv', '<F2>j', '<C-w>j', { desc = 'Focus window down' }},
@@ -119,13 +135,19 @@ helpers.keymap_set_multi({
   {'i', '<A-l>', '<Esc><C-w>l', { desc = 'Focus window right' }},
   -- resizing
   {'nv', '<F2>K', '<C-w>+<C-w>+<C-w>+', { desc = 'Increase window height' }},
+  {'nv', '<A-K>', '<C-w>+<C-w>+<C-w>+', { desc = 'Increase window height' }},
   {'nv', '<F2>J', '<C-w>-<C-w>-<C-w>-', { desc = 'Decrease window height' }},
+  {'nv', '<A-J>', '<C-w>-<C-w>-<C-w>-', { desc = 'Decrease window height' }},
   {'nv', '<F2>H', '<C-w><<C-w><<C-w><', { desc = 'Decrease window width' }},
+  {'nv', '<A-H>', '<C-w><<C-w><<C-w><', { desc = 'Decrease window width' }},
   {'nv', '<F2>L', '<C-w>><C-w>><C-w>>', { desc = 'Increase window width' }},
+  {'nv', '<A-L>', '<C-w>><C-w>><C-w>>', { desc = 'Increase window width' }},
   -- zooming
   {'nC', '<C-w>s', 'lua Lpke_win_zoom_toggle()', { desc = '"Zoom" current window horizontally and vertically' }},
   {'nC', '<F2>s', 'lua Lpke_win_zoom_toggle()', { desc = 'Toggle current window "zoom" state' }},
+  {'nC', '<A-s>', 'lua Lpke_win_zoom_toggle()', { desc = 'Toggle current window "zoom" state' }},
   {'n', '<F2>;', '<C-w>=', { desc = 'Equalise split windows' }},
+  {'n', '<A-;>', '<C-w>=', { desc = 'Equalise split windows' }},
 
   -- tab control
   -- creation / deletion
@@ -140,7 +162,9 @@ helpers.keymap_set_multi({
   {'nv', '<C-w><Right>', 'gt', { desc = 'Next Tab (right)' }},
   {'nv', '<C-w><Left>', 'gT', { desc = 'Previous Tab (left)' }},
   {'nviC', '<F2><Right>', 'tabnext', { desc = 'Next Tab (right)' }},
+  {'nviC', '<A-<Right>>', 'tabnext', { desc = 'Next Tab (right)' }},
   {'nviC', '<F2><Left>', 'tabprevious', { desc = 'Previous Tab (left)' }},
+  {'nviC', '<A-<Left>>', 'tabprevious', { desc = 'Previous Tab (left)' }},
   -- moving
   {'nC', '<C-w>g<Right>', 'tabmove +1', { desc = 'Move Tab Right' }},
   {'nC', '<C-w>g<Left>', 'tabmove -1', { desc = 'Move Tab Left' }},

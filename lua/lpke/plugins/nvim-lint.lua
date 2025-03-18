@@ -59,6 +59,7 @@ local function config()
   -- keymaps
   helpers.keymap_set_multi({
     {'nv', '<F2>t', Lpke_toggle_linting, { desc = 'Toggle linting globally' }},
+    {'nv', '<A-t>', Lpke_toggle_linting, { desc = 'Toggle linting globally' }},
     {'nv', '<leader>L', lint.try_lint, { desc = 'Trigger linting for current file' }},
   })
 end

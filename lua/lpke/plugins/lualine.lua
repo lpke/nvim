@@ -516,12 +516,19 @@ local function config()
   -- keymaps when using lualine
   helpers.keymap_set_multi({
     { 'n', '<F2>D', function() Lpke_show_cwd = not Lpke_show_cwd refresh() end, { desc = 'Lualine: Toggle cwd' }},
+    { 'n', '<A-D>', function() Lpke_show_cwd = not Lpke_show_cwd refresh() end, { desc = 'Lualine: Toggle cwd' }},
     { 'n', '<F2>A', function() Lpke_show_harpoon = not Lpke_show_harpoon refresh() end, { desc = 'Lualine: Toggle harpoon index' }},
+    { 'n', '<A-A>', function() Lpke_show_harpoon = not Lpke_show_harpoon refresh() end, { desc = 'Lualine: Toggle harpoon index' }},
     { 'n', '<F2>F', function() Lpke_full_path = not Lpke_full_path refresh() end, { desc = 'Lualine: Toggle file path' }},
+    { 'n', '<A-F>', function() Lpke_full_path = not Lpke_full_path refresh() end, { desc = 'Lualine: Toggle file path' }},
     { 'n', '<F2>E', function() Lpke_show_encoding = not Lpke_show_encoding refresh() end, { desc = 'Lualine: Toggle encoding info' }},
+    { 'n', '<A-E>', function() Lpke_show_encoding = not Lpke_show_encoding refresh() end, { desc = 'Lualine: Toggle encoding info' }},
     { 'n', '<F2>S', function() Lpke_show_session = not Lpke_show_session refresh() end, { desc = 'Lualine: Toggle session name' }},
+    { 'n', '<A-S>', function() Lpke_show_session = not Lpke_show_session refresh() end, { desc = 'Lualine: Toggle session name' }},
     { 'n', '<F2>G', function() Lpke_show_git = not Lpke_show_git refresh() end, { desc = 'Lualine: Toggle all git info' }},
+    { 'n', '<A-G>', function() Lpke_show_git = not Lpke_show_git refresh() end, { desc = 'Lualine: Toggle all git info' }},
     { 'n', '<F2>g', function() Lpke_show_git_branch = not Lpke_show_git_branch refresh() end, { desc = 'Lualine: Toggle git branch display' }},
+    { 'n', '<A-g>', function() Lpke_show_git_branch = not Lpke_show_git_branch refresh() end, { desc = 'Lualine: Toggle git branch display' }},
   })
   -- stylua: ignore end
 end

@@ -19,7 +19,9 @@ local function config()
     {'nC', '-', 'Oil', { desc = 'Open Oil File Browser' }},
     -- open in a new split (neovim-wide)
     {'nC', '<F2>>', 'vsplit | Oil', { desc = 'Open Oil File Browser at current location (v split)' }},
+    {'nC', '<A->>', 'vsplit | Oil', { desc = 'Open Oil File Browser at current location (v split)' }},
     {'nC', '<F2><', 'split | Oil', { desc = 'Open Oil File Browser at current location (h split)' }},
+    {'nC', '<A-<>>', 'split | Oil', { desc = 'Open Oil File Browser at current location (h split)' }},
   })
   -- stylua: ignore end
 
@@ -141,17 +143,34 @@ local function config()
       ['g\\'] = 'actions.toggle_trash',
       -- new window
       ['<F2>.'] = 'actions.select_vsplit',
+      ['<A-.>'] = 'actions.select_vsplit',
       ['<F2>,'] = 'actions.select_split',
+      ['<A-,>'] = 'actions.select_split',
       ['<F2>n'] = 'actions.select_tab',
+      ['<A-n>'] = 'actions.select_tab',
       -- override default bind for this to keep oil at same dir when splitting from within oil
       ['<F2>>'] = {
+        desc = 'Open Oil File Browser (v split)',
         callback = function()
           vim.cmd('vsplit')
         end,
+        mode = 'n',
+      },
+      ['<A->>'] = {
         desc = 'Open Oil File Browser (v split)',
+        callback = function()
+          vim.cmd('vsplit')
+        end,
         mode = 'n',
       },
       ['<F2><'] = {
+        callback = function()
+          vim.cmd('split')
+        end,
+        desc = 'Open Oil File Browser (h split)',
+        mode = 'n',
+      },
+      ['<A-<>'] = {
         callback = function()
           vim.cmd('split')
         end,

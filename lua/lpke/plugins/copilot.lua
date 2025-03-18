@@ -117,6 +117,7 @@ local function config()
   -- stylua: ignore start
   helpers.keymap_set_multi({
     {'nv', '<F2>C', Lpke_toggle_copilot, { desc = 'Toggle copilot for all buffers' }},
+    {'nv', '<A-C>', Lpke_toggle_copilot, { desc = 'Toggle copilot for all buffers' }},
     {'i', '<F2>.', function()
       local is_attached = client.buf_is_attached(0)
       if not is_attached then
@@ -138,6 +139,7 @@ local function config()
         accept = '<CR>',
         refresh = 'gr',
         open = '<F2>/',
+        open = '<A-/>',
       },
       layout = {
         position = 'bottom', -- | top | left | right
@@ -150,11 +152,14 @@ local function config()
       debounce = 75,
       keymap = {
         accept = '<F2>;',
+        accept = '<A-;>',
         accept_word = false,
         accept_line = false,
         next = false, -- handled manually in keymaps above
         prev = '<F2>>',
+        prev = '<A->>',
         dismiss = '<F2>c',
+        dismiss = '<A-c>',
       },
     },
     filetypes = {

@@ -155,8 +155,11 @@ local function config()
       -- info/toggle/reload
       {'nC', '<BS>ip', 'LspInfo', opts('Open LSP info window')},
       {'nv', '<F2>d', Lpke_toggle_diagnostics, opts('Toggle diagnostics visibility globally')},
+      {'nv', '<A-d>', Lpke_toggle_diagnostics, opts('Toggle diagnostics visibility globally')},
       {'nv', '<F2>v', Lpke_toggle_diagnostics_virtual_text, opts('Toggle diagnostics virtual text brightness globally')},
+      {'nv', '<A-v>', Lpke_toggle_diagnostics_virtual_text, opts('Toggle diagnostics virtual text brightness globally')},
       {'nv', '<F2>V', Lpke_toggle_diagnostics_hl, opts('Toggle diagnostics highlighting globally')},
+      {'nv', '<A-V>', Lpke_toggle_diagnostics_hl, opts('Toggle diagnostics highlighting globally')},
       {'nC', '<leader>R', 'LspRestart', opts('Restart LSP')},
 
       -- smart actions

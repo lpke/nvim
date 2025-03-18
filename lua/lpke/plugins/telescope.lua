@@ -187,8 +187,11 @@ local function config()
           -- OPENING FILES
           ['<CR>'] = actions.select_default,
           ['<F2>.'] = actions.file_vsplit,
+          ['<A-.>'] = actions.file_vsplit,
           ['<F2>,'] = actions.file_split,
+          ['<A-,>'] = actions.file_split,
           ['<F2>n'] = actions.file_tab,
+          ['<A-n>'] = actions.file_tab,
 
           -- RESULTS NAVIGATION
           ['<C-j>'] = function(bufnr)
@@ -204,6 +207,7 @@ local function config()
           -- ['<C-h>'] = actions.preview_scrolling_left,
           -- ['<C-l>'] = actions.preview_scrolling_right,
           ['<F2>p'] = actions_layout.toggle_preview,
+          ['<A-p>'] = actions_layout.toggle_preview,
 
           -- SELECTIONS
           ['<Tab>'] = function(bufnr)
@@ -229,8 +233,11 @@ local function config()
           -- OPENING FILES
           ['<CR>'] = actions.select_default,
           ['<F2>.'] = actions.file_vsplit,
+          ['<A-.>'] = actions.file_vsplit,
           ['<F2>,'] = actions.file_split,
+          ['<A-,>'] = actions.file_split,
           ['<F2>n'] = actions.file_tab,
+          ['<A-n>'] = actions.file_tab,
 
           -- SEARCHING
           ['/'] = { 'i', type = 'command' },
@@ -259,7 +266,9 @@ local function config()
 
           -- LAYOUT CONTROL
           ['<F2>p'] = actions_layout.toggle_preview,
+          ['<A-p>'] = actions_layout.toggle_preview,
           ['<F2>O'] = actions_layout.toggle_mirror,
+          ['<A-O>'] = actions_layout.toggle_mirror,
 
           -- SELECTIONS
           ['<Tab>'] = function(bufnr)

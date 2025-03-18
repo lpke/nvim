@@ -94,6 +94,12 @@ local function config()
       Lpke_toggle_auto_cmp,
       { desc = 'Toggle automatic cmp menu display when typing' },
     },
+    {
+      'ni',
+      '<A-m>',
+      Lpke_toggle_auto_cmp,
+      { desc = 'Toggle automatic cmp menu display when typing' },
+    },
   })
 
   -- CMP SETUP: GENERAL/INSERT
@@ -117,6 +123,7 @@ local function config()
     -- keymaps - editor
     mapping = {
       ['<F2>,'] = cmp.mapping.complete(),
+      ['<A-,>'] = cmp.mapping.complete(),
 
       -- completion menu
       ['<Up>'] = cmp.mapping.select_prev_item(),
@@ -124,13 +131,18 @@ local function config()
       ['<C-p>'] = cmp.mapping.select_prev_item(),
       ['<C-n>'] = cmp.mapping.select_next_item(),
       ['<F2>p'] = cmp.mapping.select_prev_item(),
+      ['<A-p>'] = cmp.mapping.select_prev_item(),
       ['<F2>n'] = cmp.mapping.select_next_item(),
+      ['<A-n>'] = cmp.mapping.select_next_item(),
 
       -- preview/'docs' window
       ['<C-k>'] = cmp.mapping.scroll_docs(-4),
       ['<C-j>'] = cmp.mapping.scroll_docs(4),
       -- confim/abort
       ['<F2><CR>'] = cmp.mapping.confirm({
+        select = true,
+      }),
+      ['<A-<CR>>'] = cmp.mapping.confirm({
         select = true,
       }),
       ['<C-c>'] = cmp.mapping.abort(),
@@ -203,6 +215,7 @@ local function config()
   -- CMP SETUP: COMMAND-LINE
   local cmdline_mapping = {
     ['<F2>,'] = { c = cmp.mapping.complete() },
+    ['<A-,>'] = { c = cmp.mapping.complete() },
 
     -- completion menu
     ['<Tab>'] = {
@@ -223,7 +236,9 @@ local function config()
     ['<C-n>'] = { c = cmp_mapping('v', cmp.select_next_item) },
     ['<C-p>'] = { c = cmp_mapping('v', cmp.select_prev_item) },
     ['<F2>j'] = { c = cmp_mapping('v', cmp.select_next_item) },
+    ['<A-j>'] = { c = cmp_mapping('v', cmp.select_next_item) },
     ['<F2>k'] = { c = cmp_mapping('v', cmp.select_prev_item) },
+    ['<A-k>'] = { c = cmp_mapping('v', cmp.select_prev_item) },
     -- preview/'docs' window
     ['<C-k>'] = {
       c = cmp_mapping('vd', function()
@@ -237,6 +252,11 @@ local function config()
     },
     -- confirm/abort
     ['<F2><CR>'] = {
+      c = cmp_mapping('', function()
+        cmp.confirm({ select = true })
+      end),
+    },
+    ['<A-<CR>>'] = {
       c = cmp_mapping('', function()
         cmp.confirm({ select = true })
       end),
