@@ -35,6 +35,7 @@ helpers.keymap_set_multi({
   {'nv', 'gg', 'gg0', { desc = 'Go to very start of buffer' }},
   {'nv', 'G', 'G$', { desc = 'Go to very end of buffer' }},
   {'n', 'Y', 'y$', { desc = 'Yank to end of line' }},
+  {'n', '<leader>Y', '"*y$', { desc = 'Global Yank to end of line' }},
   {'n', 'J', 'mzJ`z', { desc = 'Join lines (without moving cursor)' }},
   {'n', 'gJ', 'mzgJ`z', { desc = 'Join lines without modification (without moving cursor)' }},
   {'n', '<leader>J', 'mzgJi<Space><Esc>diW`z', { desc = 'Join lines without any spaces (without moving cursor)' }},

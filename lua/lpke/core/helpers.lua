@@ -1,6 +1,6 @@
 local E = {}
 
-E.is_wsl = vim.fn.exists('$WSL_DISTRO_NAME')
+E.is_wsl = vim.fn.exists('$WSL_DISTRO_NAME') == 1
 
 -- calls a function safely (non-breaking if error)
 function E.safe_call(func, silent, fallback)
