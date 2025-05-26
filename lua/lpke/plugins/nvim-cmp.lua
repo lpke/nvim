@@ -142,7 +142,7 @@ local function config()
       ['<F2><CR>'] = cmp.mapping.confirm({
         select = true,
       }),
-      ['<A-<CR>>'] = cmp.mapping.confirm({
+      ['<A-CR>'] = cmp.mapping.confirm({
         select = true,
       }),
       ['<C-c>'] = cmp.mapping.abort(),
@@ -256,7 +256,7 @@ local function config()
         cmp.confirm({ select = true })
       end),
     },
-    ['<A-<CR>>'] = {
+    ['<A-CR>'] = {
       c = cmp_mapping('', function()
         cmp.confirm({ select = true })
       end),

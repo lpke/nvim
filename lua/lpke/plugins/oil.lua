@@ -19,9 +19,9 @@ local function config()
     {'nC', '-', 'Oil', { desc = 'Open Oil File Browser' }},
     -- open in a new split (neovim-wide)
     {'nC', '<F2>>', 'vsplit | Oil', { desc = 'Open Oil File Browser at current location (v split)' }},
-    {'nC', '<A->>', 'vsplit | Oil', { desc = 'Open Oil File Browser at current location (v split)' }},
+    {'nC', '<A->>', 'vsplit | Oil', { desc = 'Open Oil File Browser at current location (v split)' }}, -- FIXME
     {'nC', '<F2><', 'split | Oil', { desc = 'Open Oil File Browser at current location (h split)' }},
-    {'nC', '<A-<>>', 'split | Oil', { desc = 'Open Oil File Browser at current location (h split)' }},
+    {'nC', '<A-<>>', 'split | Oil', { desc = 'Open Oil File Browser at current location (h split)' }}, -- FIXME
   })
   -- stylua: ignore end
 
@@ -169,7 +169,7 @@ local function config()
         end,
         mode = 'n',
       },
-      ['<A->>'] = {
+      ['<A->>'] = { -- FIXME
         desc = 'Open Oil File Browser (v split)',
         callback = function()
           vim.cmd('vsplit')
@@ -183,7 +183,7 @@ local function config()
         desc = 'Open Oil File Browser (h split)',
         mode = 'n',
       },
-      ['<A-<>'] = {
+      ['<A-<>'] = { -- FIXME
         callback = function()
           vim.cmd('split')
         end,

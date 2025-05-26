@@ -16,11 +16,16 @@ helpers.keymap_set_multi({
   {'n', '<BS>', ''}, -- no BS after <BS>
   {'n', 'Q', ''}, -- use @@ instead
   {'ic', '<F2><CR>', ''}, -- used for cmp completion
-  {'ic', '<A-<CR>>', ''}, -- used for cmp completion
+  {'ic', '<A-CR>', ''}, -- used for cmp completion
+
+  -- MacOS cmd -> ctrl parity
+  {'n', '<D-o>', '<C-o>'},
+  {'n', '<D-i>', '<C-i>'},
 
   -- High-level maps
   {'i', '<S-Tab>', '<Esc><<I', { desc = 'Unindent' }},
   {'nvi', '<C-s>', function() vim.cmd('w'); pcall(function() require('lualine').refresh() end) end, { desc = 'Save buffer' }},
+  {'nvi', '<D-s>', function() vim.cmd('w'); pcall(function() require('lualine').refresh() end) end, { desc = 'Save buffer' }},
   {'c', '<Esc>', '<C-c>', { desc = 'Exit cmd-line with ctrl+c' }},
   {'i', '<C-c>', '<Esc>', { desc = 'Exit insert mode with ctrl+c, but still trigger `InsertLeave` autocmds' }},
 
@@ -38,7 +43,9 @@ helpers.keymap_set_multi({
   {'nv', '=*', 'mzgg=G`z', { desc = 'Indent entire file' }},
   {'nv', '=_', '==', { desc = 'Indent current line or selection only' }},
   {'nv', '<C-k>', '8k', { desc = 'Move up 8 lines' }},
+  {'nv', '<D-k>', '8k', { desc = 'Move up 8 lines' }},
   {'nv', '<C-j>', '8j', { desc = 'Move down 8 lines' }},
+  {'nv', '<D-j>', '8j', { desc = 'Move down 8 lines' }},
   {'nv', 'ze', 'zt8<C-y>', { desc = 'Centre cursor 8 lines below zt' }},
   {'nC', '<BS>L', 'botright copen', { desc = 'Open quick fix list' }},
   {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.'), 'text': getline('.')}], 'a')",
@@ -83,11 +90,11 @@ helpers.keymap_set_multi({
 
   -- buffer navigation
   {'nviC', '<F2><Down>', 'bnext', { desc = 'Next buffer' }},
-  {'nviC', '<A-<Down>>', 'bnext', { desc = 'Next buffer' }},
+  {'nviC', '<A-Down>', 'bnext', { desc = 'Next buffer' }},
   {'nviC', '<F2><Up>', 'bprev', { desc = 'Previous buffer' }},
-  {'nviC', '<A-<Up>>', 'bprev', { desc = 'Previous buffer' }},
+  {'nviC', '<A-Up>', 'bprev', { desc = 'Previous buffer' }},
   {'nvC', '<F2><BS>', 'bdelete', { desc = 'Delete buffer' }},
-  {'nvC', '<A-<BS>>', 'bdelete', { desc = 'Delete buffer' }},
+  {'nvC', '<A-BS>', 'bdelete', { desc = 'Delete buffer' }},
 
   -- window control
   -- creation / deletion
@@ -162,9 +169,9 @@ helpers.keymap_set_multi({
   {'nv', '<C-w><Right>', 'gt', { desc = 'Next Tab (right)' }},
   {'nv', '<C-w><Left>', 'gT', { desc = 'Previous Tab (left)' }},
   {'nviC', '<F2><Right>', 'tabnext', { desc = 'Next Tab (right)' }},
-  {'nviC', '<A-<Right>>', 'tabnext', { desc = 'Next Tab (right)' }},
+  {'nviC', '<A-Right>', 'tabnext', { desc = 'Next Tab (right)' }},
   {'nviC', '<F2><Left>', 'tabprevious', { desc = 'Previous Tab (left)' }},
-  {'nviC', '<A-<Left>>', 'tabprevious', { desc = 'Previous Tab (left)' }},
+  {'nviC', '<A-Left>', 'tabprevious', { desc = 'Previous Tab (left)' }},
   -- moving
   {'nC', '<C-w>g<Right>', 'tabmove +1', { desc = 'Move Tab Right' }},
   {'nC', '<C-w>g<Left>', 'tabmove -1', { desc = 'Move Tab Left' }},
@@ -179,9 +186,13 @@ helpers.keymap_set_multi({
 
   -- center cursor when down/up page
   {'nv', '<C-u>', 'M<C-u>zz', { desc = 'Move up half a screen (center cursor)' }},
+  {'nv', '<D-u>', 'M<C-u>zz', { desc = 'Move up half a screen (center cursor)' }},
   {'nv', '<C-d>', 'M<C-d>zz', { desc = 'Move down half a screen (center cursor)' }},
+  {'nv', '<D-d>', 'M<C-d>zz', { desc = 'Move down half a screen (center cursor)' }},
   {'nv', '<C-Up>', 'M4kzz', { desc = 'Move up 4 line (center cursor)' }},
+  {'nv', '<D-Up>', 'M4kzz', { desc = 'Move up 4 line (center cursor)' }},
   {'nv', '<C-Down>', 'M4jzz', { desc = 'Move down 4 line (center cursor)' }},
+  {'nv', '<D-Down>', 'M4jzz', { desc = 'Move down 4 line (center cursor)' }},
 
   -- center cursor when searching
   {'n', 'n', 'nzzzv', { desc = 'Next search result (center cursor)' }},
