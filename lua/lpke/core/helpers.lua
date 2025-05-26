@@ -78,6 +78,7 @@ function E.keymap_set(keymap)
   opts = E.merge_tables({ noremap = true }, opts or {})
   local modes = {}
   local delete_only = false
+  local mac_lhs = ''
 
   for char in mode:gmatch('.') do
     if char == 'R' then
@@ -90,6 +91,10 @@ function E.keymap_set(keymap)
       opts.silent = true
     elseif char == 'D' then
       delete_only = true
+    elseif char == 'M' then
+      if lhs:find('<C%-') then
+        mac_lhs = lhs:gsub('<C%-', '<D-')
+      end
     else
       table.insert(modes, char)
     end
@@ -97,8 +102,14 @@ function E.keymap_set(keymap)
 
   if delete_only then
     vim.keymap.del(modes, lhs, opts)
+    if mac_lhs ~= '' then
+      vim.keymap.del(modes, mac_lhs, opts)
+    end
   else
     vim.keymap.set(modes, lhs, rhs, opts)
+    if mac_lhs ~= '' then
+      vim.keymap.set(modes, mac_lhs, rhs, opts)
+    end
   end
 end
 
