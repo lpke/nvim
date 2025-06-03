@@ -57,11 +57,9 @@ local function config()
 
   -- keymaps
   helpers.keymap_set_multi({
-    {'nC', '<BS>im', 'Mason', { desc = 'Open Mason GUI' }},
+    { 'nC', '<BS>im', 'Mason', { desc = 'Open Mason GUI' } },
   })
-
 end
-
 
 return {
   'williamboman/mason.nvim',

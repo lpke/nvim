@@ -251,7 +251,7 @@ function E.repeat_function(func, args, count)
     end
   end
 
-  for i = 1, count do
+  for _i = 1, count do
     func(args)
   end
 end

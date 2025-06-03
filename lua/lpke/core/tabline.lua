@@ -25,7 +25,8 @@ function Lpke_tabline()
     local cur_bufnr = vim.api.nvim_win_get_buf(win_id)
     local raw_cur_bufname = helpers.get_buf_name(cur_bufnr)
     local cur_bufname = helpers.remove_protocol(raw_cur_bufname)
-    local file_type = vim.api.nvim_get_option_value('filetype', { buf = cur_bufnr })
+    local file_type =
+      vim.api.nvim_get_option_value('filetype', { buf = cur_bufnr })
     local tab_zoomed = Lpke_zoomed[tab_id]
 
     -- parse path into segments
@@ -37,16 +38,21 @@ function Lpke_tabline()
     local file_ext = vim.fn.fnamemodify(cur_bufname, ':e')
 
     -- handle modified
-    local cur_modified = vim.api.nvim_get_option_value('modified', { buf = cur_bufnr })
-      and (file_type ~= 'TelescopePrompt')
+    local cur_modified = vim.api.nvim_get_option_value(
+      'modified',
+      { buf = cur_bufnr }
+    ) and (file_type ~= 'TelescopePrompt')
     local has_modified = cur_modified
     local windows = vim.api.nvim_tabpage_list_wins(tab_id)
     if not cur_modified then
       for _, win in ipairs(windows) do
         local buf = vim.api.nvim_win_get_buf(win)
-        local is_modified = vim.api.nvim_get_option_value('modified', { buf = buf })
-        local is_telescope = vim.api.nvim_get_option_value('filetype', { buf = buf })
-          == 'TelescopePrompt'
+        local is_modified =
+          vim.api.nvim_get_option_value('modified', { buf = buf })
+        local is_telescope = vim.api.nvim_get_option_value(
+          'filetype',
+          { buf = buf }
+        ) == 'TelescopePrompt'
         if is_modified and not is_telescope then
           has_modified = true
           break
@@ -97,8 +103,13 @@ function Lpke_tabline()
     end
 
     -- handle readonly
-    local cur_readonly = vim.api.nvim_get_option_value('readonly', { buf = cur_bufnr })
-      or (not vim.api.nvim_get_option_value('modifiable', { buf = cur_bufnr }))
+    local cur_readonly = vim.api.nvim_get_option_value(
+      'readonly',
+      { buf = cur_bufnr }
+    ) or (not vim.api.nvim_get_option_value(
+      'modifiable',
+      { buf = cur_bufnr }
+    ))
 
     -- add this tab to string
     tabline = tabline
