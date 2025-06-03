@@ -1,6 +1,5 @@
 local function config()
   local helpers = require('lpke.core.helpers')
-  local fb = require('telescope').extensions.file_browser
 
   -- stylua: ignore start
   -- keymaps
@@ -19,12 +18,11 @@ local function telescope_settings(
   actions_state,
   actions_utils
 )
-  local helpers = require('lpke.core.helpers')
   return {
     initial_mode = 'normal',
     sorting_strategy = 'ascending',
-    path = vim.loop.cwd(),
-    cwd = vim.loop.cwd(),
+    path = vim.uv.cwd(),
+    cwd = vim.uv.cwd(),
     cwd_to_path = false,
     grouped = true,
     files = true,

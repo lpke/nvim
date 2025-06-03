@@ -1,6 +1,6 @@
 -- ensure lazy is installed, then initialise
 local lazy_path = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
-if not vim.loop.fs_stat(lazy_path) then
+if not vim.uv.fs_stat(lazy_path) then
   vim.fn.system({
     'git',
     'clone',
@@ -70,7 +70,7 @@ local lazy_options = {
 
 -- keymaps
 require('lpke.core.helpers').keymap_set_multi({
-  {'nC', '<BS>il', 'Lazy', { desc = 'Open lazy.nvim GUI' }},
+  { 'nC', '<BS>il', 'Lazy', { desc = 'Open lazy.nvim GUI' } },
 })
 
 -- setup lazy
