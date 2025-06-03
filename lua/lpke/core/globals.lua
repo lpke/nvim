@@ -431,7 +431,7 @@ function Lpke_new_float(opts)
   local win = vim.api.nvim_open_win(buf, true, options) -- attach buffer to floating window
 
   for k, v in pairs(win_opts) do
-    vim.api.nvim_win_set_option(win, k, v)
+    vim.api.nvim_set_option_value(k, v, { win = win })
   end
 
   return { buf = buf, win = win }
@@ -543,7 +543,8 @@ function Lpke_clean_buffers()
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if not active_bufs[buf] then
       -- dont unload if buffer has unsaved changes
-      local modifiable = vim.api.nvim_get_option_value('modifiable', { buf = buf })
+      local modifiable =
+        vim.api.nvim_get_option_value('modifiable', { buf = buf })
       local modified = vim.api.nvim_get_option_value('modified', { buf = buf })
       if (modifiable and not modified) or not modifiable then
         vim.api.nvim_buf_delete(buf, { force = false, unload = false })
