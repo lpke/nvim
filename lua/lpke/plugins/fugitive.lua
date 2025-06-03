@@ -1,27 +1,49 @@
 Lpke_fugitive_prev_win_id = nil
 function Lpke_toggle_git_fugitive(new_tab)
-  local windows = vim.api.nvim_tabpage_list_wins(0)
   local fugitive_open = false
   local fugitive_win = nil
+  local fugitive_tab = nil
 
   -- get window
-  for _, win in ipairs(windows) do
-    local bufnr = vim.api.nvim_win_get_buf(win)
-    local bufname = vim.api.nvim_buf_get_name(bufnr)
-    local filetype = vim.api.nvim_buf_get_option(bufnr, 'filetype')
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    local windows = vim.api.nvim_tabpage_list_wins(tab)
+    for _, win in ipairs(windows) do
+      local bufnr = vim.api.nvim_win_get_buf(win)
+      local bufname = vim.api.nvim_buf_get_name(bufnr)
+      local filetype =
+        vim.api.nvim_get_option_value('filetype', { buf = bufnr })
 
-    if (filetype == 'fugitive') and (bufname:match('^fugitive://')) then
-      fugitive_open = true
-      fugitive_win = win
+      if (filetype == 'fugitive') and (bufname:match('^fugitive://')) then
+        fugitive_open = true
+        fugitive_win = win
+        fugitive_tab = tab
+        break
+      end
+    end
+    if fugitive_open then
       break
     end
   end
 
   -- toggle
-  if fugitive_open then
-    vim.api.nvim_win_close(fugitive_win, false)
-    if Lpke_fugitive_prev_win_id then
-      vim.api.nvim_set_current_win(Lpke_fugitive_prev_win_id)
+  if
+    fugitive_open
+    and type(fugitive_win) == 'number'
+    and type(fugitive_tab) == 'number'
+  then
+    local current_win = vim.api.nvim_get_current_win()
+    local current_tab = vim.api.nvim_get_current_tabpage()
+
+    -- close if active
+    if fugitive_tab == current_tab and fugitive_win == current_win then
+      vim.api.nvim_win_close(fugitive_win, false)
+      if Lpke_fugitive_prev_win_id then
+        vim.api.nvim_set_current_win(Lpke_fugitive_prev_win_id)
+      end
+    else
+      -- focus if not active
+      vim.api.nvim_set_current_tabpage(fugitive_tab)
+      vim.api.nvim_set_current_win(fugitive_win)
     end
   else
     Lpke_fugitive_prev_win_id = vim.api.nvim_get_current_win()

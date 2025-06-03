@@ -543,8 +543,8 @@ function Lpke_clean_buffers()
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if not active_bufs[buf] then
       -- dont unload if buffer has unsaved changes
-      local modifiable = vim.api.nvim_buf_get_option(buf, 'modifiable')
-      local modified = vim.api.nvim_buf_get_option(buf, 'modified')
+      local modifiable = vim.api.nvim_get_option_value('modifiable', { buf = buf })
+      local modified = vim.api.nvim_get_option_value('modified', { buf = buf })
       if (modifiable and not modified) or not modifiable then
         vim.api.nvim_buf_delete(buf, { force = false, unload = false })
       end

@@ -194,8 +194,8 @@ local function config()
       return symbols.readonly
     end,
     cond = function()
-      local is_readonly = vim.api.nvim_buf_get_option(0, 'readonly')
-        or (not vim.api.nvim_buf_get_option(0, 'modifiable'))
+      local is_readonly = vim.api.nvim_get_option_value('readonly', { buf = 0 })
+        or (not vim.api.nvim_get_option_value('modifiable', { buf = 0 }))
       return is_readonly
     end,
     padding = { left = 0, right = 1 },
@@ -207,7 +207,7 @@ local function config()
       return symbols.modified
     end,
     cond = function()
-      local is_modified = vim.api.nvim_buf_get_option(0, 'modified')
+      local is_modified = vim.api.nvim_get_option_value('modified', { buf = 0 })
       return is_modified
     end,
     padding = { left = 0, right = 1 },

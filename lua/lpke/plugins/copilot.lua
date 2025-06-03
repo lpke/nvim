@@ -58,7 +58,8 @@ local function config()
         c_id = vim.lsp.start(client.config)
       end
       local should_attach = force
-      local filetype = vim.api.nvim_buf_get_option(bufnr, 'filetype')
+      local filetype =
+        vim.api.nvim_get_option_value('filetype', { buf = bufnr })
       should_attach = not is_ft_disabled(filetype, cfg.get('filetypes'))
       if should_attach or force then
         vim.lsp.buf_attach_client(bufnr, c_id)
@@ -138,7 +139,7 @@ local function config()
         jump_next = ']]',
         accept = '<CR>',
         refresh = 'gr',
-        open = '<F2>/',
+        -- open = '<F2>/', -- FIXME?
         open = '<A-/>',
       },
       layout = {
@@ -151,14 +152,14 @@ local function config()
       auto_trigger = false,
       debounce = 75,
       keymap = {
-        accept = '<F2>;',
+        -- accept = '<F2>;', -- FIXME?
         accept = '<A-;>',
         accept_word = false,
         accept_line = false,
         next = false, -- handled manually in keymaps above
-        prev = '<F2>>',
+        -- prev = '<F2>>', -- FIXME?
         prev = '<A->>',
-        dismiss = '<F2>c',
+        -- dismiss = '<F2>c', -- FIXME?
         dismiss = '<A-c>',
       },
     },
