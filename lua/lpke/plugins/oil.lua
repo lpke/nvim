@@ -117,7 +117,13 @@ local function config()
       ['cdg'] = {
         callback = function()
           local dir = oil.get_current_dir()
-          local git_root = vim.fn.system('cd ' .. vim.fn.shellescape(dir) .. ' && git rev-parse --show-toplevel'):gsub('\n', '')
+          local git_root = vim.fn
+            .system(
+              'cd '
+                .. vim.fn.shellescape(dir)
+                .. ' && git rev-parse --show-toplevel'
+            )
+            :gsub('\n', '')
           if vim.v.shell_error == 0 and git_root ~= '' then
             vim.cmd('cd ' .. vim.fn.fnameescape(git_root))
           else

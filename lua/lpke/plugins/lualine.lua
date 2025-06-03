@@ -456,15 +456,14 @@ local function config()
             return 'D'
           end,
           cond = function()
-            local lsp_attached = vim.lsp.get_active_clients({ bufnr = 0 })[1]
-              ~= nil
+            local lsp_attached = vim.lsp.get_clients({ bufnr = 0 })[1] ~= nil
             return lsp_attached
           end,
           on_click = function()
             Lpke_toggle_diagnostics()
           end,
           color = function()
-            local enabled = not vim.diagnostic.is_disabled()
+            local enabled = vim.diagnostic.is_enabled()
             return enabled and { bg = tc.overlayplus, fg = tc.text }
               or { bg = tc.overlaybump, fg = tc.lovefaded }
           end,
