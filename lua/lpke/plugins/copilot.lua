@@ -190,4 +190,5 @@ return {
   'zbirenbaum/copilot.lua',
   event = 'InsertEnter',
   config = config,
+  enabled = false,
 }

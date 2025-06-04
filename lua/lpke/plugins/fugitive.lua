@@ -75,14 +75,27 @@ function Lpke_toggle_git_diff(against_staging)
       or type(Lpke_fugitive_diff_before_win_id) ~= 'number'
       or type(Lpke_fugitive_diff_after_win_id) ~= 'number'
     then
-      vim.notify(
-        'Warning: Invalid fugitive diff window IDs detected. Resetting...',
-        vim.log.levels.WARN
-      )
+      print('Warning: Invalid fugitive diff window IDs detected. Resetting...')
+      if Lpke_fugitive_diff_autocmd_id then
+        vim.api.nvim_del_autocmd(Lpke_fugitive_diff_autocmd_id)
+      end
+      if
+        Lpke_fugitive_diff_before_win_id
+        and vim.api.nvim_win_is_valid(Lpke_fugitive_diff_before_win_id)
+      then
+        vim.api.nvim_win_close(Lpke_fugitive_diff_before_win_id, false)
+      end
+      if
+        Lpke_fugitive_diff_after_win_id
+        and vim.api.nvim_win_is_valid(Lpke_fugitive_diff_after_win_id)
+      then
+        vim.api.nvim_win_close(Lpke_fugitive_diff_after_win_id, false)
+      end
       Lpke_fugitive_diff_original_win_id = nil
       Lpke_fugitive_diff_before_win_id = nil
       Lpke_fugitive_diff_after_win_id = nil
       Lpke_fugitive_diff_autocmd_id = nil
+      return
     else
       local current_win_id = vim.api.nvim_get_current_win()
       -- in original window: focus back to already-open tab

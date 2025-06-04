@@ -167,13 +167,13 @@ local function config()
       {'nv', '<leader>a', vim.lsp.buf.code_action, opts('See available code actions')},
 
       -- hover info
-      {'n', 'gh', vim.lsp.buf.hover, opts('Show documentation for what is under cursor')},
-      {'n', 'gl', vim.diagnostic.open_float, opts('Show line diagnostics')},
+      {'n', 'gh', function() vim.lsp.buf.hover({ border = 'rounded' }) end, opts('Show documentation for what is under cursor')},
+      {'n', 'gl', function() vim.diagnostic.open_float({ border = 'rounded' }) end, opts('Show line diagnostics')},
 
       -- 'l'sp navigation
       {'nC', '<leader>l', 'Telescope diagnostics bufnr=0', opts('Show buffer diagnostics')},
-      {'n', '[l', vim.diagnostic.goto_prev, opts('Go to previous diagnostic')},
-      {'n', ']l', vim.diagnostic.goto_next, opts('Go to next diagnostic')},
+      {'n', '[l', function() vim.diagnostic.jump({ count = -1, float = true }) end, opts('Go to previous diagnostic')},
+      {'n', ']l', function() vim.diagnostic.jump({ count = 1, float = true }) end, opts('Go to next diagnostic')},
 
       -- jump/list related code
       {'nC', '<leader>;', 'Telescope lsp_references', opts('Show LSP references')},
@@ -189,24 +189,23 @@ local function config()
   local capabilities = cmp_nvim_lsp.default_capabilities()
 
   -- symbols
-  local signs = {
-    Error = '■',
-    Warn = '▲',
-    Info = '◆',
-    Hint = '●',
-  }
-  for type, icon in pairs(signs) do
-    local hl = 'DiagnosticSign' .. type
-    vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = '' })
-  end
-
   vim.diagnostic.config({
+    signs = {
+      text = {
+        [vim.diagnostic.severity.ERROR] = '■',
+        [vim.diagnostic.severity.WARN] = '▲',
+        [vim.diagnostic.severity.INFO] = '◆',
+        [vim.diagnostic.severity.HINT] = '●',
+      },
+    },
     virtual_text = {
       prefix = '■',
     },
     float = {
       border = 'rounded',
     },
+    -- ensure that signs are sorted in sign column (errors on top)
+    severity_sort = true,
   })
 
   -- diagnostics filter
@@ -247,25 +246,25 @@ local function config()
 
   -- can be overwritten per language (these will be merged in initially)
   local handlers = {
-    ['textDocument/hover'] = vim.lsp.with(
-      vim.lsp.handlers.hover,
-      { border = 'rounded' }
-    ),
-    ['textDocument/signatureHelp'] = vim.lsp.with(
-      vim.lsp.handlers.signature_help,
-      { border = 'rounded' }
-    ),
-    ['textDocument/publishDiagnostics'] = vim.lsp.with(
-      -- injecting custom code to allow filtering/control of diagnostic messages
-      function(err, result, context, conf)
-        helpers.arr_filter_inplace(result.diagnostics, filter_diagnostics) -- custom part
-        vim.lsp.diagnostic.on_publish_diagnostics(err, result, context, conf) -- default part
-      end,
-      {
-        -- ensure that signs are sorted in sign column (errors on top)
-        severity_sort = true,
-      }
-    ),
+    ['textDocument/hover'] = function(err, result, ctx, conf)
+      conf = conf or {}
+      conf.border = conf.border or 'rounded'
+      return vim.lsp.handlers['textDocument/hover'](err, result, ctx, conf)
+    end,
+    ['textDocument/signatureHelp'] = function(err, result, ctx, conf)
+      conf = conf or {}
+      conf.border = conf.border or 'rounded'
+      return vim.lsp.handlers['textDocument/signatureHelp'](
+        err,
+        result,
+        ctx,
+        conf
+      )
+    end,
+    ['textDocument/publishDiagnostics'] = function(_, result, ctx)
+      helpers.arr_filter_inplace(result.diagnostics, filter_diagnostics) -- custom part
+      vim.lsp.diagnostic.on_publish_diagnostics(_, result, ctx) -- default part (fixed signature)
+    end,
   }
 
   -- configure LSP servers

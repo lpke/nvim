@@ -25,11 +25,12 @@ local function config()
       'jsonls',
       'graphql',
       'lua_ls',
+      'vimls',
       'emmet_ls',
       'bashls',
       'pyright',
     },
-    automatic_installation = true,
+    automatic_enable = true,
   })
 
   mason_tool_installer.setup({
@@ -62,9 +63,9 @@ local function config()
 end
 
 return {
-  'williamboman/mason.nvim',
+  'mason-org/mason.nvim',
   dependencies = {
-    'williamboman/mason-lspconfig.nvim',
+    'mason-org/mason-lspconfig.nvim',
     'WhoIsSethDaniel/mason-tool-installer.nvim',
   },
   config = config,

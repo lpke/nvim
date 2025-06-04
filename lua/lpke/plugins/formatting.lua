@@ -26,7 +26,7 @@ local function config()
   end
   helpers.keymap_set_multi({
     { 'nv', '==', format, { desc = 'Format file' } },
-    { 'nC', '<BS>ic', 'ConformInfo', { desc = 'Open confirm info GUI' } },
+    { 'nC', '<BS>ic', 'ConformInfo', { desc = 'Open conform info GUI' } },
   })
 end
 

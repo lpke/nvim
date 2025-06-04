@@ -15,13 +15,8 @@ local function config()
   local telescope = require('telescope')
   local actions = require('telescope.actions')
   local actions_state = require('telescope.actions.state')
-  local actions_utils = require('telescope.actions.utils')
   local actions_layout = require('telescope.actions.layout')
   local builtin = require('telescope.builtin')
-
-  local fb_actions = require('telescope._extensions.file_browser.actions')
-  local fb_settings =
-    require('lpke.plugins.telescope-file-browser').telescope_settings
 
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
@@ -280,7 +275,7 @@ local function config()
             actions.move_selection_previous(bufnr)
           end,
           ['v'] = function(bufnr)
-            fb_actions.toggle_all(bufnr)
+            actions.toggle_all(bufnr)
             helpers.refresh_picker(bufnr)
           end,
           ['V'] = actions.select_all,
@@ -437,26 +432,16 @@ local function config()
       },
     },
 
-    extensions = {
-      -- :h telescope-file-browser.picker
-      file_browser = fb_settings(
-        fb_actions,
-        actions,
-        actions_state,
-        actions_utils
-      ),
-    },
+    extensions = {},
   })
 
   -- extensions
   telescope.load_extension('fzf')
-  telescope.load_extension('file_browser')
   telescope.load_extension('harpoon')
 end
 
 return {
   'nvim-telescope/telescope.nvim',
-  tag = '0.1.4',
   dependencies = {
     'nvim-lua/plenary.nvim',
     -- improves sorting performance (as per docs):

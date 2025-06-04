@@ -81,6 +81,8 @@ local function config()
     highlight_groups = {
       Normal = { bg = 'none' },
       NormalNC = { bg = 'none' },
+      VisualNOS = { bg = 'highlight_med', inherit = false },
+      Visual = { bg = 'highlight_med', inherit = false },
       VertSplit = { bg = 'none' },
       Comment = { fg = 'muted' },
       ColorColumn = { bg = 'rose' },
