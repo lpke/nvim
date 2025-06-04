@@ -11,27 +11,27 @@ local function config()
   -- stylua: ignore end
 
   auto_session.setup({
-    auto_session_enabled = true,
-    auto_session_suppress_dirs = { '/', '~/', '~/Downloads' },
-    auto_session_root_dir = vim.fn.stdpath('data') .. '/sessions/',
-    auto_session_enable_last_session = false, -- load last session for cwd if doesnt exist
-    auto_save_enabled = true,
-    auto_restore_enabled = true,
-    auto_session_use_git_branch = false, -- differentiate by git branch name (false because worktrees are better)
-    bypass_session_save_file_types = { '' }, -- dont auto-save when only buffer open is one of these file types
+    enabled = true,
+    suppressed_dirs = { '/', '~/', '~/Downloads' },
+    root_dir = vim.fn.stdpath('data') .. '/sessions/',
+    auto_restore_last_session = false, -- load last session for cwd if doesnt exist
+    auto_save = true,
+    auto_restore = true,
+    git_use_branch_name = false, -- differentiate by git branch name (false because worktrees are better)
+    bypass_save_filetypes = { '' }, -- dont auto-save when only buffer open is one of these file types
     log_level = 'error',
-    cwd_change_handling = {
-      restore_upcoming_session = false, -- enabling this causes me errors when swapping with telescope
-      post_cwd_changed_hook = function()
+    cwd_change_handling = true, -- when changing cwd, save current session and restore incoming session
+
+    -- hooks
+    post_cwd_changed_cmds = {
+      function()
         require('lualine').refresh()
       end,
     },
+
     session_lens = {
       load_on_setup = true,
-      buftypes_to_ignore = {}, -- list of buffer types that should not be deleted from current session
-
       -- telescope picker options
-      theme = 'vertical',
       theme_conf = {
         initial_mode = 'normal',
         sorting_strategy = 'ascending',
