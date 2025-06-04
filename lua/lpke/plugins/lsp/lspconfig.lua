@@ -3,6 +3,8 @@ local function config()
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
 
+  local cmp_nvim_lsp = require('cmp_nvim_lsp')
+
   -- theme (see functions for the rest)
   helpers.set_hl('LspInfoTitle', { fg = tc.growth })
   helpers.set_hl('DiagnosticOk', { fg = tc.growth })
@@ -65,7 +67,6 @@ local function config()
     return true
   end
 
-  -- will be merged into all server configs
   local global_handlers = {
     ['textDocument/publishDiagnostics'] = function(_, result, ctx)
       helpers.arr_filter_inplace(result.diagnostics, filter_diagnostics) -- custom part
@@ -73,11 +74,13 @@ local function config()
     end,
   }
 
-  -- enable each server with my config overrides (if provided) and globals
+  local global_capabilities = cmp_nvim_lsp.default_capabilities()
+
+  -- enable each server with my config overrides (if provided) and globals (above)
   for language_server, config_override in pairs(lsp_settings.config_overrides) do
     local merged_config = vim.tbl_deep_extend(
       'force',
-      { handlers = global_handlers },
+      { handlers = global_handlers, capabilities = global_capabilities },
       config_override
     )
 
