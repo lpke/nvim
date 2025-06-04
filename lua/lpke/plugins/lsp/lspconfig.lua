@@ -3,7 +3,7 @@ local function config()
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
 
-  -- theme
+  -- theme (see functions for the rest)
   helpers.set_hl('LspInfoTitle', { fg = tc.growth })
   helpers.set_hl('DiagnosticOk', { fg = tc.growth })
   helpers.set_hl('DiagnosticSignOk', { fg = tc.growth })
