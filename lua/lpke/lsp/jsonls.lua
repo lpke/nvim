@@ -6,14 +6,6 @@ return {
     -- for every buffer attach
   end,
   settings = {
-    Lua = {
-      workspace = {
-        checkThirdParty = false,
-        library = {
-          vim.env.VIMRUNTIME,
-          '${3rd}/luv/library',
-        },
-      },
-    },
+    filetypes = { 'json', 'jsonc' },
   },
 }

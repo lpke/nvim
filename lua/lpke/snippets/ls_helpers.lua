@@ -32,7 +32,7 @@ end
 
 -- use with a `d(1, sel)` node to a `fmt` to fill insert with selection
 -- (selection is set with <Tab> in visual mode)
-local sel = function(_, parent) -- (args, parent)
+local sel = function(_args, parent)
   if #parent.snippet.env.LS_SELECT_RAW > 0 then
     return sn(nil, i(1, parent.snippet.env.LS_SELECT_RAW))
   else -- If LS_SELECT_RAW is empty, return a blank insert node
@@ -41,7 +41,7 @@ local sel = function(_, parent) -- (args, parent)
 end
 
 -- `sel`, but removes surrounding quotes from the selection
-local sel_q = function(_, parent)
+local sel_q = function(_args, parent)
   local q_regex = '["\'`]'
   local selection = parent.snippet.env.LS_SELECT_RAW
   if #selection > 0 then
@@ -54,7 +54,7 @@ local sel_q = function(_, parent)
 end
 
 -- `sel`, but removes surrounding brackets from the selection
-local sel_b = function(_, parent)
+local sel_b = function(_args, parent)
   local b_regex_open = '[%(%[%{%<]'
   local b_regex_close = '[%)%]%}%>]'
   local selection = parent.snippet.env.LS_SELECT_RAW

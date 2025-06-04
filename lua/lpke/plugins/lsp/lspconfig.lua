@@ -31,9 +31,57 @@ local function config()
     severity_sort = true,
   })
 
-  -- enable each server with my config overrides (if provided)
+  -- diagnostics filter
+  local function filter_diagnostics(diag) -- diag.source, diag.message, diag.code
+    -- current line diagnostics (not including `diag`) - TODO: no longer needed?
+    -- local ldiag =
+    --   vim.diagnostic.get(0, { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 })
+
+    -- lua
+    if string.match(diag.source, '^[Ll]ua.*') then
+      if string.match(diag.message, 'Unused local `_.+`.') then
+        return false
+      end
+    end
+
+    -- typescript - TODO: no longer needed?
+    -- if diag.source == 'typescript' then
+    --   local esldiag = helpers.arr_filter((ldiag or {}), function(item)
+    --     if type(item) ~= 'table' then
+    --       return false
+    --     end
+    --     return item.source == 'eslint_d' -- deprecated: `eslint_d` linter replaced with `eslint-lsp` (mason)
+    --   end)
+    --
+    --   -- handle TS/eslint diagnostic double-ups
+    --   if #esldiag > 0 then
+    --     -- unused variables
+    --     if diag.code == 6133 then
+    --       return false
+    --     end
+    --   end
+    -- end
+
+    return true
+  end
+
+  -- will be merged into all server configs
+  local global_handlers = {
+    ['textDocument/publishDiagnostics'] = function(_, result, ctx)
+      helpers.arr_filter_inplace(result.diagnostics, filter_diagnostics) -- custom part
+      vim.lsp.diagnostic.on_publish_diagnostics(_, result, ctx) -- default part (fixed signature)
+    end,
+  }
+
+  -- enable each server with my config overrides (if provided) and globals
   for language_server, config_override in pairs(lsp_settings.config_overrides) do
-    vim.lsp.config(language_server, config_override)
+    local merged_config = vim.tbl_deep_extend(
+      'force',
+      { handlers = global_handlers },
+      config_override
+    )
+
+    vim.lsp.config(language_server, merged_config)
     vim.lsp.enable(language_server)
   end
 

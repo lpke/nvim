@@ -6,6 +6,7 @@ local enabled_language_servers = {
   'cssls',
   'tailwindcss',
   'ts_ls', -- formerly: `tsserver`
+  'eslint',
   'jsonls',
   'graphql',
   'lua_ls',
