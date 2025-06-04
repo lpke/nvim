@@ -43,7 +43,7 @@ local function config()
       end)
     end)
     if not ok then
-      print('Error detaching buffer ' .. bufnr .. ': ' .. result)
+      vim.notify('Error detaching buffer ' .. bufnr .. ': ' .. result, vim.log.levels.ERROR)
     end
   end
 
@@ -66,7 +66,7 @@ local function config()
       end
     end)
     if not ok then
-      print('Error attaching buffer ' .. bufnr .. ': ' .. result)
+      vim.notify('Error attaching buffer ' .. bufnr .. ': ' .. result, vim.log.levels.ERROR)
     end
   end
 

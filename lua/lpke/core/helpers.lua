@@ -9,7 +9,7 @@ function E.safe_call(func, silent, fallback)
     return result
   else
     if not silent then
-      print('safe_call error: ' .. result)
+      vim.notify('safe_call error: ' .. result, vim.log.levels.ERROR)
     end
     return fallback
   end
@@ -291,7 +291,7 @@ function E.refresh_picker(bufnr, remember, selection_defer_time)
   end)
 
   if not ok then
-    print('Error refreshing picker: ' .. result)
+    vim.notify('Error refreshing picker: ' .. result, vim.log.levels.ERROR)
   end
 end
 

@@ -75,7 +75,10 @@ function Lpke_toggle_git_diff(against_staging)
       or type(Lpke_fugitive_diff_before_win_id) ~= 'number'
       or type(Lpke_fugitive_diff_after_win_id) ~= 'number'
     then
-      print('Warning: Invalid fugitive diff window IDs detected. Resetting...')
+      vim.notify(
+        'Lpke_toggle_git_diff: Invalid fugitive diff window IDs detected. Resetting state.',
+        vim.log.levels.WARN
+      )
       if Lpke_fugitive_diff_autocmd_id then
         vim.api.nvim_del_autocmd(Lpke_fugitive_diff_autocmd_id)
       end

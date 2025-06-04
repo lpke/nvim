@@ -1,3 +1,6 @@
+-- everything to be accessible from `lpke.lsp`
+require('lpke.lsp.globals')
+
 local enabled_language_servers = {
   'html',
   'cssls',

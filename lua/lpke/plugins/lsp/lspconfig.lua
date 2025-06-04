@@ -1,10 +1,35 @@
-function Lpke_toggle_diagnostics()
-  return
-end
-
 local function config()
   local lsp_settings = require('lpke.lsp')
   local helpers = require('lpke.core.helpers')
+  local tc = Lpke_theme_colors
+
+  -- theme
+  helpers.set_hl('LspInfoTitle', { fg = tc.growth })
+  helpers.set_hl('DiagnosticOk', { fg = tc.growth })
+  helpers.set_hl('DiagnosticSignOk', { fg = tc.growth })
+  helpers.set_hl('DiagnosticFloatingOk', { fg = tc.growth })
+  Lpke_show_diagnostic_virtual_text()
+  Lpke_hide_diagnostic_hl()
+
+  -- symbols
+  vim.diagnostic.config({
+    signs = {
+      text = {
+        [vim.diagnostic.severity.ERROR] = '■',
+        [vim.diagnostic.severity.WARN] = '▲',
+        [vim.diagnostic.severity.INFO] = '◆',
+        [vim.diagnostic.severity.HINT] = '●',
+      },
+    },
+    virtual_text = {
+      prefix = '■',
+    },
+    float = {
+      border = 'rounded',
+    },
+    -- ensure that signs are sorted in sign column (errors on top)
+    severity_sort = true,
+  })
 
   -- enable each server with my config overrides (if provided)
   for language_server, config_override in pairs(lsp_settings.config_overrides) do
@@ -13,16 +38,24 @@ local function config()
   end
 
   -- stylua: ignore start
+  -- keymaps
   helpers.keymap_set_multi({
+    -- remove defaults introduced in nvim 0.11
+    -- https://gpanders.com/blog/whats-new-in-neovim-0-11/#more-default-mappings
+    { 'nD', 'grn', '' },
+    { 'nD', 'grr', '' },
+    { 'nD', 'gri', '' },
+    { 'nvD', 'gra', '' },
+
     -- info/toggle/reload
     { 'nC', '<BS>ip', 'LspInfo', { desc = 'Open LSP info window' } },
-    -- {'nv', '<F2>d', Lpke_toggle_diagnostics, { desc = 'Toggle diagnostics visibility globally' }},
-    -- {'nv', '<A-d>', Lpke_toggle_diagnostics, { desc = 'Toggle diagnostics visibility globally' }},
-    -- {'nv', '<F2>v', Lpke_toggle_diagnostics_virtual_text, { desc = 'Toggle diagnostics virtual text brightness globally' }},
-    -- {'nv', '<A-v>', Lpke_toggle_diagnostics_virtual_text, { desc = 'Toggle diagnostics virtual text brightness globally' }},
-    -- {'nv', '<F2>V', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting globally' }},
-    -- {'nv', '<A-V>', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting globally' }},
-    -- {'nC', '<leader>R', 'LspRestart', { desc = 'Restart LSP' }},
+    { 'nv', '<F2>d', Lpke_toggle_diagnostics, { desc = 'Toggle diagnostics visibility globally' }},
+    { 'nv', '<A-d>', Lpke_toggle_diagnostics, { desc = 'Toggle diagnostics visibility globally' }},
+    { 'nv', '<F2>v', Lpke_toggle_diagnostics_virtual_text, { desc = 'Toggle diagnostics virtual text brightness globally' }},
+    { 'nv', '<A-v>', Lpke_toggle_diagnostics_virtual_text, { desc = 'Toggle diagnostics virtual text brightness globally' }},
+    { 'nv', '<F2>V', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting globally' }},
+    { 'nv', '<A-V>', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting globally' }},
+    { 'n', '<leader>R', Lpke_lsp_restart, { desc = 'Restart LSPs for current buffer filetype' }},
 
     -- smart actions
     { 'n', 'gr', vim.lsp.buf.rename, { desc = 'Smart rename' } },

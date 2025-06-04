@@ -94,7 +94,10 @@ function Lpke_copy_layout()
   end)
   if not ok then
     Lpke_layout_reset_state()
-    print('Copy layout: Encountered an error: ' .. err)
+    vim.notify(
+      'Copy layout: Encountered an error: ' .. err,
+      vim.log.levels.ERROR
+    )
   end
 end
 
@@ -104,28 +107,31 @@ function Lpke_paste_layout()
     -- checking state health and ensure pasting into correct tab
     if #Lpke_copied_layout == 0 then
       Lpke_layout_reset_state()
-      print(
-        'Paste layout: Copied layout data is empty. Resetting state and aborting.'
+      vim.notify(
+        'Paste layout: Copied layout data is empty. Resetting state and aborting.',
+        vim.log.levels.WARN
       )
       return
     end
     if Lpke_copied_layout_count == nil then
       Lpke_layout_reset_state()
-      print(
-        'Paste layout: Copied layout count is nil. Resetting state and aborting.'
+      vim.notify(
+        'Paste layout: Copied layout count is nil. Resetting state and aborting.',
+        vim.log.levels.WARN
       )
       return
     end
     if Lpke_copied_layout_tab == nil then
       Lpke_layout_reset_state()
-      print(
-        'Paste layout: Copied layout tab is nil. Resetting state and aborting.'
+      vim.notify(
+        'Paste layout: Copied layout tab is nil. Resetting state and aborting.',
+        vim.log.levels.WARN
       )
       return
     end
     local cur_tab = vim.api.nvim_get_current_tabpage()
     if cur_tab ~= Lpke_copied_layout_tab then
-      print('Paste layout: Current tab does not match copied tab. Aborting.')
+      vim.notify('Paste layout: Current tab does not match copied tab. Aborting.', vim.log.levels.WARN)
       return
     end
 
@@ -144,14 +150,15 @@ function Lpke_paste_layout()
       end
     else
       Lpke_layout_reset_state()
-      print(
-        'Paste layout: Less windows than expected. Resetting state and aborting.'
+      vim.notify(
+        'Paste layout: Less windows than expected. Resetting state and aborting.',
+        vim.log.levels.WARN
       )
     end
   end)
   if not ok then
     Lpke_layout_reset_state()
-    print('Paste layout: Encountered an error: ' .. err)
+    vim.notify('Paste layout: Encountered an error: ' .. err, vim.log.levels.ERROR)
   end
 end
 
@@ -194,8 +201,9 @@ function Lpke_win_zoom_toggle()
         end
         Lpke_zoomed_reset_state(false, cur_tab)
       else
-        print(
-          'Un-Zoom: Could not restore previous sizing: Less windows than expected.'
+        vim.notify(
+          'Un-Zoom: Could not restore previous sizing: Less windows than expected.',
+          vim.log.levels.WARN
         )
         Lpke_zoomed_reset_state(true, cur_tab)
       end
@@ -227,7 +235,7 @@ function Lpke_win_zoom_toggle()
   -- error occured
   if not ok then
     Lpke_zoomed_reset_state()
-    print('Zoom: Encountered an error: ' .. err)
+    vim.notify('Zoom: Encountered an error: ' .. err, vim.log.levels.ERROR)
   end
 
   -- update lualine
@@ -360,7 +368,7 @@ function Lpke_new_float(opts)
       end
       width = screen.width - width
     else
-      print('New Float: Invalid width string. Falling back on ' .. fb_width)
+      vim.notify('New Float: Invalid width string. Falling back on ' .. fb_width, vim.log.levels.WARN)
       width = fb_width
     end
   end
@@ -382,7 +390,7 @@ function Lpke_new_float(opts)
       end
       height = screen.height - height
     else
-      print('New Float: Invalid height string. Falling back on ' .. fb_height)
+      vim.notify('New Float: Invalid height string. Falling back on ' .. fb_height, vim.log.levels.WARN)
       height = fb_height
     end
   end
@@ -577,9 +585,10 @@ function Lpke_silent(func)
     vim.notify = Lpke_vim_notify
   end)
   if not ok then
-    print(
+    vim.notify(
       'Error running function silently. Reverting notify function. Error: '
-        .. result
+        .. result,
+      vim.log.levels.ERROR
     )
     vim.notify = Lpke_vim_notify
   end

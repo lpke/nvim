@@ -24,8 +24,8 @@ local function config()
   -- stylua: ignore start
   -- keymaps
   helpers.keymap_set_multi({
-    {'n', '<F2>c', function() vim.cmd('TSContextToggle') end, { desc = 'Toggle treesitter context sticky windows' }},
-    {'n', '<A-c>', function() vim.cmd('TSContextToggle') end, { desc = 'Toggle treesitter context sticky windows' }},
+    {'n', '<F2>c', function() vim.cmd('TSContext toggle') end, { desc = 'Toggle treesitter context sticky windows' }},
+    {'n', '<A-c>', function() vim.cmd('TSContext toggle') end, { desc = 'Toggle treesitter context sticky windows' }},
   })
   -- stylua: ignore end
 end
