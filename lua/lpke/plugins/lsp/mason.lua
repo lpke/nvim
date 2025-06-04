@@ -1,10 +1,12 @@
 local function config()
   local mason = require('mason') -- package manager
-  local mason_lspconfig = require('mason-lspconfig') -- lsp config module
-  -- manages third-party tools such as prettier
-  local mason_tool_installer = require('mason-tool-installer')
-  local tc = Lpke_theme_colors
+  local mason_lspconfig = require('mason-lspconfig') -- for lsps
+  local mason_tool_installer = require('mason-tool-installer') -- for other tools
+
+  local lsp_settings = require('lpke.lsp')
+  local language_servers = lsp_settings.enabled_language_servers
   local helpers = require('lpke.core.helpers')
+  local tc = Lpke_theme_colors
 
   mason.setup({
     ui = {
@@ -17,20 +19,10 @@ local function config()
   })
 
   mason_lspconfig.setup({
-    ensure_installed = {
-      'html',
-      'cssls',
-      'tailwindcss',
-      'ts_ls', -- formerly: `tsserver`
-      'jsonls',
-      'graphql',
-      'lua_ls',
-      'vimls',
-      'emmet_ls',
-      'bashls',
-      'pyright',
-    },
-    automatic_enable = true,
+    ensure_installed = language_servers,
+    -- If enabled: runs `vim.lsp.enable(<server>)` using lspconfig
+    -- I prefer to control this explicitly inside my lspconfig.lua
+    automatic_enable = false,
   })
 
   mason_tool_installer.setup({
