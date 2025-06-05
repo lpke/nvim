@@ -1,8 +1,6 @@
 local function config()
   local avante = require('avante')
   avante.setup({
-    -- add any opts here
-    -- for example
     provider = 'openai',
     providers = {
       openai = {
@@ -16,11 +14,17 @@ local function config()
         },
       },
     },
+    windows = {
+      sidebar_header = {
+        rounded = false,
+      },
+    },
   })
 end
 
 return {
   'yetone/avante.nvim',
+  enabled = false,
   event = 'VeryLazy',
   version = false, -- Never set this value to "*"! Never!
   config = config,

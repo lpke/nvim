@@ -1,8 +1,26 @@
--- palette colors:  https://rosepinetheme.com/palette/ingredients/
--- recipes:         https://github.com/rose-pine/neovim/wiki/Recipes
+-- Rose Pine Default Palette:
+-- https://rosepinetheme.com/palette/ingredients/
+--   base = #191724
+--   surface = #1f1d2e
+--   overlay = #26233a
+--   muted = #6e6a86
+--   subtle = #908caa
+--   text = #e0def4
+--   love = #eb6f92
+--   gold = #f6c177
+--   rose = #ebbcba
+--   pine = #31748f
+--   foam = #9ccfd8
+--   iris = #c4a7e7
+--   highlight_low = #21202e
+--   highlight_med = #403d52
+--   highlight_high = #524f67
+
+-- Grey Shades (ascending brightness order):
+--   base | surface | overlay | overlaybump | overlayplus | mutedminus |
+--   muted | subtle | subtleplus | textminus | text
 
 -- Extra colors
--- Shades: base | surface | overlay | overlaybump | overlayplus | mutedminus | muted | subtle | subtleplus | textminus | text
 local ec = {
   textminus = '#c0bcd2',
   subtleplus = '#a7a3bd',
@@ -83,7 +101,8 @@ local function config()
       NormalNC = { bg = 'none' },
       VisualNOS = { bg = 'highlight_med', inherit = false },
       Visual = { bg = 'highlight_med', inherit = false },
-      VertSplit = { bg = 'none' },
+      VertSplit = { bg = 'none', fg = 'highlight_med' },
+      WinSeparator = { bg = 'none', fg = 'highlight_med' },
       Comment = { fg = 'muted' },
       ColorColumn = { bg = 'rose' },
       StatusLine = { fg = 'subtle', bg = 'overlay' },
