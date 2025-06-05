@@ -1,8 +1,6 @@
-return {
-  'yetone/avante.nvim',
-  event = 'VeryLazy',
-  version = false, -- Never set this value to "*"! Never!
-  opts = {
+local function config()
+  local avante = require('avante')
+  avante.setup({
     -- add any opts here
     -- for example
     provider = 'openai',
@@ -18,7 +16,14 @@ return {
         },
       },
     },
-  },
+  })
+end
+
+return {
+  'yetone/avante.nvim',
+  event = 'VeryLazy',
+  version = false, -- Never set this value to "*"! Never!
+  config = config,
   -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
   build = 'make',
   -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
