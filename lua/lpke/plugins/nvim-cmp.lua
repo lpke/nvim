@@ -154,6 +154,7 @@ local function config()
       { name = 'luasnip', keyword_length = 5 }, -- snippets
       { name = 'path' }, -- file system paths
       { name = 'buffer', keyword_length = 5 }, -- text within current buffer
+      { name = 'render-markdown' },
     }),
 
     -- suggestion matching settings
