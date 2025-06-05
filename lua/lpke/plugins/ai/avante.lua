@@ -4,16 +4,29 @@ local function config()
   -- full default options:
   -- https://github.com/yetone/avante.nvim/blob/main/lua/avante/config.lua
   avante.setup({
-    provider = 'openai',
+    provider = 'claude',
     providers = {
       openai = {
         endpoint = 'https://api.openai.com/v1',
         model = 'gpt-4o', -- your desired model (or use gpt-4o, etc.)
         extra_request_body = {
-          timeout = 30000, -- Timeout in milliseconds, increase this for reasoning models
+          timeout = 30000, -- ms
           temperature = 0.75,
           max_completion_tokens = 8192, -- Increase this to include reasoning tokens (for reasoning models)
           --reasoning_effort = "medium", -- low|medium|high, only used for reasoning models
+        },
+      },
+      claude = {
+        -- modal name | cost input | cost output (/ MTok)
+        -- claude-opus-4-20250514   | $15   | $75
+        -- claude-sonnet-4-20250514 | $3    | $15
+        -- claude-3-5-haiku-latest  | $0.80 | $4
+        endpoint = 'https://api.anthropic.com',
+        model = 'claude-sonnet-4-20250514',
+        timeout = 45000, -- ms (increase for reasoning models)
+        extra_request_body = {
+          temperature = 0.75,
+          max_tokens = 20480,
         },
       },
     },
