@@ -24,7 +24,6 @@ end
 
 return {
   'yetone/avante.nvim',
-  enabled = false,
   event = 'VeryLazy',
   version = false, -- Never set this value to "*"! Never!
   config = config,
