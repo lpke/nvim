@@ -16,6 +16,7 @@ vim.opt.rtp:prepend(lazy_path)
 local lazy_plugins = {
   { import = 'lpke.plugins' },
   { import = 'lpke.plugins.lsp' },
+  { import = 'lpke.plugins.ai' },
 }
 
 -- lazy config options

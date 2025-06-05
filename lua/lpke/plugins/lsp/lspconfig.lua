@@ -110,7 +110,7 @@ local function config()
 
     -- smart actions
     { 'n', 'gr', vim.lsp.buf.rename, { desc = 'Smart rename' } },
-    { 'nv', '<leader>a', vim.lsp.buf.code_action, { desc = 'See available code actions' }, },
+    { 'nv', 'ga', vimlsp.buf.code_action, { desc = 'See available code actions' }, },
 
     -- hover info
     { 'n', 'gh', function() vim.lsp.buf.hover({ border = 'rounded' }) end, { desc = 'Show documentation for what is under cursor' }, },
