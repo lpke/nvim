@@ -34,7 +34,9 @@ helpers.keymap_set_multi({
   {'nv', 'gg', 'gg0', { desc = 'Go to very start of buffer' }},
   {'nv', 'G', 'G$', { desc = 'Go to very end of buffer' }},
   {'n', 'Y', 'y$', { desc = 'Yank to end of line' }},
-  {'n', '<leader>Y', '"*y$', { desc = 'Global Yank to end of line' }},
+  {'n', '<leader>Y', '"*y$', { desc = 'Global yank to end of line' }},
+  {'n', 'ygG', 'mzggyG`z', { desc = 'Yank entire buffer (without moving cursor)' }},
+  {'n', '<leader>ygG', 'mzgg"*yG`z', { desc = 'Global yank entire buffer (without moving cursor)' }},
   {'n', 'J', 'mzJ`z', { desc = 'Join lines (without moving cursor)' }},
   {'n', 'gJ', 'mzgJ`z', { desc = 'Join lines without modification (without moving cursor)' }},
   {'n', '<leader>J', 'mzgJi<Space><Esc>diW`z', { desc = 'Join lines without any spaces (without moving cursor)' }},
@@ -46,7 +48,7 @@ helpers.keymap_set_multi({
   {'nvM', '<C-j>', '8j', { desc = 'Move down 8 lines' }},
   {'nv', 'ze', 'zt8<C-y>', { desc = 'Centre cursor 8 lines below zt' }},
   {'nC', '<BS>L', 'botright copen', { desc = 'Open quick fix list' }},
-  {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.'), 'text': getline('.')}], 'a')",
+  {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.') - 1, 'text': getline('.')}], 'a')",
     { desc = 'Add current file/position to quick fix list' }},
 
   -- glorified macros

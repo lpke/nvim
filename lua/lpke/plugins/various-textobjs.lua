@@ -1,37 +1,20 @@
 local function config()
-  local keymaps = {
+  local helpers = require('lpke.core.helpers')
+
+  -- stylua: ignore start
+  helpers.keymap_set_multi({
     -- subword (camelCase, snake_case, kebab-case)
-    {
-      'oxC',
-      'i<leader>w',
-      [[lua require('various-textobjs').subword('inner')]],
-    },
-    {
-      'oxC',
-      'a<leader>w',
-      [[lua require('various-textobjs').subword('outer')]],
-    },
+    { 'oxC', 'i<leader>w', [[lua require('various-textobjs').subword('inner')]] },
+    { 'oxC', 'a<leader>w', [[lua require('various-textobjs').subword('outer')]] },
     -- entire buffer
     { 'oxC', 'gG', [[lua require('various-textobjs').entireBuffer()]] },
     -- indentation
-    {
-      'oxC',
-      'ii',
-      [[lua require('various-textobjs').indentation('inner', 'inner')]],
-    },
-    {
-      'oxC',
-      'ai',
-      [[lua require('various-textobjs').indentation('outer', 'inner')]],
-    },
-    {
-      'oxC',
-      'aI',
-      [[lua require('various-textobjs').indentation('outer', 'outer')]],
-    },
+    { 'oxC', 'ii', [[lua require('various-textobjs').indentation('inner', 'inner')]] },
+    { 'oxC', 'ai', [[lua require('various-textobjs').indentation('outer', 'inner')]] },
+    { 'oxC', 'aI', [[lua require('various-textobjs').indentation('outer', 'outer')]] },
     { 'oxC', 'iI', [[lua require('various-textobjs').restOfIndentation()]] },
-  }
-  require('lpke.core.helpers').keymap_set_multi(keymaps)
+  })
+  -- stylua: ignore end
 
   -- options
   require('various-textobjs').setup({

@@ -18,14 +18,13 @@ local function config()
     end)
   end
 
-  -- stylua: ignore start
   -- theme
   helpers.set_hl('HarpoonTitle', { link = 'FloatTitle' })
   helpers.set_hl('HarpoonBorder', { link = 'FloatBorder' })
   helpers.set_hl('HarpoonWindow', { link = 'NormalFloat' })
 
+  -- stylua: ignore start
   helpers.keymap_set_multi({
-    { 'n', '<CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
     { 'n', '<leader><CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
     { 'nC', '<BS><CR>', 'Telescope harpoon marks', { desc = 'Harpoon: Telescope marks' } },
     { 'n', '<F2>u', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },
