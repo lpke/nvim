@@ -88,6 +88,22 @@ local function config()
     vim.lsp.enable(language_server)
   end
 
+  -- LSP hover overrides
+  local hover = vim.lsp.buf.hover
+  ---@diagnostic disable-next-line: duplicate-set-field
+  vim.lsp.buf.hover = function()
+    hover({
+      border = 'rounded',
+    })
+  end
+
+  -- LSP diagnostic overrides
+  local diagnostic_open_float = vim.diagnostic.open_float
+  ---@diagnostic disable-next-line: duplicate-set-field
+  vim.diagnostic.open_float = function(opts)
+    diagnostic_open_float(vim.tbl_deep_extend('force', { border = 'rounded' }, opts or {}))
+  end
+
   -- stylua: ignore start
   -- keymaps
   helpers.keymap_set_multi({
@@ -113,8 +129,8 @@ local function config()
     { 'nv', 'ga', vim.lsp.buf.code_action, { desc = 'See available code actions' }, },
 
     -- hover info
-    { 'n', 'gh', function() vim.lsp.buf.hover({ border = 'rounded' }) end, { desc = 'Show documentation for what is under cursor' }, },
-    { 'n', 'gl', function() vim.diagnostic.open_float({ border = 'rounded' }) end, { desc = 'Show line diagnostics' }, },
+    { 'n', 'gh', vim.lsp.buf.hover, { desc = 'Show documentation for what is under cursor' } },
+    { 'n', 'gl', vim.diagnostic.open_float, { desc = 'Show line diagnostics' } },
 
     -- 'l'sp navigation
     { 'nC', '<leader>l', 'Telescope diagnostics bufnr=0', { desc = 'Show buffer diagnostics' }, },
