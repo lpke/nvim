@@ -5,7 +5,5 @@ return {
   on_attach = function(_client, _bufnr)
     -- for every buffer attach
   end,
-  settings = {
-    filetypes = { 'sh' },
-  },
+  filetypes = { 'sh' },
 }

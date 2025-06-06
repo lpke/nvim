@@ -5,13 +5,8 @@ return {
   on_attach = function(_client, _bufnr)
     -- for every buffer attach
   end,
-  settings = {
-    filetypes = {
-      'graphql',
-      'gql',
-      'svelte',
-      'typescriptreact',
-      'javascriptreact',
-    },
+  filetypes = {
+    'graphql',
+    'gql',
   },
 }
