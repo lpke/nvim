@@ -116,7 +116,7 @@ local function config()
         rounded = false,
       },
       input = {
-        prefix = '❯ ',
+        prefix = '> ',
         height = 6, -- Height of the input window in vertical layout
       },
       edit = {
@@ -197,6 +197,7 @@ return {
   'yetone/avante.nvim',
   event = 'VeryLazy',
   version = false, -- Never set this value to "*"! Never!
+  enabled = false,
   init = function()
     vim.env.ANTHROPIC_API_KEY =
       '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'

@@ -49,6 +49,8 @@ local function config()
   helpers.set_hl('@function.builtin', { italic = false, fg = tc.love })
   helpers.set_hl('@lsp.typemod.function.defaultLibrary.lua', { link = '@function.builtin' })
   helpers.set_hl('@variable', { italic = false, fg = tc.text })
+  helpers.set_hl('@variable.builtin', { fg = tc.love, italic = false, bold = false })
+  helpers.set_hl('@module.builtin', { bold = false })
   helpers.set_hl('@parameter', { italic = false, fg = tc.iris })
   helpers.set_hl('@variable.parameter', { link = '@parameter' })
   helpers.set_hl('@keyword', { link = 'Keyword' })
@@ -66,6 +68,7 @@ local function config()
   helpers.set_hl('@tag.tsx', { link = 'Tag' }) -- custom components
   helpers.set_hl('@tag.builtin.tsx', { fg = tc.growthminus }) -- html elements
   helpers.set_hl('@tag.attribute', { fg = tc.iris, italic = true })
+  helpers.set_hl('@markup.heading.gitcommit', { fg = tc.foam, bold = false })
 
   helpers.keymap_set_multi({
     {'nC', '<leader>t', 'Inspect', { desc = 'Treesitter: Inspect highlight group under cursor (:Inspect)' }},

@@ -57,7 +57,7 @@ local function config()
     },
 
     styles = {
-      bold = false,
+      bold = true,
       italic = true,
       transparency = false,
     },
@@ -118,6 +118,7 @@ local function config()
       IncSearch = { link = 'CurSearch' },
       Substitute = { fg = 'base', bg = 'love' },
       MatchParen = { fg = ec.growth, bg = ec.growthminus, blend = 15 },
+      Directory = { bold = false },
 
       -- vim syntax highlight groups (inherited in treesitter config file for `@` groups)
       Keyword = { fg = 'pine', italic = true },
