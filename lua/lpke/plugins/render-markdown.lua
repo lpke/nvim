@@ -7,9 +7,11 @@ local function config()
 
   -- https://github.com/MeanderingProgrammer/render-markdown.nvim#setup
   render_markdown.setup({
-    file_types = { 'markdown', 'help', 'Avante' },
+    file_types = { 'markdown', 'help', 'codecompanion', 'Avante' },
     completions = { lsp = { enabled = true } },
     heading = {
+      position = 'inline',
+      icons = { '', '', '', '', '', '' },
       backgrounds = {
         'none',
         'none',

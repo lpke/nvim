@@ -60,7 +60,7 @@ local function config()
       local should_attach = force
       local filetype =
         vim.api.nvim_get_option_value('filetype', { buf = bufnr })
-      should_attach = not is_ft_disabled(filetype, cfg.get('filetypes'))
+      should_attach = not is_ft_disabled(filetype, cfg.filetypes)
       if should_attach or force then
         vim.lsp.buf_attach_client(bufnr, c_id)
       end
@@ -120,6 +120,14 @@ local function config()
     {'nv', '<F2>C', Lpke_toggle_copilot, { desc = 'Toggle copilot for all buffers' }},
     {'nv', '<A-C>', Lpke_toggle_copilot, { desc = 'Toggle copilot for all buffers' }},
     {'i', '<F2>.', function()
+      local is_attached = client.buf_is_attached(0)
+      if not is_attached then
+        Lpke_copilot_buf_attach(0)
+        Lpke_feedkeys('<Space><BS>', 'tn')
+      end
+      sug.next()
+    end, { desc = 'Copilot: Trigger/next suggestion' }},
+    {'i', '<A-.>', function()
       local is_attached = client.buf_is_attached(0)
       if not is_attached then
         Lpke_copilot_buf_attach(0)
@@ -190,5 +198,4 @@ return {
   'zbirenbaum/copilot.lua',
   event = 'InsertEnter',
   config = config,
-  enabled = false,
 }
