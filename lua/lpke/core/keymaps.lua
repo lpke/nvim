@@ -79,6 +79,8 @@ helpers.keymap_set_multi({
   -- FIXME: disabled due to lualine bug requiring me to set `globalstatue = true`
   -- {'n', '<F2>e', function() helpers.toggle_global_status() end,
   --   { desc = 'Toggle global status line' }},
+  -- {'n', '<A-e>', function() helpers.toggle_global_status() end,
+  --   { desc = 'Toggle global status line' }},
   {'n!', '<F2>W', function() helpers.toggle_whitespace_hl(options.custom_opts.whitespace_hl) end,
     { desc = 'Toggle visible whitespace' }},
   {'n!', '<A-W>', function() helpers.toggle_whitespace_hl(options.custom_opts.whitespace_hl) end,

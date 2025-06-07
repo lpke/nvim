@@ -10,6 +10,7 @@ local function config()
     { 'nvC', '<A-f>', 'CodeCompanionChat Toggle', { desc = 'CodeCompanion: Open a chat buffer' }},
     { 'nvC', '<F2>f', 'CodeCompanionChat Toggle', { desc = 'CodeCompanion: Open a chat buffer' }},
     { 'niC', '<C-l>', 'CodeCompanion', { desc = 'CodeCompanion: Open inline dialog' }},
+    { 'vC', '<C-l>', "'<,'>CodeCompanion", { desc = 'CodeCompanion: Open inline dialog (visual selection)' }},
   })
   -- stylua: ignore end
 

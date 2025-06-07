@@ -85,13 +85,15 @@ function Lpke_tabline()
         tab_title = 'G:' .. helpers.shorten_path(file_path)
       end
     elseif file_type == 'harpoon' then
-      tab_title = 'harpoon'
+      tab_title = 'Harpoon'
     elseif file_type == 'TelescopePrompt' then
-      tab_title = 'telescope'
+      tab_title = 'Telescope'
     elseif file_type == 'undotree' then
-      tab_title = 'undotree'
+      tab_title = 'Undotree'
     elseif file_type == 'diff' then
       tab_title = 'diff'
+    elseif file_type == 'codecompanion' then
+      tab_title = 'Copilot'
     elseif file_name == '' then
       tab_title = symbols.unnamed
     else

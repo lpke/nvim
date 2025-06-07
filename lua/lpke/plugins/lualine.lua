@@ -148,6 +148,8 @@ local function config()
       local raw_bufname = helpers.get_buf_name(0)
       local normal_buffer = vim.bo.buftype == ''
       local oil_buffer = vim.bo.filetype == 'oil'
+      local telescope_buffer = vim.bo.filetype == 'TelescopePrompt'
+      local codecompanion_buffer = vim.bo.filetype == 'codecompanion'
       local fugitive_buffer = (vim.bo.filetype == 'fugitive')
         or (vim.bo.filetype == 'fugitiveblame')
         or (string.match(raw_bufname, '^fugitive://'))
@@ -169,6 +171,10 @@ local function config()
       else
         if oil_buffer or fugitive_buffer then
           return helpers.get_path_tail(raw_bufname)
+        elseif telescope_buffer then
+          return 'Telescope'
+        elseif codecompanion_buffer then
+          return str:gsub('%[CodeCompanion%]', 'Copilot')
         else
           return helpers.get_path_tail(str)
         end
@@ -288,6 +294,7 @@ local function config()
       ignore_focus = {},
       always_divide_middle = false,
       -- FIXME: this should be false, but it's a workaround to a flicker bug
+      -- https://github.com/nvim-lualine/lualine.nvim/issues/1280
       globalstatus = true,
       refresh = {
         statusline = 100,
