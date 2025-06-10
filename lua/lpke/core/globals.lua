@@ -131,7 +131,10 @@ function Lpke_paste_layout()
     end
     local cur_tab = vim.api.nvim_get_current_tabpage()
     if cur_tab ~= Lpke_copied_layout_tab then
-      vim.notify('Paste layout: Current tab does not match copied tab. Aborting.', vim.log.levels.WARN)
+      vim.notify(
+        'Paste layout: Current tab does not match copied tab. Aborting.',
+        vim.log.levels.WARN
+      )
       return
     end
 
@@ -158,7 +161,10 @@ function Lpke_paste_layout()
   end)
   if not ok then
     Lpke_layout_reset_state()
-    vim.notify('Paste layout: Encountered an error: ' .. err, vim.log.levels.ERROR)
+    vim.notify(
+      'Paste layout: Encountered an error: ' .. err,
+      vim.log.levels.ERROR
+    )
   end
 end
 
@@ -245,7 +251,16 @@ function Lpke_win_zoom_toggle()
 end
 
 -- like print but can print tables
-function Lpke_print(val, max_depth, indent_size, indent, current_depth)
+function Lpke_print(
+  val,
+  newline_at_end,
+  max_depth,
+  indent_size,
+  indent,
+  current_depth,
+  is_top_level
+)
+  is_top_level = is_top_level == nil and true or is_top_level
   if type(val) ~= 'table' then
     print(val)
   else
@@ -264,11 +279,22 @@ function Lpke_print(val, max_depth, indent_size, indent, current_depth)
       local key = tostring(k)
       if type(v) == 'table' then
         print(indent .. key .. ':')
-        Lpke_print(v, max_depth, indent_size, next_indent, current_depth + 1)
+        Lpke_print(
+          v,
+          false,
+          max_depth,
+          indent_size,
+          next_indent,
+          current_depth + 1,
+          false
+        )
       else
         print(indent .. key .. ': ' .. tostring(v))
       end
     end
+  end
+  if newline_at_end and is_top_level then
+    print(' ')
   end
 end
 
@@ -368,7 +394,10 @@ function Lpke_new_float(opts)
       end
       width = screen.width - width
     else
-      vim.notify('New Float: Invalid width string. Falling back on ' .. fb_width, vim.log.levels.WARN)
+      vim.notify(
+        'New Float: Invalid width string. Falling back on ' .. fb_width,
+        vim.log.levels.WARN
+      )
       width = fb_width
     end
   end
@@ -390,7 +419,10 @@ function Lpke_new_float(opts)
       end
       height = screen.height - height
     else
-      vim.notify('New Float: Invalid height string. Falling back on ' .. fb_height, vim.log.levels.WARN)
+      vim.notify(
+        'New Float: Invalid height string. Falling back on ' .. fb_height,
+        vim.log.levels.WARN
+      )
       height = fb_height
     end
   end
@@ -592,4 +624,83 @@ function Lpke_silent(func)
     )
     vim.notify = Lpke_vim_notify
   end
+end
+
+Lpke_messages_win_open = false
+Lpke_messages_win_id = nil
+Lpke_messages_buf_id = nil
+function Lpke_toggle_messages()
+  local function reset_messages_win_state()
+    Lpke_messages_win_open = false
+    Lpke_messages_win_id = nil
+    Lpke_messages_buf_id = nil
+  end
+
+  local function update_messages_content()
+    if
+      Lpke_messages_buf_id and vim.api.nvim_buf_is_valid(Lpke_messages_buf_id)
+    then
+      vim.api.nvim_buf_set_lines(Lpke_messages_buf_id, 0, -1, false, {})
+      vim.api.nvim_buf_call(Lpke_messages_buf_id, function()
+        vim.cmd("silent! put =execute('messages')")
+        vim.cmd('1,2delete _') -- remove first empty lines
+        vim.cmd('silent! g/^\\d\\+ more lines$/d') -- remove "X more messages" lines
+        vim.cmd([[silent! g/^\s*$/s/.*/]]) -- replace whitespace-only lines with empty lines
+        vim.cmd('normal! G')
+      end)
+    end
+  end
+
+  -- ensure valid state values
+  if
+    (Lpke_messages_win_open or Lpke_messages_win_id or Lpke_messages_buf_id)
+    and (
+      not (Lpke_messages_win_id and Lpke_messages_buf_id)
+      or not vim.api.nvim_win_is_valid(Lpke_messages_win_id)
+    )
+  then
+    vim.notify(
+      'Toggle messages window: State is invalid. Resetting state before proceeding.',
+      vim.log.levels.WARN
+    )
+    reset_messages_win_state()
+  end
+
+  local cur_win = vim.api.nvim_get_current_win()
+
+  -- if window is already open, update content and focus it
+  if Lpke_messages_win_open and Lpke_messages_win_id then
+    update_messages_content()
+    vim.api.nvim_set_current_win(Lpke_messages_win_id)
+    return
+  end
+
+  -- open messages window
+  vim.cmd('botright new')
+  vim.cmd(
+    "silent! enew | silent! put =execute('messages') | silent! set nomodified buftype=nofile bufhidden=wipe"
+  )
+  vim.cmd('1,2delete _') -- remove first empty lines
+  vim.cmd('silent! g/^\\d\\+ more lines$/d') -- remove "X more messages" lines
+  vim.cmd([[silent! g/^\s*$/s/.*/]]) -- replace whitespace-only lines with empty lines
+  vim.cmd('normal! G')
+  Lpke_messages_win_open = true
+  Lpke_messages_win_id = vim.api.nvim_get_current_win()
+  Lpke_messages_buf_id = vim.api.nvim_get_current_buf()
+
+  -- handle messages window close
+  vim.api.nvim_create_autocmd('BufWipeout', {
+    buffer = Lpke_messages_buf_id,
+    callback = function()
+      vim.schedule(function()
+        -- focus previous window if possible
+        if vim.api.nvim_win_is_valid(cur_win) then
+          vim.api.nvim_set_current_win(cur_win)
+        end
+        reset_messages_win_state()
+      end)
+      return true -- cleanup
+    end,
+    desc = 'Return to original window when :Mes buffer is closed',
+  })
 end

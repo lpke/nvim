@@ -137,7 +137,13 @@ vim.api.nvim_create_autocmd('InsertLeave', {
 -- USER COMMANDS
 --------------------------
 
+Lpke_messages_win_open = false
+Lpke_messages_win_id = nil
+Lpke_messages_buf_id = nil
 -- stylua: ignore start
+vim.api.nvim_create_user_command('M', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
+vim.api.nvim_create_user_command('Mes', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
+vim.api.nvim_create_user_command('Messages', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
 vim.api.nvim_create_user_command('TrashRestore', Lpke_trash_restore, {})
 vim.api.nvim_create_user_command('T', Lpke_term, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('Term', Lpke_term, { nargs = '*' }) -- arg: full

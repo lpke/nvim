@@ -6,7 +6,7 @@ local tc = Lpke_theme_colors
 function Lpke_lsp_restart()
   local current_ft = vim.bo.filetype
   if not current_ft or current_ft == '' then
-    vim.notify('No filetype detected for current buffer', vim.log.levels.WARN)
+    vim.notify('Lsp Restart: No filetype detected for current buffer', vim.log.levels.WARN)
     return
   end
 
@@ -14,7 +14,7 @@ function Lpke_lsp_restart()
   local clients = vim.lsp.get_clients({ bufnr = 0 })
 
   if #clients == 0 then
-    vim.notify('No LSP clients active for current buffer', vim.log.levels.WARN)
+    vim.notify('Lsp Restart: No LSP clients active for current buffer', vim.log.levels.WARN)
     return
   end
 

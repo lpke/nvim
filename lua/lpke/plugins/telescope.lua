@@ -77,6 +77,20 @@ local function config()
     end)
   end
 
+  local function remove_selected_from_codecompanion(bufnr)
+    local cc_history = require('codecompanion').extensions.history
+    local chats = cc_history.get_chats()
+    helpers.telescope_sel_foreach(bufnr, function(sel)
+      Lpke_print(sel, true, 2)
+      local save_id = sel.save_id
+      cc_history.delete_chat(save_id)
+    end)
+    vim.cmd('CodeCompanionHistory')
+    pcall(function()
+      require('lualine').refresh()
+    end)
+  end
+
   -- custom pickers
   local function find_git_files()
     if helpers.cwd_has_git() then
@@ -314,6 +328,8 @@ local function config()
               remove_selected_from_qflist(bufnr)
             elseif prompt_title == 'harpoon marks' then -- remove harpoon
               remove_selected_from_harpoon(bufnr)
+            elseif prompt_title == 'Saved Chats' then -- remove harpoon
+              remove_selected_from_codecompanion(bufnr)
             end
           end,
 
