@@ -27,6 +27,7 @@ local filetypes = {
 local function config()
   local lualine = require('lualine')
   local tc = Lpke_theme_colors
+  local llm_spinner = require('lpke.plugins.ai.helpers.lualine-spinner')
   local refresh = lualine.refresh
 
   local custom_theme = {
@@ -369,6 +370,11 @@ local function config()
         },
       },
       lualine_x = {
+        -- codecompanion LLM request spinner
+        {
+          llm_spinner,
+          color = { fg = tc.foam },
+        },
         {
           'encoding',
           cond = function()

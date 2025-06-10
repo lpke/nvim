@@ -28,6 +28,7 @@ E.vim_opts = {
   clipboard = '', -- setting this to anything else will make pasting very slow on WSL
   cmdheight = 1, -- set height of command-line to 1
   conceallevel = 0, -- show text normally
+  more = false, -- dont steal focus for console messages
   --fileencoding = 'utf-8', -- file encoding for current buffer
   hlsearch = false, -- don't highlight matches
   incsearch = true, -- show the pattern matches as i type

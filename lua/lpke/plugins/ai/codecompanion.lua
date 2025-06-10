@@ -2,7 +2,7 @@ local function config()
   local codecompanion = require('codecompanion')
   local helpers = require('lpke.core.helpers')
 
-  local spinner = require('lpke.plugins.ai.helpers.spinner')
+  local spinner = require('lpke.plugins.ai.helpers.chat-spinner')
   spinner:init()
 
   -- stylua: ignore start
@@ -15,6 +15,12 @@ local function config()
   -- stylua: ignore end
 
   codecompanion.setup({
+    adapters = {
+      opts = {
+        show_defaults = false,
+        show_model_choices = true,
+      },
+    },
     display = {
       chat = {
         intro_message = 'g? for options',

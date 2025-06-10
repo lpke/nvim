@@ -81,7 +81,6 @@ local function config()
     local cc_history = require('codecompanion').extensions.history
     local chats = cc_history.get_chats()
     helpers.telescope_sel_foreach(bufnr, function(sel)
-      Lpke_print(sel, true, 2)
       local save_id = sel.save_id
       cc_history.delete_chat(save_id)
     end)
