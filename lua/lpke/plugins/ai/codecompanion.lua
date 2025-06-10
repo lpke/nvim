@@ -220,6 +220,21 @@ local function config()
             end,
             description = 'Open a new chat',
           },
+          delete_chat = {
+            modes = {
+              n = 'gX',
+            },
+            index = 21,
+            callback = function()
+              local cur_chat =
+                require('codecompanion.strategies.chat').buf_get_chat(0)
+              local save_id = cur_chat.opts.save_id
+              require('codecompanion').extensions.history.delete_chat(save_id)
+              cur_chat:close()
+              vim.cmd('CodeCompanionChat')
+            end,
+            description = 'Delete current chat and open a new one',
+          },
         },
         slash_commands = {
           ['git_files'] = {

@@ -279,7 +279,7 @@ if helpers.is_wsl then
     { desc = 'Paste to line above from * register (converting to unix line endings)' }})
 else
   keymap_set({'nv', '<leader>p', '"*p', { desc = 'Global paste' }})
-
+  keymap_set({'nv', '<leader>P', '"*P', { desc = 'Global paste (before cursor)' }})
 end
 -- stylua: ignore end
 
