@@ -16,6 +16,15 @@ local function config()
 
   codecompanion.setup({
     adapters = {
+      copilot = function()
+        return require('codecompanion.adapters').extend('copilot', {
+          schema = {
+            model = {
+              default = 'claude-sonnet-4',
+            },
+          },
+        })
+      end,
       opts = {
         show_defaults = false,
         show_model_choices = true,
