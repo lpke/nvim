@@ -210,6 +210,42 @@ local function config()
             callback = 'keymaps.goto_file_under_cursor',
             description = 'Open the file under cursor in a new tab.',
           },
+          new_chat = {
+            modes = {
+              n = 'gn',
+            },
+            index = 20,
+            callback = function()
+              vim.cmd('CodeCompanionChat')
+            end,
+            description = 'Open a new chat',
+          },
+        },
+        slash_commands = {
+          ['git_files'] = {
+            description = 'List git files',
+            callback = function(chat)
+              local handle = io.popen('git ls-files')
+              if handle ~= nil then
+                local result = handle:read('*a')
+                handle:close()
+                chat:add_reference(
+                  { role = 'user', content = result },
+                  'git',
+                  '<git_files>'
+                )
+              else
+                return vim.notify(
+                  'No git files available',
+                  vim.log.levels.INFO,
+                  { title = 'CodeCompanion' }
+                )
+              end
+            end,
+            opts = {
+              contains_code = false,
+            },
+          },
         },
       },
     },

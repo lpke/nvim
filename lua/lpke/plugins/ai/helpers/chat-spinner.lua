@@ -120,9 +120,14 @@ function M:setup_buffer_autocmds(buf)
     group = group,
     callback = function(request)
       -- Only handle events for the current buffer
+      local current_buf_valid, current_buf = pcall(vim.api.nvim_get_current_buf)
+      local buf_filetype_valid, buf_filetype = pcall(function()
+        return vim.bo[buf] and vim.bo[buf].filetype
+      end)
+
       if
-        vim.api.nvim_get_current_buf() == buf
-        or (vim.bo[buf] and vim.bo[buf].filetype == self.filetype)
+        (current_buf_valid and current_buf == buf)
+        or (buf_filetype_valid and buf_filetype == self.filetype)
       then
         if request.match == 'CodeCompanionRequestStarted' then
           self:start_spinner(buf)
