@@ -1,6 +1,7 @@
 local helpers = require('lpke.core.helpers')
 local symbols = require('lpke.core.options').custom_opts.symbols
 
+-- configures and renders the tabline (call it again to refresh)
 function Lpke_tabline()
   -- initialise string and get context
   local tabline = ''
