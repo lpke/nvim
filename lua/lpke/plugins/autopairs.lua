@@ -1,5 +1,7 @@
 local function config()
   local autopairs = require('nvim-autopairs')
+  local Rule = require('nvim-autopairs.rule')
+  local cond = require('nvim-autopairs.conds')
 
   -- add autoclose functionality when selecting cmp items
   local cmp_autopairs = require('nvim-autopairs.completion.cmp')
@@ -29,6 +31,12 @@ local function config()
     map_c_h = true, -- Map the <C-h> key to delete a pair
     map_c_w = false, -- map <c-w> to delete a pair if possible
   })
+
+  -- allow triple backtick typing without a fourth
+  autopairs.remove_rule('`')
+  autopairs.add_rule(
+    Rule('`', '`'):with_pair(cond.not_before_regex('`')):with_move(cond.done())
+  )
 end
 
 return {
