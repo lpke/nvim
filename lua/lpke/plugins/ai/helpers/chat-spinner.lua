@@ -59,7 +59,7 @@ function M:update_spinner(buf)
           },
         },
       },
-      virt_lines_above = true,
+      virt_lines_above = false,
     })
   end)
 
