@@ -5,10 +5,109 @@ local function config()
   local spinner = require('lpke.plugins.ai.helpers.chat-spinner')
   spinner:init()
 
+  local function toggle_if_already_in_chat()
+    if vim.bo.filetype == 'codecompanion' then
+      vim.cmd('CodeCompanionChat Toggle')
+      return true
+    end
+    return false
+  end
+
+  -- toggle the codecompanion chat buffer
+  function Lpke_toggle_cc()
+    -- stylua: ignore
+    if toggle_if_already_in_chat() then return end
+    -- find and close any codecompanion windows in other tabs
+    for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+      if tab ~= vim.api.nvim_get_current_tabpage() then
+        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+          local buf = vim.api.nvim_win_get_buf(win)
+          if
+            vim.api.nvim_get_option_value('filetype', { buf = buf })
+            == 'codecompanion'
+          then
+            vim.api.nvim_win_close(win, false)
+            break
+          end
+        end
+      end
+    end
+    -- toggle codecompanion chat normally
+    vim.cmd('CodeCompanionChat Toggle')
+  end
+
+  local function open_new_chat_with_context()
+    -- stylua: ignore
+    if toggle_if_already_in_chat() then return end
+    vim.cmd('CodeCompanionChat')
+    vim.cmd('normal! i#buffer #lsp')
+    vim.cmd('normal! G2o')
+    vim.cmd('stopinsert')
+    vim.cmd('normal! i@editor ')
+    vim.cmd('stopinsert')
+  end
+
+  local function open_new_chat_with_context_selection()
+    -- stylua: ignore
+    if toggle_if_already_in_chat() then return end
+    vim.cmd('CodeCompanionChat')
+    vim.cmd('normal! gg}}{i#buffer #lsp')
+    vim.cmd('normal! G2o')
+    vim.cmd('stopinsert')
+    vim.cmd('normal! i@editor ')
+    vim.cmd('stopinsert')
+  end
+
+  local function toggle_chat_with_context_selection()
+    -- stylua: ignore
+    if toggle_if_already_in_chat() then return end
+    -- copy selection
+    vim.cmd('normal! "vy')
+    local selection = vim.fn.getreg('v')
+    local filetype = vim.bo.filetype
+    -- check for codecompanion windows in current tab
+    local cc_win = nil
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if
+        vim.api.nvim_buf_is_loaded(buf)
+        and vim.api.nvim_get_option_value('filetype', { buf = buf })
+          == 'codecompanion'
+      then
+        cc_win = win
+        break
+      end
+    end
+    -- if codecompanion window is already open in current tab, focus it
+    if cc_win then
+      vim.api.nvim_set_current_win(cc_win)
+    else
+      -- toggle chat if no codecompanion window exists in current tab
+      vim.cmd('CodeCompanionChat Toggle')
+    end
+    -- insert selection in a code block
+    if selection ~= '' then
+      vim.cmd('normal! Go#buffer #lsp')
+      vim.cmd('stopinsert')
+      local code_block_lines = { '```' .. filetype }
+      vim.list_extend(code_block_lines, vim.split(selection, '\n'))
+      vim.list_extend(code_block_lines, { '```' })
+      vim.api.nvim_put(code_block_lines, 'l', true, true)
+      vim.cmd('normal! 2o')
+      vim.cmd('stopinsert')
+    end
+  end
+
   -- stylua: ignore start
   helpers.keymap_set_multi({
-    { 'nvC', '<A-f>', 'CodeCompanionChat Toggle', { desc = 'CodeCompanion: Open a chat buffer' }},
-    { 'nvC', '<F2>f', 'CodeCompanionChat Toggle', { desc = 'CodeCompanion: Open a chat buffer' }},
+    { 'n', '<A-f>', Lpke_toggle_cc, { desc = 'CodeCompanion: Toggle the chat buffer' }},
+    { 'n', '<F2>f', Lpke_toggle_cc, { desc = 'CodeCompanion: Toggle the chat buffer' }},
+    { 'n', '<A-F>', open_new_chat_with_context, { desc = 'CodeCompanion: Open new chat buffer with context' }},
+    { 'n', '<F2>F', open_new_chat_with_context, { desc = 'CodeCompanion: Open new chat buffer with context' }},
+    { 'v', '<A-f>', toggle_chat_with_context_selection, { desc = 'CodeCompanion: Toggle chat buffer, add context and selection' }},
+    { 'v', '<F2>f', toggle_chat_with_context_selection, { desc = 'CodeCompanion: Toggle chat buffer, add context and selection' }},
+    { 'v', '<A-F>', open_new_chat_with_context_selection, { desc = 'CodeCompanion: Open a new chat buffer with context and selection' }},
+    { 'v', '<F2>F', open_new_chat_with_context_selection, { desc = 'CodeCompanion: Open a new chat buffer with context and selection' }},
     { 'niC', '<C-l>', 'CodeCompanion', { desc = 'CodeCompanion: Open inline dialog' }},
     { 'v', '<C-l>', ":<C-u>'<,'>CodeCompanion<cr>", { desc = 'CodeCompanion: Open inline dialog (visual selection)' }},
   })
@@ -259,6 +358,18 @@ local function config()
             end,
             opts = {
               contains_code = false,
+            },
+          },
+        },
+        variables = {
+          ['buffer'] = {
+            opts = {
+              default_params = 'watch',
+            },
+          },
+          ['lsp'] = {
+            opts = {
+              default_params = 'watch',
             },
           },
         },
