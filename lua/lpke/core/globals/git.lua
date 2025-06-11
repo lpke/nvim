@@ -1,8 +1,14 @@
--- find the git root of any path (if applicable)
+-- find the git root of any path, or current file (if applicable)
 function Lpke_find_git_root(path)
-  -- Handle nil or empty path
+  -- Handle nil or empty path - use current buffer's path
   if not path or path == '' then
-    return nil
+    path = vim.api.nvim_buf_get_name(0)
+    if vim.bo.filetype == 'oil' then
+      path = path:gsub('^oil://', '')
+    end
+    if path == '' then
+      return nil -- Current buffer has no file
+    end
   end
 
   -- Convert to absolute path and get directory
@@ -14,8 +20,15 @@ function Lpke_find_git_root(path)
   -- Traverse up the directory tree
   while current_path and current_path ~= '/' do
     local git_dir = current_path .. '/.git'
+    -- check if .git is a directory (most cases)
     if vim.fn.isdirectory(git_dir) == 1 then
       return current_path
+    -- check if .git is a file (worktrees)
+    elseif vim.fn.filereadable(git_dir) == 1 then
+      local git_file_content = vim.fn.readfile(git_dir)[1]
+      if git_file_content and git_file_content:match('^gitdir: ') then
+        return current_path
+      end
     end
 
     -- Move to parent directory
