@@ -1,3 +1,5 @@
+local helpers = require('lpke.core.helpers')
+
 -- quick shorthands for manually feeding keys
 function Lpke_rep_termcodes(str)
   return vim.api.nvim_replace_termcodes(str, true, true, true)
@@ -684,4 +686,18 @@ function Lpke_toggle_messages()
     end,
     desc = 'Return to original window when :Mes buffer is closed',
   })
+end
+
+-- print IDs for active tab/buffer/window
+function Lpke_active()
+  print(
+    'Tab:'
+      .. vim.api.nvim_get_current_tabpage()
+      .. ', Buf:'
+      .. vim.api.nvim_get_current_buf()
+      .. ', Win:'
+      .. vim.api.nvim_get_current_win()
+      .. ', Buf name: '
+      .. helpers.get_buf_name(0)
+  )
 end

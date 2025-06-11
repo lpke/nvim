@@ -76,6 +76,7 @@ local function config()
   Lpke_show_git = true
   Lpke_show_git_branch = false
   Lpke_show_diagnostics = true
+  Lpke_show_active_ids = false
 
   -- custom component display
   local zoom_status = function()
@@ -282,6 +283,23 @@ local function config()
     },
   }
 
+  local active_ids = {
+    function()
+      return 'T:'
+        .. vim.api.nvim_get_current_tabpage()
+        .. ' B:'
+        .. vim.api.nvim_get_current_buf()
+        .. ' W:'
+        .. vim.api.nvim_get_current_win()
+    end,
+    cond = function()
+      return Lpke_show_active_ids
+    end,
+    on_click = function()
+      Lpke_active()
+    end,
+  }
+
   lualine.setup({
     options = {
       icons_enabled = false,
@@ -370,8 +388,8 @@ local function config()
         },
       },
       lualine_x = {
-        -- codecompanion LLM request spinner
         {
+          -- codecompanion LLM request spinner
           llm_spinner,
           color = { fg = tc.foam },
         },
@@ -496,6 +514,7 @@ local function config()
               or { bg = tc.overlaybump, fg = tc.lovefaded }
           end,
         },
+        active_ids,
       },
       lualine_z = {},
     },
@@ -541,6 +560,8 @@ local function config()
     { 'n', '<A-G>', function() Lpke_show_git = not Lpke_show_git refresh() end, { desc = 'Lualine: Toggle all git info' }},
     { 'n', '<F2>g', function() Lpke_show_git_branch = not Lpke_show_git_branch refresh() end, { desc = 'Lualine: Toggle git branch display' }},
     { 'n', '<A-g>', function() Lpke_show_git_branch = not Lpke_show_git_branch refresh() end, { desc = 'Lualine: Toggle git branch display' }},
+    { 'n', '<F2>B', function() Lpke_show_active_ids = not Lpke_show_active_ids refresh() end, { desc = 'Lualine: Toggle active IDs display' }},
+    { 'n', '<A-B>', function() Lpke_show_active_ids = not Lpke_show_active_ids refresh() end, { desc = 'Lualine: Toggle active IDs display' }},
   })
   -- stylua: ignore end
 end

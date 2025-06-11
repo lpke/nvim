@@ -142,20 +142,28 @@ Lpke_messages_win_open = false
 Lpke_messages_win_id = nil
 Lpke_messages_buf_id = nil
 -- stylua: ignore start
-vim.api.nvim_create_user_command('M', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
-vim.api.nvim_create_user_command('Mes', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
-vim.api.nvim_create_user_command('Messages', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
+vim.api.nvim_create_user_command('Bclean', Lpke_clean_buffers, {})
+
+-- terminal
 vim.api.nvim_create_user_command('TrashRestore', Lpke_trash_restore, {})
 vim.api.nvim_create_user_command('T', Lpke_term, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('Term', Lpke_term, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('Terminal', Lpke_term, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('R', Lpke_ranger, { nargs = '*' }) -- arg: full
 vim.api.nvim_create_user_command('Ranger', Lpke_ranger, { nargs = '*' }) -- arg: full
-vim.api.nvim_create_user_command('Bclean', Lpke_clean_buffers, {})
-vim.api.nvim_create_user_command('Path', function() print(helpers.get_buf_name()) end, {})
-vim.api.nvim_create_user_command('P', function() print(helpers.get_buf_name()) end, {})
 
--- yank commands
+-- message window
+vim.api.nvim_create_user_command('M', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
+vim.api.nvim_create_user_command('Mes', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
+vim.api.nvim_create_user_command('Messages', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
+
+-- printing
+vim.api.nvim_create_user_command('Path', function() print(helpers.get_buf_name()) end, { desc = 'Print the active buffer name' })
+vim.api.nvim_create_user_command('P', function() print(helpers.get_buf_name()) end, { desc = 'Print the active buffer name' })
+vim.api.nvim_create_user_command('Active', Lpke_active, { desc = 'Print details about the currently active tab/buffer/window' })
+vim.api.nvim_create_user_command('A', Lpke_active, { desc = 'Print details about the currently active tab/buffer/window' })
+
+-- yanking
 vim.api.nvim_create_user_command('YP', function(cmd) Lpke_yank_buf_name(cmd, true) end, { nargs = '*' }) -- arg: <register>
 vim.api.nvim_create_user_command('Yp', function(cmd) Lpke_yank_buf_name(cmd, false) end, { nargs = '*' }) -- arg: <register>
 vim.api.nvim_create_user_command('YL', function(cmd) Lpke_yank_location(cmd, true) end, { nargs = '*' }) -- arg: <register> ['blame']
