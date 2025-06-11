@@ -86,6 +86,9 @@ helpers.keymap_set_multi({
   {'n!', '<A-W>', function() helpers.toggle_whitespace_hl(options.custom_opts.whitespace_hl) end,
     { desc = 'Toggle visible whitespace' }},
 
+  -- Native git features
+  {'n', '<BS>GG', Lpke_diff, { desc = 'Open arbitrary diff tab' }},
+
   -- Fold management
   {'nv', 'zo', 'za', { desc = 'Toggle fold under cursor' }},
   {'nv', 'zO', 'zA', { desc = 'Toggle all nested folds under cursor' }},
