@@ -8,8 +8,6 @@ function Lpke_diff()
   vim.bo.modified = false
   vim.bo.buftype = 'nofile'
   vim.api.nvim_buf_set_name(0, 'Temp File 2')
-  -- FIXME
-  vim.wo.wrap = true
 
   vim.cmd('vsplit')
   vim.cmd('enew')
@@ -17,9 +15,12 @@ function Lpke_diff()
   vim.bo.modified = false
   vim.bo.buftype = 'nofile'
   vim.api.nvim_buf_set_name(0, 'Temp File 1')
-  -- FIXME
-  vim.wo.wrap = true
 
   vim.cmd('windo diffthis')
   vim.cmd('wincmd H')
+
+  vim.schedule(function()
+    vim.cmd('windo set wrap')
+    vim.cmd('wincmd h')
+  end)
 end
