@@ -46,13 +46,25 @@ function Lpke_toggle_git_fugitive(new_tab)
       vim.api.nvim_set_current_win(fugitive_win)
     end
   else
-    Lpke_fugitive_prev_win_id = vim.api.nvim_get_current_win()
-    if new_tab then
-      vim.cmd('tabnew')
-      vim.cmd('Git')
-      vim.cmd('only')
+    if Lpke_find_git_root(vim.fn.getcwd()) ~= nil then
+      Lpke_fugitive_prev_win_id = vim.api.nvim_get_current_win()
+      if new_tab then
+        vim.cmd('tabnew')
+        vim.cmd('Git')
+        vim.cmd('only')
+      else
+        vim.cmd('Git')
+      end
     else
-      vim.cmd('Git')
+      vim.notify(
+        'Toggle Fugitive: Not in a git repository.',
+        vim.log.levels.ERROR
+      )
+      Lpke_fugitive_prev_win_id = nil
+      fugitive_open = false
+      fugitive_win = nil
+      fugitive_tab = nil
+      return
     end
   end
 end
