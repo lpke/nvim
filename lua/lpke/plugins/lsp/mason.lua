@@ -19,19 +19,24 @@ local function config()
   })
 
   mason_lspconfig.setup({
+    -- set in my lsp settings
     ensure_installed = language_servers,
     -- If enabled: runs `vim.lsp.enable(<server>)` using lspconfig
     -- I prefer to control this explicitly inside my lspconfig.lua
     automatic_enable = false,
   })
 
+  -- See `:Mason` for list of installed tools and their target filetypes
   mason_tool_installer.setup({
     ensure_installed = {
-      'prettier',
-      'stylua', -- lua formatter
-      'isort', -- python formatter
-      'black', -- python formatter
-      'pylint', -- python linter
+      -- linters
+      'pylint', -- python
+      -- formatters
+      'prettier', -- html/css/js/ts/json/md/graphql
+      'stylua', -- lua
+      'shfmt', -- bash/shell
+      'isort', -- python imports
+      'black', -- python formatting
     },
   })
 

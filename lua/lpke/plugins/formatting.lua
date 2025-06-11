@@ -3,6 +3,7 @@ local function config()
   local helpers = require('lpke.core.helpers')
 
   conform.setup({
+    -- Formatters are installed by Mason (see `:Mason`)
     formatters_by_ft = {
       javascript = { 'prettier' },
       typescript = { 'prettier' },
@@ -17,6 +18,9 @@ local function config()
       graphql = { 'prettier' },
       lua = { 'stylua' },
       python = { 'isort', 'black' },
+      sh = { 'shfmt' },
+      bash = { 'shfmt' },
+      zsh = { 'shfmt' },
     },
   })
 
