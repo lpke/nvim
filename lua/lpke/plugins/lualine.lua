@@ -254,6 +254,7 @@ local function config()
 
   local git_components = {
     {
+      -- note: this is a diff against what is staged
       'diff',
       colored = true,
       cond = function()
@@ -265,8 +266,7 @@ local function config()
         removed = { fg = tc.love },
       },
       on_click = function()
-        Lpke_show_git_branch = not Lpke_show_git_branch
-        refresh()
+        Lpke_toggle_git_diff(true) -- diff to staging
       end,
       color = { bg = tc.overlaybump },
     },
@@ -276,8 +276,7 @@ local function config()
         return Lpke_show_git and Lpke_show_git_branch
       end,
       on_click = function()
-        Lpke_show_git_branch = not Lpke_show_git_branch
-        refresh()
+        Lpke_toggle_git_diff() -- diff to HEAD
       end,
       color = { fg = tc.textminus, bg = tc.overlaybump, gui = 'bold' },
     },
