@@ -1,5 +1,33 @@
--- TODO
-function Lpke_path_git_root() end
+-- find the git root of any path (if applicable)
+function Lpke_find_git_root(path)
+  -- Handle nil or empty path
+  if not path or path == '' then
+    return nil
+  end
+
+  -- Convert to absolute path and get directory
+  local current_path = vim.fn.fnamemodify(path, ':p')
+  if vim.fn.isdirectory(current_path) == 0 then
+    current_path = vim.fn.fnamemodify(current_path, ':h')
+  end
+
+  -- Traverse up the directory tree
+  while current_path and current_path ~= '/' do
+    local git_dir = current_path .. '/.git'
+    if vim.fn.isdirectory(git_dir) == 1 then
+      return current_path
+    end
+
+    -- Move to parent directory
+    local parent = vim.fn.fnamemodify(current_path, ':h')
+    if parent == current_path then
+      break -- Reached filesystem root
+    end
+    current_path = parent
+  end
+
+  return nil
+end
 
 -- open a new tab with 2 left/right windows, each with a seperate new buffer that has bufhidden=wipe and nomodified and buftype=nofile
 function Lpke_diff()
