@@ -139,3 +139,60 @@ function Lpke_yank_location(cmd, global)
     .. location
   vim.notify(message, vim.log.levels.INFO)
 end
+
+-- yank current tab id to specified register
+function Lpke_yank_tab_id(cmd, global)
+  local tab_id = tostring(vim.api.nvim_get_current_tabpage())
+  local registers_used
+  if cmd.args and (cmd.args ~= '') then
+    registers_used = cmd.args
+    Lpke_yank(tab_id, cmd.args)
+  else
+    registers_used = global
+    Lpke_yank(tab_id, global)
+  end
+
+  local message = 'Yanked tab ID ('
+    .. format_registers(registers_used)
+    .. '): '
+    .. tab_id
+  vim.notify(message, vim.log.levels.INFO)
+end
+
+-- yank current buffer id to specified register
+function Lpke_yank_buf_id(cmd, global)
+  local buf_id = tostring(vim.api.nvim_get_current_buf())
+  local registers_used
+  if cmd.args and (cmd.args ~= '') then
+    registers_used = cmd.args
+    Lpke_yank(buf_id, cmd.args)
+  else
+    registers_used = global
+    Lpke_yank(buf_id, global)
+  end
+
+  local message = 'Yanked buffer ID ('
+    .. format_registers(registers_used)
+    .. '): '
+    .. buf_id
+  vim.notify(message, vim.log.levels.INFO)
+end
+
+-- yank current window id to specified register
+function Lpke_yank_win_id(cmd, global)
+  local win_id = tostring(vim.api.nvim_get_current_win())
+  local registers_used
+  if cmd.args and (cmd.args ~= '') then
+    registers_used = cmd.args
+    Lpke_yank(win_id, cmd.args)
+  else
+    registers_used = global
+    Lpke_yank(win_id, global)
+  end
+
+  local message = 'Yanked window ID ('
+    .. format_registers(registers_used)
+    .. '): '
+    .. win_id
+  vim.notify(message, vim.log.levels.INFO)
+end

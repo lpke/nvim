@@ -154,10 +154,18 @@ vim.api.nvim_create_user_command('Ranger', Lpke_ranger, { nargs = '*' }) -- arg:
 vim.api.nvim_create_user_command('Bclean', Lpke_clean_buffers, {})
 vim.api.nvim_create_user_command('Path', function() print(helpers.get_buf_name()) end, {})
 vim.api.nvim_create_user_command('P', function() print(helpers.get_buf_name()) end, {})
+
+-- yank commands
 vim.api.nvim_create_user_command('YP', function(cmd) Lpke_yank_buf_name(cmd, true) end, { nargs = '*' }) -- arg: <register>
 vim.api.nvim_create_user_command('Yp', function(cmd) Lpke_yank_buf_name(cmd, false) end, { nargs = '*' }) -- arg: <register>
 vim.api.nvim_create_user_command('YL', function(cmd) Lpke_yank_location(cmd, true) end, { nargs = '*' }) -- arg: <register> ['blame']
 vim.api.nvim_create_user_command('Yl', function(cmd) Lpke_yank_location(cmd, false) end, { nargs = '*' }) -- arg: <register> ['blame']
+vim.api.nvim_create_user_command('YT', function(cmd) Lpke_yank_tab_id(cmd, true) end, { nargs = '*' }) -- arg: <register>
+vim.api.nvim_create_user_command('Yt', function(cmd) Lpke_yank_tab_id(cmd, false) end, { nargs = '*' }) -- arg: <register>
+vim.api.nvim_create_user_command('YB', function(cmd) Lpke_yank_buf_id(cmd, true) end, { nargs = '*' }) -- arg: <register>
+vim.api.nvim_create_user_command('Yb', function(cmd) Lpke_yank_buf_id(cmd, false) end, { nargs = '*' }) -- arg: <register>
+vim.api.nvim_create_user_command('YW', function(cmd) Lpke_yank_win_id(cmd, true) end, { nargs = '*' }) -- arg: <register>
+vim.api.nvim_create_user_command('Yw', function(cmd) Lpke_yank_win_id(cmd, false) end, { nargs = '*' }) -- arg: <register>
 -- stylua: ignore end
 
 return E
