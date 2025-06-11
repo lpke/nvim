@@ -252,6 +252,39 @@ local function config()
     },
   }
 
+  local llm_model = {
+    function()
+      local bufnr = vim.api.nvim_get_current_buf()
+      local chat = require('codecompanion').buf_get_chat(bufnr)
+      if not chat then
+        return nil
+      end
+      local adapter = chat.adapter
+      if not adapter then
+        return nil
+      end
+      local model = adapter.schema.model.default or adapter.opts.model
+      local model_display_maps = {
+        ['claude-sonnet-4'] = 'sonnet-4',
+        ['claude-3.5-sonnet'] = 'sonnet-3.5',
+        ['gemini-2.0-flash-001'] = 'gemini-2-flash',
+        ['gpt-4.1'] = 'GPT-4.1',
+        ['o1'] = 'o1',
+        ['claude-3.7-sonnet'] = 'sonnet-3.7',
+        ['gemini-2.5-pro'] = 'gemini-2.5-pro',
+        ['gpt-4o'] = 'GPT-4o',
+        ['o3-mini'] = 'o3-mini',
+        ['o4-mini'] = 'o4-mini',
+        ['claude-3.7-sonnet-thought'] = 'sonnet-3.7-think',
+      }
+      return model_display_maps[model] or model
+    end,
+    cond = function()
+      return vim.bo.filetype == 'codecompanion'
+    end,
+    color = { fg = tc.text },
+  }
+
   local git_components = {
     {
       -- note: this is a diff against what is staged
@@ -420,6 +453,7 @@ local function config()
             refresh()
           end,
         },
+        llm_model,
       },
       lualine_y = {
         'progress',
