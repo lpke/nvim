@@ -69,6 +69,7 @@ local function config()
   helpers.set_hl('@tag.builtin.tsx', { fg = tc.growthminus }) -- html elements
   helpers.set_hl('@tag.attribute', { fg = tc.iris, italic = true })
   helpers.set_hl('@markup.heading.gitcommit', { fg = tc.foam, bold = false })
+  helpers.set_hl('@markup.list', { fg = tc.muted })
 
   helpers.keymap_set_multi({
     {'nC', '<leader>t', 'Inspect', { desc = 'Treesitter: Inspect highlight group under cursor (:Inspect)' }},

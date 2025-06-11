@@ -1,38 +1,9 @@
-local helpers = require('lpke.core.helpers')
-
 -- quick shorthands for manually feeding keys
 function Lpke_rep_termcodes(str)
   return vim.api.nvim_replace_termcodes(str, true, true, true)
 end
 function Lpke_feedkeys(key, mode)
   vim.api.nvim_feedkeys(Lpke_rep_termcodes(key), mode, true)
-end
-
--- yanks contents into desired register/s
-function Lpke_yank(contents, registers)
-  if type(registers) ~= 'string' then
-    vim.fn.setreg('"', contents)
-    if type(registers) == 'boolean' then
-      vim.fn.setreg('*', contents)
-      vim.fn.setreg('+', contents)
-    end
-  else
-    for i = 1, #registers do
-      local reg = registers:sub(i, i)
-      vim.fn.setreg(reg, contents)
-    end
-  end
-  return contents
-end
-
--- yank current buf name (path) to specified register (used for user command: `YP`/`Yp`)
-function Lpke_yank_buf_name(cmd, global)
-  local buf_name = helpers.get_buf_name(0, true)
-  if cmd.args and (cmd.args ~= '') then
-    Lpke_yank(buf_name, cmd.args)
-  else
-    Lpke_yank(buf_name, global)
-  end
 end
 
 -- copy current buffer id and position

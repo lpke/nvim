@@ -4,7 +4,7 @@ function Lpke_toggle_git_fugitive(new_tab)
   local fugitive_win = nil
   local fugitive_tab = nil
 
-  -- get window
+  -- get and set fugitive state
   for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
     local windows = vim.api.nvim_tabpage_list_wins(tab)
     for _, win in ipairs(windows) do
@@ -31,11 +31,11 @@ function Lpke_toggle_git_fugitive(new_tab)
     and type(fugitive_win) == 'number'
     and type(fugitive_tab) == 'number'
   then
-    local current_win = vim.api.nvim_get_current_win()
-    local current_tab = vim.api.nvim_get_current_tabpage()
+    local cur_win = vim.api.nvim_get_current_win()
+    local cur_tab = vim.api.nvim_get_current_tabpage()
 
     -- close if active
-    if fugitive_tab == current_tab and fugitive_win == current_win then
+    if fugitive_tab == cur_tab and fugitive_win == cur_win then
       vim.api.nvim_win_close(fugitive_win, false)
       if Lpke_fugitive_prev_win_id then
         vim.api.nvim_set_current_win(Lpke_fugitive_prev_win_id)

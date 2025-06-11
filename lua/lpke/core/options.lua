@@ -156,6 +156,8 @@ vim.api.nvim_create_user_command('Path', function() print(helpers.get_buf_name()
 vim.api.nvim_create_user_command('P', function() print(helpers.get_buf_name()) end, {})
 vim.api.nvim_create_user_command('YP', function(cmd) Lpke_yank_buf_name(cmd, true) end, { nargs = '*' }) -- arg: <register>
 vim.api.nvim_create_user_command('Yp', function(cmd) Lpke_yank_buf_name(cmd, false) end, { nargs = '*' }) -- arg: <register>
+vim.api.nvim_create_user_command('YL', function(cmd) Lpke_yank_location(cmd, true) end, { nargs = '*' }) -- arg: <register> ['blame']
+vim.api.nvim_create_user_command('Yl', function(cmd) Lpke_yank_location(cmd, false) end, { nargs = '*' }) -- arg: <register> ['blame']
 -- stylua: ignore end
 
 return E
