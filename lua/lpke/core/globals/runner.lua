@@ -21,7 +21,7 @@ local filetype_commands = {
       'try { ' ..
         'jsdom = require(\'jsdom\'); ' ..
       '} catch (e) { ' ..
-        'console.error(\'[HTML Runner Error] jsdom module not found. Install with: npm install -g jsdom\'); ' ..
+        'console.error(\'[Runner] \\`jsdom\\` module not found. Install with: \\`npm install -g jsdom\\`\'); ' ..
         'process.exit(1); ' ..
       '} ' ..
       'const { JSDOM } = jsdom; ' ..
@@ -60,9 +60,9 @@ function Lpke_run_buf()
   local command = filetype_commands[filetype]
   if not command then
     vim.notify(
-      'No runner configured for filetype: '
+      'Runner: No runner configured for filetype: '
         .. (filetype and filetype ~= '' and filetype or '-'),
-      vim.log.levels.WARN
+      vim.log.levels.ERROR
     )
     return
   end
@@ -94,7 +94,10 @@ function Lpke_run_buf()
 
     local file = io.open(temp_file, 'w')
     if not file then
-      vim.notify('Failed to create temporary file', vim.log.levels.ERROR)
+      vim.notify(
+        'Runner: Failed to create temporary file',
+        vim.log.levels.ERROR
+      )
       return
     end
     file:write(content)
@@ -120,7 +123,7 @@ function Lpke_run_buf()
       vim.cmd('botright split')
       output_win = vim.api.nvim_get_current_win()
       vim.api.nvim_win_set_buf(output_win, output_buf)
-      vim.api.nvim_win_set_height(output_win, 15)
+      vim.api.nvim_win_set_height(output_win, 20)
     end
 
     -- Clear existing content
@@ -142,7 +145,7 @@ function Lpke_run_buf()
     vim.cmd('botright split')
     output_win = vim.api.nvim_get_current_win()
     vim.api.nvim_win_set_buf(output_win, output_buf)
-    vim.api.nvim_win_set_height(output_win, 15)
+    vim.api.nvim_win_set_height(output_win, 20)
 
     -- Set buffer name
     vim.api.nvim_buf_set_name(output_buf, '[Runner Output]')
