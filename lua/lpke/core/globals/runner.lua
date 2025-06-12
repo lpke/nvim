@@ -15,6 +15,38 @@ local filetype_commands = {
   rust = 'cargo run',
   php = 'php',
   perl = 'perl',
+  -- stylua: ignore start
+    html = 'node -e "' ..
+      'let jsdom; ' ..
+      'try { ' ..
+        'jsdom = require(\'jsdom\'); ' ..
+      '} catch (e) { ' ..
+        'console.error(\'[HTML Runner Error] jsdom module not found. Install with: npm install -g jsdom\'); ' ..
+        'process.exit(1); ' ..
+      '} ' ..
+      'const { JSDOM } = jsdom; ' ..
+      'const fs = require(\'fs\'); ' ..
+      'const html = fs.readFileSync(process.argv[1], \'utf8\'); ' ..
+      'const dom = new JSDOM(html, { ' ..
+        'runScripts: \'dangerously\', ' ..
+        'resources: \'usable\', ' ..
+        'pretendToBeVisual: true ' ..
+      '}); ' ..
+      'const originalConsole = { ' ..
+        'log: console.log, ' ..
+        'error: console.error, ' ..
+        'warn: console.warn, ' ..
+        'info: console.info ' ..
+      '}; ' ..
+      'dom.window.console.log = (...args) => originalConsole.log(\'[HTML Console]\', ...args); ' ..
+      'dom.window.console.error = (...args) => originalConsole.error(\'[HTML Console]\', ...args); ' ..
+      'dom.window.console.warn = (...args) => originalConsole.warn(\'[HTML Console]\', ...args); ' ..
+      'dom.window.console.info = (...args) => originalConsole.info(\'[HTML Console]\', ...args); ' ..
+      'dom.window.addEventListener(\'error\', (e) => { ' ..
+        'originalConsole.error(\'[HTML Error]\', e.error?.message || e.message); ' ..
+      '}); ' ..
+      'setTimeout(() => process.exit(0), 1000);"',
+  -- stylua: ignore end
 }
 
 -- Global variable to track runner output buffer
@@ -138,8 +170,17 @@ function Lpke_run_buf()
   -- Build full command
   local full_command = command .. ' ' .. vim.fn.shellescape(file_to_run)
 
+  -- Set up environment for Node.js commands to access global modules
+  local env = vim.fn.environ()
+  if filetype == 'html' then
+    -- Get global npm modules path and set NODE_PATH
+    local npm_global_path = vim.fn.system('npm root -g'):gsub('\n', '')
+    env.NODE_PATH = npm_global_path
+  end
+
   -- Run command and capture output
   vim.fn.jobstart(full_command, {
+    env = env,
     stdout_buffered = false,
     stderr_buffered = false,
     on_stdout = function(_, data)
