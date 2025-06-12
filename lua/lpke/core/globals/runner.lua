@@ -1,22 +1,65 @@
 local helpers = require('lpke.core.helpers')
 
-local filetype_commands = {
-  javascript = 'node',
-  js = 'node',
-  typescript = 'ts-node',
-  ts = 'ts-node',
-  python = 'python3',
-  lua = 'lua',
-  sh = 'bash',
-  bash = 'bash',
-  zsh = 'zsh',
-  ruby = 'ruby',
-  go = 'go run',
-  rust = 'cargo run',
-  php = 'php',
-  perl = 'perl',
+local runner_config = {
+  javascript = {
+    run_command = 'node',
+    dependencies = { 'node' },
+  },
+  js = {
+    run_command = 'node',
+    dependencies = { 'node' },
+  },
+  typescript = {
+    run_command = 'ts-node',
+    dependencies = { 'ts-node' },
+  },
+  ts = {
+    run_command = 'ts-node',
+    dependencies = { 'ts-node' },
+  },
+  python = {
+    run_command = 'python3',
+    dependencies = { 'python3' },
+  },
+  lua = {
+    run_command = 'lua',
+    dependencies = { 'lua' },
+  },
+  sh = {
+    run_command = 'bash',
+    dependencies = { 'bash' },
+  },
+  bash = {
+    run_command = 'bash',
+    dependencies = { 'bash' },
+  },
+  zsh = {
+    run_command = 'zsh',
+    dependencies = { 'zsh' },
+  },
+  ruby = {
+    run_command = 'ruby',
+    dependencies = { 'ruby' },
+  },
+  go = {
+    run_command = 'go run',
+    dependencies = { 'go' },
+  },
+  rust = {
+    run_command = 'cargo run',
+    dependencies = { 'cargo' },
+  },
+  php = {
+    run_command = 'php',
+    dependencies = { 'php' },
+  },
+  perl = {
+    run_command = 'perl',
+    dependencies = { 'perl' },
+  },
   -- stylua: ignore start
-    html = 'node -e "' ..
+  html = {
+    run_command = 'node -e "' ..
       'let jsdom; ' ..
       'try { ' ..
         'jsdom = require(\'jsdom\'); ' ..
@@ -46,8 +89,40 @@ local filetype_commands = {
         'originalConsole.error(\'[HTML Error]\', e.error?.message || e.message); ' ..
       '}); ' ..
       'setTimeout(() => process.exit(0), 1000);"',
+    dependencies = { 'node' }
+  },
   -- stylua: ignore end
 }
+
+-- Function to check if jsdom is available
+local function check_jsdom_availability(env)
+  local check_command =
+    "node -e \"try { require('jsdom'); console.log('OK'); } catch (e) { console.error('ERROR'); process.exit(1); }\""
+
+  -- Run the check synchronously
+  local result = vim.fn.system({
+    'bash',
+    '-c',
+    'NODE_PATH=' .. (env.NODE_PATH or '') .. ' ' .. check_command,
+  })
+
+  -- Check if the command succeeded and returned "OK"
+  return result:match('OK') ~= nil
+end
+
+-- Function to check if a command is available in PATH
+local function check_command_availability(cmd)
+  -- Extract just the command name (remove arguments like "go run" -> "go")
+  local command_name = cmd:match('^(%S+)')
+  if not command_name then
+    return false
+  end
+  -- Use 'which' command to check if it exists in PATH
+  local result = vim.fn.system(
+    'which ' .. vim.fn.shellescape(command_name) .. ' 2>/dev/null'
+  )
+  return vim.v.shell_error == 0 and result:match('%S') ~= nil
+end
 
 -- Global variable to track runner output buffer
 Lpke_run_buf_output_buf = nil
@@ -57,14 +132,32 @@ function Lpke_run_buf()
   local filetype = vim.bo[current_buf].filetype
 
   -- Check if filetype is supported
-  local command = filetype_commands[filetype]
-  if not command then
+  local config = runner_config[filetype]
+  local command = runner_config[filetype].run_command
+  if not config then
     vim.notify(
-      'Runner: No runner configured for filetype: '
+      'Runner: No command configured for filetype: '
         .. (filetype and filetype ~= '' and filetype or '-'),
       vim.log.levels.ERROR
     )
     return
+  end
+
+  local dependencies = config.dependencies or {}
+
+  -- Check if the required dependencies are available
+  for _, dep in ipairs(dependencies) do
+    if not check_command_availability(dep) then
+      vim.notify(
+        'Runner: Command `'
+          .. dep
+          .. '` is required to run `'
+          .. filetype
+          .. '` files',
+        vim.log.levels.ERROR
+      )
+      return
+    end
   end
 
   -- Check if buffer is a saved file
@@ -104,9 +197,29 @@ function Lpke_run_buf()
     file:close()
   end
 
+  -- Set up environment for Node.js commands and check dependencies early
+  local env = vim.fn.environ()
+  if filetype == 'html' then
+    -- Get global npm modules path and set NODE_PATH
+    local npm_global_path = vim.fn.system('npm root -g'):gsub('\n', '')
+    env.NODE_PATH = npm_global_path
+
+    -- Check if jsdom is available before proceeding
+    if not check_jsdom_availability(env) then
+      vim.notify(
+        'Runner: `jsdom` node module not found. Install with: `npm install -g jsdom`',
+        vim.log.levels.ERROR
+      )
+      -- Clean up temporary file if one was created
+      if use_temp_file and temp_file then
+        vim.fn.delete(temp_file)
+      end
+      return
+    end
+  end
+
   local output_buf
   local output_win
-
   -- Check if output buffer already exists and is valid
   if
     Lpke_run_buf_output_buf
@@ -160,7 +273,6 @@ function Lpke_run_buf()
       end,
     })
   end
-
   -- Add initial content
   local run_info = use_temp_file
       and 'Running: `' .. command .. ' ' .. temp_file .. '` (temp file)'
@@ -172,14 +284,6 @@ function Lpke_run_buf()
 
   -- Build full command
   local full_command = command .. ' ' .. vim.fn.shellescape(file_to_run)
-
-  -- Set up environment for Node.js commands to access global modules
-  local env = vim.fn.environ()
-  if filetype == 'html' then
-    -- Get global npm modules path and set NODE_PATH
-    local npm_global_path = vim.fn.system('npm root -g'):gsub('\n', '')
-    env.NODE_PATH = npm_global_path
-  end
 
   -- Run command and capture output
   vim.fn.jobstart(full_command, {
