@@ -32,11 +32,11 @@ local function config()
     map_c_w = false, -- map <c-w> to delete a pair if possible
   })
 
-  -- allow triple backtick typing without a fourth
   autopairs.remove_rule('`')
-  autopairs.add_rule(
-    Rule('`', '`'):with_pair(cond.not_before_regex('`')):with_move(cond.done())
-  )
+  -- allow triple backtick typing without a fourth
+  -- autopairs.add_rule(
+  --   Rule('`', '`'):with_pair(cond.not_before_regex('`')):with_move(cond.done())
+  -- )
 end
 
 return {
