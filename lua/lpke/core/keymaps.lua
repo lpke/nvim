@@ -60,10 +60,10 @@ helpers.keymap_set_multi({
     { desc = 'Wrap html element below with matching tag of selected text' }},
 
   -- terminal
-  {'nC', '<BS>t', 'Term', { desc = 'Open a floating terminal window' }},
-  {'nC', '<BS>T', 'Term full', { desc = 'Open a floating terminal window (fullscreen)' }},
-  {'nC', '<BS>r', 'Ranger', { desc = 'Open a floating ranger window' }},
-  {'nC', '<BS>R', 'Ranger full', { desc = 'Open a floating ranger window (fullscreen)' }},
+  {'nC', '<BS>tt', 'Term', { desc = 'Open a floating terminal window' }},
+  {'nC', '<BS>TT', 'Term full', { desc = 'Open a floating terminal window (fullscreen)' }},
+  {'nC', '<BS>tr', 'Ranger', { desc = 'Open a floating ranger window' }},
+  {'nC', '<BS>TR', 'Ranger full', { desc = 'Open a floating ranger window (fullscreen)' }},
   {'t', '<F2>;', '<C-\\><C-n>', { desc = 'Enter vim normal mode from terminal' }},
   {'t', '<A-;>', '<C-\\><C-n>', { desc = 'Enter vim normal mode from terminal' }},
   {'t', '<F2>:', '<C-\\><C-n>:', { desc = 'Enter vim cmd-line from terminal' }},
