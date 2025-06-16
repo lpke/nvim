@@ -37,6 +37,19 @@ local function config()
   -- autopairs.add_rule(
   --   Rule('`', '`'):with_pair(cond.not_before_regex('`')):with_move(cond.done())
   -- )
+
+  autopairs.remove_rule('(')
+  autopairs.add_rule(
+    Rule('(', ')')
+      :with_pair(cond.not_after_regex('[()%w]'))
+      :with_pair(cond.not_inside_quote())
+  )
+  autopairs.remove_rule('{')
+  autopairs.add_rule(
+    Rule('{', '}')
+      :with_pair(cond.not_after_regex('[{}%w]'))
+      :with_pair(cond.not_inside_quote())
+  )
 end
 
 return {
