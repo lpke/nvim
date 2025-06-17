@@ -43,14 +43,15 @@ local function config()
     Rule('(', ')')
       :with_pair(cond.not_after_regex('[()%w]'))
       :with_pair(cond.not_inside_quote())
-      :with_move(cond.done())
+      :with_move(cond.move_right())
   )
+
   autopairs.remove_rule('{')
   autopairs.add_rule(
     Rule('{', '}')
       :with_pair(cond.not_after_regex('[{}%w]'))
       :with_pair(cond.not_inside_quote())
-      :with_move(cond.done())
+      :with_move(cond.move_right())
   )
 end
 
