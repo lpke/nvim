@@ -135,16 +135,25 @@ vim.api.nvim_create_autocmd('InsertLeave', {
 -- })
 
 -- disable matchparen in insert mode
-local matchparen_group = vim.api.nvim_create_augroup("MatchParenToggle", { clear = true })
-vim.api.nvim_create_autocmd("InsertEnter", {
+local matchparen_group =
+  vim.api.nvim_create_augroup('MatchParenToggle', { clear = true })
+vim.api.nvim_create_autocmd('InsertEnter', {
   group = matchparen_group,
-  pattern = "*",
-  command = "NoMatchParen",
+  pattern = '*',
+  callback = function()
+    if vim.bo.filetype ~= 'TelescopePrompt' then
+      vim.cmd('NoMatchParen')
+    end
+  end,
 })
-vim.api.nvim_create_autocmd("InsertLeave", {
+vim.api.nvim_create_autocmd('InsertLeave', {
   group = matchparen_group,
-  pattern = "*",
-  command = "DoMatchParen",
+  pattern = '*',
+  callback = function()
+    if vim.bo.filetype ~= 'TelescopePrompt' then
+      vim.cmd('DoMatchParen')
+    end
+  end,
 })
 
 --------------------------
