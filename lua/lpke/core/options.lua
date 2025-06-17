@@ -134,6 +134,19 @@ vim.api.nvim_create_autocmd('InsertLeave', {
 --   command = "silent! loadview"
 -- })
 
+-- disable matchparen in insert mode
+local matchparen_group = vim.api.nvim_create_augroup("MatchParenToggle", { clear = true })
+vim.api.nvim_create_autocmd("InsertEnter", {
+  group = matchparen_group,
+  pattern = "*",
+  command = "NoMatchParen",
+})
+vim.api.nvim_create_autocmd("InsertLeave", {
+  group = matchparen_group,
+  pattern = "*",
+  command = "DoMatchParen",
+})
+
 --------------------------
 -- USER COMMANDS
 --------------------------

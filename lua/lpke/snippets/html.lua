@@ -18,6 +18,18 @@ end
 
 return { -- html
   s({
+    trig = 'did',
+    name = 'Document Element by ID',
+  }, fmt('document.getElementById(<>)', { i(1) })),
+  s({
+    trig = 'ds',
+    name = 'Document Query Selector',
+  }, fmt('document.querySelector(<>)', { i(1) })),
+  s({
+    trig = 'dsa',
+    name = 'Document Query Selector All',
+  }, fmt('document.querySelectorAll(<>)', { i(1) })),
+  s({
     trig = 'cl',
     name = 'Console Log',
   }, fmt('console.log(<>)', { i(1) })),
