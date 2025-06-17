@@ -17,4 +17,12 @@ local function get_opening_tag_name()
 end
 
 return { -- html
+  s({
+    trig = 'cl',
+    name = 'Console Log',
+  }, fmt('console.log(<>)', { i(1) })),
+  s({
+    trig = 'cld',
+    name = 'Console Log Debug',
+  }, fmt('console.log({ <> })', { i(1) })),
 }
