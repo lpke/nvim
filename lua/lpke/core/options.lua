@@ -141,7 +141,9 @@ vim.api.nvim_create_autocmd('InsertEnter', {
   group = matchparen_group,
   pattern = '*',
   callback = function()
-    if vim.bo.filetype ~= 'TelescopePrompt' then
+    if
+      vim.bo.filetype ~= 'TelescopePrompt' and vim.fn.getcmdwintype() == ''
+    then
       vim.cmd('NoMatchParen')
     end
   end,
@@ -150,7 +152,9 @@ vim.api.nvim_create_autocmd('InsertLeave', {
   group = matchparen_group,
   pattern = '*',
   callback = function()
-    if vim.bo.filetype ~= 'TelescopePrompt' then
+    if
+      vim.bo.filetype ~= 'TelescopePrompt' and vim.fn.getcmdwintype() == ''
+    then
       vim.cmd('DoMatchParen')
     end
   end,

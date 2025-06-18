@@ -21,6 +21,68 @@ local function config()
       sh = { 'shfmt' },
       bash = { 'shfmt' },
       zsh = { 'shfmt' },
+      toml = { 'taplo' },
+    },
+    -- Default overrides (including config)
+    formatters = {
+      prettier = {
+        -- https://prettier.io/docs/cli
+        -- https://prettier.io/docs/options
+        prepend_args = {
+          '--config-precedence',
+          'file-override',
+          '--single-quote',
+          '--tab-width',
+          '2',
+        },
+      },
+      stylua = {
+        -- https://github.com/johnnymorganz/stylua#configuration
+        prepend_args = function(_self, _ctx)
+          if
+            helpers.find_upward_to_git_root_or_cwd({
+              '.stylua.toml',
+              'stylua.toml',
+            })
+          then
+            return {}
+          end
+          return {
+            '--indent-width',
+            '2',
+            '--indent-type',
+            'spaces',
+            '--column-width',
+            '80',
+            '--quote-style',
+            'autoprefersingle',
+          }
+        end,
+      },
+      taplo = {
+        -- https://taplo.tamasfe.dev/cli/usage/formatting.html
+        -- https://taplo.tamasfe.dev/configuration/formatter-options.html
+        append_args = function(_self, _ctx)
+          if
+            helpers.find_upward_to_git_root_or_cwd({
+              '.taplo.toml',
+              'taplo.toml',
+            })
+          then
+            return {}
+          end
+          return {
+            'fmt',
+            '--option',
+            'indent_string=    ',
+            '--option',
+            'indent_tables=true',
+            '--option',
+            'indent_entries=true',
+            '$FILENAME',
+          }
+        end,
+      },
     },
   })
 

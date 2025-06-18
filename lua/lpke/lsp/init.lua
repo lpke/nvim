@@ -14,6 +14,7 @@ local enabled_language_servers = {
   'emmet_ls',
   'bashls',
   'pyright',
+  'taplo',
 }
 
 local config_overrides = {}

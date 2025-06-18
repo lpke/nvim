@@ -368,4 +368,36 @@ function E.transform_path(full_path, opts)
   return rel_path
 end
 
+function E.find_upward_to_git_root_or_cwd(items)
+  local cur_dir = vim.fn.fnamemodify(vim.fn.expand('%:p'), ':h')
+  local root = Lpke_find_git_root() or vim.fn.getcwd()
+  while cur_dir and cur_dir ~= '/' do
+    for _, item in ipairs(items) do
+      local path
+      if item:sub(-1) == '/' then
+        -- item is a directory
+        path = cur_dir .. '/' .. item:sub(1, -2)
+        if vim.fn.isdirectory(path) == 1 then
+          return path .. '/'
+        end
+      else
+        -- item is a file
+        path = cur_dir .. '/' .. item
+        if vim.fn.filereadable(path) == 1 then
+          return path
+        end
+      end
+    end
+    if cur_dir == root then
+      break
+    end
+    local parent = vim.fn.fnamemodify(cur_dir, ':h')
+    if parent == cur_dir then
+      break
+    end
+    cur_dir = parent
+  end
+  return nil
+end
+
 return E
