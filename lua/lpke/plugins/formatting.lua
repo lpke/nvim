@@ -74,7 +74,7 @@ local function config()
           return {
             'fmt',
             '--option',
-            'indent_string=    ',
+            'indent_string=  ',
             '--option',
             'indent_tables=true',
             '--option',
