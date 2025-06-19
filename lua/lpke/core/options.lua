@@ -23,7 +23,21 @@ E.custom_opts = {
 E.vim_opts = {
   backup = false, -- no backups (using persistent undo instead)
   swapfile = false, -- don't create a swapfile (using persistent undo instead)
-  undodir = os.getenv('HOME') .. '/.local/share/nvim/undo', -- where undo files are saved
+  -- TODO: handle windows check in seperate function as well as path handling
+  undodir = (function()
+    if vim.fn.has('win32') == 1 or vim.fn.has('win64') == 1 then
+      -- Windows: use LOCALAPPDATA or fallback to USERPROFILE
+      local localappdata = os.getenv('LOCALAPPDATA')
+      if localappdata then
+        return localappdata .. '\\nvim\\undo'
+      else
+        return os.getenv('USERPROFILE') .. '\\AppData\\Local\\nvim\\undo'
+      end
+    else
+      -- Unix-like systems (macOS, Linux, WSL)
+      return os.getenv('HOME') .. '/.local/share/nvim/undo'
+    end
+  end)(), -- where undo files are saved
   undofile = true, -- use persistent undo (persists sessions)
   clipboard = '', -- setting this to anything else will make pasting very slow on WSL
   cmdheight = 1, -- set height of command-line to 1
