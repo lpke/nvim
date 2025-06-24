@@ -26,6 +26,7 @@ local function config()
   -- stylua: ignore start
   helpers.keymap_set_multi({
     { 'n', '<leader><CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
+    { 'n', '<CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
     { 'nC', '<BS><CR>', 'Telescope harpoon marks', { desc = 'Harpoon: Telescope marks' } },
     { 'n', '<F2>u', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },
     { 'n', '<A-u>', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },
@@ -42,6 +43,25 @@ local function config()
     { 'n', '<A-a>', add_file, { desc = 'Harpoon: Mark current file' } },
     { 'n', '<F2>x', rm_file, { desc = 'Harpoon: Remove current file' } },
     { 'n', '<A-x>', rm_file, { desc = 'Harpoon: Remove current file' } },
+
+    { 'n', '<F2>1', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },
+    { 'n', '<A-1>', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },
+    { 'n', '<F2>2', function() harpoon_ui.nav_file(2) end, { desc = 'Harpoon: Go to file 2' } },
+    { 'n', '<A-2>', function() harpoon_ui.nav_file(2) end, { desc = 'Harpoon: Go to file 2' } },
+    { 'n', '<F2>3', function() harpoon_ui.nav_file(3) end, { desc = 'Harpoon: Go to file 3' } },
+    { 'n', '<A-3>', function() harpoon_ui.nav_file(3) end, { desc = 'Harpoon: Go to file 3' } },
+    { 'n', '<F2>4', function() harpoon_ui.nav_file(4) end, { desc = 'Harpoon: Go to file 4' } },
+    { 'n', '<A-4>', function() harpoon_ui.nav_file(4) end, { desc = 'Harpoon: Go to file 4' } },
+    { 'n', '<F2>5', function() harpoon_ui.nav_file(5) end, { desc = 'Harpoon: Go to file 5' } },
+    { 'n', '<A-5>', function() harpoon_ui.nav_file(5) end, { desc = 'Harpoon: Go to file 5' } },
+    { 'n', '<F2>6', function() harpoon_ui.nav_file(6) end, { desc = 'Harpoon: Go to file 6' } },
+    { 'n', '<A-6>', function() harpoon_ui.nav_file(6) end, { desc = 'Harpoon: Go to file 6' } },
+    { 'n', '<F2>7', function() harpoon_ui.nav_file(7) end, { desc = 'Harpoon: Go to file 7' } },
+    { 'n', '<A-7>', function() harpoon_ui.nav_file(7) end, { desc = 'Harpoon: Go to file 7' } },
+    { 'n', '<F2>8', function() harpoon_ui.nav_file(8) end, { desc = 'Harpoon: Go to file 8' } },
+    { 'n', '<A-8>', function() harpoon_ui.nav_file(8) end, { desc = 'Harpoon: Go to file 8' } },
+    { 'n', '<F2>9', function() harpoon_ui.nav_file(9) end, { desc = 'Harpoon: Go to file 9' } },
+    { 'n', '<A-9>', function() harpoon_ui.nav_file(9) end, { desc = 'Harpoon: Go to file 9' } },
 
     -- adding <BS> version in case I'm confined to a normal keyboard
     { 'n', '<BS>a', add_file, { desc = 'Harpoon: Mark current file' } },
