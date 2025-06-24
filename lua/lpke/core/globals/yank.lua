@@ -196,3 +196,46 @@ function Lpke_yank_win_id(cmd, global)
     .. win_id
   vim.notify(message, vim.log.levels.INFO)
 end
+
+-- yank current working directory to specified register
+function Lpke_yank_cwd(cmd, global)
+  local cwd = vim.fn.getcwd()
+  local registers_used
+  if cmd.args and (cmd.args ~= '') then
+    registers_used = cmd.args
+    Lpke_yank(cwd, cmd.args)
+  else
+    registers_used = global
+    Lpke_yank(cwd, global)
+  end
+
+  local message = 'Yanked current working directory ('
+    .. format_registers(registers_used)
+    .. '): '
+    .. cwd
+  vim.notify(message, vim.log.levels.INFO)
+end
+
+-- yank git root directory to specified register
+function Lpke_yank_git_root(cmd, global)
+  local git_root = Lpke_find_git_root()
+  if not git_root then
+    vim.notify('No git repository found', vim.log.levels.WARN)
+    return
+  end
+
+  local registers_used
+  if cmd.args and (cmd.args ~= '') then
+    registers_used = cmd.args
+    Lpke_yank(git_root, cmd.args)
+  else
+    registers_used = global
+    Lpke_yank(git_root, global)
+  end
+
+  local message = 'Yanked git root ('
+    .. format_registers(registers_used)
+    .. '): '
+    .. git_root
+  vim.notify(message, vim.log.levels.INFO)
+end

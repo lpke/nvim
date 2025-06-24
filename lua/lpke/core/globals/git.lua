@@ -42,6 +42,11 @@ function Lpke_find_git_root(path)
   return nil
 end
 
+-- print the git root
+function Lpke_git_root(path)
+  print(Lpke_find_git_root(path))
+end
+
 -- open a new tab with 2 left/right windows, each with a seperate new buffer that has bufhidden=wipe and nomodified and buftype=nofile
 function Lpke_diff()
   vim.cmd('tabnew')
