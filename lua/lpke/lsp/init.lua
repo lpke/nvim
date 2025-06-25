@@ -15,6 +15,7 @@ local enabled_language_servers = {
   'bashls',
   'pyright',
   'taplo',
+  'powershell_es',
 }
 
 local config_overrides = {}
