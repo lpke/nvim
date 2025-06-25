@@ -88,7 +88,11 @@ local function config()
 
   -- keymaps
   local function format()
-    conform.format({ lsp_fallback = true, async = false, timeout_ms = 2000 })
+    local formatted =
+      conform.format({ lsp_fallback = true, async = false, timeout_ms = 2000 })
+    if not formatted then
+      vim.cmd('normal! mzgg=G`z')
+    end
   end
   helpers.keymap_set_multi({
     { 'nv', '==', format, { desc = 'Format file' } },
