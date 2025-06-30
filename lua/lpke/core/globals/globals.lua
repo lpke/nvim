@@ -229,10 +229,10 @@ end
 -- like print but can print tables
 function Lpke_print(
   val,
-  newline_at_end,
   max_depth,
   indent_size,
   indent,
+  newline_at_end,
   current_depth,
   is_top_level
 )
@@ -257,10 +257,10 @@ function Lpke_print(
         print(indent .. key .. ':')
         Lpke_print(
           v,
-          false,
           max_depth,
           indent_size,
           next_indent,
+          false,
           current_depth + 1,
           false
         )

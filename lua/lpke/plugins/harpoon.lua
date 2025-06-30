@@ -26,7 +26,6 @@ local function config()
   -- stylua: ignore start
   helpers.keymap_set_multi({
     { 'n', '<leader><CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
-    { 'n', '<CR>', harpoon_ui.toggle_quick_menu, { desc = 'Harpoon: Toggle quick menu' } },
     { 'nC', '<BS><CR>', 'Telescope harpoon marks', { desc = 'Harpoon: Telescope marks' } },
     { 'n', '<F2>u', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },
     { 'n', '<A-u>', function() harpoon_ui.nav_file(1) end, { desc = 'Harpoon: Go to file 1' } },

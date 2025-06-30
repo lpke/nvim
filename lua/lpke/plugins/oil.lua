@@ -15,13 +15,13 @@ local function config()
   -- stylua: ignore start
   helpers.keymap_set_multi({
     -- open in current window
-    {'nC', '<BS>s', 'Oil', { desc = 'Open Oil File Browser' }},
-    {'nC', '-', 'Oil', { desc = 'Open Oil File Browser' }},
+    {'nC', '<BS>s', 'Oil', { desc = 'Oil: Open Oil File Browser' }},
+    {'nC', '-', 'Oil', { desc = 'Oil: Open Oil File Browser' }},
     -- open in a new split (neovim-wide)
-    {'nC', '<F2>>', 'vsplit | Oil', { desc = 'Open Oil File Browser at current location (v split)' }},
-    {'nC', '<A->>', 'vsplit | Oil', { desc = 'Open Oil File Browser at current location (v split)' }}, -- FIXME
-    {'nC', '<F2><', 'split | Oil', { desc = 'Open Oil File Browser at current location (h split)' }},
-    {'nC', '<A-<>>', 'split | Oil', { desc = 'Open Oil File Browser at current location (h split)' }}, -- FIXME
+    {'nC', '<F2>>', 'vsplit | Oil', { desc = 'Oil: Open Oil File Browser at current location (v split)' }},
+    {'nC', '<A->>', 'vsplit | Oil', { desc = 'Oil: Open Oil File Browser at current location (v split)' }}, -- FIXME
+    {'nC', '<F2><', 'split | Oil', { desc = 'Oil: Open Oil File Browser at current location (h split)' }},
+    {'nC', '<A-<>>', 'split | Oil', { desc = 'Oil: Open Oil File Browser at current location (h split)' }}, -- FIXME
   })
   -- stylua: ignore end
 
@@ -89,7 +89,7 @@ local function config()
             oil.select()
           end
         end,
-        desc = 'If IN_VSCODE and file, run "cursor -r", else open normally',
+        desc = 'Oil: If IN_VSCODE and file, run "cursor -r", else open normally',
         mode = 'n',
       },
       ['<leader><CR>'] = {
@@ -101,7 +101,7 @@ local function config()
             vim.fn.jobstart({ 'cursor', '-r', fullpath })
           end
         end,
-        desc = 'Run "cursor -r" on selected entry',
+        desc = 'Oil: Run "cursor -r" on selected entry',
         mode = 'n',
       },
       ['-'] = 'actions.parent',
@@ -110,7 +110,7 @@ local function config()
         callback = function()
           oil.open('~/')
         end,
-        desc = 'Open oil in the home (~/) folder',
+        desc = 'Oil: Open oil in the home (~/) folder',
         mode = 'n',
       },
       -- cd
@@ -130,28 +130,28 @@ local function config()
             vim.notify('Not a git repository', vim.log.levels.WARN)
           end
         end,
-        desc = ':cd to the git root of the current directory',
+        desc = 'Oil: :cd to the git root of the current directory',
         mode = 'n',
       },
       ['cdc'] = {
         callback = function()
           cd('cd')
         end,
-        desc = ':cd to the current oil directory (changes whole session)',
+        desc = 'Oil: :cd to the current oil directory (changes whole session)',
         mode = 'n',
       },
       ['cdt'] = {
         callback = function()
           cd('tcd')
         end,
-        desc = ':tcd to the current oil directory (tab scoped)',
+        desc = 'Oil: :tcd to the current oil directory (tab scoped)',
         mode = 'n',
       },
       ['cdl'] = {
         callback = function()
           cd('lcd')
         end,
-        desc = ':lcd to the current oil directory (window scoped)',
+        desc = 'Oil: :lcd to the current oil directory (window scoped)',
         mode = 'n',
       },
       -- view/toggles
@@ -169,14 +169,14 @@ local function config()
       ['<A-n>'] = 'actions.select_tab',
       -- override default bind for this to keep oil at same dir when splitting from within oil
       ['<F2>>'] = {
-        desc = 'Open Oil File Browser (v split)',
+        desc = 'Oil: Open Oil File Browser (v split)',
         callback = function()
           vim.cmd('vsplit')
         end,
         mode = 'n',
       },
       ['<A->>'] = { -- FIXME
-        desc = 'Open Oil File Browser (v split)',
+        desc = 'Oil: Open Oil File Browser (v split)',
         callback = function()
           vim.cmd('vsplit')
         end,
@@ -186,14 +186,14 @@ local function config()
         callback = function()
           vim.cmd('split')
         end,
-        desc = 'Open Oil File Browser (h split)',
+        desc = 'Oil: Open Oil File Browser (h split)',
         mode = 'n',
       },
       ['<A-<>'] = { -- FIXME
         callback = function()
           vim.cmd('split')
         end,
-        desc = 'Open Oil File Browser (h split)',
+        desc = 'Oil: Open Oil File Browser (h split)',
         mode = 'n',
       },
       -- yanking
@@ -202,7 +202,7 @@ local function config()
           local dir = oil.get_current_dir()
           Lpke_yank(dir, '"*+')
         end,
-        desc = 'Yank the path of the current directory',
+        desc = 'Oil: Yank the path of the current directory',
         mode = 'n',
       },
       ['yp'] = {
@@ -212,7 +212,7 @@ local function config()
           local path = dir .. name
           Lpke_yank(path, '"*+')
         end,
-        desc = 'Yank the path of the currently selected item',
+        desc = 'Oil: Yank the path of the currently selected item',
         mode = 'n',
       },
       -- disabled defaults

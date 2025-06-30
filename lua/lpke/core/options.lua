@@ -198,8 +198,14 @@ vim.api.nvim_create_user_command('Mes', Lpke_toggle_messages, { desc = 'Open :me
 vim.api.nvim_create_user_command('Messages', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
 
 -- printing
-vim.api.nvim_create_user_command('P', function() print('PP: buf name | PC: cwd | PG: git root | PW: win details') end,
-  { desc = 'Print help for `P` commands' })
+vim.api.nvim_create_user_command('P', function(cmd)
+  if #cmd.fargs == 0 then
+    print('PP: buf name | PC: cwd | PG: git root | PW: win details | P <args>: Lpke_print(...args)')
+  else
+    local args = helpers.parse_command_args(cmd.fargs)
+    Lpke_print(table.unpack(args))
+  end
+end, { nargs = '*', desc = 'Print help for `P` commands or call Lpke_print with args' })
 vim.api.nvim_create_user_command('PP', function() print(helpers.get_buf_name()) end, { desc = 'Print the active buffer name' })
 vim.api.nvim_create_user_command('PC', function() print(vim.fn.getcwd()) end, { desc = 'Print the current working directory' })
 vim.api.nvim_create_user_command('PG', function() Lpke_git_root() end, { desc = 'Print the path of the git root of the current file' })

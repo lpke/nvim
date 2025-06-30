@@ -400,4 +400,60 @@ function E.find_upward_to_git_root_or_cwd(items)
   return nil
 end
 
+-- Parse command arguments, handling [[]] pairs and quoted strings
+function E.parse_command_args(fargs)
+  -- Join all arguments into one string
+  local full_string = table.concat(fargs, ' ')
+  -- Parse arguments, handling [[]] pairs
+  local raw_args = {}
+  local i = 1
+  while i <= #full_string do
+    -- Skip leading whitespace
+    while i <= #full_string and full_string:sub(i, i):match('%s') do
+      i = i + 1
+    end
+    if i > #full_string then
+      break
+    end
+    -- Check for [[ ]] pair
+    if full_string:sub(i, i + 1) == '[[' then
+      local start = i + 2
+      local end_pos = full_string:find(']]', start)
+      if end_pos then
+        table.insert(raw_args, full_string:sub(start, end_pos - 1))
+        i = end_pos + 2
+      else
+        -- No closing ]], treat as regular argument
+        local space_pos = full_string:find('%s', i) or (#full_string + 1)
+        table.insert(raw_args, full_string:sub(i, space_pos - 1))
+        i = space_pos
+      end
+    else
+      -- Regular argument (space-delimited)
+      local space_pos = full_string:find('%s', i) or (#full_string + 1)
+      table.insert(raw_args, full_string:sub(i, space_pos - 1))
+      i = space_pos
+    end
+  end
+  -- Process arguments (handle quotes and evaluation)
+  local args = {}
+  for j, arg in ipairs(raw_args) do
+    -- Check if argument is wrapped in quotes
+    if arg:match('^".*"$') or arg:match("^'.*'$") then
+      -- Remove quotes and treat as literal string
+      args[j] = arg:sub(2, -2)
+    else
+      -- Try to evaluate as Lua expression
+      local func, _err = load('return ' .. arg)
+      if func then
+        args[j] = func()
+      else
+        -- If evaluation fails, treat as string
+        args[j] = arg
+      end
+    end
+  end
+  return args
+end
+
 return E
