@@ -198,22 +198,22 @@ vim.api.nvim_create_user_command('Mes', Lpke_toggle_messages, { desc = 'Open :me
 vim.api.nvim_create_user_command('Messages', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
 
 -- printing
-vim.api.nvim_create_user_command('Path', function() print(helpers.get_buf_name()) end, { desc = 'Print the active buffer name' })
-vim.api.nvim_create_user_command('P', function() print(helpers.get_buf_name()) end, { desc = 'Print the active buffer name' })
-vim.api.nvim_create_user_command('Cwd', function() print(vim.fn.getcwd()) end, { desc = 'Print the current working directory' })
-vim.api.nvim_create_user_command('D', function() print(vim.fn.getcwd()) end, { desc = 'Print the current working directory' })
-vim.api.nvim_create_user_command('GitRoot', function() Lpke_git_root() end, { desc = 'Print the path of the git root of the current file' })
-vim.api.nvim_create_user_command('I', function() Lpke_git_root() end, { desc = 'Print the path of the git root of the current file' })
-vim.api.nvim_create_user_command('Active', Lpke_active, { desc = 'Print details about the currently active tab/buffer/window' })
-vim.api.nvim_create_user_command('A', Lpke_active, { desc = 'Print details about the currently active tab/buffer/window' })
+vim.api.nvim_create_user_command('P', function() print('PP: buf name | PC: cwd | PG: git root | PW: win details') end,
+  { desc = 'Print help for `P` commands' })
+vim.api.nvim_create_user_command('PP', function() print(helpers.get_buf_name()) end, { desc = 'Print the active buffer name' })
+vim.api.nvim_create_user_command('PC', function() print(vim.fn.getcwd()) end, { desc = 'Print the current working directory' })
+vim.api.nvim_create_user_command('PG', function() Lpke_git_root() end, { desc = 'Print the path of the git root of the current file' })
+vim.api.nvim_create_user_command('PW', Lpke_active, { desc = 'Print details about the currently active tab/buffer/window' })
 
 -- yanking
+vim.api.nvim_create_user_command('Y', function() print('YP/p: buf name | YD/d: cwd | YG/g: git root | YL/l: location | YT/t: tab ID | YB/b: buf ID | YW/w: win ID') end,
+  { desc = 'Print help for `Y` commands' })
 vim.api.nvim_create_user_command('YP', function(cmd) Lpke_yank_buf_name(cmd, true) end, { nargs = '*' }) -- arg: <register>
 vim.api.nvim_create_user_command('Yp', function(cmd) Lpke_yank_buf_name(cmd, false) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('YD', function(cmd) Lpke_yank_cwd(cmd, true) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('Yd', function(cmd) Lpke_yank_cwd(cmd, false) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('YI', function(cmd) Lpke_yank_git_root(cmd, true) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('Yi', function(cmd) Lpke_yank_git_root(cmd, false) end, { nargs = '*' }) -- arg: <register>
+vim.api.nvim_create_user_command('YC', function(cmd) Lpke_yank_cwd(cmd, true) end, { nargs = '*' }) -- arg: <register>
+vim.api.nvim_create_user_command('Yc', function(cmd) Lpke_yank_cwd(cmd, false) end, { nargs = '*' }) -- arg: <register>
+vim.api.nvim_create_user_command('YG', function(cmd) Lpke_yank_git_root(cmd, true) end, { nargs = '*' }) -- arg: <register>
+vim.api.nvim_create_user_command('Yg', function(cmd) Lpke_yank_git_root(cmd, false) end, { nargs = '*' }) -- arg: <register>
 vim.api.nvim_create_user_command('YL', function(cmd) Lpke_yank_location(cmd, true) end, { nargs = '*' }) -- arg: <register> ['blame']
 vim.api.nvim_create_user_command('Yl', function(cmd) Lpke_yank_location(cmd, false) end, { nargs = '*' }) -- arg: <register> ['blame']
 vim.api.nvim_create_user_command('YT', function(cmd) Lpke_yank_tab_id(cmd, true) end, { nargs = '*' }) -- arg: <register>
