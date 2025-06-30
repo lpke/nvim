@@ -137,24 +137,10 @@ function E.set_hl(name, hl)
   vim.api.nvim_set_hl(0, name, hl)
 end
 
--- toggle 'list' option (show whitespace chars) and highlight
-local non_text_hl = {}
-local has_toggled_whitespace = false
-function E.toggle_whitespace_hl(hl_name)
-  if not has_toggled_whitespace then
-    non_text_hl = E.get_hl('NonText')
-    has_toggled_whitespace = true
-  end
-
+-- toggle 'list' option (show whitespace chars)
+function E.toggle_show_whitespace()
   local is_list = vim.wo.list
   vim.wo.list = not is_list
-
-  if not is_list then -- if not *previously*
-    local target_hl = E.get_hl(hl_name)
-    E.set_hl('NonText', { fg = target_hl.fg, bg = target_hl.bg })
-  else
-    E.set_hl('NonText', non_text_hl)
-  end
 end
 
 -- toggle global status line ('laststatus' option 2/3)

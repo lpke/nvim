@@ -6,7 +6,10 @@ local tc = Lpke_theme_colors
 function Lpke_lsp_restart()
   local current_ft = vim.bo.filetype
   if not current_ft or current_ft == '' then
-    vim.notify('Lsp Restart: No filetype detected for current buffer', vim.log.levels.WARN)
+    vim.notify(
+      'Lsp Restart: No filetype detected for current buffer',
+      vim.log.levels.WARN
+    )
     return
   end
 
@@ -14,7 +17,10 @@ function Lpke_lsp_restart()
   local clients = vim.lsp.get_clients({ bufnr = 0 })
 
   if #clients == 0 then
-    vim.notify('Lsp Restart: No LSP clients active for current buffer', vim.log.levels.WARN)
+    vim.notify(
+      'Lsp Restart: No LSP clients active for current buffer',
+      vim.log.levels.WARN
+    )
     return
   end
 
@@ -88,47 +94,63 @@ end
 
 -- stylua: ignore start
 function Lpke_hide_diagnostic_hl()
-  helpers.set_hl('diagnosticunnecessary', {})
-  helpers.set_hl('diagnosticunderlineok', {})
-  helpers.set_hl('diagnosticunderlinehint', {})
-  helpers.set_hl('diagnosticunderlineinfo', {})
-  helpers.set_hl('diagnosticunderlinewarn', {})
-  helpers.set_hl('diagnosticunderlineerror', {})
+  helpers.set_hl('DiagnosticUnnecessary', {})
+  helpers.set_hl('DiagnosticUnderlineOk', {})
+  helpers.set_hl('DiagnosticUnderlineHint', {})
+  helpers.set_hl('DiagnosticUnderlineInfo', {})
+  helpers.set_hl('DiagnosticUnderlineWarn', {})
+  helpers.set_hl('DiagnosticUnderlineError', {})
 end
 function Lpke_show_diagnostic_hl()
-  helpers.set_hl('diagnosticunnecessary', { fg = tc.subtleplus })
-  helpers.set_hl('diagnosticunderlineok', { bg = tc.growthbg })
-  helpers.set_hl('diagnosticunderlinehint', { bg = tc.irisbg })
-  helpers.set_hl('diagnosticunderlineinfo', { bg = tc.foambg })
-  helpers.set_hl('diagnosticunderlinewarn', { bg = tc.goldbg })
-  helpers.set_hl('diagnosticunderlineerror', { bg = tc.lovebg })
+  helpers.set_hl('DiagnosticUnnecessary', { fg = tc.subtleplus })
+  helpers.set_hl('DiagnosticUnderlineOk', { bg = tc.growthbg })
+  helpers.set_hl('DiagnosticUnderlineHint', { bg = tc.irisbg })
+  helpers.set_hl('DiagnosticUnderlineInfo', { bg = tc.foambg })
+  helpers.set_hl('DiagnosticUnderlineWarn', { bg = tc.goldbg })
+  helpers.set_hl('DiagnosticUnderlineError', { bg = tc.lovebg })
 end
 
 function Lpke_dim_diagnostic_virtual_text()
-  helpers.set_hl('diagnosticvirtualtextok', { fg = tc.growthbg, italic = true })
-  helpers.set_hl('diagnosticvirtualtexthint', { fg = tc.irisbg, italic = true })
-  helpers.set_hl('diagnosticvirtualtextinfo', { fg = tc.foambg, italic = true })
-  helpers.set_hl('diagnosticvirtualtextwarn', { fg = tc.goldbg, italic = true })
-  helpers.set_hl('diagnosticvirtualtexterror', { fg = tc.lovebg, italic = true })
+  helpers.set_hl('DiagnosticVirtualTextOk', { fg = tc.growthbg, italic = true })
+  helpers.set_hl('DiagnosticVirtualTextHint', { fg = tc.irisbg, italic = true })
+  helpers.set_hl('DiagnosticVirtualTextInfo', { fg = tc.foambg, italic = true })
+  helpers.set_hl('DiagnosticVirtualTextWarn', { fg = tc.goldbg, italic = true })
+  helpers.set_hl('DiagnosticVirtualTextError', { fg = tc.lovebg, italic = true })
+  helpers.set_hl('DiagnosticVirtualLinesOk', { fg = tc.growthbg, italic = true })
+  helpers.set_hl('DiagnosticVirtualLinesHint', { fg = tc.irisbg, italic = true })
+  helpers.set_hl('DiagnosticVirtualLinesInfo', { fg = tc.foambg, italic = true })
+  helpers.set_hl('DiagnosticVirtualLinesWarn', { fg = tc.goldbg, italic = true })
+  helpers.set_hl('DiagnosticVirtualLinesError', { fg = tc.lovebg, italic = true })
 end
 function Lpke_show_diagnostic_virtual_text()
-  helpers.set_hl('diagnosticvirtualtextok', { fg = tc.growth, italic = true })
-  helpers.set_hl('diagnosticvirtualtexthint', { fg = tc.irisfaded, italic = true })
-  helpers.set_hl('diagnosticvirtualtextinfo', { fg = tc.foamfaded, italic = true })
-  helpers.set_hl('diagnosticvirtualtextwarn', { fg = tc.goldfaded, italic = true })
-  helpers.set_hl('diagnosticvirtualtexterror', { fg = tc.lovefaded, italic = true })
+  helpers.set_hl('DiagnosticVirtualTextOk', { fg = tc.growth, italic = true })
+  helpers.set_hl('DiagnosticVirtualTextHint', { fg = tc.irisfaded, italic = true })
+  helpers.set_hl('DiagnosticVirtualTextInfo', { fg = tc.foamfaded, italic = true })
+  helpers.set_hl('DiagnosticVirtualTextWarn', { fg = tc.goldfaded, italic = true })
+  helpers.set_hl('DiagnosticVirtualTextError', { fg = tc.lovefaded, italic = true })
+  helpers.set_hl('DiagnosticVirtualLinesOk', { fg = tc.growth, italic = true })
+  helpers.set_hl('DiagnosticVirtualLinesHint', { fg = tc.irisfaded, italic = true })
+  helpers.set_hl('DiagnosticVirtualLinesInfo', { fg = tc.foamfaded, italic = true })
+  helpers.set_hl('DiagnosticVirtualLinesWarn', { fg = tc.goldfaded, italic = true })
+  helpers.set_hl('DiagnosticVirtualLinesError', { fg = tc.lovefaded, italic = true })
 end
 -- stylua: ignore end
 
 -- toggle LSP diagnostic highlighting globally
+-- also toggles virtual lines
 Lpke_diagnostics_hl_enabled = false
 function Lpke_toggle_diagnostics_hl()
   local enabled = Lpke_diagnostics_hl_enabled
   if enabled then
     Lpke_hide_diagnostic_hl()
+    vim.diagnostic.config({
+      virtual_lines = false,
+      virtual_text = Lpke_diagnostic_config.virtual_text,
+    })
     Lpke_diagnostics_hl_enabled = false
   else
     Lpke_show_diagnostic_hl()
+    vim.diagnostic.config({ virtual_lines = true, virtual_text = false })
     Lpke_diagnostics_hl_enabled = true
   end
   pcall(function()
@@ -136,9 +158,43 @@ function Lpke_toggle_diagnostics_hl()
   end)
 end
 
+-- toggle virtual text for current line only
+function Lpke_toggle_virtual_text_current_line()
+  local cur_config = vim.diagnostic.config() or {}
+  if
+    (cur_config.virtual_lines == true)
+    or (type(cur_config.virtual_text) == 'boolean')
+  then
+    return
+  end
+  vim.diagnostic.config({
+    virtual_text = vim.tbl_extend(
+      'force',
+      Lpke_diagnostic_config.virtual_text,
+      {
+        current_line = not cur_config.virtual_text.current_line,
+      }
+    ),
+  })
+end
+
+-- toggle virtual text
+function Lpke_toggle_virtual_text()
+  local cur_config = vim.diagnostic.config() or {}
+  if cur_config.virtual_text == false then
+    vim.diagnostic.config({
+      virtual_text = Lpke_diagnostic_config.virtual_text,
+    })
+  else
+    vim.diagnostic.config({
+      virtual_text = false,
+    })
+  end
+end
+
 -- toggle LSP diagnostic virtual text globally
 Lpke_diagnostics_virtual_text_enabled = true
-function Lpke_toggle_diagnostics_virtual_text()
+function Lpke_toggle_dim_virtual_text()
   local enabled = Lpke_diagnostics_virtual_text_enabled
   if enabled then
     Lpke_dim_diagnostic_virtual_text()

@@ -32,7 +32,7 @@ local function config()
   local function clear_lint_autocmds()
     vim.api.nvim_clear_autocmds({ group = lint_augroup })
     vim.diagnostic.reset(nil) -- kills all diagnostics globally
-    vim.cmd('LspRestart') -- restart LSP
+    Lpke_lsp_restart()
   end
 
   function Lpke_toggle_linting()
@@ -58,8 +58,8 @@ local function config()
   -- stylua: ignore start
   -- keymaps
   helpers.keymap_set_multi({
-    {'nv', '<F2>t', Lpke_toggle_linting, { desc = 'Toggle linting globally' }},
-    {'nv', '<A-t>', Lpke_toggle_linting, { desc = 'Toggle linting globally' }},
+    {'nv', '<F2>T', Lpke_toggle_linting, { desc = 'Toggle linting globally' }},
+    {'nv', '<A-T>', Lpke_toggle_linting, { desc = 'Toggle linting globally' }},
     {'nv', '<leader>L', lint.try_lint, { desc = 'Trigger linting for current file' }},
   })
 end

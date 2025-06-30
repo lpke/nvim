@@ -6,7 +6,6 @@ local helpers = require('lpke.core.helpers')
 --------------------------
 
 E.custom_opts = {
-  whitespace_hl = 'NvimInternalError', -- the `:highlight` style to use when toggling whitespace chars
   symbols = {
     modified = '●',
     modified_alt = '○',

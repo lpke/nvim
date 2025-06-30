@@ -6,9 +6,10 @@ function Lpke_cd(target_path, target_scope)
   -- use `find_upward_to_git_root_or_cwd` or `Lpke_find_git_root`
   -- use this to replace the `cd()` function in the oil config
 
-  -- local path = 
-  -- if path == nil or path == '' then
-  -- end
+  local path = ''
+  local scope = ''
+  if path == nil or path == '' then
+  end
 
   -- buffer type safety check
   local normal_buffer = vim.bo.buftype == ''
@@ -27,7 +28,6 @@ function Lpke_cd(target_path, target_scope)
   else
     cur_dir = vim.fn.expand('%:p:h') .. '/'
   end
-
 
   return vim.fn.getcwd()
 end

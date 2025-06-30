@@ -81,10 +81,8 @@ helpers.keymap_set_multi({
   --   { desc = 'Toggle global status line' }},
   -- {'n', '<A-e>', function() helpers.toggle_global_status() end,
   --   { desc = 'Toggle global status line' }},
-  {'n!', '<F2>W', function() helpers.toggle_whitespace_hl(options.custom_opts.whitespace_hl) end,
-    { desc = 'Toggle visible whitespace' }},
-  {'n!', '<A-W>', function() helpers.toggle_whitespace_hl(options.custom_opts.whitespace_hl) end,
-    { desc = 'Toggle visible whitespace' }},
+  {'n!', '<F2>W', helpers.toggle_show_whitespace, { desc = 'Toggle visible whitespace' }},
+  {'n!', '<A-W>', helpers.toggle_show_whitespace, { desc = 'Toggle visible whitespace' }},
 
   -- Native git features
   {'n', '<BS>GG', Lpke_diff, { desc = 'Open arbitrary diff tab' }},

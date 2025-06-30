@@ -1,3 +1,23 @@
+Lpke_diagnostic_config = {
+  signs = {
+    text = {
+      [vim.diagnostic.severity.ERROR] = '■',
+      [vim.diagnostic.severity.WARN] = '▲',
+      [vim.diagnostic.severity.INFO] = '◆',
+      [vim.diagnostic.severity.HINT] = '●',
+    },
+  },
+  virtual_text = {
+    prefix = '■',
+    virt_text_pos = 'eol_right_align',
+  },
+  float = {
+    border = 'rounded',
+  },
+  -- ensure that signs are sorted in sign column (errors on top)
+  severity_sort = true,
+}
+
 local function config()
   local lsp_settings = require('lpke.lsp')
   local helpers = require('lpke.core.helpers')
@@ -13,25 +33,8 @@ local function config()
   Lpke_show_diagnostic_virtual_text()
   Lpke_hide_diagnostic_hl()
 
-  -- symbols
-  vim.diagnostic.config({
-    signs = {
-      text = {
-        [vim.diagnostic.severity.ERROR] = '■',
-        [vim.diagnostic.severity.WARN] = '▲',
-        [vim.diagnostic.severity.INFO] = '◆',
-        [vim.diagnostic.severity.HINT] = '●',
-      },
-    },
-    virtual_text = {
-      prefix = '■',
-    },
-    float = {
-      border = 'rounded',
-    },
-    -- ensure that signs are sorted in sign column (errors on top)
-    severity_sort = true,
-  })
+  -- config options (:h diagnostic.opts)
+  vim.diagnostic.config(Lpke_diagnostic_config)
 
   -- diagnostics filter
   local function filter_diagnostics(diag) -- diag.source, diag.message, diag.code
@@ -101,7 +104,9 @@ local function config()
   local diagnostic_open_float = vim.diagnostic.open_float
   ---@diagnostic disable-next-line: duplicate-set-field
   vim.diagnostic.open_float = function(opts)
-    diagnostic_open_float(vim.tbl_deep_extend('force', { border = 'rounded' }, opts or {}))
+    diagnostic_open_float(
+      vim.tbl_deep_extend('force', { border = 'rounded' }, opts or {})
+    )
   end
 
   -- stylua: ignore start
@@ -116,12 +121,16 @@ local function config()
 
     -- info/toggle/reload
     { 'nC', '<BS>ip', 'LspInfo', { desc = 'Open LSP info window' } },
-    { 'nv', '<F2>d', Lpke_toggle_diagnostics, { desc = 'Toggle diagnostics visibility globally' }},
-    { 'nv', '<A-d>', Lpke_toggle_diagnostics, { desc = 'Toggle diagnostics visibility globally' }},
-    { 'nv', '<F2>v', Lpke_toggle_diagnostics_virtual_text, { desc = 'Toggle diagnostics virtual text brightness globally' }},
-    { 'nv', '<A-v>', Lpke_toggle_diagnostics_virtual_text, { desc = 'Toggle diagnostics virtual text brightness globally' }},
-    { 'nv', '<F2>V', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting globally' }},
-    { 'nv', '<A-V>', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting globally' }},
+    { 'nv', '<F2>d', Lpke_toggle_diagnostics, { desc = 'Toggle diagnostics visibility' }},
+    { 'nv', '<A-d>', Lpke_toggle_diagnostics, { desc = 'Toggle diagnostics visibility' }},
+    { 'nv', '<F2>v', Lpke_toggle_virtual_text, { desc = 'Toggle virtual text for current line only' }},
+    { 'nv', '<A-v>', Lpke_toggle_virtual_text, { desc = 'Toggle virtual text for current line only' }},
+    { 'nv', '<F2>e', Lpke_toggle_virtual_text_current_line, { desc = 'Toggle virtual text for current line only' }},
+    { 'nv', '<A-e>', Lpke_toggle_virtual_text_current_line, { desc = 'Toggle virtual text for current line only' }},
+    { 'nv', '<F2>t', Lpke_toggle_dim_virtual_text, { desc = 'Toggle diagnostics virtual text brightness' }},
+    { 'nv', '<A-t>', Lpke_toggle_dim_virtual_text, { desc = 'Toggle diagnostics virtual text brightness' }},
+    { 'nv', '<F2>V', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting' }},
+    { 'nv', '<A-V>', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting' }},
     { 'n', '<leader>R', Lpke_lsp_restart, { desc = 'Restart LSPs for current buffer filetype' }},
 
     -- smart actions

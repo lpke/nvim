@@ -119,6 +119,7 @@ local function config()
       Substitute = { fg = 'base', bg = 'love' },
       MatchParen = { fg = ec.growth, bg = ec.growthminus, blend = 15 },
       Directory = { bold = false },
+      NonText = { fg = 'text', bg = ec.irisbg },
 
       -- vim syntax highlight groups (inherited in treesitter config file for `@` groups)
       Keyword = { fg = 'pine', italic = true },
