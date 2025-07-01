@@ -180,53 +180,63 @@ vim.api.nvim_create_autocmd('InsertLeave', {
 Lpke_messages_win_open = false
 Lpke_messages_win_id = nil
 Lpke_messages_buf_id = nil
+
 -- stylua: ignore start
-vim.api.nvim_create_user_command('Bclean', Lpke_clean_buffers, {})
+helpers.command_set_multi({
+  { '', 'Bclean', Lpke_clean_buffers, { desc = 'Removes buffers that arent actively shown' } },
 
--- terminal
-vim.api.nvim_create_user_command('TrashRestore', Lpke_trash_restore, {})
-vim.api.nvim_create_user_command('T', Lpke_term, { nargs = '*' }) -- arg: full
-vim.api.nvim_create_user_command('Term', Lpke_term, { nargs = '*' }) -- arg: full
-vim.api.nvim_create_user_command('Terminal', Lpke_term, { nargs = '*' }) -- arg: full
-vim.api.nvim_create_user_command('R', Lpke_ranger, { nargs = '*' }) -- arg: full
-vim.api.nvim_create_user_command('Ranger', Lpke_ranger, { nargs = '*' }) -- arg: full
+  -- terminal
+  { '', 'TrashRestore', Lpke_trash_restore },
+  { '*', 'T', Lpke_term }, -- arg: full
+  { '*', 'Term', Lpke_term }, -- arg: full
+  { '*', 'Terminal', Lpke_term }, -- arg: full
+  { '*', 'R', Lpke_ranger }, -- arg: full
+  { '*', 'Ranger', Lpke_ranger }, -- arg: full
 
--- message window
-vim.api.nvim_create_user_command('M', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
-vim.api.nvim_create_user_command('Mes', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
-vim.api.nvim_create_user_command('Messages', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' })
+  -- message window
+  { '', 'M', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' } },
+  { '', 'Mes', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' } },
+  { '', 'Messages', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' } },
 
--- printing
-vim.api.nvim_create_user_command('P', function(cmd)
-  if #cmd.fargs == 0 then
-    print('PP: buf name | PC: cwd | PG: git root | PW: win details | P <args>: Lpke_print(...args)')
-  else
-    local args = helpers.parse_command_args(cmd.fargs)
-    Lpke_print(table.unpack(args))
-  end
-end, { nargs = '*', desc = 'Print help for `P` commands or call Lpke_print with args' })
-vim.api.nvim_create_user_command('PP', function() print(helpers.get_buf_name()) end, { desc = 'Print the active buffer name' })
-vim.api.nvim_create_user_command('PC', function() print(vim.fn.getcwd()) end, { desc = 'Print the current working directory' })
-vim.api.nvim_create_user_command('PG', function() Lpke_git_root() end, { desc = 'Print the path of the git root of the current file' })
-vim.api.nvim_create_user_command('PW', Lpke_active, { desc = 'Print details about the currently active tab/buffer/window' })
+  -- printing
+  { '?', 'P', function(cmd)
+    if #cmd.fargs == 0 then
+      print('PP: buf name | PC: cwd | PG: git root | PW: win details | P <lua>: Lpke_print(lua)')
+    else
+      Lpke_print(helpers.execute_as_lua(cmd.fargs[1]), 3)
+    end
+  end, { desc = 'Print help for `P` commands or call Lpke_print(<lua>)' } },
+  { '', 'PP', function() print(helpers.get_buf_name()) end, { desc = 'Print the active buffer name' } },
+  { '', 'PC', function() print(vim.fn.getcwd()) end, { desc = 'Print the current working directory' } },
+  { '', 'PG', function() Lpke_git_root() end, { desc = 'Print the path of the git root of the current file' } },
+  { '', 'PW', Lpke_active, { desc = 'Print details about the currently active tab/buffer/window' } },
 
--- yanking
-vim.api.nvim_create_user_command('Y', function() print('YP/p: buf name | YD/d: cwd | YG/g: git root | YL/l: location | YT/t: tab ID | YB/b: buf ID | YW/w: win ID') end,
-  { desc = 'Print help for `Y` commands' })
-vim.api.nvim_create_user_command('YP', function(cmd) Lpke_yank_buf_name(cmd, true) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('Yp', function(cmd) Lpke_yank_buf_name(cmd, false) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('YC', function(cmd) Lpke_yank_cwd(cmd, true) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('Yc', function(cmd) Lpke_yank_cwd(cmd, false) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('YG', function(cmd) Lpke_yank_git_root(cmd, true) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('Yg', function(cmd) Lpke_yank_git_root(cmd, false) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('YL', function(cmd) Lpke_yank_location(cmd, true) end, { nargs = '*' }) -- arg: <register> ['blame']
-vim.api.nvim_create_user_command('Yl', function(cmd) Lpke_yank_location(cmd, false) end, { nargs = '*' }) -- arg: <register> ['blame']
-vim.api.nvim_create_user_command('YT', function(cmd) Lpke_yank_tab_id(cmd, true) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('Yt', function(cmd) Lpke_yank_tab_id(cmd, false) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('YB', function(cmd) Lpke_yank_buf_id(cmd, true) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('Yb', function(cmd) Lpke_yank_buf_id(cmd, false) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('YW', function(cmd) Lpke_yank_win_id(cmd, true) end, { nargs = '*' }) -- arg: <register>
-vim.api.nvim_create_user_command('Yw', function(cmd) Lpke_yank_win_id(cmd, false) end, { nargs = '*' }) -- arg: <register>
+  -- yanking
+  { '', 'Y', function() print('YP/p: buf name | YD/d: cwd | YG/g: git root | YL/l: location | YT/t: tab ID | YB/b: buf ID | YW/w: win ID') end,
+    { desc = 'Print help for `Y` commands' } },
+  { '*', 'YP', function(cmd) Lpke_yank_buf_name(cmd, true) end }, -- arg: <register>
+  { '*', 'Yp', function(cmd) Lpke_yank_buf_name(cmd, false) end }, -- arg: <register>
+  { '*', 'YC', function(cmd) Lpke_yank_cwd(cmd, true) end }, -- arg: <register>
+  { '*', 'Yc', function(cmd) Lpke_yank_cwd(cmd, false) end }, -- arg: <register>
+  { '*', 'YG', function(cmd) Lpke_yank_git_root(cmd, true) end }, -- arg: <register>
+  { '*', 'Yg', function(cmd) Lpke_yank_git_root(cmd, false) end }, -- arg: <register>
+  { '*', 'YL', function(cmd) Lpke_yank_location(cmd, true) end }, -- arg: <register> ['blame']
+  { '*', 'Yl', function(cmd) Lpke_yank_location(cmd, false) end }, -- arg: <register> ['blame']
+  { '*', 'YT', function(cmd) Lpke_yank_tab_id(cmd, true) end }, -- arg: <register>
+  { '*', 'Yt', function(cmd) Lpke_yank_tab_id(cmd, false) end }, -- arg: <register>
+  { '*', 'YB', function(cmd) Lpke_yank_buf_id(cmd, true) end }, -- arg: <register>
+  { '*', 'Yb', function(cmd) Lpke_yank_buf_id(cmd, false) end }, -- arg: <register>
+  { '*', 'YW', function(cmd) Lpke_yank_win_id(cmd, true) end }, -- arg: <register>
+  { '*', 'Yw', function(cmd) Lpke_yank_win_id(cmd, false) end }, -- arg: <register>
+
+  -- changing directory (cd)
+  { '', 'Cd', function() Lpke_cd_here('global') end, { desc = ':cd <current_dir>' } },
+  { '', 'Cdr', function() Lpke_cd_root('global') end, { desc = ':cd <git_root_or_cwd>' } },
+  { '', 'Tcd', function() Lpke_cd_here('tab') end, { desc = ':tcd <current_dir>' } },
+  { '', 'Tcdr', function() Lpke_cd_root('tab') end, { desc = ':tcd <git_root_or_cwd>' } },
+  { '', 'Lcd', function() Lpke_cd_here('window') end, { desc = ':lcd <current_dir>' } },
+  { '', 'Lcdr', function() Lpke_cd_root('window') end, { desc = ':lcd <git_root_or_cwd>' } },
+})
 -- stylua: ignore end
 
 return E

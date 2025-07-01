@@ -2,16 +2,6 @@ local function config()
   local oil = require('oil')
   local helpers = require('lpke.core.helpers')
 
-  local function cd(cmd)
-    local cur_dir = oil.get_current_dir()
-    if cur_dir then
-      vim.cmd(cmd .. ' ' .. cur_dir)
-      pcall(function()
-        require('lualine').refresh()
-      end)
-    end
-  end
-
   -- stylua: ignore start
   helpers.keymap_set_multi({
     -- open in current window
@@ -131,27 +121,6 @@ local function config()
           end
         end,
         desc = 'Oil: :cd to the git root of the current directory',
-        mode = 'n',
-      },
-      ['cdc'] = {
-        callback = function()
-          cd('cd')
-        end,
-        desc = 'Oil: :cd to the current oil directory (changes whole session)',
-        mode = 'n',
-      },
-      ['cdt'] = {
-        callback = function()
-          cd('tcd')
-        end,
-        desc = 'Oil: :tcd to the current oil directory (tab scoped)',
-        mode = 'n',
-      },
-      ['cdl'] = {
-        callback = function()
-          cd('lcd')
-        end,
-        desc = 'Oil: :lcd to the current oil directory (window scoped)',
         mode = 'n',
       },
       -- view/toggles

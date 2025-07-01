@@ -120,6 +120,46 @@ function E.keymap_set_multi(keymaps)
   end
 end
 
+-- parses a table containing custom command args and creates or deletes the command
+function E.command_set(command)
+  local flags, name, cmd, opts = table.unpack(command)
+  opts = E.merge_tables({}, opts or {})
+  local delete_only = false
+
+  for char in flags:gmatch('.') do
+    if char == 'B' then
+      opts.bang = true
+    elseif char == 'R' then
+      opts.range = true
+    elseif char == 'D' then
+      delete_only = true
+    elseif char == '0' then -- no args allowed
+      opts.nargs = 0
+    elseif char == '1' then -- 1 arg required, unescaped spaces allowed
+      opts.nargs = 1
+    elseif char == '?' then -- 1 arg optional, unescaped spaces allowed
+      opts.nargs = '?'
+    elseif char == '+' then -- required many args
+      opts.nargs = '+'
+    elseif char == '*' then -- optional many args
+      opts.nargs = '*'
+    end
+  end
+
+  if delete_only then
+    vim.api.nvim_del_user_command(name)
+  else
+    vim.api.nvim_create_user_command(name, cmd, opts)
+  end
+end
+
+-- same as above but accepts multiple command tables in a table
+function E.command_set_multi(commands)
+  for _i, command in ipairs(commands) do
+    E.command_set(command)
+  end
+end
+
 -- pastes from register with unix line endings
 function E.paste_unix(register, above)
   local content = vim.fn.getreg(register)
@@ -386,60 +426,14 @@ function E.find_upward_to_git_root_or_cwd(items)
   return nil
 end
 
--- Parse command arguments, handling [[]] pairs and quoted strings
-function E.parse_command_args(fargs)
-  -- Join all arguments into one string
-  local full_string = table.concat(fargs, ' ')
-  -- Parse arguments, handling [[]] pairs
-  local raw_args = {}
-  local i = 1
-  while i <= #full_string do
-    -- Skip leading whitespace
-    while i <= #full_string and full_string:sub(i, i):match('%s') do
-      i = i + 1
-    end
-    if i > #full_string then
-      break
-    end
-    -- Check for [[ ]] pair
-    if full_string:sub(i, i + 1) == '[[' then
-      local start = i + 2
-      local end_pos = full_string:find(']]', start)
-      if end_pos then
-        table.insert(raw_args, full_string:sub(start, end_pos - 1))
-        i = end_pos + 2
-      else
-        -- No closing ]], treat as regular argument
-        local space_pos = full_string:find('%s', i) or (#full_string + 1)
-        table.insert(raw_args, full_string:sub(i, space_pos - 1))
-        i = space_pos
-      end
-    else
-      -- Regular argument (space-delimited)
-      local space_pos = full_string:find('%s', i) or (#full_string + 1)
-      table.insert(raw_args, full_string:sub(i, space_pos - 1))
-      i = space_pos
-    end
+-- Execute a string as Lua code
+function E.execute_as_lua(code_string)
+  local func, err = load('return ' .. code_string)
+  if func then
+    return func()
+  else
+    vim.notify(err or 'unknown error', vim.log.levels.ERROR)
   end
-  -- Process arguments (handle quotes and evaluation)
-  local args = {}
-  for j, arg in ipairs(raw_args) do
-    -- Check if argument is wrapped in quotes
-    if arg:match('^".*"$') or arg:match("^'.*'$") then
-      -- Remove quotes and treat as literal string
-      args[j] = arg:sub(2, -2)
-    else
-      -- Try to evaluate as Lua expression
-      local func, _err = load('return ' .. arg)
-      if func then
-        args[j] = func()
-      else
-        -- If evaluation fails, treat as string
-        args[j] = arg
-      end
-    end
-  end
-  return args
 end
 
 return E
