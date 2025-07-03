@@ -34,6 +34,7 @@ local function config()
     end
     -- toggle codecompanion chat normally
     vim.cmd('CodeCompanionChat Toggle')
+    vim.cmd('stopinsert')
   end
 
   local function open_new_chat_with_context()
@@ -100,10 +101,10 @@ local function config()
 
   -- stylua: ignore start
   helpers.keymap_set_multi({
-    { 'n', '<A-f>', Lpke_toggle_cc, { desc = 'CodeCompanion: Toggle the chat buffer' }},
-    { 'n', '<F2>f', Lpke_toggle_cc, { desc = 'CodeCompanion: Toggle the chat buffer' }},
-    { 'n', '<A-F>', open_new_chat_with_context, { desc = 'CodeCompanion: Open new chat buffer with context' }},
-    { 'n', '<F2>F', open_new_chat_with_context, { desc = 'CodeCompanion: Open new chat buffer with context' }},
+    { 'in', '<A-f>', Lpke_toggle_cc, { desc = 'CodeCompanion: Toggle the chat buffer' }},
+    { 'in', '<F2>f', Lpke_toggle_cc, { desc = 'CodeCompanion: Toggle the chat buffer' }},
+    { 'in', '<A-F>', open_new_chat_with_context, { desc = 'CodeCompanion: Open new chat buffer with context' }},
+    { 'in', '<F2>F', open_new_chat_with_context, { desc = 'CodeCompanion: Open new chat buffer with context' }},
     { 'v', '<A-f>', toggle_chat_with_context_selection, { desc = 'CodeCompanion: Toggle chat buffer, add context and selection' }},
     { 'v', '<F2>f', toggle_chat_with_context_selection, { desc = 'CodeCompanion: Toggle chat buffer, add context and selection' }},
     { 'v', '<A-F>', open_new_chat_with_context_selection, { desc = 'CodeCompanion: Open a new chat buffer with context and selection' }},

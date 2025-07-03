@@ -65,7 +65,9 @@ function Lpke_tabline()
     local tab_title = ''
     local cur_git_term = (string.match(raw_cur_bufname, '^term://'))
       and (helpers.get_path_tail(raw_cur_bufname) == 'git')
-    local cur_git = (file_type == 'fugitive')
+    local cur_fugitive_status = file_type == 'fugitive'
+    local cur_neogit = string.match(file_type, 'Neogit')
+    local cur_git = cur_fugitive_status
       or (file_type == 'fugitiveblame')
       or (file_type == 'git')
       or (file_type == 'gitui')
@@ -73,6 +75,7 @@ function Lpke_tabline()
       or (file_type == 'gitmerge')
       or (file_type == 'gitrebase')
       or (string.match(raw_cur_bufname, '^fugitive://'))
+      or cur_neogit
       or cur_git_term
     if file_type == 'oil' then
       local oil_trash = string.match(raw_cur_bufname, '^oil%-trash://')
@@ -80,7 +83,11 @@ function Lpke_tabline()
         .. helpers.shorten_path(file_path)
         .. '/'
     elseif cur_git or cur_git_term then
-      if cur_git_term then
+      if cur_neogit then
+        tab_title = 'G:' .. file_type:gsub('^Neogit', '')
+      elseif cur_fugitive_status then
+        tab_title = 'G:Fugitive'
+      elseif cur_git_term then
         tab_title = 'G:terminal'
       else
         tab_title = 'G:' .. helpers.shorten_path(file_path)
