@@ -5,7 +5,7 @@ local function config()
 
   neogit.setup({
     -- Hides the hints at the top of the status buffer
-    disable_hint = false,
+    disable_hint = true,
     -- Disables changing the buffer highlights based on where the cursor is.
     disable_context_highlighting = true,
     -- Disables signs for sections/items/hunks
@@ -322,7 +322,7 @@ local function config()
         ['2'] = 'Depth2',
         ['3'] = 'Depth3',
         ['4'] = 'Depth4',
-        ['Q'] = 'Command',
+        ['gG'] = 'Command',
         ['='] = 'Toggle',
         ['za'] = 'Toggle',
         ['zo'] = 'OpenFold',
@@ -338,7 +338,7 @@ local function config()
         ['$'] = 'CommandHistory',
         ['Y'] = 'YankSelected',
         ['<c-r>'] = 'RefreshBuffer',
-        ['<leader><cr>'] = 'GoToFile',
+        ['<cr>'] = 'GoToFile',
         ['<s-cr>'] = 'PeekFile',
         ['<F2>.'] = 'VSplitOpen',
         ['<A-.>'] = 'VSplitOpen',
@@ -346,7 +346,6 @@ local function config()
         ['<A-,>'] = 'SplitOpen',
         ['<F2>n'] = 'TabOpen',
         ['<A-n>'] = 'TabOpen',
-        ['<cr>'] = 'TabOpen',
         ['{'] = 'GoToPreviousHunkHeader',
         ['}'] = 'GoToNextHunkHeader',
         ['[c'] = 'OpenOrScrollUp',
@@ -369,6 +368,7 @@ local function config()
   helpers.set_hl('NeogitDiffDelete', { link = 'DiffDelete' })
   helpers.set_hl('NeogitDiffContext', { bg = 'none', fg = tc.text })
   helpers.set_hl('NeogitHunkHeader', { fg = tc.muted })
+  helpers.set_hl('NeogitDiffHeader', { bg = tc.overlaybump, fg = tc.iris, bold = true })
   -- for window borders inside neogit
   -- helpers.set_hl('FloatBorder', { bg = 'none', fg = tc.highlight_med, force = true })
   -- stylua: ignore end
