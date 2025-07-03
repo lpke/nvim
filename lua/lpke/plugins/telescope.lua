@@ -109,6 +109,7 @@ local function config()
     local finders = require('telescope.finders')
     local conf = require('telescope.config').values
     local action_state = require('telescope.actions.state')
+    local previewers = require('telescope.previewers')
 
     pickers
       .new({}, {
@@ -124,6 +125,51 @@ local function config()
           '*/.*',
         }, {}),
         sorter = conf.generic_sorter({}),
+        previewer = previewers.new_buffer_previewer({
+          title = 'Directory Contents',
+          define_preview = function(self, entry)
+            local function scan_directory(path)
+              local ok, entries = pcall(vim.fn.readdir, path, function(name)
+                return name ~= '.' and name ~= '..'
+              end)
+              if not ok then
+                return {}
+              end
+
+              local dirs, files = {}, {}
+              for _, name in ipairs(entries) do
+                local full_path = path .. '/' .. name
+                if vim.fn.isdirectory(full_path) == 1 then
+                  table.insert(dirs, name .. '/')
+                else
+                  table.insert(files, name)
+                end
+              end
+
+              table.sort(dirs)
+              table.sort(files)
+
+              local result = {}
+              vim.list_extend(result, dirs)
+              vim.list_extend(result, files)
+              return result
+            end
+
+            local entries = scan_directory(entry.value)
+            vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, entries)
+            vim.bo[self.state.bufnr].filetype = 'oil'
+
+            vim.api.nvim_buf_call(self.state.bufnr, function()
+              vim.cmd('syntax clear')
+              vim.cmd('syntax match TelescopePreviewDirectory ".*/$"')
+              vim.api.nvim_set_hl(
+                0,
+                'TelescopePreviewDirectory',
+                { fg = tc.foam }
+              )
+            end)
+          end,
+        }),
         attach_mappings = function(prompt_bufnr, _map)
           actions.select_default:replace(function()
             actions.close(prompt_bufnr)
@@ -200,10 +246,11 @@ local function config()
         'truncate',
       },
       layout_config = {
+        prompt_position = 'top',
         horizontal = {
           height = 0.92,
           width = 0.85,
-          preview_width = 0.55,
+          preview_width = 0.5,
         },
       },
       vimgrep_arguments = {
@@ -400,7 +447,7 @@ local function config()
       },
       find_files = {
         initial_mode = 'insert',
-        sorting_strategy = 'descending',
+        sorting_strategy = 'ascending',
         hidden = true,
         -- needed to exclude some files & dirs from general search
         -- when not included or specified in .gitignore
@@ -428,7 +475,7 @@ local function config()
       },
       current_buffer_fuzzy_find = {
         initial_mode = 'insert',
-        sorting_strategy = 'descending',
+        sorting_strategy = 'ascending',
       },
       git_bcommits = {
         prompt_title = 'File Commits',
@@ -472,19 +519,19 @@ local function config()
       },
       registers = {
         initial_mode = 'insert',
-        sorting_strategy = 'descending',
+        sorting_strategy = 'ascending',
       },
       keymaps = {
         initial_mode = 'insert',
-        sorting_strategy = 'descending',
+        sorting_strategy = 'ascending',
       },
       highlights = {
         initial_mode = 'insert',
-        sorting_strategy = 'descending',
+        sorting_strategy = 'ascending',
       },
       help_tags = {
         initial_mode = 'insert',
-        sorting_strategy = 'descending',
+        sorting_strategy = 'ascending',
       },
     },
 
