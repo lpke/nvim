@@ -79,7 +79,6 @@ local function config()
 
   local function remove_selected_from_codecompanion(bufnr)
     local cc_history = require('codecompanion').extensions.history
-    local chats = cc_history.get_chats()
     helpers.telescope_sel_foreach(bufnr, function(sel)
       local save_id = sel.save_id
       cc_history.delete_chat(save_id)
@@ -105,12 +104,54 @@ local function config()
     builtin.grep_string({ search = vim.fn.input('Grep: ') })
   end
 
+  local function find_directories_oil()
+    local pickers = require('telescope.pickers')
+    local finders = require('telescope.finders')
+    local conf = require('telescope.config').values
+    local action_state = require('telescope.actions.state')
+
+    pickers
+      .new({}, {
+        prompt_title = 'Find Directories',
+        initial_mode = 'insert',
+        finder = finders.new_oneshot_job({
+          'find',
+          '.',
+          '-type',
+          'd',
+          '-not',
+          '-path',
+          '*/.*',
+        }, {}),
+        sorter = conf.generic_sorter({}),
+        attach_mappings = function(prompt_bufnr, _map)
+          actions.select_default:replace(function()
+            actions.close(prompt_bufnr)
+            local selection = action_state.get_selected_entry()
+            if selection then
+              vim.cmd('Oil ' .. selection.value)
+            end
+          end)
+          return true
+        end,
+      })
+      :find()
+  end
+
+  local function smart_find_files()
+    if vim.bo.filetype == 'oil' then
+      find_directories_oil()
+    else
+      builtin.find_files()
+    end
+  end
+
   -- stylua: ignore start
   -- mappings to access telescope
   helpers.keymap_set_multi({
     {'nC', '<BS><leader>', 'Telescope resume', { desc = 'Resume previous Telescope search' }},
     -- files
-    {'nC', '<BS><BS>', 'Telescope find_files', { desc = 'Fuzzy find files in cwd' }},
+    {'n', '<BS><BS>', smart_find_files, { desc = 'Fuzzy find files in cwd (or directories in oil)' }},
     {'n', '<BS>ff', find_git_files, { desc = 'Fuzzy find git files in cwd (or cwd if not git)' }},
     {'nC', '<BS>fr', 'Telescope oldfiles', { desc = 'Fuzzy find recent files' }},
     -- grep
