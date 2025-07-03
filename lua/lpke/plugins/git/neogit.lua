@@ -56,7 +56,7 @@ local function config()
       underline = true,
     },
     -- Set to false if you want to be responsible for creating _ALL_ keymappings
-    use_default_keymaps = true,
+    use_default_keymaps = false,
     -- Neogit refreshes its internal state after specific events, which can be expensive depending on the repository size.
     -- Disabling `auto_refresh` will make it so you have to manually refresh the status after you open it.
     auto_refresh = true,
@@ -121,8 +121,8 @@ local function config()
       -- "split_above" Like :top split
       -- "vsplit_left" like :vsplit, but open to the left
       -- "auto" "vsplit" if window would have 80 cols, otherwise "split"
-      staged_diff_split_kind = 'split',
-      spell_check = true,
+      staged_diff_split_kind = 'auto',
+      spell_check = false,
     },
     commit_select_view = {
       kind = 'tab',
@@ -158,8 +158,8 @@ local function config()
     signs = {
       -- { CLOSED, OPENED }
       hunk = { '', '' },
-      item = { '>', 'v' },
-      section = { '>', 'v' },
+      item = { '\u{f054}', '\u{f078}' },
+      section = { '\u{f054}', '\u{f078}' },
     },
     -- Each Integration is auto-detected through plugin presence, however, it can be disabled by setting to `false`
     integrations = {
@@ -323,6 +323,7 @@ local function config()
         ['3'] = 'Depth3',
         ['4'] = 'Depth4',
         ['gG'] = 'Command',
+        ['<tab>'] = 'Toggle',
         ['='] = 'Toggle',
         ['za'] = 'Toggle',
         ['zo'] = 'OpenFold',
@@ -369,6 +370,8 @@ local function config()
   helpers.set_hl('NeogitDiffContext', { bg = 'none', fg = tc.text })
   helpers.set_hl('NeogitHunkHeader', { fg = tc.muted })
   helpers.set_hl('NeogitDiffHeader', { bg = tc.overlaybump, fg = tc.iris, bold = true })
+  helpers.set_hl('NeogitFloatHeader', { bg = tc.overlaybump, fg = tc.rose, bold = true })
+  helpers.set_hl('NeogitFloatHeaderHighlight', { bg = tc.overlaybump, fg = tc.gold, bold = true })
   -- for window borders inside neogit
   -- helpers.set_hl('FloatBorder', { bg = 'none', fg = tc.highlight_med, force = true })
   -- stylua: ignore end
