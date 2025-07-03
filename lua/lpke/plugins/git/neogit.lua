@@ -1,10 +1,7 @@
 local function config()
   local neogit = require('neogit')
   local helpers = require('lpke.core.helpers')
-  -- local tc = Lpke_theme_colors
-
-  -- for window borders inside neogit
-  -- helpers.set_hl('FloatBorder', { bg = 'none', fg = tc.highlight_med, force = true })
+  local tc = Lpke_theme_colors
 
   neogit.setup({
     -- Hides the hints at the top of the status buffer
@@ -341,19 +338,23 @@ local function config()
         ['$'] = 'CommandHistory',
         ['Y'] = 'YankSelected',
         ['<c-r>'] = 'RefreshBuffer',
-        ['<cr>'] = 'GoToFile',
+        ['<leader><cr>'] = 'GoToFile',
         ['<s-cr>'] = 'PeekFile',
-        ['<c-v>'] = 'VSplitOpen',
-        ['<c-x>'] = 'SplitOpen',
-        ['<c-t>'] = 'TabOpen',
+        ['<F2>.'] = 'VSplitOpen',
+        ['<A-.>'] = 'VSplitOpen',
+        ['<F2>,'] = 'SplitOpen',
+        ['<A-,>'] = 'SplitOpen',
+        ['<F2>n'] = 'TabOpen',
+        ['<A-n>'] = 'TabOpen',
+        ['<cr>'] = 'TabOpen',
         ['{'] = 'GoToPreviousHunkHeader',
         ['}'] = 'GoToNextHunkHeader',
         ['[c'] = 'OpenOrScrollUp',
         [']c'] = 'OpenOrScrollDown',
         ['<c-k>'] = 'PeekUp',
         ['<c-j>'] = 'PeekDown',
-        ['<c-n>'] = 'NextSection',
-        ['<c-p>'] = 'PreviousSection',
+        [']]'] = 'NextSection',
+        ['[['] = 'PreviousSection',
       },
     },
   })
@@ -362,6 +363,14 @@ local function config()
   helpers.keymap_set_multi({
     {'nv', '<leader>i', neogit.open, { desc = 'Neogit: Toggle status window (new tab)' }},
   })
+
+  helpers.set_hl('NeogitActiveItem', { bg = tc.overlaybump, fg = tc.text, bold = true })
+  helpers.set_hl('NeogitDiffAdd', { link = 'DiffAdd' })
+  helpers.set_hl('NeogitDiffDelete', { link = 'DiffDelete' })
+  helpers.set_hl('NeogitDiffContext', { bg = 'none', fg = tc.text })
+  helpers.set_hl('NeogitHunkHeader', { fg = tc.muted })
+  -- for window borders inside neogit
+  -- helpers.set_hl('FloatBorder', { bg = 'none', fg = tc.highlight_med, force = true })
   -- stylua: ignore end
 end
 

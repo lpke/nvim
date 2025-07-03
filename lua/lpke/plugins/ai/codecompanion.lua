@@ -41,10 +41,10 @@ local function config()
     -- stylua: ignore
     if toggle_if_already_in_chat() then return end
     vim.cmd('CodeCompanionChat')
-    vim.cmd('normal! i#buffer #lsp')
+    vim.cmd('normal! i#{buffer} #{lsp}')
     vim.cmd('normal! G2o')
     vim.cmd('stopinsert')
-    vim.cmd('normal! i@editor ')
+    vim.cmd('normal! i@{insert_edit_into_file} ')
     vim.cmd('stopinsert')
   end
 
@@ -52,10 +52,10 @@ local function config()
     -- stylua: ignore
     if toggle_if_already_in_chat() then return end
     vim.cmd('CodeCompanionChat')
-    vim.cmd('normal! gg}}{i#buffer #lsp')
+    vim.cmd('normal! gg}}{i#{buffer} #{lsp}')
     vim.cmd('normal! G2o')
     vim.cmd('stopinsert')
-    vim.cmd('normal! i@editor ')
+    vim.cmd('normal! i@{insert_edit_into_file} ')
     vim.cmd('stopinsert')
   end
 
@@ -88,7 +88,7 @@ local function config()
     end
     -- insert selection in a code block
     if selection ~= '' then
-      vim.cmd('normal! Go#buffer #lsp')
+      vim.cmd('normal! Go#{buffer} #{lsp}')
       vim.cmd('stopinsert')
       local code_block_lines = { '```' .. filetype }
       vim.list_extend(code_block_lines, vim.split(selection, '\n'))
@@ -97,6 +97,14 @@ local function config()
       vim.cmd('normal! 2o')
       vim.cmd('stopinsert')
     end
+  end
+
+  local function open_inline_prompt_with_context()
+    if vim.bo.filetype == 'codecompanion' then
+      return
+    end
+    vim.cmd('CodeCompanion')
+    vim.api.nvim_input('#{buffer} ')
   end
 
   -- stylua: ignore start
@@ -109,8 +117,8 @@ local function config()
     { 'v', '<F2>f', toggle_chat_with_context_selection, { desc = 'CodeCompanion: Toggle chat buffer, add context and selection' }},
     { 'v', '<A-F>', open_new_chat_with_context_selection, { desc = 'CodeCompanion: Open a new chat buffer with context and selection' }},
     { 'v', '<F2>F', open_new_chat_with_context_selection, { desc = 'CodeCompanion: Open a new chat buffer with context and selection' }},
-    { 'niC', '<C-l>', 'CodeCompanion', { desc = 'CodeCompanion: Open inline dialog' }},
-    { 'v', '<C-l>', ":<C-u>'<,'>CodeCompanion<cr>", { desc = 'CodeCompanion: Open inline dialog (visual selection)' }},
+    { 'ni', '<C-l>', open_inline_prompt_with_context, { desc = 'CodeCompanion: Open inline prompt with context' }},
+    { 'v', '<C-l>', ":<C-u>'<,'>CodeCompanion<cr>#{buffer} ", { desc = 'CodeCompanion: Open inline prompt with context and selection' }},
   })
   -- stylua: ignore end
 
@@ -136,7 +144,13 @@ local function config()
         show_header_separator = false,
       },
     },
+    tools = {
+      opts = {
+        wait_timeout = 120000, -- time to accept edit
+      },
+    },
     strategies = {
+      -- CHAT STRATEGY ----------------------------------------------------------
       chat = {
         keymaps = {
           options = {
@@ -375,6 +389,8 @@ local function config()
           },
         },
       },
+      -- INLINE STRATEGY --------------------------------------------------------
+      inline = {},
     },
     extensions = {
       history = {

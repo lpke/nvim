@@ -20,7 +20,6 @@
 --   base | surface | overlay | overlaybump | overlayplus | mutedminus |
 --   muted | subtle | subtleplus | textminus | text
 
--- Extra colors
 local ec = {
   textminus = '#c0bcd2',
   subtleplus = '#a7a3bd',
@@ -139,6 +138,7 @@ local function config()
   })
 
   -- save theme to global var, add extras
+  ---@type { base: string, surface: string, overlay: string, muted: string, subtle: string, text: string, love: string, gold: string, rose: string, pine: string, foam: string, iris: string, highlight_low: string, highlight_med: string, highlight_high: string, textminus: string, subtleplus: string, mutedminus: string, mutedplus: string, overlaybump: string, overlayplus: string, growth: string, growthminus: string, irisplus: string, irisminus: string, lovefaded: string, goldfaded: string, irisfaded: string, foamfaded: string, lovebg: string, goldbg: string, irisbg: string, foambg: string, growthbg: string, growthbgplus: string }
   Lpke_theme_colors = require('rose-pine.palette')
   for k, v in pairs(ec) do
     Lpke_theme_colors[k] = v
