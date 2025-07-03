@@ -1,5 +1,4 @@
 local helpers = require('lpke.core.helpers')
-local options = require('lpke.core.options')
 local keymap_set = helpers.keymap_set
 
 --[[  SYNTAX: {'<modes><R=rec,E=expr,C=:,!=sil,D=delete>', <lhs>, <rhs>, <desc>, {opts}}

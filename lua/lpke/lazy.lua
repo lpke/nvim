@@ -17,6 +17,7 @@ local lazy_plugins = {
   { import = 'lpke.plugins' },
   { import = 'lpke.plugins.lsp' },
   { import = 'lpke.plugins.ai' },
+  { import = 'lpke.plugins.git' },
 }
 
 -- lazy config options
