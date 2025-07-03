@@ -111,6 +111,30 @@ local function config()
     local action_state = require('telescope.actions.state')
     local previewers = require('telescope.previewers')
 
+    -- Read and prepare .gitignore patterns
+    local gitignore_patterns = {}
+    local gitignore_file = vim.fn.findfile('.gitignore', '.;')
+    if gitignore_file ~= '' then
+      local gitignore_content = vim.fn.readfile(gitignore_file)
+      for _, pattern in ipairs(gitignore_content) do
+        -- Skip empty lines and comments
+        if pattern ~= '' and not pattern:match('^#') then
+          -- Remove trailing slash for directory patterns
+          local clean_pattern = pattern:gsub('/$', '')
+          table.insert(gitignore_patterns, clean_pattern)
+        end
+      end
+    end
+
+    local function should_ignore_dir(dir_path)
+      for _, pattern in ipairs(gitignore_patterns) do
+        if dir_path:match(pattern) or dir_path:match(pattern .. '$') then
+          return true
+        end
+      end
+      return false
+    end
+
     pickers
       .new({}, {
         prompt_title = 'Find Directories',
@@ -123,7 +147,24 @@ local function config()
           '-not',
           '-path',
           '*/.*',
-        }, {}),
+          '-not',
+          '-path',
+          '*/node_modules',
+          '-not',
+          '-path',
+          '*/node_modules/*',
+        }, {
+          entry_maker = function(entry)
+            if should_ignore_dir(entry) then
+              return nil
+            end
+            return {
+              value = entry,
+              display = entry,
+              ordinal = entry,
+            }
+          end,
+        }),
         sorter = conf.generic_sorter({}),
         previewer = previewers.new_buffer_previewer({
           title = 'Directory Contents',
@@ -290,16 +331,16 @@ local function config()
           ['<A-n>'] = actions.file_tab,
 
           -- RESULTS NAVIGATION
-          ['<C-j>'] = function(bufnr)
-            helpers.repeat_function(actions.move_selection_next, bufnr, 8)
+          ['<C-d>'] = function(bufnr)
+            helpers.repeat_function(actions.move_selection_next, bufnr, 10)
           end,
-          ['<C-k>'] = function(bufnr)
-            helpers.repeat_function(actions.move_selection_previous, bufnr, 8)
+          ['<C-u>'] = function(bufnr)
+            helpers.repeat_function(actions.move_selection_previous, bufnr, 10)
           end,
 
           -- PREVIEW SCROLLING
-          ['<C-d>'] = actions.preview_scrolling_down,
-          ['<C-u>'] = actions.preview_scrolling_up,
+          ['<C-j>'] = actions.preview_scrolling_down,
+          ['<C-k>'] = actions.preview_scrolling_up,
           -- ['<C-h>'] = actions.preview_scrolling_left,
           -- ['<C-l>'] = actions.preview_scrolling_right,
           ['<F2>p'] = actions_layout.toggle_preview,
@@ -351,10 +392,14 @@ local function config()
           ['K'] = function(bufnr)
             helpers.repeat_function(actions.move_selection_previous, bufnr, 20)
           end,
+          ['<C-d>'] = function(bufnr)
+            helpers.repeat_function(actions.move_selection_next, bufnr, 10)
+          end,
+          ['<C-u>'] = function(bufnr)
+            helpers.repeat_function(actions.move_selection_previous, bufnr, 10)
+          end,
 
           -- PREVIEW SCROLLING
-          ['<C-d>'] = actions.preview_scrolling_down,
-          ['<C-u>'] = actions.preview_scrolling_up,
           ['<C-j>'] = actions.preview_scrolling_down,
           ['<C-k>'] = actions.preview_scrolling_up,
           -- ['<C-h>'] = actions.preview_scrolling_left, -- uncomment when released
