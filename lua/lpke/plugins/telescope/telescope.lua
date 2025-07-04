@@ -1,22 +1,12 @@
--- workaround since breaking change where this can't be accessed with:
--- require('auto-session.session-lens.actions').delete_session()
-local function delete_session(bufnr)
-  local auto_session = require('auto-session')
-  local action_state = require('telescope.actions.state')
-  local current_picker = action_state.get_current_picker(bufnr)
-  current_picker:delete_selection(function(selection)
-    if selection then
-      auto_session.DeleteSessionFile(selection.path, selection.display())
-    end
-  end)
-end
-
 local function config()
   local telescope = require('telescope')
   local actions = require('telescope.actions')
   local actions_state = require('telescope.actions.state')
   local actions_layout = require('telescope.actions.layout')
   local builtin = require('telescope.builtin')
+
+  local custom_pickers = require('lpke.plugins.telescope.pickers')
+  local ts_helpers = require('lpke.plugins.telescope.helpers')
 
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
@@ -43,209 +33,19 @@ local function config()
   helpers.set_hl('TelescopeMultiIcon', { fg = tc.goldfaded })
   -- stylua: ignore end
 
-  -- custom mapping functions
-  local function remove_selected_from_qflist(bufnr)
-    local qflist = vim.fn.getqflist()
-    helpers.telescope_sel_foreach(bufnr, function(sel)
-      for i, item in ipairs(qflist) do
-        if item.bufnr == sel.bufnr and item.lnum == sel.lnum then
-          table.remove(qflist, i)
-          break
-        end
-      end
-    end)
-    vim.fn.setqflist(qflist)
-    helpers.refresh_picker(bufnr)
-    builtin.quickfix()
-  end
-
-  local function force_delete_selected_bufs(bufnr)
-    helpers.telescope_sel_foreach(bufnr, function(sel)
-      vim.api.nvim_buf_delete(sel.bufnr, { force = true })
-    end)
-    builtin.buffers()
-  end
-
-  local function remove_selected_from_harpoon(bufnr)
-    helpers.telescope_sel_foreach(bufnr, function(sel)
-      local filename = sel.value.filename and sel.value.filename or sel.filename
-      require('harpoon.mark').rm_file(filename)
-    end)
-    vim.cmd('Telescope harpoon marks')
-    pcall(function()
-      require('lualine').refresh()
-    end)
-  end
-
-  local function remove_selected_from_codecompanion(bufnr)
-    local cc_history = require('codecompanion').extensions.history
-    helpers.telescope_sel_foreach(bufnr, function(sel)
-      local save_id = sel.save_id
-      cc_history.delete_chat(save_id)
-    end)
-    vim.cmd('CodeCompanionHistory')
-    pcall(function()
-      require('lualine').refresh()
-    end)
-  end
-
-  -- custom pickers
-  local function find_git_files()
-    if helpers.cwd_has_git() then
-      builtin.git_files()
-    else
-      builtin.find_files()
-    end
-  end
-  local function grep_yanked()
-    builtin.grep_string({ search = vim.fn.getreg('"') })
-  end
-  local function grep_custom()
-    builtin.grep_string({ search = vim.fn.input('Grep: ') })
-  end
-
-  local function find_directories_oil()
-    local pickers = require('telescope.pickers')
-    local finders = require('telescope.finders')
-    local conf = require('telescope.config').values
-    local action_state = require('telescope.actions.state')
-    local previewers = require('telescope.previewers')
-
-    -- Read and prepare .gitignore patterns
-    local gitignore_patterns = {}
-    local gitignore_file = vim.fn.findfile('.gitignore', '.;')
-    if gitignore_file ~= '' then
-      local gitignore_content = vim.fn.readfile(gitignore_file)
-      for _, pattern in ipairs(gitignore_content) do
-        -- Skip empty lines and comments
-        if pattern ~= '' and not pattern:match('^#') then
-          -- Remove trailing slash for directory patterns
-          local clean_pattern = pattern:gsub('/$', '')
-          table.insert(gitignore_patterns, clean_pattern)
-        end
-      end
-    end
-
-    local function should_ignore_dir(dir_path)
-      for _, pattern in ipairs(gitignore_patterns) do
-        if dir_path:match(pattern) or dir_path:match(pattern .. '$') then
-          return true
-        end
-      end
-      return false
-    end
-
-    pickers
-      .new({}, {
-        prompt_title = 'Find Directories',
-        initial_mode = 'insert',
-        finder = finders.new_oneshot_job({
-          'find',
-          '.',
-          '-type',
-          'd',
-          '-not',
-          '-path',
-          '*/.*',
-          '-not',
-          '-path',
-          '*/node_modules',
-          '-not',
-          '-path',
-          '*/node_modules/*',
-        }, {
-          entry_maker = function(entry)
-            if should_ignore_dir(entry) then
-              return nil
-            end
-            return {
-              value = entry,
-              display = entry,
-              ordinal = entry,
-            }
-          end,
-        }),
-        sorter = conf.generic_sorter({}),
-        previewer = previewers.new_buffer_previewer({
-          title = 'Directory Contents',
-          define_preview = function(self, entry)
-            local function scan_directory(path)
-              local ok, entries = pcall(vim.fn.readdir, path, function(name)
-                return name ~= '.' and name ~= '..'
-              end)
-              if not ok then
-                return {}
-              end
-
-              local dirs, files = {}, {}
-              for _, name in ipairs(entries) do
-                local full_path = path .. '/' .. name
-                if vim.fn.isdirectory(full_path) == 1 then
-                  table.insert(dirs, name .. '/')
-                else
-                  table.insert(files, name)
-                end
-              end
-
-              table.sort(dirs)
-              table.sort(files)
-
-              local result = {}
-              vim.list_extend(result, dirs)
-              vim.list_extend(result, files)
-              return result
-            end
-
-            local entries = scan_directory(entry.value)
-            vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, entries)
-            vim.bo[self.state.bufnr].filetype = 'oil'
-
-            vim.api.nvim_buf_call(self.state.bufnr, function()
-              vim.cmd('syntax clear')
-              vim.cmd('syntax match TelescopePreviewDirectory ".*/$"')
-              vim.api.nvim_set_hl(
-                0,
-                'TelescopePreviewDirectory',
-                { fg = tc.foam }
-              )
-            end)
-          end,
-        }),
-        attach_mappings = function(prompt_bufnr, _map)
-          actions.select_default:replace(function()
-            actions.close(prompt_bufnr)
-            local selection = action_state.get_selected_entry()
-            if selection then
-              vim.cmd('Oil ' .. selection.value)
-            end
-          end)
-          return true
-        end,
-      })
-      :find()
-  end
-
-  local function smart_find_files()
-    if vim.bo.filetype == 'oil' then
-      find_directories_oil()
-    else
-      builtin.find_files()
-    end
-  end
-
   -- stylua: ignore start
   -- mappings to access telescope
   helpers.keymap_set_multi({
     {'nC', '<BS><leader>', 'Telescope resume', { desc = 'Resume previous Telescope search' }},
     -- files
-    {'n', '<BS><BS>', smart_find_files, { desc = 'Fuzzy find files in cwd (or directories in oil)' }},
-    {'n', '<BS>ff', find_git_files, { desc = 'Fuzzy find git files in cwd (or cwd if not git)' }},
+    {'n', '<BS><BS>', custom_pickers.smart_find_files, { desc = 'Fuzzy find files in cwd (or directories in oil)' }},
+    {'n', '<BS>ff', custom_pickers.find_git_files, { desc = 'Fuzzy find git files in cwd (or cwd if not git)' }},
     {'nC', '<BS>fr', 'Telescope oldfiles', { desc = 'Fuzzy find recent files' }},
     -- grep
     {'nC', '<leader>/', 'Telescope current_buffer_fuzzy_find', { desc = 'Fuzzy find in current file' }},
     {'nC', '<BS>/', 'Telescope live_grep', { desc = 'Find string in cwd' } },
-    {'n', '<BS>fp', grep_yanked, { desc = 'Find pasted string in cwd' } },
-    {'n', '<BS>fi', grep_custom, { desc = 'Find input string in cwd' } },
+    {'n', '<BS>fp', custom_pickers.grep_yanked, { desc = 'Find pasted string in cwd' } },
+    {'n', '<BS>fi', custom_pickers.grep_custom, { desc = 'Find input string in cwd' } },
     {'nC', '<BS>fw', 'Telescope grep_string', { desc = 'Find string under cursor in cwd' }},
     -- git
     {'nC', '<BS>gg', 'Telescope git_status', { desc = 'Fuzzy find git status' }},
@@ -455,13 +255,13 @@ local function config()
             local prompt_title =
               actions_state.get_current_picker(bufnr).prompt_title
             if prompt_title == 'Sessions' then -- delete session
-              delete_session(bufnr)
+              ts_helpers.delete_session(bufnr)
             elseif prompt_title == 'Quickfix' then -- remove qflist items
-              remove_selected_from_qflist(bufnr)
+              ts_helpers.remove_selected_from_qflist(bufnr)
             elseif prompt_title == 'harpoon marks' then -- remove harpoon
-              remove_selected_from_harpoon(bufnr)
+              ts_helpers.remove_selected_from_harpoon(bufnr)
             elseif prompt_title == 'Saved Chats' then -- remove harpoon
-              remove_selected_from_codecompanion(bufnr)
+              ts_helpers.remove_selected_from_codecompanion(bufnr)
             end
           end,
 
@@ -529,7 +329,7 @@ local function config()
         mappings = {
           n = {
             ['dD'] = actions.delete_buffer,
-            ['dxD'] = force_delete_selected_bufs,
+            ['dxD'] = ts_helpers.force_delete_selected_bufs,
             ['dX'] = function()
               Lpke_clean_buffers()
               builtin.buffers()
@@ -547,7 +347,7 @@ local function config()
             ['h'] = function()
               builtin.quickfixhistory()
             end,
-            ['dD'] = remove_selected_from_qflist,
+            ['dD'] = ts_helpers.remove_selected_from_qflist,
           },
         },
       },

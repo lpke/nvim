@@ -1,5 +1,6 @@
 local function config()
   local neogit = require('neogit')
+  local ng_helpers = require('lpke.plugins.neogit.helpers')
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
 
@@ -315,7 +316,7 @@ local function config()
         ['j'] = 'MoveDown',
         ['k'] = 'MoveUp',
         ['o'] = 'OpenTree',
-        ['<leader>i'] = 'Close',
+        ['<leader>I'] = 'Close',
         ['q'] = 'Close',
         ['I'] = 'InitRepo',
         ['1'] = 'Depth1',
@@ -361,7 +362,7 @@ local function config()
 
   -- stylua: ignore start
   helpers.keymap_set_multi({
-    {'nv', '<leader>i', neogit.open, { desc = 'Neogit: Toggle status window (new tab)' }},
+    {'nv', '<leader>I', neogit.open, { desc = 'Neogit: Toggle status window (new tab)' }},
   })
 
   helpers.set_hl('NeogitActiveItem', { bg = tc.overlaybump, fg = tc.text, bold = true })

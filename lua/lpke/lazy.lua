@@ -17,7 +17,8 @@ local lazy_plugins = {
   { import = 'lpke.plugins' },
   { import = 'lpke.plugins.lsp' },
   { import = 'lpke.plugins.ai' },
-  { import = 'lpke.plugins.git' },
+  { import = 'lpke.plugins.telescope.telescope' },
+  { import = 'lpke.plugins.neogit.neogit' },
 }
 
 -- lazy config options

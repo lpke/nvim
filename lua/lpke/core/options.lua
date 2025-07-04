@@ -203,7 +203,7 @@ helpers.command_set_multi({
     if #cmd.fargs == 0 then
       print('PP: buf name | PC: cwd | PG: git root | PW: win details | P <lua>: Lpke_print(lua)')
     else
-      Lpke_print(helpers.execute_as_lua(cmd.fargs[1]), 3)
+      Lpke_print(helpers.execute_as_lua(cmd.fargs[1]), 1)
     end
   end, { desc = 'Print help for `P` commands or call Lpke_print(<lua>)' } },
   { '', 'PP', function() print(helpers.get_buf_name()) end, { desc = 'Print the active buffer name' } },

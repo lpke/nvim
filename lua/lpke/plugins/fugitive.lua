@@ -220,7 +220,7 @@ local function config()
 
   -- stylua: ignore start
   helpers.keymap_set_multi({
-    {'nv', '<leader>I', function() Lpke_toggle_git_fugitive(true) end, { desc = 'Fugitive: Toggle fugitive window (`:Git` in new tab)' }},
+    {'nv', '<leader>i', function() Lpke_toggle_git_fugitive(true) end, { desc = 'Fugitive: Toggle fugitive window (`:Git` in new tab)' }},
     {'nC', '<leader>gb', 'Git blame', { desc = 'Fugitive: Open blame panel' }},
     {'nv', '<leader>gd', Lpke_toggle_git_diff, { desc = 'Fugitive: Open diff split for current file (against HEAD) in a new tab' }},
     {'nv', '<leader>gs', function() Lpke_toggle_git_diff(true) end, { desc = 'Fugitive: Open diff split for current file (against staging) in a new tab' }},
