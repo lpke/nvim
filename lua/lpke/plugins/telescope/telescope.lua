@@ -38,7 +38,7 @@ local function config()
   helpers.keymap_set_multi({
     {'nC', '<BS><leader>', 'Telescope resume', { desc = 'Resume previous Telescope search' }},
     -- files
-    {'n', '<BS><BS>', custom_pickers.smart_find_files, { desc = 'Fuzzy find files in cwd (or directories in oil)' }},
+    {'n', '<BS><BS>', custom_pickers.smart_find, { desc = 'Fuzzy find files in cwd (or directories in oil)' }},
     {'n', '<BS>ff', custom_pickers.find_git_files, { desc = 'Fuzzy find git files in cwd (or cwd if not git)' }},
     {'nC', '<BS>fr', 'Telescope oldfiles', { desc = 'Fuzzy find recent files' }},
     -- grep
