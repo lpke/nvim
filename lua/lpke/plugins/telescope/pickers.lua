@@ -4,6 +4,8 @@ local helpers = require('lpke.core.helpers')
 local tc = Lpke_theme_colors
 
 local SWITCH_PICKER_KEYMAPS = { '<F2>s', '<A-s>' }
+local PARENT_DIR_KEYMAPS = { '<BS><BS>' }
+local PARENT_GREP_KEYMAPS = { '<BS>/' }
 
 local E = {}
 
@@ -13,6 +15,83 @@ local function switch_to_picker(prompt_bufnr, picker_func)
   local current_query = current_picker:_get_prompt()
   actions.close(prompt_bufnr)
   picker_func({ default_text = current_query })
+end
+
+local function get_selection_parent_dir(_prompt_bufnr, is_directory_picker)
+  local action_state = require('telescope.actions.state')
+  local selection = action_state.get_selected_entry()
+  if not selection then
+    return vim.fn.getcwd()
+  end
+
+  local path = selection.value or selection.path or selection[1]
+  if not path then
+    return vim.fn.getcwd()
+  end
+
+  -- For directory pickers, use the selected directory directly
+  -- For file pickers, get the parent directory
+  if is_directory_picker then
+    return path
+  end
+
+  -- If it's a directory, use it directly; if it's a file, get its parent
+  if vim.fn.isdirectory(path) == 1 then
+    return path
+  else
+    return vim.fn.fnamemodify(path, ':h')
+  end
+end
+
+-- Helper function to setup common keymaps for both pickers
+local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
+  -- Switch picker keymaps
+  for _, keymap in ipairs(SWITCH_PICKER_KEYMAPS) do
+    local target_func = is_directory_picker and E.find_files
+      or E.find_directories
+    map('i', keymap, function()
+      switch_to_picker(prompt_bufnr, target_func)
+    end)
+    map('n', keymap, function()
+      switch_to_picker(prompt_bufnr, target_func)
+    end)
+  end
+
+  -- Parent directory navigation keymaps
+  for _, keymap in ipairs(PARENT_DIR_KEYMAPS) do
+    map('n', keymap, function()
+      local parent_dir =
+        get_selection_parent_dir(prompt_bufnr, is_directory_picker)
+      local current_picker =
+        require('telescope.actions.state').get_current_picker(prompt_bufnr)
+      local current_query = current_picker:_get_prompt()
+      actions.close(prompt_bufnr)
+
+      local target_func = is_directory_picker and E.find_directories
+        or E.find_files
+      target_func({
+        default_text = current_query,
+        cwd = parent_dir,
+      })
+    end)
+  end
+
+  -- Parent directory live grep keymaps
+  for _, keymap in ipairs(PARENT_GREP_KEYMAPS) do
+    map('n', keymap, function()
+      local parent_dir =
+        get_selection_parent_dir(prompt_bufnr, is_directory_picker)
+      local current_picker =
+        require('telescope.actions.state').get_current_picker(prompt_bufnr)
+      local current_query = current_picker:_get_prompt()
+      actions.close(prompt_bufnr)
+
+      builtin.live_grep({
+        default_text = current_query,
+        cwd = parent_dir,
+      })
+    end)
+  end
 end
 
 function E.find_git_files()
@@ -143,15 +222,8 @@ function E.find_directories(opts)
         end,
       }),
       attach_mappings = function(prompt_bufnr, map)
-        -- Add custom mapping to switch to files
-        for _, keymap in ipairs(SWITCH_PICKER_KEYMAPS) do
-          map('i', keymap, function()
-            switch_to_picker(prompt_bufnr, E.find_files)
-          end)
-          map('n', keymap, function()
-            switch_to_picker(prompt_bufnr, E.find_files)
-          end)
-        end
+        -- Setup common keymaps
+        setup_common_keymaps(prompt_bufnr, map, true)
 
         actions.select_default:replace(function()
           actions.close(prompt_bufnr)
@@ -182,15 +254,9 @@ function E.find_files(opts)
       original_attach_mappings(prompt_bufnr, map)
     end
 
-    -- Add custom mapping to switch to directories
-    for _, keymap in ipairs(SWITCH_PICKER_KEYMAPS) do
-      map('i', keymap, function()
-        switch_to_picker(prompt_bufnr, E.find_directories)
-      end)
-      map('n', keymap, function()
-        switch_to_picker(prompt_bufnr, E.find_directories)
-      end)
-    end
+    -- Setup common keymaps
+    setup_common_keymaps(prompt_bufnr, map, false)
+
     return true
   end
 

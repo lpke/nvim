@@ -264,24 +264,6 @@ local function config()
               ts_helpers.remove_selected_from_codecompanion(bufnr)
             end
           end,
-
-          -- SUB-PICKER SEARCHING
-          ['<BS><BS>'] = function(bufnr) -- find files (current path)
-            local picker = actions_state.get_current_picker(bufnr)
-            local path = picker.finder.path
-            if path then
-              print(path)
-              vim.cmd('Telescope find_files cwd=' .. path)
-            end
-          end,
-          ['<BS>/'] = function(bufnr) -- live grep (current path)
-            local picker = actions_state.get_current_picker(bufnr)
-            local path = picker.finder.path
-            if path then
-              print(path)
-              vim.cmd('Telescope live_grep cwd=' .. path)
-            end
-          end,
         },
       },
     },
@@ -316,7 +298,7 @@ local function config()
       },
       live_grep = {
         initial_mode = 'insert',
-        sorting_strategy = 'descending',
+        sorting_strategy = 'ascending',
       },
       current_buffer_fuzzy_find = {
         initial_mode = 'insert',
