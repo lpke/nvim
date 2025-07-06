@@ -17,6 +17,39 @@ local keymaps = {
 
 local E = {}
 
+-- Store the gap path between nvim's cwd and telescope's cwd
+local gap_path = ''
+
+-- Helper function to calculate and store the gap path
+local function update_gap_path(telescope_cwd)
+  local nvim_cwd = vim.fn.getcwd()
+  if telescope_cwd == nvim_cwd then
+    gap_path = ''
+  else
+    -- Calculate relative path from nvim_cwd to telescope_cwd
+    gap_path = vim.fn.fnamemodify(telescope_cwd, ':.')
+    if gap_path == telescope_cwd then
+      -- telescope_cwd is absolute and not under nvim_cwd
+      gap_path = telescope_cwd
+    end
+  end
+end
+
+-- Helper function to resolve path relative to nvim's cwd
+local function resolve_path_from_nvim_cwd(relative_path)
+  if gap_path == '' then
+    return relative_path
+  end
+
+  -- If gap_path is absolute, join directly
+  if vim.fn.fnamemodify(gap_path, ':p') == gap_path then
+    return gap_path .. '/' .. relative_path
+  end
+
+  -- Otherwise, gap_path is relative to nvim_cwd
+  return gap_path .. '/' .. relative_path
+end
+
 local function switch_to_picker(cur_prompt_buf, picker_func, keep_query)
   local current_picker = action_state.get_current_picker(cur_prompt_buf)
   local current_query = current_picker:_get_prompt()
@@ -72,12 +105,16 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
     map('n', keymap, function()
       local parent_dir =
         get_selection_parent_dir(prompt_bufnr, is_directory_picker)
+
+      -- Resolve the path relative to nvim's cwd
+      local resolved_parent_dir = resolve_path_from_nvim_cwd(parent_dir)
+
       actions.close(prompt_bufnr)
 
       local target_func = is_directory_picker and E.find_directories
         or E.find_files
       target_func({
-        cwd = parent_dir,
+        cwd = resolved_parent_dir,
       })
     end)
   end
@@ -87,10 +124,14 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
     map('n', keymap, function()
       local parent_dir =
         get_selection_parent_dir(prompt_bufnr, is_directory_picker)
+
+      -- Resolve the path relative to nvim's cwd
+      local resolved_parent_dir = resolve_path_from_nvim_cwd(parent_dir)
+
       actions.close(prompt_bufnr)
 
       builtin.live_grep({
-        cwd = parent_dir,
+        cwd = resolved_parent_dir,
       })
     end)
   end
@@ -113,6 +154,13 @@ end
 function E.find_directories(opts)
   opts = opts or {}
   local initial_query = opts.default_text or ''
+
+  -- Update gap path when cwd is specified
+  if opts.cwd then
+    update_gap_path(opts.cwd)
+  else
+    gap_path = ''
+  end
 
   -- Read and prepare .gitignore patterns
   local gitignore_patterns = {}
@@ -238,6 +286,13 @@ end
 function E.find_files(opts)
   opts = opts or {}
   local initial_query = opts.default_text or ''
+
+  -- Update gap path when cwd is specified
+  if opts.cwd then
+    update_gap_path(opts.cwd)
+  else
+    gap_path = ''
+  end
 
   -- Set default_text for the builtin picker
   opts.default_text = initial_query
