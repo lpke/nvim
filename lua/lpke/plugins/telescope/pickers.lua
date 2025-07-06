@@ -1,24 +1,34 @@
 local actions = require('telescope.actions')
+local action_state = require('telescope.actions.state')
 local builtin = require('telescope.builtin')
 local helpers = require('lpke.core.helpers')
+local pickers = require('telescope.pickers')
+local finders = require('telescope.finders')
+local conf = require('telescope.config').values
+local previewers = require('telescope.previewers')
+
 local tc = Lpke_theme_colors
 
-local SWITCH_PICKER_KEYMAPS = { '<F2>s', '<A-s>' }
-local PARENT_DIR_KEYMAPS = { '<BS><BS>' }
-local PARENT_GREP_KEYMAPS = { '<BS>/' }
+local keymaps = {
+  file_dir_switch = { '<F2>s', '<A-s>' },
+  cwd_change = { '<BS><BS>' },
+  cwd_change_grep = { '<BS>/' },
+}
 
 local E = {}
 
-local function switch_to_picker(prompt_bufnr, picker_func)
-  local action_state = require('telescope.actions.state')
-  local current_picker = action_state.get_current_picker(prompt_bufnr)
+local function switch_to_picker(cur_prompt_buf, picker_func, keep_query)
+  local current_picker = action_state.get_current_picker(cur_prompt_buf)
   local current_query = current_picker:_get_prompt()
-  actions.close(prompt_bufnr)
-  picker_func({ default_text = current_query })
+  actions.close(cur_prompt_buf)
+  if keep_query then
+    picker_func({ default_text = current_query })
+  else
+    picker_func()
+  end
 end
 
 local function get_selection_parent_dir(_prompt_bufnr, is_directory_picker)
-  local action_state = require('telescope.actions.state')
   local selection = action_state.get_selected_entry()
   if not selection then
     return vim.fn.getcwd()
@@ -46,48 +56,40 @@ end
 -- Helper function to setup common keymaps for both pickers
 local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
   -- Switch picker keymaps
-  for _, keymap in ipairs(SWITCH_PICKER_KEYMAPS) do
+  for _, keymap in ipairs(keymaps.file_dir_switch) do
     local target_func = is_directory_picker and E.find_files
       or E.find_directories
     map('i', keymap, function()
-      switch_to_picker(prompt_bufnr, target_func)
+      switch_to_picker(prompt_bufnr, target_func, true)
     end)
     map('n', keymap, function()
-      switch_to_picker(prompt_bufnr, target_func)
+      switch_to_picker(prompt_bufnr, target_func, true)
     end)
   end
 
   -- Parent directory navigation keymaps
-  for _, keymap in ipairs(PARENT_DIR_KEYMAPS) do
+  for _, keymap in ipairs(keymaps.cwd_change) do
     map('n', keymap, function()
       local parent_dir =
         get_selection_parent_dir(prompt_bufnr, is_directory_picker)
-      local current_picker =
-        require('telescope.actions.state').get_current_picker(prompt_bufnr)
-      local current_query = current_picker:_get_prompt()
       actions.close(prompt_bufnr)
 
       local target_func = is_directory_picker and E.find_directories
         or E.find_files
       target_func({
-        default_text = current_query,
         cwd = parent_dir,
       })
     end)
   end
 
   -- Parent directory live grep keymaps
-  for _, keymap in ipairs(PARENT_GREP_KEYMAPS) do
+  for _, keymap in ipairs(keymaps.cwd_change_grep) do
     map('n', keymap, function()
       local parent_dir =
         get_selection_parent_dir(prompt_bufnr, is_directory_picker)
-      local current_picker =
-        require('telescope.actions.state').get_current_picker(prompt_bufnr)
-      local current_query = current_picker:_get_prompt()
       actions.close(prompt_bufnr)
 
       builtin.live_grep({
-        default_text = current_query,
         cwd = parent_dir,
       })
     end)
@@ -111,12 +113,6 @@ end
 function E.find_directories(opts)
   opts = opts or {}
   local initial_query = opts.default_text or ''
-
-  local pickers = require('telescope.pickers')
-  local finders = require('telescope.finders')
-  local conf = require('telescope.config').values
-  local action_state = require('telescope.actions.state')
-  local previewers = require('telescope.previewers')
 
   -- Read and prepare .gitignore patterns
   local gitignore_patterns = {}
