@@ -135,6 +135,29 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
       })
     end)
   end
+
+  -- Navigate up one directory level with `-` in normal mode
+  map('n', '-', function()
+    local current_picker = action_state.get_current_picker(prompt_bufnr)
+    local current_cwd = current_picker.cwd or vim.fn.getcwd()
+    local parent_dir = vim.fn.fnamemodify(current_cwd, ':h')
+
+    -- Don't navigate up if we're already at the root
+    if parent_dir == current_cwd then
+      return
+    end
+
+    -- Resolve the path relative to nvim's cwd
+    local resolved_parent_dir = resolve_path_from_nvim_cwd(parent_dir)
+
+    actions.close(prompt_bufnr)
+
+    local target_func = is_directory_picker and E.find_directories
+      or E.find_files
+    target_func({
+      cwd = resolved_parent_dir,
+    })
+  end)
 end
 
 function E.find_git_files()
