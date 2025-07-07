@@ -273,8 +273,37 @@ local function config()
         initial_mode = 'insert',
         sorting_strategy = 'ascending',
       },
+      git_commits = {
+        git_command = {
+          'git',
+          'log',
+          '--pretty=tformat:%h %ad  %s',
+          '--date=format:%y-%m-%d %H:%M',
+          '--abbrev-commit',
+          '--',
+          '.',
+        },
+      },
       git_bcommits = {
         prompt_title = 'File Commits',
+        git_command = {
+          'git',
+          'log',
+          '--pretty=tformat:%h %ad  %s',
+          '--date=format:%y-%m-%d %H:%M',
+          '--abbrev-commit',
+        },
+      },
+      git_bcommits_range = {
+        git_command = {
+          'git',
+          'log',
+          '--pretty=tformat:%h %ad  %s',
+          '--date=format:%y-%m-%d %H:%M',
+          '--abbrev-commit',
+          '--no-patch',
+          '-L',
+        },
       },
       buffers = {
         mappings = {
@@ -383,6 +412,9 @@ local function config()
     {'n', '<BS>gg', function()
       builtin_pickers.git_status()
     end, { desc = 'Find git status' }},
+    {'n', '<BS>gc', function()
+      builtin_pickers.git_commits()
+    end, { desc = 'Find git commits' }},
     {'n', '<leader>gc', function()
       builtin_pickers.git_bcommits()
     end, { desc = 'Find buffer git commits' }},
@@ -392,11 +424,9 @@ local function config()
       local end_line = vim.api.nvim_buf_get_mark(0, ">")[1]
       builtin_pickers.git_bcommits_range({
         prompt_title = 'File Commits (L' .. start_line .. '-' .. end_line .. ')',
-        from = start_line, to = end_line })
+        from = start_line, to = end_line
+      })
     end, { desc = 'Find selection git commits' }},
-    {'n', '<BS>gc', function()
-      builtin_pickers.git_commits()
-    end, { desc = 'Find git commits' }},
     {'n', '<BS>gb', function()
       builtin_pickers.git_branches()
     end, { desc = 'Find git branches' }},
