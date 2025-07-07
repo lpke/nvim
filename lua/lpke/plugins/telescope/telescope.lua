@@ -369,6 +369,10 @@ local function config()
     {'n', '<BS>/', function()
       builtin.live_grep({ prompt_title = 'Find in Files' })
     end, { desc = 'Find string in cwd' } },
+    -- TODO - WIP:
+    {'n', '<BS>fx', function()
+      -- WIP...
+    end, { desc = 'Find string in cwd, with file filtering' } },
     {'n', '<BS>fp', function()
       builtin.grep_string({ search = vim.fn.getreg('"') })
     end, { desc = 'Find pasted string in cwd' } },
