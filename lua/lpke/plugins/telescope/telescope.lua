@@ -14,24 +14,26 @@ local function config()
 
   -- stylua: ignore start
   -- theme
-  helpers.set_hl('TelescopeBorder', { fg = tc.surface, bg = tc.surface })
-  helpers.set_hl('TelescopePromptBorder', { fg = tc.overlaybump, bg = tc.overlaybump })
-  helpers.set_hl('TelescopePromptNormal', { fg = tc.text, bg = tc.overlaybump })
-  helpers.set_hl('TelescopePromptPrefix', { fg = tc.textminus, bg = tc.overlaybump })
-  helpers.set_hl('TelescopeSelectionCaret', { fg = tc.textminus, bg = tc.surface })
-  helpers.set_hl('TelescopeSelection', { fg = tc.text, bg = tc.overlaybump })
-  helpers.set_hl('TelescopeResultsTitle', { fg = tc.base, bg = tc.pine })
-  helpers.set_hl('TelescopePreviewTitle', { fg = tc.base, bg = tc.growth })
-  helpers.set_hl('TelescopePromptTitle', { fg = tc.base, bg = tc.iris })
-  helpers.set_hl('TelescopePromptCounter', { fg = tc.mutedplus, bg = tc.overlaybump })
-  helpers.set_hl('TelescopeMatching', { fg = tc.iris, bold = true })
-  helpers.set_hl('TelescopeResultsNormal', { fg = tc.subtle, bg = tc.surface })
-  helpers.set_hl('TelescopeResultsDiffChange', { fg = tc.rose })
-  helpers.set_hl('TelescopeResultsDiffAdd', { fg = tc.foam })
-  helpers.set_hl('TelescopeResultsDiffDelete', { fg = tc.love })
-  helpers.set_hl('TelescopeResultsDiffUntracked', { fg = tc.irisfaded })
-  helpers.set_hl('TelescopeMultiSelection', { fg = tc.gold })
-  helpers.set_hl('TelescopeMultiIcon', { fg = tc.goldfaded })
+  helpers.set_hl_multi({
+    ['TelescopeBorder'] = { fg = tc.surface, bg = tc.surface },
+    ['TelescopePromptBorder'] = { fg = tc.overlaybump, bg = tc.overlaybump },
+    ['TelescopePromptNormal'] = { fg = tc.text, bg = tc.overlaybump },
+    ['TelescopePromptPrefix'] = { fg = tc.textminus, bg = tc.overlaybump },
+    ['TelescopeSelectionCaret'] = { fg = tc.textminus, bg = tc.surface },
+    ['TelescopeSelection'] = { fg = tc.text, bg = tc.overlaybump },
+    ['TelescopeResultsTitle'] = { fg = tc.base, bg = tc.pine },
+    ['TelescopePreviewTitle'] = { fg = tc.base, bg = tc.growth },
+    ['TelescopePromptTitle'] = { fg = tc.base, bg = tc.iris },
+    ['TelescopePromptCounter'] = { fg = tc.mutedplus, bg = tc.overlaybump },
+    ['TelescopeMatching'] = { fg = tc.iris, bold = true },
+    ['TelescopeResultsNormal'] = { fg = tc.subtle, bg = tc.surface },
+    ['TelescopeResultsDiffChange'] = { fg = tc.rose },
+    ['TelescopeResultsDiffAdd'] = { fg = tc.foam },
+    ['TelescopeResultsDiffDelete'] = { fg = tc.love },
+    ['TelescopeResultsDiffUntracked'] = { fg = tc.irisfaded },
+    ['TelescopeMultiSelection'] = { fg = tc.gold },
+    ['TelescopeMultiIcon'] = { fg = tc.goldfaded },
+  })
   -- stylua: ignore end
 
   -- stylua: ignore start

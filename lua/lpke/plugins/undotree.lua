@@ -4,13 +4,15 @@ local function config()
 
   -- stylua: ignore start
   -- theme
-  helpers.set_hl('UndotreeNode', { fg = tc.gold })
-  helpers.set_hl('UndotreeBranch', { fg = tc.goldfaded })
-  helpers.set_hl('UndotreeCurrent', { fg = tc.foam })
-  helpers.set_hl('UndotreeNext', { fg = tc.pine })
-  helpers.set_hl('UndotreeTimestamp', { link = 'Comment' })
-  helpers.set_hl('UndotreeSavedBig', { fg = tc.love, bold = true })
-  helpers.set_hl('UndotreeSavedSmall', { fg = tc.love })
+  helpers.set_hl_multi({
+    ['UndotreeNode'] = { fg = tc.gold },
+    ['UndotreeBranch'] = { fg = tc.goldfaded },
+    ['UndotreeCurrent'] = { fg = tc.foam },
+    ['UndotreeNext'] = { fg = tc.pine },
+    ['UndotreeTimestamp'] = { link = 'Comment' },
+    ['UndotreeSavedBig'] = { fg = tc.love, bold = true },
+    ['UndotreeSavedSmall'] = { fg = tc.love },
+  })
 
   helpers.keymap_set_multi({
     { 'nC', '<leader>u', 'UndotreeToggle', { desc = 'Undotree: Open undo tree' } },

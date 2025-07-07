@@ -41,16 +41,18 @@ local function config()
   })
 
   -- theme
-  helpers.set_hl('MasonHeader', { fg = tc.base, bg = tc.gold })
-  helpers.set_hl('MasonHighlightBlockBold', { link = 'Visual' })
-  helpers.set_hl('MasonHighlightBlockBoldSecondary', { link = 'Visual' })
-  helpers.set_hl('MasonHighlightSecondary', { fg = tc.gold })
-  helpers.set_hl('MasonMutedBlock', { link = 'CursorLine' })
-  helpers.set_hl('MasonMutedBlockBold', { link = 'CursorLine' })
-  helpers.set_hl('MasonHighlight', { fg = tc.growth })
-  helpers.set_hl('MasonMuted', { fg = tc.muted })
-  helpers.set_hl('MasonHeaderSecondary', { link = 'Visual' })
-  helpers.set_hl('MasonHighlightBlock', { fg = tc.base, bg = tc.growth })
+  helpers.set_hl_multi({
+    ['MasonHeader'] = { fg = tc.base, bg = tc.gold },
+    ['MasonHighlightBlockBold'] = { link = 'Visual' },
+    ['MasonHighlightBlockBoldSecondary'] = { link = 'Visual' },
+    ['MasonHighlightSecondary'] = { fg = tc.gold },
+    ['MasonMutedBlock'] = { link = 'CursorLine' },
+    ['MasonMutedBlockBold'] = { link = 'CursorLine' },
+    ['MasonHighlight'] = { fg = tc.growth },
+    ['MasonMuted'] = { fg = tc.muted },
+    ['MasonHeaderSecondary'] = { link = 'Visual' },
+    ['MasonHighlightBlock'] = { fg = tc.base, bg = tc.growth },
+  })
 
   -- keymaps
   helpers.keymap_set_multi({

@@ -176,6 +176,11 @@ end
 function E.set_hl(name, hl)
   vim.api.nvim_set_hl(0, name, hl)
 end
+function E.set_hl_multi(highlights)
+  for name, hl in pairs(highlights) do
+    E.set_hl(name, hl)
+  end
+end
 
 -- toggle 'list' option (show whitespace chars)
 function E.toggle_show_whitespace()

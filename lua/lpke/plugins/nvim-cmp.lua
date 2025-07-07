@@ -76,15 +76,17 @@ local function config()
   end
 
   -- theme
-  helpers.set_hl('CmpItemKind', { fg = tc.muted, italic = true })
-  helpers.set_hl('CmpItemKindDefault', { fg = tc.rose, italic = true })
-  helpers.set_hl('CmpItemKindFunction', { fg = tc.rose, italic = true })
-  helpers.set_hl('CmpItemKindSnippet', { fg = tc.gold, italic = true })
-  helpers.set_hl('CmpItemKindMethod', { fg = tc.iris, italic = true })
-  helpers.set_hl('CmpItemKindClass', { fg = tc.pine, italic = true })
-  helpers.set_hl('CmpItemKindVariable', { fg = tc.textminus, italic = true })
-  helpers.set_hl('CmpItemKindField', { fg = tc.subtle, italic = true })
-  helpers.set_hl('CmpItemKindInterface', { fg = tc.foam, italic = true })
+  helpers.set_hl_multi({
+    ['CmpItemKind'] = { fg = tc.muted, italic = true },
+    ['CmpItemKindDefault'] = { fg = tc.rose, italic = true },
+    ['CmpItemKindFunction'] = { fg = tc.rose, italic = true },
+    ['CmpItemKindSnippet'] = { fg = tc.gold, italic = true },
+    ['CmpItemKindMethod'] = { fg = tc.iris, italic = true },
+    ['CmpItemKindClass'] = { fg = tc.pine, italic = true },
+    ['CmpItemKindVariable'] = { fg = tc.textminus, italic = true },
+    ['CmpItemKindField'] = { fg = tc.subtle, italic = true },
+    ['CmpItemKindInterface'] = { fg = tc.foam, italic = true },
+  })
 
   -- keymaps - general
   helpers.keymap_set_multi({

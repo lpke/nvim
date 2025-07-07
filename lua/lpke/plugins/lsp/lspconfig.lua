@@ -26,10 +26,12 @@ local function config()
   local cmp_nvim_lsp = require('cmp_nvim_lsp')
 
   -- theme (see functions for the rest)
-  helpers.set_hl('LspInfoTitle', { fg = tc.growth })
-  helpers.set_hl('DiagnosticOk', { fg = tc.growth })
-  helpers.set_hl('DiagnosticSignOk', { fg = tc.growth })
-  helpers.set_hl('DiagnosticFloatingOk', { fg = tc.growth })
+  helpers.set_hl_multi({
+    ['LspInfoTitle'] = { fg = tc.growth },
+    ['DiagnosticOk'] = { fg = tc.growth },
+    ['DiagnosticSignOk'] = { fg = tc.growth },
+    ['DiagnosticFloatingOk'] = { fg = tc.growth },
+  })
   Lpke_show_diagnostic_virtual_text()
   Lpke_hide_diagnostic_hl()
 

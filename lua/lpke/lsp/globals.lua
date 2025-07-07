@@ -94,45 +94,53 @@ end
 
 -- stylua: ignore start
 function Lpke_hide_diagnostic_hl()
-  helpers.set_hl('DiagnosticUnnecessary', {})
-  helpers.set_hl('DiagnosticUnderlineOk', {})
-  helpers.set_hl('DiagnosticUnderlineHint', {})
-  helpers.set_hl('DiagnosticUnderlineInfo', {})
-  helpers.set_hl('DiagnosticUnderlineWarn', {})
-  helpers.set_hl('DiagnosticUnderlineError', {})
+  helpers.set_hl_multi({
+    ['DiagnosticUnnecessary'] = {},
+    ['DiagnosticUnderlineOk'] = {},
+    ['DiagnosticUnderlineHint'] = {},
+    ['DiagnosticUnderlineInfo'] = {},
+    ['DiagnosticUnderlineWarn'] = {},
+    ['DiagnosticUnderlineError'] = {},
+  })
 end
 function Lpke_show_diagnostic_hl()
-  helpers.set_hl('DiagnosticUnnecessary', { fg = tc.subtleplus })
-  helpers.set_hl('DiagnosticUnderlineOk', { bg = tc.growthbg })
-  helpers.set_hl('DiagnosticUnderlineHint', { bg = tc.irisbg })
-  helpers.set_hl('DiagnosticUnderlineInfo', { bg = tc.foambg })
-  helpers.set_hl('DiagnosticUnderlineWarn', { bg = tc.goldbg })
-  helpers.set_hl('DiagnosticUnderlineError', { bg = tc.lovebg })
+  helpers.set_hl_multi({
+    ['DiagnosticUnnecessary'] = { fg = tc.subtleplus },
+    ['DiagnosticUnderlineOk'] = { bg = tc.growthbg },
+    ['DiagnosticUnderlineHint'] = { bg = tc.irisbg },
+    ['DiagnosticUnderlineInfo'] = { bg = tc.foambg },
+    ['DiagnosticUnderlineWarn'] = { bg = tc.goldbg },
+    ['DiagnosticUnderlineError'] = { bg = tc.lovebg },
+  })
 end
 
 function Lpke_dim_diagnostic_virtual_text()
-  helpers.set_hl('DiagnosticVirtualTextOk', { fg = tc.growthbg, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextHint', { fg = tc.irisbg, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextInfo', { fg = tc.foambg, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextWarn', { fg = tc.goldbg, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextError', { fg = tc.lovebg, italic = true })
-  helpers.set_hl('DiagnosticVirtualLinesOk', { fg = tc.growthbg, italic = true })
-  helpers.set_hl('DiagnosticVirtualLinesHint', { fg = tc.irisbg, italic = true })
-  helpers.set_hl('DiagnosticVirtualLinesInfo', { fg = tc.foambg, italic = true })
-  helpers.set_hl('DiagnosticVirtualLinesWarn', { fg = tc.goldbg, italic = true })
-  helpers.set_hl('DiagnosticVirtualLinesError', { fg = tc.lovebg, italic = true })
+  helpers.set_hl_multi({
+    ['DiagnosticVirtualTextOk'] = { fg = tc.growthbg, italic = true },
+    ['DiagnosticVirtualTextHint'] = { fg = tc.irisbg, italic = true },
+    ['DiagnosticVirtualTextInfo'] = { fg = tc.foambg, italic = true },
+    ['DiagnosticVirtualTextWarn'] = { fg = tc.goldbg, italic = true },
+    ['DiagnosticVirtualTextError'] = { fg = tc.lovebg, italic = true },
+    ['DiagnosticVirtualLinesOk'] = { fg = tc.growthbg, italic = true },
+    ['DiagnosticVirtualLinesHint'] = { fg = tc.irisbg, italic = true },
+    ['DiagnosticVirtualLinesInfo'] = { fg = tc.foambg, italic = true },
+    ['DiagnosticVirtualLinesWarn'] = { fg = tc.goldbg, italic = true },
+    ['DiagnosticVirtualLinesError'] = { fg = tc.lovebg, italic = true },
+  })
 end
 function Lpke_show_diagnostic_virtual_text()
-  helpers.set_hl('DiagnosticVirtualTextOk', { fg = tc.growth, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextHint', { fg = tc.irisfaded, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextInfo', { fg = tc.foamfaded, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextWarn', { fg = tc.goldfaded, italic = true })
-  helpers.set_hl('DiagnosticVirtualTextError', { fg = tc.lovefaded, italic = true })
-  helpers.set_hl('DiagnosticVirtualLinesOk', { fg = tc.growth, italic = true })
-  helpers.set_hl('DiagnosticVirtualLinesHint', { fg = tc.irisfaded, italic = true })
-  helpers.set_hl('DiagnosticVirtualLinesInfo', { fg = tc.foamfaded, italic = true })
-  helpers.set_hl('DiagnosticVirtualLinesWarn', { fg = tc.goldfaded, italic = true })
-  helpers.set_hl('DiagnosticVirtualLinesError', { fg = tc.lovefaded, italic = true })
+  helpers.set_hl_multi({
+    ['DiagnosticVirtualTextOk'] = { fg = tc.growth, italic = true },
+    ['DiagnosticVirtualTextHint'] = { fg = tc.irisfaded, italic = true },
+    ['DiagnosticVirtualTextInfo'] = { fg = tc.foamfaded, italic = true },
+    ['DiagnosticVirtualTextWarn'] = { fg = tc.goldfaded, italic = true },
+    ['DiagnosticVirtualTextError'] = { fg = tc.lovefaded, italic = true },
+    ['DiagnosticVirtualLinesOk'] = { fg = tc.growth, italic = true },
+    ['DiagnosticVirtualLinesHint'] = { fg = tc.irisfaded, italic = true },
+    ['DiagnosticVirtualLinesInfo'] = { fg = tc.foamfaded, italic = true },
+    ['DiagnosticVirtualLinesWarn'] = { fg = tc.goldfaded, italic = true },
+    ['DiagnosticVirtualLinesError'] = { fg = tc.lovefaded, italic = true },
+  })
 end
 -- stylua: ignore end
 

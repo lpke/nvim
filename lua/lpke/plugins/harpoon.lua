@@ -19,9 +19,11 @@ local function config()
   end
 
   -- theme
-  helpers.set_hl('HarpoonTitle', { link = 'FloatTitle' })
-  helpers.set_hl('HarpoonBorder', { link = 'FloatBorder' })
-  helpers.set_hl('HarpoonWindow', { link = 'NormalFloat' })
+  helpers.set_hl_multi({
+    ['HarpoonTitle'] = { link = 'FloatTitle' },
+    ['HarpoonBorder'] = { link = 'FloatBorder' },
+    ['HarpoonWindow'] = { link = 'NormalFloat' },
+  })
 
   -- stylua: ignore start
   helpers.keymap_set_multi({

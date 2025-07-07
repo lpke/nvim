@@ -41,67 +41,69 @@ local function config()
 
   -- stylua: ignore start
   -- highlight customisations (top-level groups found in rose-pine config file)
-  helpers.set_hl('@none', { fg = tc.textminus })
-  helpers.set_hl('@number', { fg = tc.irisminus })
-  helpers.set_hl('@constant.builtin', { fg = tc.love })
-  helpers.set_hl('@constructor', { fg = tc.growth })
-  helpers.set_hl('@property', { italic = false, fg = tc.foam })
-  helpers.set_hl('@function.builtin', { italic = false, fg = tc.love })
-  helpers.set_hl('@lsp.typemod.function.defaultLibrary.lua', { link = '@function.builtin' })
-  helpers.set_hl('@variable', { italic = false, fg = tc.text })
-  helpers.set_hl('@variable.builtin', { fg = tc.love, italic = false, bold = false })
-  helpers.set_hl('@module.builtin', { bold = false })
-  helpers.set_hl('@parameter', { italic = false, fg = tc.iris })
-  helpers.set_hl('@variable.parameter', { link = '@parameter' })
-  helpers.set_hl('@keyword', { link = 'Keyword' })
-  helpers.set_hl('@keyword.import', { link = 'Keyword' })
-  helpers.set_hl('@keyword.conditional', { link = 'Keyword' })
-  helpers.set_hl('@keyword.conditional.ternary', { fg = tc.pine, italic = false })
-  helpers.set_hl('@keyword.repeat', { link = 'Keyword' })
-  helpers.set_hl('@keyword.exception', { link = 'Keyword' })
-  helpers.set_hl('@keyword.return', { link = 'Keyword' })
-  helpers.set_hl('@include', { link = 'Keyword' })
-  helpers.set_hl('@type', { link = 'Type' })
-  helpers.set_hl('@type.builtin', { link = 'Type' })
-  helpers.set_hl('@type.builtin.typescript', { link = 'Type' })
-  helpers.set_hl('@tag', { link = 'Tag' })
-  helpers.set_hl('@tag.tsx', { link = 'Tag' }) -- custom components
-  helpers.set_hl('@tag.builtin.tsx', { fg = tc.growthminus }) -- html elements
-  helpers.set_hl('@tag.builtin.javascript', { fg = tc.growthminus }) -- html elements
-  helpers.set_hl('@tag.attribute', { fg = tc.iris, italic = true })
-  helpers.set_hl('@markup.heading.gitcommit', { fg = tc.foam, bold = false })
-  helpers.set_hl('@markup.list', { fg = tc.muted })
-  -- tsx/jsx/html fixes (simplify)
-  helpers.set_hl('@markup.heading.1.tsx', { link = '@spell' })
-  helpers.set_hl('@markup.heading.2.tsx', { link = '@spell' })
-  helpers.set_hl('@markup.heading.3.tsx', { link = '@spell' })
-  helpers.set_hl('@markup.heading.4.tsx', { link = '@spell' })
-  helpers.set_hl('@markup.heading.5.tsx', { link = '@spell' })
-  helpers.set_hl('@markup.heading.6.tsx', { link = '@spell' })
-  helpers.set_hl('@markup.link.label.tsx', { link = '@spell' })
-  helpers.set_hl('@markup.italic.tsx', { link = '@spell' })
-  helpers.set_hl('@markup.strong.tsx', { link = '@spell' })
-  helpers.set_hl('@markup.raw.tsx', { link = '@spell' })
-  helpers.set_hl('@markup.heading.1.javascript', { link = '@spell' })
-  helpers.set_hl('@markup.heading.2.javascript', { link = '@spell' })
-  helpers.set_hl('@markup.heading.3.javascript', { link = '@spell' })
-  helpers.set_hl('@markup.heading.4.javascript', { link = '@spell' })
-  helpers.set_hl('@markup.heading.5.javascript', { link = '@spell' })
-  helpers.set_hl('@markup.heading.6.javascript', { link = '@spell' })
-  helpers.set_hl('@markup.link.label.javascript', { link = '@spell' })
-  helpers.set_hl('@markup.italic.javascript', { link = '@spell' })
-  helpers.set_hl('@markup.strong.javascript', { link = '@spell' })
-  helpers.set_hl('@markup.raw.javascript', { link = '@spell' })
-  helpers.set_hl('@markup.heading.1.html', { link = '@spell' })
-  helpers.set_hl('@markup.heading.2.html', { link = '@spell' })
-  helpers.set_hl('@markup.heading.3.html', { link = '@spell' })
-  helpers.set_hl('@markup.heading.4.html', { link = '@spell' })
-  helpers.set_hl('@markup.heading.5.html', { link = '@spell' })
-  helpers.set_hl('@markup.heading.6.html', { link = '@spell' })
-  helpers.set_hl('@markup.link.label.html', { link = '@spell' })
-  helpers.set_hl('@markup.italic.html', { link = '@spell' })
-  helpers.set_hl('@markup.strong.html', { link = '@spell' })
-  helpers.set_hl('@markup.raw.html', { link = '@spell' })
+  helpers.set_hl_multi({
+    ['@none'] = { fg = tc.textminus },
+    ['@number'] = { fg = tc.irisminus },
+    ['@constant.builtin'] = { fg = tc.love },
+    ['@constructor'] = { fg = tc.growth },
+    ['@property'] = { italic = false, fg = tc.foam },
+    ['@function.builtin'] = { italic = false, fg = tc.love },
+    ['@lsp.typemod.function.defaultLibrary.lua'] = { link = '@function.builtin' },
+    ['@variable'] = { italic = false, fg = tc.text },
+    ['@variable.builtin'] = { fg = tc.love, italic = false, bold = false },
+    ['@module.builtin'] = { bold = false },
+    ['@parameter'] = { italic = false, fg = tc.iris },
+    ['@variable.parameter'] = { link = '@parameter' },
+    ['@keyword'] = { link = 'Keyword' },
+    ['@keyword.import'] = { link = 'Keyword' },
+    ['@keyword.conditional'] = { link = 'Keyword' },
+    ['@keyword.conditional.ternary'] = { fg = tc.pine, italic = false },
+    ['@keyword.repeat'] = { link = 'Keyword' },
+    ['@keyword.exception'] = { link = 'Keyword' },
+    ['@keyword.return'] = { link = 'Keyword' },
+    ['@include'] = { link = 'Keyword' },
+    ['@type'] = { link = 'Type' },
+    ['@type.builtin'] = { link = 'Type' },
+    ['@type.builtin.typescript'] = { link = 'Type' },
+    ['@tag'] = { link = 'Tag' },
+    ['@tag.tsx'] = { link = 'Tag' }, -- custom components
+    ['@tag.builtin.tsx'] = { fg = tc.growthminus }, -- html elements
+    ['@tag.builtin.javascript'] = { fg = tc.growthminus }, -- html elements
+    ['@tag.attribute'] = { fg = tc.iris, italic = true },
+    ['@markup.heading.gitcommit'] = { fg = tc.foam, bold = false },
+    ['@markup.list'] = { fg = tc.muted },
+    -- tsx/jsx/html fixes (simplify)
+    ['@markup.heading.1.tsx'] = { link = '@spell' },
+    ['@markup.heading.2.tsx'] = { link = '@spell' },
+    ['@markup.heading.3.tsx'] = { link = '@spell' },
+    ['@markup.heading.4.tsx'] = { link = '@spell' },
+    ['@markup.heading.5.tsx'] = { link = '@spell' },
+    ['@markup.heading.6.tsx'] = { link = '@spell' },
+    ['@markup.link.label.tsx'] = { link = '@spell' },
+    ['@markup.italic.tsx'] = { link = '@spell' },
+    ['@markup.strong.tsx'] = { link = '@spell' },
+    ['@markup.raw.tsx'] = { link = '@spell' },
+    ['@markup.heading.1.javascript'] = { link = '@spell' },
+    ['@markup.heading.2.javascript'] = { link = '@spell' },
+    ['@markup.heading.3.javascript'] = { link = '@spell' },
+    ['@markup.heading.4.javascript'] = { link = '@spell' },
+    ['@markup.heading.5.javascript'] = { link = '@spell' },
+    ['@markup.heading.6.javascript'] = { link = '@spell' },
+    ['@markup.link.label.javascript'] = { link = '@spell' },
+    ['@markup.italic.javascript'] = { link = '@spell' },
+    ['@markup.strong.javascript'] = { link = '@spell' },
+    ['@markup.raw.javascript'] = { link = '@spell' },
+    ['@markup.heading.1.html'] = { link = '@spell' },
+    ['@markup.heading.2.html'] = { link = '@spell' },
+    ['@markup.heading.3.html'] = { link = '@spell' },
+    ['@markup.heading.4.html'] = { link = '@spell' },
+    ['@markup.heading.5.html'] = { link = '@spell' },
+    ['@markup.heading.6.html'] = { link = '@spell' },
+    ['@markup.link.label.html'] = { link = '@spell' },
+    ['@markup.italic.html'] = { link = '@spell' },
+    ['@markup.strong.html'] = { link = '@spell' },
+    ['@markup.raw.html'] = { link = '@spell' },
+  })
 
 
   helpers.keymap_set_multi({

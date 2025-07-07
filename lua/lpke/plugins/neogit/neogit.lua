@@ -365,16 +365,18 @@ local function config()
     {'nv', '<leader>I', neogit.open, { desc = 'Neogit: Toggle status window (new tab)' }},
   })
 
-  helpers.set_hl('NeogitActiveItem', { bg = tc.overlaybump, fg = tc.text, bold = true })
-  helpers.set_hl('NeogitDiffAdd', { link = 'DiffAdd' })
-  helpers.set_hl('NeogitDiffDelete', { link = 'DiffDelete' })
-  helpers.set_hl('NeogitDiffContext', { bg = 'none', fg = tc.text })
-  helpers.set_hl('NeogitHunkHeader', { fg = tc.muted })
-  helpers.set_hl('NeogitDiffHeader', { bg = tc.overlaybump, fg = tc.iris, bold = true })
-  helpers.set_hl('NeogitFloatHeader', { bg = tc.overlaybump, fg = tc.rose, bold = true })
-  helpers.set_hl('NeogitFloatHeaderHighlight', { bg = tc.overlaybump, fg = tc.gold, bold = true })
-  -- for window borders inside neogit
-  -- helpers.set_hl('FloatBorder', { bg = 'none', fg = tc.highlight_med, force = true })
+  helpers.set_hl_multi({
+    ['NeogitActiveItem'] = { bg = tc.overlaybump, fg = tc.text, bold = true },
+    ['NeogitDiffAdd'] = { link = 'DiffAdd' },
+    ['NeogitDiffDelete'] = { link = 'DiffDelete' },
+    ['NeogitDiffContext'] = { bg = 'none', fg = tc.text },
+    ['NeogitHunkHeader'] = { fg = tc.muted },
+    ['NeogitDiffHeader'] = { bg = tc.overlaybump, fg = tc.iris, bold = true },
+    ['NeogitFloatHeader'] = { bg = tc.overlaybump, fg = tc.rose, bold = true },
+    ['NeogitFloatHeaderHighlight'] = { bg = tc.overlaybump, fg = tc.gold, bold = true },
+    -- for window borders inside neogit
+    -- ['FloatBorder'] = { bg = 'none', fg = tc.highlight_med, force = true },
+  })
   -- stylua: ignore end
 end
 
