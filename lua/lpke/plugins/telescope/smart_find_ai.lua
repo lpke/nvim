@@ -14,7 +14,7 @@ local keymaps = {
   cwd_change_grep = { '<BS>/' },
 }
 
-local E = {}
+local M = {}
 
 -- Store the gap path between nvim's cwd and telescope's cwd
 local gap_path = ''
@@ -97,8 +97,8 @@ end
 local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
   -- Switch picker keymaps
   for _, keymap in ipairs(keymaps.file_dir_switch) do
-    local target_func = is_directory_picker and E.find_files
-      or E.find_directories
+    local target_func = is_directory_picker and M.find_files
+      or M.find_directories
     map('i', keymap, function()
       switch_to_picker(prompt_bufnr, target_func, true)
     end)
@@ -115,8 +115,8 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
 
       actions.close(prompt_bufnr)
 
-      local target_func = is_directory_picker and E.find_directories
-        or E.find_files
+      local target_func = is_directory_picker and M.find_directories
+        or M.find_files
       target_func({
         cwd = parent_dir,
       })
@@ -148,8 +148,8 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
 
     actions.close(prompt_bufnr)
 
-    local target_func = is_directory_picker and E.find_directories
-      or E.find_files
+    local target_func = is_directory_picker and M.find_directories
+      or M.find_files
     target_func({
       cwd = parent_dir,
       initial_mode = 'normal',
@@ -157,7 +157,7 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
   end)
 end
 
-function E.find_directories(opts)
+function M.find_directories(opts)
   opts = opts or {}
   local initial_query = opts.default_text or ''
 
@@ -290,7 +290,7 @@ function E.find_directories(opts)
 end
 
 -- extends default find files picker
-function E.find_files(opts)
+function M.find_files(opts)
   opts = opts or {}
   local initial_query = opts.default_text or ''
 
@@ -323,12 +323,12 @@ function E.find_files(opts)
 end
 
 -- use find_files or find_directories depending on if editing a file or in oil buffer
-function E.smart_find()
+function M.smart_find()
   if vim.bo.filetype == 'oil' then
-    E.find_directories()
+    M.find_directories()
   else
-    E.find_files()
+    M.find_files()
   end
 end
 
-return E
+return M

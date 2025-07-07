@@ -1,9 +1,9 @@
-local E = {}
+local M = {}
 
-E.is_wsl = vim.fn.exists('$WSL_DISTRO_NAME') == 1
+M.is_wsl = vim.fn.exists('$WSL_DISTRO_NAME') == 1
 
 -- calls a function safely (non-breaking if error)
-function E.safe_call(func, silent, fallback)
+function M.safe_call(func, silent, fallback)
   local ok, result = pcall(func)
   if ok then
     return result
@@ -16,7 +16,7 @@ function E.safe_call(func, silent, fallback)
 end
 
 -- merges all tables provided as args (later tables take priority)
-function E.merge_tables(...)
+function M.merge_tables(...)
   local combined_table = {}
   -- iterate over all provided tables
   for _, tbl in ipairs({ ... }) do
@@ -28,7 +28,7 @@ function E.merge_tables(...)
 end
 
 -- concatenates all arrays (itables) provided as args (in order)
-function E.concat_arrs(...)
+function M.concat_arrs(...)
   local result_table = {}
   -- iterate over all provided tables
   for _, tbl in ipairs({ ... }) do
@@ -40,7 +40,7 @@ function E.concat_arrs(...)
 end
 
 -- filter array (ipairs table) non-destructively
-function E.arr_filter(arr, func)
+function M.arr_filter(arr, func)
   local filtered_arr = {}
   for index, item in ipairs(arr) do
     if func(item, index) then
@@ -51,7 +51,7 @@ function E.arr_filter(arr, func)
 end
 
 -- filter array in place (https://stackoverflow.com/questions/49709998/how-to-filter-a-lua-array-inplace)
-function E.arr_filter_inplace(arr, func)
+function M.arr_filter_inplace(arr, func)
   local new_index = 1
   local size_orig = #arr
   for old_index, v in ipairs(arr) do
@@ -66,16 +66,16 @@ function E.arr_filter_inplace(arr, func)
 end
 
 -- convert my options table into vim.opt.<key> = <value>
-function E.set_options(options)
+function M.set_options(options)
   for k, v in pairs(options) do
     vim.opt[k] = v
   end
 end
 
 -- parses a table containing custom keymap args and sets or deletes the keymap
-function E.keymap_set(keymap)
+function M.keymap_set(keymap)
   local mode, lhs, rhs, opts = table.unpack(keymap)
-  opts = E.merge_tables({ noremap = true }, opts or {})
+  opts = M.merge_tables({ noremap = true }, opts or {})
   local modes = {}
   local delete_only = false
   local mac_lhs = ''
@@ -114,16 +114,16 @@ function E.keymap_set(keymap)
 end
 
 -- same as above but accepts multiple keymap tables in a table
-function E.keymap_set_multi(keymaps)
+function M.keymap_set_multi(keymaps)
   for _i, keymap in ipairs(keymaps) do
-    E.keymap_set(keymap)
+    M.keymap_set(keymap)
   end
 end
 
 -- parses a table containing custom command args and creates or deletes the command
-function E.command_set(command)
+function M.command_set(command)
   local flags, name, cmd, opts = table.unpack(command)
-  opts = E.merge_tables({}, opts or {})
+  opts = M.merge_tables({}, opts or {})
   local delete_only = false
 
   for char in flags:gmatch('.') do
@@ -154,14 +154,14 @@ function E.command_set(command)
 end
 
 -- same as above but accepts multiple command tables in a table
-function E.command_set_multi(commands)
+function M.command_set_multi(commands)
   for _i, command in ipairs(commands) do
-    E.command_set(command)
+    M.command_set(command)
   end
 end
 
 -- pastes from register with unix line endings
-function E.paste_unix(register, above)
+function M.paste_unix(register, above)
   local content = vim.fn.getreg(register)
   local fixed_content = vim.fn.substitute(content, '\r\n', '\n', 'g')
   fixed_content = fixed_content:gsub('\n$', '')
@@ -170,26 +170,26 @@ function E.paste_unix(register, above)
 end
 
 -- getter and setters for highlight colors
-function E.get_hl(name)
+function M.get_hl(name)
   return vim.api.nvim_get_hl(0, { name = name })
 end
-function E.set_hl(name, hl)
+function M.set_hl(name, hl)
   vim.api.nvim_set_hl(0, name, hl)
 end
-function E.set_hl_multi(highlights)
+function M.set_hl_multi(highlights)
   for name, hl in pairs(highlights) do
-    E.set_hl(name, hl)
+    M.set_hl(name, hl)
   end
 end
 
 -- toggle 'list' option (show whitespace chars)
-function E.toggle_show_whitespace()
+function M.toggle_show_whitespace()
   local is_list = vim.wo.list
   vim.wo.list = not is_list
 end
 
 -- toggle global status line ('laststatus' option 2/3)
-function E.toggle_global_status()
+function M.toggle_global_status()
   if vim.o.laststatus == 3 then
     vim.o.laststatus = 2
   else
@@ -198,7 +198,7 @@ function E.toggle_global_status()
 end
 
 -- prints a message 'over' the previous message
-function E.print_over(msg, history, height)
+function M.print_over(msg, history, height)
   history = history or false
   local orig_height = vim.o.cmdheight
   vim.o.cmdheight = height or 2
@@ -211,34 +211,34 @@ function E.print_over(msg, history, height)
 end
 
 -- clear the latest message if it contains `target`
-function E.clear_last_message(target)
+function M.clear_last_message(target)
   local messages = vim.fn.execute('messages')
   local lines = vim.split(messages, '\n')
   local last_line = lines[#lines]
 
   if string.find(last_line, target, 1, true) then
-    E.print_over(' ')
+    M.print_over(' ')
   end
 end
 
 -- yank still: upwards (up to `max`)
-function E.keymap_set_yank_still_upwards(max)
+function M.keymap_set_yank_still_upwards(max)
   for i = 1, max do
-    E.keymap_set({ 'nC', ('y' .. i .. 'k'), ('-' .. i .. ',.y') })
+    M.keymap_set({ 'nC', ('y' .. i .. 'k'), ('-' .. i .. ',.y') })
   end
 end
 
 -- yank still: marks (a-z)
-function E.keymap_set_yank_still_marks()
+function M.keymap_set_yank_still_marks()
   for i = string.byte('a'), string.byte('z') do
     local letter = string.char(i)
-    E.keymap_set({ 'nC!', ("y'" .. letter), ("'" .. letter .. ',.y') })
+    M.keymap_set({ 'nC!', ("y'" .. letter), ("'" .. letter .. ',.y') })
   end
 end
 
 -- if `str` matches an item in `mappings`, return second value for it
 -- eg: 'hello', {{'hello', 'hi'}, ...} -> 'hi'
-function E.map_string(str, mappings, fallback)
+function M.map_string(str, mappings, fallback)
   for _, map in ipairs(mappings) do
     if str == map[1] then
       return map[2]
@@ -248,19 +248,19 @@ function E.map_string(str, mappings, fallback)
 end
 
 -- get last segment of a path
-function E.get_path_tail(str)
+function M.get_path_tail(str)
   return str:match('([^/]+/?/?)$')
 end
 
 -- get cwd folder name
-function E.get_cwd_folder()
+function M.get_cwd_folder()
   local cwd = vim.fn.getcwd()
-  return E.get_path_tail(cwd)
+  return M.get_path_tail(cwd)
 end
 
 -- get current session name
-function E.get_session_name(fallback)
-  return E.safe_call(
+function M.get_session_name(fallback)
+  return M.safe_call(
     require('auto-session.lib').current_session_name,
     true,
     fallback
@@ -268,14 +268,14 @@ function E.get_session_name(fallback)
 end
 
 -- check if session exists and matches cwd
-function E.session_in_cwd()
-  local cwd = E.get_cwd_folder()
-  local session = E.get_session_name()
+function M.session_in_cwd()
+  local cwd = M.get_cwd_folder()
+  local session = M.get_session_name()
   return session and not (cwd == session)
 end
 
 -- call a function `count` times - for multiple args, use a table
-function E.repeat_function(func, args, count)
+function M.repeat_function(func, args, count)
   if type(args) == 'table' then
     args = function()
       return table.unpack(args)
@@ -288,12 +288,12 @@ function E.repeat_function(func, args, count)
 end
 
 -- check if cwd has .git folder
-function E.cwd_has_git()
+function M.cwd_has_git()
   return vim.fn.glob('.git/') ~= ''
 end
 
 -- stop currently focused terminal
-function E.stop_term()
+function M.stop_term()
   vim.fn.jobstop(vim.b.terminal_job_id)
   vim.cmd('sleep 100m')
   vim.api.nvim_feedkeys(
@@ -304,7 +304,7 @@ function E.stop_term()
 end
 
 -- refresh a telescope picker and optionally remember selection location
-function E.refresh_picker(bufnr, remember, selection_defer_time)
+function M.refresh_picker(bufnr, remember, selection_defer_time)
   selection_defer_time = selection_defer_time or 5
   if remember == nil then
     remember = true
@@ -327,7 +327,7 @@ function E.refresh_picker(bufnr, remember, selection_defer_time)
 end
 
 -- iterate over selection/s in a telescope picker
-function E.telescope_sel_foreach(bufnr, func)
+function M.telescope_sel_foreach(bufnr, func)
   local actions_state = require('telescope.actions.state')
   local actions_utils = require('telescope.actions.utils')
 
@@ -347,27 +347,27 @@ function E.telescope_sel_foreach(bufnr, func)
 end
 
 -- remove the protocol (eg `oil://` or `oil-trash://`) from a string
-function E.remove_protocol(str)
+function M.remove_protocol(str)
   return str:gsub('^.*://', '')
 end
 
 -- get buf name (current if omitted), which is usually the path
-function E.get_buf_name(bufnr, remove_protocol)
+function M.get_buf_name(bufnr, remove_protocol)
   bufnr = bufnr or 0
   local raw_buf_name = vim.api.nvim_buf_get_name(bufnr)
-  local buf_name = remove_protocol and E.remove_protocol(raw_buf_name)
+  local buf_name = remove_protocol and M.remove_protocol(raw_buf_name)
     or raw_buf_name
   return buf_name
 end
 
 -- shorten a path (eg `plugins/lsp/test.lua` to `p/l/test.lua`)
-function E.shorten_path(path)
+function M.shorten_path(path)
   return path:gsub('([^/%w]?[^/])[^/]*/', '%1/')
 end
 
 -- transform full path string to a configurable relative path
-function E.transform_path(full_path, opts)
-  full_path = E.remove_protocol(full_path)
+function M.transform_path(full_path, opts)
+  full_path = M.remove_protocol(full_path)
   opts = opts or {}
   local default_opts = {
     include_filename = true,
@@ -375,17 +375,17 @@ function E.transform_path(full_path, opts)
     cwd_name = true,
     shorten = false,
   }
-  opts = E.merge_tables(default_opts, opts)
+  opts = M.merge_tables(default_opts, opts)
 
   local mods = ':p:~:.' .. (opts.include_filename and '' or ':h')
   local rel_path = vim.fn.fnamemodify(full_path, mods)
 
   if opts.cwd_name and rel_path == '.' then
-    rel_path = E.get_cwd_folder()
+    rel_path = M.get_cwd_folder()
   end
 
   if opts.shorten then
-    rel_path = E.shorten_path(rel_path)
+    rel_path = M.shorten_path(rel_path)
   end
 
   if
@@ -399,7 +399,7 @@ function E.transform_path(full_path, opts)
   return rel_path
 end
 
-function E.find_upward_to_git_root_or_cwd(items)
+function M.find_upward_to_git_root_or_cwd(items)
   local cur_dir = vim.fn.fnamemodify(vim.fn.expand('%:p'), ':h')
   local root = Lpke_find_git_root() or vim.fn.getcwd()
   while cur_dir and cur_dir ~= '/' do
@@ -432,7 +432,7 @@ function E.find_upward_to_git_root_or_cwd(items)
 end
 
 -- Execute a string as Lua code
-function E.execute_as_lua(code_string)
+function M.execute_as_lua(code_string)
   local func, err = load('return ' .. code_string)
   if func then
     return func()
@@ -441,4 +441,4 @@ function E.execute_as_lua(code_string)
   end
 end
 
-return E
+return M

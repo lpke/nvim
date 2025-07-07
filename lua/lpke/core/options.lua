@@ -1,11 +1,11 @@
-local E = {}
+local M = {}
 local helpers = require('lpke.core.helpers')
 
 --------------------------
 -- CUSTOM OPTIONS
 --------------------------
 
-E.custom_opts = {
+M.custom_opts = {
   symbols = {
     modified = '●',
     modified_alt = '○',
@@ -19,7 +19,7 @@ E.custom_opts = {
 -- VIM OPTIONS
 --------------------------
 
-E.vim_opts = {
+M.vim_opts = {
   backup = false, -- no backups (using persistent undo instead)
   swapfile = false, -- don't create a swapfile (using persistent undo instead)
   -- TODO: handle windows check in seperate function as well as path handling
@@ -84,7 +84,7 @@ E.vim_opts = {
   timeoutlen = 4000, -- timeout when waiting for next key in a keymap
   tabline = '%!v:lua.Lpke_tabline()',
 }
-helpers.set_options(E.vim_opts)
+helpers.set_options(M.vim_opts)
 
 --------------------------
 -- GLOBAL VARIABLES
@@ -239,4 +239,4 @@ helpers.command_set_multi({
 })
 -- stylua: ignore end
 
-return E
+return M

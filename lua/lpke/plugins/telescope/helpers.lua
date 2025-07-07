@@ -1,11 +1,11 @@
 local builtin = require('telescope.builtin')
 local helpers = require('lpke.core.helpers')
 
-local E = {}
+local M = {}
 
 -- workaround since breaking change where this can't be accessed with:
 -- require('auto-session.session-lens.actions').delete_session()
-function E.delete_session(bufnr)
+function M.delete_session(bufnr)
   local auto_session = require('auto-session')
   local action_state = require('telescope.actions.state')
   local current_picker = action_state.get_current_picker(bufnr)
@@ -17,7 +17,7 @@ function E.delete_session(bufnr)
 end
 
 -- custom mapping functions
-function E.remove_selected_from_qflist(bufnr)
+function M.remove_selected_from_qflist(bufnr)
   local qflist = vim.fn.getqflist()
   helpers.telescope_sel_foreach(bufnr, function(sel)
     for i, item in ipairs(qflist) do
@@ -32,14 +32,14 @@ function E.remove_selected_from_qflist(bufnr)
   builtin.quickfix()
 end
 
-function E.force_delete_selected_bufs(bufnr)
+function M.force_delete_selected_bufs(bufnr)
   helpers.telescope_sel_foreach(bufnr, function(sel)
     vim.api.nvim_buf_delete(sel.bufnr, { force = true })
   end)
   builtin.buffers()
 end
 
-function E.remove_selected_from_harpoon(bufnr)
+function M.remove_selected_from_harpoon(bufnr)
   helpers.telescope_sel_foreach(bufnr, function(sel)
     local filename = sel.value.filename and sel.value.filename or sel.filename
     require('harpoon.mark').rm_file(filename)
@@ -50,7 +50,7 @@ function E.remove_selected_from_harpoon(bufnr)
   end)
 end
 
-function E.remove_selected_from_codecompanion(bufnr)
+function M.remove_selected_from_codecompanion(bufnr)
   local cc_history = require('codecompanion').extensions.history
   helpers.telescope_sel_foreach(bufnr, function(sel)
     local save_id = sel.save_id
@@ -62,4 +62,4 @@ function E.remove_selected_from_codecompanion(bufnr)
   end)
 end
 
-return E
+return M
