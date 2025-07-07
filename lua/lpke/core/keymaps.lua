@@ -191,8 +191,9 @@ helpers.keymap_set_multi({
   {'nv', '<S-Left>', '6zh', { desc = 'Scroll left (6 columns)' }},
 
   -- center cursor when down/up page
-  {'nvM', '<C-u>', 'M<C-u>zz', { desc = 'Move up half a screen (center cursor)' }},
-  {'nvM', '<C-d>', 'M<C-d>zz', { desc = 'Move down half a screen (center cursor)' }},
+  -- trying out not using these for a while:
+  -- {'nvM', '<C-u>', 'M<C-u>zz', { desc = 'Move up half a screen (center cursor)' }},
+  -- {'nvM', '<C-d>', 'M<C-d>zz', { desc = 'Move down half a screen (center cursor)' }},
   {'nvM', '<C-Up>', 'M4kzz', { desc = 'Move up 4 line (center cursor)' }},
   {'nvM', '<C-Down>', 'M4jzz', { desc = 'Move down 4 line (center cursor)' }},
 
