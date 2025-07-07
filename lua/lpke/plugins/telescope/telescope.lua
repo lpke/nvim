@@ -5,7 +5,7 @@ local function config()
   local actions_layout = require('telescope.actions.layout')
   local builtin = require('telescope.builtin')
 
-  local smart_find = require('lpke.plugins.telescope.smart_find')
+  local smart_find = require('lpke.plugins.telescope.smart_find_ai')
   local custom_pickers = require('lpke.plugins.telescope.custom_pickers')
   local ts_helpers = require('lpke.plugins.telescope.helpers')
 
