@@ -346,10 +346,11 @@ local function config()
     end, { desc = 'Resume previous Telescope search' }},
 
     -- files
-    -- {'n', '<BS><BS>', smart_find_ai.smart_find, { desc = 'Find files in cwd (or directories in oil)' }},
     {'n', '<BS><BS>', function()
-      builtin_pickers.find_files()
-    end, { desc = 'Find files in cwd' }},
+      -- builtin_pickers.find_files()
+      -- TODO: tidy this up. Original implementation above
+      smart_find_ai.smart_find()
+    end, { desc = 'Find files in cwd (or directories in oil)' }},
     {'n', '<BS>ff', function()
       if Lpke_find_git_root(vim.fn.getcwd(-1, -1)) then
         builtin_pickers.git_files()
