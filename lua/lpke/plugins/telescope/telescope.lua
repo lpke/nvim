@@ -6,7 +6,6 @@ local function config()
   local builtin = require('telescope.builtin')
 
   local smart_find_ai = require('lpke.plugins.telescope.smart_find_ai')
-  local custom_pickers = require('lpke.plugins.telescope.custom_pickers')
   local ts_helpers = require('lpke.plugins.telescope.helpers')
 
   local helpers = require('lpke.core.helpers')
@@ -33,40 +32,6 @@ local function config()
     ['TelescopeResultsDiffUntracked'] = { fg = tc.irisfaded },
     ['TelescopeMultiSelection'] = { fg = tc.gold },
     ['TelescopeMultiIcon'] = { fg = tc.goldfaded },
-  })
-  -- stylua: ignore end
-
-  -- stylua: ignore start
-  -- mappings to access telescope
-  helpers.keymap_set_multi({
-    {'nC', '<BS><leader>', 'Telescope resume', { desc = 'Resume previous Telescope search' }},
-    -- files
-    {'n', '<BS><BS>', smart_find_ai.smart_find, { desc = 'Fuzzy find files in cwd (or directories in oil)' }},
-    {'n', '<BS>ff', custom_pickers.find_git_files, { desc = 'Fuzzy find git files in cwd (or cwd if not git)' }},
-    {'nC', '<BS>fr', 'Telescope oldfiles', { desc = 'Fuzzy find recent files' }},
-    -- grep
-    {'nC', '<leader>/', 'Telescope current_buffer_fuzzy_find', { desc = 'Fuzzy find in current file' }},
-    {'nC', '<BS>/', 'Telescope live_grep', { desc = 'Find string in cwd' } },
-    {'n', '<BS>fp', custom_pickers.grep_yanked, { desc = 'Find pasted string in cwd' } },
-    {'n', '<BS>fi', custom_pickers.grep_custom, { desc = 'Find input string in cwd' } },
-    {'nC', '<BS>fw', 'Telescope grep_string', { desc = 'Find string under cursor in cwd' }},
-    -- git
-    {'nC', '<BS>gg', 'Telescope git_status', { desc = 'Fuzzy find git status' }},
-    {'nC', '<leader>gc', 'Telescope git_bcommits', { desc = 'Fuzzy find buffer git commits' }},
-    {'nC', '<BS>gc', 'Telescope git_commits', { desc = 'Fuzzy find git commits' }},
-    {'nC', '<BS>gb', 'Telescope git_branches', { desc = 'Fuzzy find git branches' }},
-    {'nC', '<BS>gs', 'Telescope git_stash', { desc = 'Fuzzy find git stash' }},
-    -- treesitter
-    {'nC', '<leader>fs', 'Telescope treesitter', { desc = 'Fuzzy find treesitter symbols in file' }},
-    -- vim
-    {'nC', '<BS>fb', 'Telescope buffers', { desc = 'Fuzzy find buffers' } },
-    {'nC', '<BS>l', 'Telescope quickfix', { desc = 'Open quickfix list' } },
-    {'nC', '<BS>fm', 'Telescope marks', { desc = 'Fuzzy find marks' } },
-    {'nC', "<BS>f'", 'Telescope registers', { desc = 'Fuzzy find registers' }},
-    {'nC', '<BS>fj', 'Telescope jumplist', { desc = 'Fuzzy find jumplist' } },
-    {'nC', '<BS>fk', 'Telescope keymaps', { desc = 'Fuzzy find keymaps' } },
-    {'nC', '<BS>fl', 'Telescope highlights', { desc = 'Fuzzy find highlights' }},
-    {'nC', '<BS>fh', 'Telescope help_tags', { desc = 'Fuzzy find help tags' }},
   })
   -- stylua: ignore end
 
@@ -371,6 +336,106 @@ local function config()
   -- extensions
   telescope.load_extension('fzf')
   telescope.load_extension('harpoon')
+
+  -- custom pickers
+
+  -- stylua: ignore start
+  -- mappings to access telescope
+  helpers.keymap_set_multi({
+    {'n', '<BS><leader>', function()
+      builtin.resume()
+    end, { desc = 'Resume previous Telescope search' }},
+
+    -- files
+    -- {'n', '<BS><BS>', smart_find_ai.smart_find, { desc = 'Find files in cwd (or directories in oil)' }},
+    {'n', '<BS><BS>', function()
+      builtin.find_files()
+    end, { desc = 'Find files in cwd' }},
+    {'n', '<BS>ff', function()
+      if Lpke_find_git_root(vim.fn.getcwd(-1, -1)) then
+        builtin.git_files()
+      else
+        builtin.find_files()
+      end
+    end, { desc = 'Find git files in cwd (or cwd if not git)' }},
+    {'n', '<BS>fr', function()
+      builtin.oldfiles({ prompt_title = 'Recent Files' })
+    end, { desc = 'Find recent files' }},
+
+    -- grep
+    {'n', '<leader>/', function()
+      builtin.current_buffer_fuzzy_find({ prompt_title = 'Find in Buffer' })
+    end, { desc = 'Find in current file' }},
+    {'n', '<BS>/', function()
+      builtin.live_grep({ prompt_title = 'Find in Files' })
+    end, { desc = 'Find string in cwd' } },
+    {'n', '<BS>fp', function()
+      builtin.grep_string({ search = vim.fn.getreg('"') })
+    end, { desc = 'Find pasted string in cwd' } },
+    {'n', '<BS>fi', function()
+      builtin.grep_string({ search = vim.fn.input('Grep: ') })
+    end, { desc = 'Find input string in cwd' } },
+    {'n', '<BS>fw', function()
+      builtin.grep_string()
+    end, { desc = 'Find string under cursor in cwd' }},
+
+    -- git
+    {'n', '<BS>gg', function()
+      builtin.git_status()
+    end, { desc = 'Find git status' }},
+    {'n', '<leader>gc', function()
+      builtin.git_bcommits()
+    end, { desc = 'Find buffer git commits' }},
+    {'v', '<leader>gc', function()
+      vim.cmd('normal! \28\14') -- go to normal - saves prev selection `<`/`>` marks
+      local start_line = vim.api.nvim_buf_get_mark(0, "<")[1]
+      local end_line = vim.api.nvim_buf_get_mark(0, ">")[1]
+      builtin.git_bcommits_range({
+        prompt_title = 'File Commits (L' .. start_line .. '-' .. end_line .. ')',
+        from = start_line, to = end_line })
+    end, { desc = 'Find selection git commits' }},
+    {'n', '<BS>gc', function()
+      builtin.git_commits()
+    end, { desc = 'Find git commits' }},
+    {'n', '<BS>gb', function()
+      builtin.git_branches()
+    end, { desc = 'Find git branches' }},
+    {'n', '<BS>gs', function()
+      builtin.git_stash()
+    end, { desc = 'Find git stash' }},
+
+    -- treesitter
+    {'n', '<leader>fs', function()
+      builtin.treesitter()
+    end, { desc = 'Find treesitter symbols in file' }},
+
+    -- vim
+    {'n', '<BS>fb', function()
+      builtin.buffers()
+    end, { desc = 'Find buffers' } },
+    {'n', '<BS>l', function()
+      builtin.quickfix()
+    end, { desc = 'Open quickfix list' } },
+    {'n', '<BS>fm', function()
+      builtin.marks()
+    end, { desc = 'Find marks' } },
+    {'n', "<BS>f'", function()
+      builtin.registers()
+    end, { desc = 'Find registers' }},
+    {'n', '<BS>fj', function()
+      builtin.jumplist()
+    end, { desc = 'Find jumplist' } },
+    {'n', '<BS>fk', function()
+      builtin.keymaps()
+    end, { desc = 'Find keymaps' } },
+    {'n', '<BS>fl', function()
+      builtin.highlights()
+    end, { desc = 'Find highlights' }},
+    {'n', '<BS>fh', function()
+      builtin.help_tags()
+    end, { desc = 'Find help tags' }},
+  })
+  -- stylua: ignore end
 end
 
 return {
