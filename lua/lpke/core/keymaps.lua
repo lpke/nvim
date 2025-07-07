@@ -49,6 +49,7 @@ helpers.keymap_set_multi({
   {'nC', '<BS>L', 'botright copen', { desc = 'Open quick fix list' }},
   {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.') - 1, 'text': getline('.')}], 'a')",
     { desc = 'Add current file/position to quick fix list' }},
+  {'n', '<C-z>', 'u', { desc = 'Undo' }},
 
   -- glorified macros
   {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],
