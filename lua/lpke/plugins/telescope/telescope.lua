@@ -5,7 +5,8 @@ local function config()
   local actions_layout = require('telescope.actions.layout')
   local builtin = require('telescope.builtin')
 
-  local custom_pickers = require('lpke.plugins.telescope.pickers')
+  local smart_find = require('lpke.plugins.telescope.smart_find')
+  local custom_pickers = require('lpke.plugins.telescope.custom_pickers')
   local ts_helpers = require('lpke.plugins.telescope.helpers')
 
   local helpers = require('lpke.core.helpers')
@@ -38,7 +39,7 @@ local function config()
   helpers.keymap_set_multi({
     {'nC', '<BS><leader>', 'Telescope resume', { desc = 'Resume previous Telescope search' }},
     -- files
-    {'n', '<BS><BS>', custom_pickers.smart_find, { desc = 'Fuzzy find files in cwd (or directories in oil)' }},
+    {'n', '<BS><BS>', smart_find.smart_find, { desc = 'Fuzzy find files in cwd (or directories in oil)' }},
     {'n', '<BS>ff', custom_pickers.find_git_files, { desc = 'Fuzzy find git files in cwd (or cwd if not git)' }},
     {'nC', '<BS>fr', 'Telescope oldfiles', { desc = 'Fuzzy find recent files' }},
     -- grep
