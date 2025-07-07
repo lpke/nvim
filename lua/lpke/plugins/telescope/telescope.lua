@@ -3,7 +3,8 @@ local function config()
   local actions = require('telescope.actions')
   local actions_state = require('telescope.actions.state')
   local actions_layout = require('telescope.actions.layout')
-  local builtin = require('telescope.builtin')
+  local builtin_pickers = require('telescope.builtin')
+  local custom_pickers = require('lpke.plugins.telescope.custom_pickers')
 
   local smart_find_ai = require('lpke.plugins.telescope.smart_find_ai')
   local ts_helpers = require('lpke.plugins.telescope.helpers')
@@ -128,7 +129,7 @@ local function config()
           -- QUICKFIX LIST
           ['<C-q>'] = function(bufnr)
             actions.smart_send_to_qflist(bufnr)
-            builtin.quickfix()
+            builtin_pickers.quickfix()
           end,
         },
         n = {
@@ -198,17 +199,17 @@ local function config()
           -- QUICKFIX LIST
           ['q'] = function(bufnr)
             actions.smart_send_to_qflist(bufnr)
-            builtin.quickfix()
+            builtin_pickers.quickfix()
           end,
           ['QF'] = function(bufnr)
             actions.smart_add_to_qflist(bufnr)
-            builtin.quickfix()
+            builtin_pickers.quickfix()
           end,
           ['h'] = function(bufnr) -- handle 'up a level' actions if cant be done in picker-scope
             local prompt_title =
               actions_state.get_current_picker(bufnr).prompt_title
             if prompt_title == 'Quickfix' then -- open quickfixhistory
-              builtin.quickfixhistory()
+              builtin_pickers.quickfixhistory()
             else
               vim.api.nvim_feedkeys(
                 vim.api.nvim_replace_termcodes('h', true, false, true),
@@ -282,7 +283,7 @@ local function config()
             ['dxD'] = ts_helpers.force_delete_selected_bufs,
             ['dX'] = function()
               Lpke_clean_buffers()
-              builtin.buffers()
+              builtin_pickers.buffers()
             end,
           },
         },
@@ -295,7 +296,7 @@ local function config()
               vim.cmd('botright copen')
             end,
             ['h'] = function()
-              builtin.quickfixhistory()
+              builtin_pickers.quickfixhistory()
             end,
             ['dD'] = ts_helpers.remove_selected_from_qflist,
           },
@@ -337,106 +338,100 @@ local function config()
   telescope.load_extension('fzf')
   telescope.load_extension('harpoon')
 
-  -- custom pickers
-
   -- stylua: ignore start
   -- mappings to access telescope
   helpers.keymap_set_multi({
     {'n', '<BS><leader>', function()
-      builtin.resume()
+      builtin_pickers.resume()
     end, { desc = 'Resume previous Telescope search' }},
 
     -- files
     -- {'n', '<BS><BS>', smart_find_ai.smart_find, { desc = 'Find files in cwd (or directories in oil)' }},
     {'n', '<BS><BS>', function()
-      builtin.find_files()
+      builtin_pickers.find_files()
     end, { desc = 'Find files in cwd' }},
     {'n', '<BS>ff', function()
       if Lpke_find_git_root(vim.fn.getcwd(-1, -1)) then
-        builtin.git_files()
+        builtin_pickers.git_files()
       else
-        builtin.find_files()
+        builtin_pickers.find_files()
       end
     end, { desc = 'Find git files in cwd (or cwd if not git)' }},
     {'n', '<BS>fr', function()
-      builtin.oldfiles({ prompt_title = 'Recent Files' })
+      builtin_pickers.oldfiles({ prompt_title = 'Recent Files' })
     end, { desc = 'Find recent files' }},
 
     -- grep
     {'n', '<leader>/', function()
-      builtin.current_buffer_fuzzy_find({ prompt_title = 'Find in Buffer' })
+      builtin_pickers.current_buffer_fuzzy_find({ prompt_title = 'Find in Buffer' })
     end, { desc = 'Find in current file' }},
     {'n', '<BS>/', function()
-      builtin.live_grep({ prompt_title = 'Find in Files' })
-    end, { desc = 'Find string in cwd' } },
-    -- TODO - WIP:
-    {'n', '<BS>fx', function()
-      -- WIP...
-    end, { desc = 'Find string in cwd, with file filtering' } },
+      custom_pickers.live_multigrep({ prompt_title = 'Find in Files' })
+    end, { desc = 'Find string in cwd, with file filtering (str  filter)' } },
     {'n', '<BS>fp', function()
-      builtin.grep_string({ search = vim.fn.getreg('"') })
+      builtin_pickers.grep_string({ search = vim.fn.getreg('"') })
     end, { desc = 'Find pasted string in cwd' } },
     {'n', '<BS>fi', function()
-      builtin.grep_string({ search = vim.fn.input('Grep: ') })
+      builtin_pickers.grep_string({ search = vim.fn.input('Grep: ') })
     end, { desc = 'Find input string in cwd' } },
     {'n', '<BS>fw', function()
-      builtin.grep_string()
+      builtin_pickers.grep_string()
     end, { desc = 'Find string under cursor in cwd' }},
 
     -- git
     {'n', '<BS>gg', function()
-      builtin.git_status()
+      builtin_pickers.git_status()
     end, { desc = 'Find git status' }},
     {'n', '<leader>gc', function()
-      builtin.git_bcommits()
+      builtin_pickers.git_bcommits()
     end, { desc = 'Find buffer git commits' }},
     {'v', '<leader>gc', function()
       vim.cmd('normal! \28\14') -- go to normal - saves prev selection `<`/`>` marks
       local start_line = vim.api.nvim_buf_get_mark(0, "<")[1]
       local end_line = vim.api.nvim_buf_get_mark(0, ">")[1]
-      builtin.git_bcommits_range({
+      builtin_pickers.git_bcommits_range({
         prompt_title = 'File Commits (L' .. start_line .. '-' .. end_line .. ')',
         from = start_line, to = end_line })
     end, { desc = 'Find selection git commits' }},
     {'n', '<BS>gc', function()
-      builtin.git_commits()
+      builtin_pickers.git_commits()
     end, { desc = 'Find git commits' }},
     {'n', '<BS>gb', function()
-      builtin.git_branches()
+      builtin_pickers.git_branches()
     end, { desc = 'Find git branches' }},
     {'n', '<BS>gs', function()
-      builtin.git_stash()
+      builtin_pickers.git_stash()
     end, { desc = 'Find git stash' }},
 
     -- treesitter
     {'n', '<leader>fs', function()
-      builtin.treesitter()
+      builtin_pickers.treesitter()
     end, { desc = 'Find treesitter symbols in file' }},
 
     -- vim
     {'n', '<BS>fb', function()
-      builtin.buffers()
+      builtin_pickers.buffers()
     end, { desc = 'Find buffers' } },
     {'n', '<BS>l', function()
-      builtin.quickfix()
+      builtin_pickers.quickfix()
     end, { desc = 'Open quickfix list' } },
     {'n', '<BS>fm', function()
-      builtin.marks()
+      builtin_pickers.marks()
     end, { desc = 'Find marks' } },
     {'n', "<BS>f'", function()
-      builtin.registers()
+      builtin_pickers.registers()
     end, { desc = 'Find registers' }},
     {'n', '<BS>fj', function()
-      builtin.jumplist()
+      builtin_pickers.jumplist()
     end, { desc = 'Find jumplist' } },
     {'n', '<BS>fk', function()
-      builtin.keymaps()
+      builtin_pickers.keymaps()
     end, { desc = 'Find keymaps' } },
     {'n', '<BS>fl', function()
-      builtin.highlights()
+      builtin_pickers.highlights()
     end, { desc = 'Find highlights' }},
     {'n', '<BS>fh', function()
-      builtin.help_tags()
+      builtin_pickers.help_tags()
     end, { desc = 'Find help tags' }},
   })
   -- stylua: ignore end
