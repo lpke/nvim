@@ -2,7 +2,7 @@ local function config()
   local codecompanion = require('codecompanion')
   local helpers = require('lpke.core.helpers')
 
-  local spinner = require('lpke.plugins.ai.helpers.chat-spinner')
+  local spinner = require('lpke.plugins.ai.helpers.chat_spinner')
   spinner:init()
 
   local function toggle_if_already_in_chat()

@@ -27,7 +27,7 @@ local filetypes = {
 local function config()
   local lualine = require('lualine')
   local tc = Lpke_theme_colors
-  local llm_spinner = require('lpke.plugins.ai.helpers.lualine-spinner')
+  local llm_spinner = require('lpke.plugins.ai.helpers.lualine_spinner')
   local refresh = lualine.refresh
 
   local custom_theme = {
