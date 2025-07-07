@@ -29,6 +29,9 @@ local function config()
       language_name = false,
       border = 'thick',
     },
+    sign = {
+      enabled = false,
+    }
   })
 end
 
