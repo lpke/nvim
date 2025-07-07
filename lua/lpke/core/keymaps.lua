@@ -51,6 +51,12 @@ helpers.keymap_set_multi({
     { desc = 'Add current file/position to quick fix list' }},
   {'n', '<C-z>', 'u', { desc = 'Undo' }},
 
+  -- quickfix list
+  {'nviC', '<F2><Down>', 'cnext', { desc = 'Next quickfix item' }},
+  {'nviC', '<A-Down>', 'cnext', { desc = 'Next quickfix item' }},
+  {'nviC', '<F2><Up>', 'cprev', { desc = 'Previous quickfix item' }},
+  {'nviC', '<A-Up>', 'cprev', { desc = 'Previous quickfix item' }},
+
   -- glorified macros
   {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],
     { desc = 'Replace selected text with the eval() version of itself' }},
@@ -90,14 +96,6 @@ helpers.keymap_set_multi({
   -- Fold management
   {'nv', 'zo', 'za', { desc = 'Toggle fold under cursor' }},
   {'nv', 'zO', 'zA', { desc = 'Toggle all nested folds under cursor' }},
-
-  -- buffer navigation
-  {'nviC', '<F2><Down>', 'bnext', { desc = 'Next buffer' }},
-  {'nviC', '<A-Down>', 'bnext', { desc = 'Next buffer' }},
-  {'nviC', '<F2><Up>', 'bprev', { desc = 'Previous buffer' }},
-  {'nviC', '<A-Up>', 'bprev', { desc = 'Previous buffer' }},
-  {'nvC', '<F2><BS>', 'bdelete', { desc = 'Delete buffer' }},
-  {'nvC', '<A-BS>', 'bdelete', { desc = 'Delete buffer' }},
 
   -- window control
   -- creation / deletion
