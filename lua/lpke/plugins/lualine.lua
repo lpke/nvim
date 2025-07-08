@@ -140,8 +140,8 @@ local function config()
         return str
       end
 
-      -- filename dependent naming
-      local filename_bufname_maps = {
+      -- filetype dependent naming
+      local filetype_bufname_maps = {
         ['TelescopePrompt'] = 'Telescope',
         ['harpoon'] = 'Harpoon Menu',
         ['fugitive'] = 'Fugitive Status',
@@ -151,8 +151,8 @@ local function config()
         ['DiffviewFileHistory'] = 'Diffview File History',
         ['gitsigns-blame'] = 'Gitsigns Blame',
       }
-      if filename_bufname_maps[b.file_type] then
-        return filename_bufname_maps[b.file_type]
+      if filetype_bufname_maps[b.file_type] then
+        return filetype_bufname_maps[b.file_type]
       end
 
       -- handle special cases
@@ -160,6 +160,7 @@ local function config()
         return str:gsub('%[CodeCompanion%]', 'CodeCompanion')
       end
 
+      -- TODO: handle more git related cases + undotree
       -- handle bufs with toggle-able paths
       local has_path_toggling = b.normal_buffer or b.oil_buffer
       if has_path_toggling then

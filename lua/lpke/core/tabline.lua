@@ -61,57 +61,45 @@ function Lpke_tabline()
       end
     end
 
-    -- handle tab title
+    -- TAB TITLE
     local tab_title = ''
-    -- TODO: Lpke_buf_details
-    local cur_git_term = (string.match(raw_cur_bufname, '^term://'))
-      and (helpers.get_path_tail(raw_cur_bufname) == 'git')
-    local cur_fugitive = file_type == 'fugitive'
-    local cur_git_commit = file_type == 'gitcommit'
-    local cur_neogit = string.match(file_type, 'Neogit')
-    local cur_diffview = string.match(file_type, 'Diffview')
-    local cur_git = cur_fugitive
-      or cur_git_commit
-      or (file_type == 'fugitiveblame')
-      or (file_type == 'git')
-      or (file_type == 'gitui')
-      or (file_type == 'gitmerge')
-      or (file_type == 'gitrebase')
-      or (string.match(raw_cur_bufname, '^fugitive://'))
-      or cur_neogit
-      or cur_diffview
-      or cur_git_term
-    if file_type == 'oil' then
-      local oil_trash = string.match(raw_cur_bufname, '^oil%-trash://')
+    -- TODO: move and use this in other parts of the file
+    local b = Lpke_buf_details(cur_bufnr)
+    -- filename dependent naming
+    local filetype_tabtitle_maps = {
+      ['TelescopePrompt'] = 'Telescope',
+      ['harpoon'] = 'Harpoon',
+      ['undotree'] = 'Undotree',
+      ['codecompanion'] = 'CodeCompanion',
+      ['gitcommit'] = 'G:Commit',
+      ['diff'] = 'G:Diff',
+      ['fugitive'] = 'G:Status',
+      ['NeogitStatus'] = 'G:NGStatus',
+      ['fugitiveblame'] = 'G:Blame',
+      ['gitsigns-blame'] = 'G:GSBlame',
+    }
+    -- filetype dependent titles
+    if filetype_tabtitle_maps[b.file_type] then
+      tab_title = filetype_tabtitle_maps[b.file_type]
+    elseif b.file_type == 'oil' then
+      local oil_trash = string.match(b.buf_name, '^oil%-trash://')
       tab_title = (oil_trash and 'T:' or '')
         .. helpers.shorten_path(file_path)
         .. '/'
-    elseif cur_git or cur_git_term then
-      if cur_neogit then
+    elseif b.file_type == '' then
+      tab_title = symbols.unnamed
+    -- git buffers (not already explicitly handled in the map above)
+    -- TODO: improve handling here for more cases
+    elseif b.git_buffer_type then
+      if b.git_buffer_type == 'neogit' then
         tab_title = 'G:' .. file_type:gsub('^Neogit', '')
-      elseif cur_diffview then
+      elseif b.git_buffer_type == 'diffview' then
         tab_title = 'G:' .. file_type:gsub('^Diffview', '')
-      elseif cur_fugitive then
+      elseif b.git_buffer_type == 'fugitive' then
         tab_title = 'G:Fugitive'
-      elseif cur_git_commit then
-        tab_title = 'G:Commit'
-      elseif cur_git_term then
-        tab_title = 'G:terminal'
       else
         tab_title = 'G:' .. helpers.shorten_path(file_path)
       end
-    elseif file_type == 'harpoon' then
-      tab_title = 'Harpoon'
-    elseif file_type == 'TelescopePrompt' then
-      tab_title = 'Telescope'
-    elseif file_type == 'undotree' then
-      tab_title = 'Undotree'
-    elseif file_type == 'diff' then
-      tab_title = 'diff'
-    elseif file_type == 'codecompanion' then
-      tab_title = 'Copilot'
-    elseif file_name == '' then
-      tab_title = symbols.unnamed
     else
       local max_fn_len = 20
       if #file_name > max_fn_len then
@@ -136,7 +124,7 @@ function Lpke_tabline()
       .. ' '
       .. (tab_zoomed and '▣ ' or '')
       .. hl_var
-      .. tab_title
+      .. (tab_title or '-')
       .. readonly_hl_var
       .. (cur_readonly and (' ' .. symbols.readonly) or '')
       .. mod_hl_var
