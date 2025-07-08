@@ -360,6 +360,12 @@ function M.get_buf_name(bufnr, remove_protocol)
   return buf_name
 end
 
+-- get buf file type (current if omitted)
+function M.get_file_type(bufnr)
+  bufnr = bufnr or 0
+  return vim.api.nvim_get_option_value('filetype', { buf = bufnr })
+end
+
 -- shorten a path (eg `plugins/lsp/test.lua` to `p/l/test.lua`)
 function M.shorten_path(path)
   return path:gsub('([^/%w]?[^/])[^/]*/', '%1/')

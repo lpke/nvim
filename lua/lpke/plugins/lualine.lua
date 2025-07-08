@@ -70,7 +70,8 @@ local function config()
 
   Lpke_show_cwd = true
   Lpke_show_harpoon = true
-  Lpke_full_path = true
+  Lpke_format_bufname = true -- toggle all formatting of the buffer name (overrides `Lpke_full_path`)
+  Lpke_full_path = true -- show full path or not (for applicable file/buf types)
   Lpke_show_encoding = false
   Lpke_show_session = false
   Lpke_show_git = true
@@ -103,84 +104,88 @@ local function config()
     color = { fg = tc.mutedplus },
   }
 
-  local git = {
+  -- TODO: handle [Term]?
+  local buffer_tag = {
     function()
-      return '[Git]'
-    end,
-    cond = function()
-      local raw_bufname = helpers.get_buf_name(0)
-      local git_buffer = not not (
-        (vim.bo.filetype == 'fugitive')
-        or (vim.bo.filetype == 'fugitiveblame')
-        or (vim.bo.filetype == 'git')
-        or (vim.bo.filetype == 'gitui')
-        or (vim.bo.filetype == 'gitcommit')
-        or (vim.bo.filetype == 'gitmerge')
-        or (vim.bo.filetype == 'gitrebase')
-        or (vim.bo.filetype == 'gitconfig')
-        or (string.match(raw_bufname, '^fugitive://'))
-        or (
-          string.match(raw_bufname, '^term://')
-          and (helpers.get_path_tail(raw_bufname) == 'git')
-        )
-      )
-      return git_buffer
+      local b = Lpke_buf_details(0)
+      if b.oil_trash then
+        return '[Trash]'
+      elseif b.git_buffer_type then
+        return '[Git]'
+      elseif b.codecompanion_buffer then
+        return '[AI]'
+      end
+      return ''
     end,
     padding = { left = 1, right = 0 },
-    color = { fg = tc.foam },
+    color = function()
+      local b = Lpke_buf_details(0)
+      if b.oil_trash then
+        return { fg = tc.love }
+      elseif b.codecompanion_buffer then
+        return { fg = tc.iris }
+      end
+      return { fg = tc.foam }
+    end,
   }
 
-  local oil_trash = {
-    function()
-      return '[Trash]'
-    end,
-    cond = function()
-      local file_path = helpers.get_buf_name(0)
-      local oil_trash = not not string.match(file_path, '^oil%-trash://')
-      return oil_trash
-    end,
-    padding = { left = 1, right = 0 },
-    color = { fg = tc.love },
-  }
-
-  local filename = {
+  local buffer_name = {
     'filename',
     path = 1,
     fmt = function(str)
-      local raw_bufname = helpers.get_buf_name(0)
-      local normal_buffer = vim.bo.buftype == ''
-      local oil_buffer = vim.bo.filetype == 'oil'
-      local telescope_buffer = vim.bo.filetype == 'TelescopePrompt'
-      local codecompanion_buffer = vim.bo.filetype == 'codecompanion'
-      local fugitive_buffer = (vim.bo.filetype == 'fugitive')
-        or (vim.bo.filetype == 'fugitiveblame')
-        or (string.match(raw_bufname, '^fugitive://'))
-      local accepted_buffer = normal_buffer or oil_buffer or fugitive_buffer
-      if Lpke_full_path and accepted_buffer then
-        if oil_buffer then
-          local rel_path = helpers.transform_path(
-            raw_bufname,
-            { include_filename = false, cwd_name = false }
-          )
-          return rel_path
-        elseif fugitive_buffer then
-          local rel_path =
-            helpers.transform_path(raw_bufname, { cwd_name = false })
-          return rel_path
+      local b = Lpke_buf_details(0)
+
+      -- override toggle to show raw buf name
+      if not Lpke_format_bufname then
+        return str
+      end
+
+      -- filename dependent naming
+      local filename_bufname_maps = {
+        ['TelescopePrompt'] = 'Telescope',
+        ['harpoon'] = 'Harpoon Menu',
+        ['fugitive'] = 'Fugitive Status',
+        ['fugitiveblame'] = 'Fugitive Blame',
+        ['NeogitStatus'] = 'Neogit Status',
+        ['DiffviewFiles'] = 'Diffview Files',
+        ['DiffviewFileHistory'] = 'Diffview File History',
+        ['gitsigns-blame'] = 'Gitsigns Blame',
+      }
+      if filename_bufname_maps[b.file_type] then
+        return filename_bufname_maps[b.file_type]
+      end
+
+      -- handle special cases
+      if b.file_type == 'codecompanion' then
+        return str:gsub('%[CodeCompanion%]', 'CodeCompanion')
+      end
+
+      -- handle bufs with toggle-able paths
+      local has_path_toggling = b.normal_buffer or b.oil_buffer
+      if has_path_toggling then
+        -- long path format
+        if Lpke_full_path then
+          if b.oil_buffer then
+            local rel_path = helpers.transform_path(
+              b.buf_name,
+              { include_filename = false, cwd_name = false }
+            )
+            return rel_path
+          else
+            return str
+          end
         else
-          return str
-        end
-      else
-        if oil_buffer or fugitive_buffer then
-          return helpers.get_path_tail(raw_bufname)
-        elseif telescope_buffer then
-          return 'Telescope'
-        elseif codecompanion_buffer then
-          return str:gsub('%[CodeCompanion%]', 'Copilot')
-        else
-          return helpers.get_path_tail(str)
+          -- short path format
+          if b.oil_buffer then
+            return helpers.get_path_tail(b.buf_name)
+          else
+            return helpers.get_path_tail(str)
+          end
         end
       end
+
+      -- default fallback to raw buf name
+      return str
     end,
     on_click = function()
       Lpke_full_path = not Lpke_full_path
@@ -215,8 +220,9 @@ local function config()
       return symbols.modified
     end,
     cond = function()
+      local telescope_buffer = vim.bo.filetype == 'TelescopePrompt'
       local is_modified = vim.api.nvim_get_option_value('modified', { buf = 0 })
-      return is_modified
+      return is_modified and not telescope_buffer
     end,
     padding = { left = 0, right = 1 },
     color = { fg = tc.subtleplus },
@@ -399,9 +405,8 @@ local function config()
           end,
         },
         harpoon,
-        git,
-        oil_trash,
-        filename,
+        buffer_tag,
+        buffer_name,
         readonly,
         modified,
       },
@@ -556,9 +561,8 @@ local function config()
       lualine_b = {},
       lualine_c = {
         harpoon,
-        git,
-        oil_trash,
-        filename,
+        buffer_tag,
+        buffer_name,
         readonly,
         modified,
       },
@@ -583,8 +587,10 @@ local function config()
     { 'n', '<A-D>', function() Lpke_show_cwd = not Lpke_show_cwd refresh() end, { desc = 'Lualine: Toggle cwd' }},
     { 'n', '<F2>A', function() Lpke_show_harpoon = not Lpke_show_harpoon refresh() end, { desc = 'Lualine: Toggle harpoon index' }},
     { 'n', '<A-A>', function() Lpke_show_harpoon = not Lpke_show_harpoon refresh() end, { desc = 'Lualine: Toggle harpoon index' }},
-    { 'n', '<F2>B', function() Lpke_full_path = not Lpke_full_path refresh() end, { desc = 'Lualine: Toggle file path' }},
-    { 'n', '<A-B>', function() Lpke_full_path = not Lpke_full_path refresh() end, { desc = 'Lualine: Toggle file path' }},
+    { 'n', '<F2>B', function() Lpke_format_bufname = not Lpke_format_bufname refresh() end, { desc = 'Lualine: Toggle buffer name formatting' }},
+    { 'n', '<A-B>', function() Lpke_format_bufname = not Lpke_format_bufname refresh() end, { desc = 'Lualine: Toggle buffer name formatting' }},
+    { 'n', '<F2>Z', function() Lpke_full_path = not Lpke_full_path refresh() end, { desc = 'Lualine: Toggle file path' }},
+    { 'n', '<A-Z>', function() Lpke_full_path = not Lpke_full_path refresh() end, { desc = 'Lualine: Toggle file path' }},
     { 'n', '<F2>E', function() Lpke_show_encoding = not Lpke_show_encoding refresh() end, { desc = 'Lualine: Toggle encoding info' }},
     { 'n', '<A-E>', function() Lpke_show_encoding = not Lpke_show_encoding refresh() end, { desc = 'Lualine: Toggle encoding info' }},
     { 'n', '<F2>S', function() Lpke_show_session = not Lpke_show_session refresh() end, { desc = 'Lualine: Toggle session name' }},

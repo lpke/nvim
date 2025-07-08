@@ -41,9 +41,25 @@ local ec = {
   foambg = '#2b303d',
   growthbg = '#242b36',
   growthbgplus = '#21373b',
+  -- git
+  addbg = '#333c48',
+  addbgbright = '#455161',
+  changebg = '#433842',
+  changebgbright = '#61515f',
+  deletebg = '#43293a',
+  deletebgbright = '#5e3a52',
 }
 
 local function config()
+  -- save theme to global var, add extras
+  ---@type { base: string, surface: string, overlay: string, muted: string, subtle: string, text: string, love: string, gold: string, rose: string, pine: string, foam: string, iris: string, highlight_low: string, highlight_med: string, highlight_high: string, textminus: string, subtleplus: string, mutedminus: string, mutedplus: string, overlaybump: string, overlayplus: string, growth: string, growthminus: string, irisplus: string, irisminus: string, lovefaded: string, goldfaded: string, irisfaded: string, foamfaded: string, lovebg: string, goldbg: string, irisbg: string, foambg: string, growthbg: string, growthbgplus: string, addbg: string, changebg: string, deletebg: string, addbgbright: string, changebgbright: string, deletebgbright: string }
+  Lpke_theme_colors = require('rose-pine.palette')
+  for k, v in pairs(ec) do
+    Lpke_theme_colors[k] = v
+  end
+
+  local tc = Lpke_theme_colors
+
   require('rose-pine').setup({
     variant = 'main', -- main, moon, dawn
     dark_variant = 'main',
@@ -94,55 +110,54 @@ local function config()
       git_untracked = 'subtle',
     },
 
+    -- stylua: ignore start
     -- vim highlight groups (inspect under cursor with `:Inspect`)
     highlight_groups = {
       Normal = { bg = 'none' },
       NormalNC = { bg = 'none' },
-      VisualNOS = { bg = 'highlight_med', inherit = false },
-      Visual = { bg = 'highlight_med', inherit = false },
-      VertSplit = { bg = 'none', fg = 'highlight_med' },
-      WinSeparator = { bg = 'none', fg = 'highlight_med' },
-      Comment = { fg = 'muted' },
-      ColorColumn = { bg = 'rose' },
-      StatusLine = { fg = 'subtle', bg = 'overlay' },
-      StatusLineNC = { fg = 'subtle', bg = 'surface' },
-      EndOfBuffer = { fg = 'base' }, -- remove the `~`
+      VisualNOS = { bg = tc.highlight_med, inherit = false },
+      Visual = { bg = tc.highlight_med, inherit = false },
+      VertSplit = { bg = 'none', fg = tc.highlight_med },
+      WinSeparator = { bg = 'none', fg = tc.highlight_med },
+      Comment = { fg = tc.muted },
+      ColorColumn = { bg = tc.rose },
+      StatusLine = { fg = tc.subtle, bg = tc.overlay },
+      StatusLineNC = { fg = tc.subtle, bg = tc.surface },
+      EndOfBuffer = { fg = tc.base }, -- remove the `~`
       CursorLine = { bg = 'none' },
-      CursorLineNr = { fg = ec.textminus },
-      FloatTitle = { fg = 'subtle', bg = 'surface' },
-      TabLineFill = { bg = 'surface' }, -- Non-text area
-      TabLine = { fg = 'subtle', bg = 'surface' }, -- Un-selected tab
-      TabLineSel = { fg = ec.textminus, bg = ec.overlaybump, bold = false }, -- Selected tab
-      CurSearch = { fg = 'base', bg = ec.irisplus },
+      CursorLineNr = { fg = tc.textminus },
+      FloatTitle = { fg = tc.subtle, bg = tc.surface },
+      TabLineFill = { bg = tc.surface }, -- Non-text area
+      TabLine = { fg = tc.subtle, bg = tc.surface }, -- Un-selected tab
+      TabLineSel = { fg = tc.textminus, bg = ec.overlaybump, bold = false }, -- Selected tab
+      CurSearch = { fg = tc.base, bg = tc.irisplus },
       IncSearch = { link = 'CurSearch' },
-      Substitute = { fg = 'base', bg = 'love' },
-      MatchParen = { fg = ec.growth, bg = ec.growthminus, blend = 15 },
+      Substitute = { fg = tc.base, bg = tc.love },
+      MatchParen = { fg = tc.growth, bg = ec.growthminus, blend = 15 },
       Directory = { bold = false },
-      NonText = { fg = 'text', bg = ec.irisbg },
 
       -- vim syntax highlight groups (inherited in treesitter config file for `@` groups)
-      Keyword = { fg = 'pine', italic = true },
-      Type = { fg = ec.growth },
-      Tag = { fg = ec.growth },
-      Structure = { fg = ec.growth },
+      Keyword = { fg = tc.pine, italic = true },
+      Type = { fg = tc.growth },
+      Tag = { fg = tc.growth },
+      Structure = { fg = tc.growth },
+
+      -- git overrides
+      DiffChange = { force = true, bg = tc.changebg, blend = 100 },
+      DiffText = { force = true, bg = tc.changebgbright, blend = 100 },
+      GitText = { force = true, bg = tc.changebgbright, blend = 100 },
 
       -- custom highlight groups
-      LpkeTabLineZoom = { fg = ec.irisfaded, bg = 'surface' },
-      LpkeTabLineZoomSel = { fg = 'iris', bg = ec.overlaybump },
-      LpkeTabLineMod = { fg = ec.mutedminus, bg = 'surface', bold = true },
-      LpkeTabLineModSel = { fg = 'subtle', bg = ec.overlaybump, bold = true },
-      LpkeTabLineReadonly = { fg = ec.mutedminus, bg = 'surface' },
-      LpkeTabLineReadonlySel = { fg = 'muted', bg = ec.overlaybump },
-      LpkeTabLineClose = { fg = ec.overlayplus, bg = 'surface' },
+      LpkeTabLineZoom = { fg = tc.irisfaded, bg = tc.surface },
+      LpkeTabLineZoomSel = { fg = tc.iris, bg = tc.overlaybump },
+      LpkeTabLineMod = { fg = tc.mutedminus, bg = tc.surface, bold = true },
+      LpkeTabLineModSel = { fg = tc.subtle, bg = tc.overlaybump, bold = true },
+      LpkeTabLineReadonly = { fg = tc.mutedminus, bg = tc.surface },
+      LpkeTabLineReadonlySel = { fg = tc.muted, bg = tc.overlaybump },
+      LpkeTabLineClose = { fg = tc.overlayplus, bg = tc.surface },
     },
+    -- stylua: ignore end
   })
-
-  -- save theme to global var, add extras
-  ---@type { base: string, surface: string, overlay: string, muted: string, subtle: string, text: string, love: string, gold: string, rose: string, pine: string, foam: string, iris: string, highlight_low: string, highlight_med: string, highlight_high: string, textminus: string, subtleplus: string, mutedminus: string, mutedplus: string, overlaybump: string, overlayplus: string, growth: string, growthminus: string, irisplus: string, irisminus: string, lovefaded: string, goldfaded: string, irisfaded: string, foamfaded: string, lovebg: string, goldbg: string, irisbg: string, foambg: string, growthbg: string, growthbgplus: string }
-  Lpke_theme_colors = require('rose-pine.palette')
-  for k, v in pairs(ec) do
-    Lpke_theme_colors[k] = v
-  end
 
   -- set color scheme
   vim.cmd('colorscheme rose-pine')

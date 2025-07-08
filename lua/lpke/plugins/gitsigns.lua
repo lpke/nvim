@@ -1,6 +1,7 @@
 local function config()
   local gitsigns = require('gitsigns')
   local helpers = require('lpke.core.helpers')
+  local tc = Lpke_theme_colors
 
   gitsigns.setup({
     signs = {
@@ -8,7 +9,7 @@ local function config()
       change = { text = '┃' },
       delete = { text = '_' },
       topdelete = { text = '‾' },
-      changedelete = { text = '~' },
+      changedelete = { text = '┃' },
       untracked = { text = '┆' },
     },
     signs_staged = {
@@ -16,7 +17,7 @@ local function config()
       change = { text = '┃' },
       delete = { text = '_' },
       topdelete = { text = '‾' },
-      changedelete = { text = '~' },
+      changedelete = { text = '┃' },
       untracked = { text = '┆' },
     },
     signs_staged_enable = true,
@@ -45,7 +46,7 @@ local function config()
     max_file_length = 40000, -- Disable if file is longer than this (in lines)
     preview_config = {
       -- Options passed to nvim_open_win
-      style = 'minimal',
+      border = 'rounded',
       relative = 'cursor',
       row = 0,
       col = 1,
@@ -53,22 +54,28 @@ local function config()
 
     on_attach = function(_bufnr)
       -- stylua: ignore start
+      -- TODO: keymap for `:Gitsigns blame`, tidy up
       helpers.keymap_set_multi({
-        { 'n', ']c', function()
+        { 'n', ']C', function()
           if vim.wo.diff then
             vim.cmd.normal({ ']c', bang = true })
           else
-            gitsigns.nav_hunk('next')
+            gitsigns.nav_hunk('next', { preview = true })
           end
-        end, { desc = 'Go to the next git hunk' } },
-
-        { 'n', '[c', function()
+        end, { desc = 'Gitsigns: Go to the next git hunk (unstaged only)' } },
+        { 'n', '[C', function()
           if vim.wo.diff then
             vim.cmd.normal({ '[c', bang = true })
           else
-            gitsigns.nav_hunk('prev')
+            gitsigns.nav_hunk('prev', { preview = true })
           end
-        end, { desc = 'Go to the previous git hunk' } },
+        end, { desc = 'Gitsigns: Go to the previous git hunk (unstaged only)' } },
+        { 'n', ']c', function()
+          gitsigns.nav_hunk('next', { preview = true, target = 'all' })
+        end, { desc = 'Gitsigns: Go to the next git hunk (staged and unstaged)' } },
+        { 'n', '[c', function()
+          gitsigns.nav_hunk('prev', { preview = true, target = 'all' })
+        end, { desc = 'Gitsigns: Go to the previous git hunk (staged and unstaged)' } },
 
         -- Actions
         -- { 'n', '<leader>hs', gitsigns.stage_hunk, { desc = '' } },
@@ -85,8 +92,8 @@ local function config()
         -- { 'n', '<leader>hS', gitsigns.stage_buffer, { desc = '' } },
         -- { 'n', '<leader>hR', gitsigns.reset_buffer, { desc = '' } },
 
-        { 'n', '<leader>hp', gitsigns.preview_hunk, { desc = '' } },
-        { 'n', '<leader>hi', gitsigns.preview_hunk_inline, { desc = '' } },
+        { 'n', 'gH', gitsigns.preview_hunk, { desc = 'Gitsigns: Preview hunk under cursor in a floating window' } },
+        { 'n', 'gD', gitsigns.preview_hunk_inline, { desc = 'Gitsigns: Preview hunk under cursor inline' } },
 
         { 'n', '<leader>hb', function()
           gitsigns.blame_line({ full = true })
@@ -107,11 +114,25 @@ local function config()
         { 'n', '<leader>Gb', gitsigns.toggle_current_line_blame, { desc = '' } },
         { 'n', '<leader>Gw', gitsigns.toggle_word_diff, { desc = '' } },
 
+        -- TODO: fix this
         -- Text object
         -- { 'ox', 'ih', gitsigns.select_hunk, { desc = '' } },
       })
       -- stylua: ignore end
     end,
+  })
+
+  helpers.set_hl_multi({
+    ['GitSignsAddInline'] = { bg = tc.addbgbright },
+    ['GitSignsChangeInline'] = { bg = tc.changebgbright },
+    ['GitSignsDeleteInline'] = { bg = tc.deletebgbright },
+
+    ['GitSignsChangedelete'] = { link = 'GitSignsDelete' },
+    ['GitSignsChangedeleteNr'] = { link = 'GitSignsDeleteNr' },
+    ['GitSignsChangedeleteCul'] = { link = 'GitSignsDeleteCul' },
+    ['GitSignsStagedChangedelete'] = { link = 'GitSignsStagedDelete' },
+    ['GitSignsStagedChangedeleteNr'] = { link = 'GitSignsStagedDeleteNr' },
+    ['GitSignsStagedChangedeleteCul'] = { link = 'GitSignsStagedDeleteCul' },
   })
 end
 

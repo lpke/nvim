@@ -72,6 +72,7 @@ local function config()
             return
           end
           local dir = oil.get_current_dir()
+          -- FIXME: seems to be broken in trash mode `g\`
           local fullpath = dir .. entry.name
           if vim.env.IN_VSCODE and vim.fn.isdirectory(fullpath) == 0 then
             vim.fn.jobstart({ 'cursor', '-r', fullpath })

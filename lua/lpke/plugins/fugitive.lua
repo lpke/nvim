@@ -226,6 +226,8 @@ local function config()
     {'nv', '<leader>gs', function() Lpke_toggle_git_diff(true) end, { desc = 'Fugitive: Open diff split for current file (against staging) in a new tab' }},
   })
   -- stylua: ignore end
+
+  -- TODO: highlighting `FugitiveblameTime`
 end
 
 return {

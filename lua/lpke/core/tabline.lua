@@ -63,12 +63,14 @@ function Lpke_tabline()
 
     -- handle tab title
     local tab_title = ''
+    -- TODO: Lpke_buf_details
     local cur_git_term = (string.match(raw_cur_bufname, '^term://'))
       and (helpers.get_path_tail(raw_cur_bufname) == 'git')
-    local cur_fugitive_status = file_type == 'fugitive'
+    local cur_fugitive = file_type == 'fugitive'
     local cur_git_commit = file_type == 'gitcommit'
     local cur_neogit = string.match(file_type, 'Neogit')
-    local cur_git = cur_fugitive_status
+    local cur_diffview = string.match(file_type, 'Diffview')
+    local cur_git = cur_fugitive
       or cur_git_commit
       or (file_type == 'fugitiveblame')
       or (file_type == 'git')
@@ -77,6 +79,7 @@ function Lpke_tabline()
       or (file_type == 'gitrebase')
       or (string.match(raw_cur_bufname, '^fugitive://'))
       or cur_neogit
+      or cur_diffview
       or cur_git_term
     if file_type == 'oil' then
       local oil_trash = string.match(raw_cur_bufname, '^oil%-trash://')
@@ -86,7 +89,9 @@ function Lpke_tabline()
     elseif cur_git or cur_git_term then
       if cur_neogit then
         tab_title = 'G:' .. file_type:gsub('^Neogit', '')
-      elseif cur_fugitive_status then
+      elseif cur_diffview then
+        tab_title = 'G:' .. file_type:gsub('^Diffview', '')
+      elseif cur_fugitive then
         tab_title = 'G:Fugitive'
       elseif cur_git_commit then
         tab_title = 'G:Commit'

@@ -153,7 +153,6 @@ local function config()
     { 'nC', 'gd', 'Telescope lsp_definitions', { desc = 'Show LSP definitions' }, },
     { 'nC', 'gt', 'Telescope lsp_type_definitions', { desc = 'Show LSP type definitions' }, },
     { 'nC', 'gi', 'Telescope lsp_implementations', { desc = 'Show LSP implementations' }, },
-    { 'n', 'gD', vim.lsp.buf.declaration, { desc = 'Go to declaration' } },
   })
   -- stylua: ignore end
 end

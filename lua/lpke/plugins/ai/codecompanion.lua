@@ -134,7 +134,9 @@ local function config()
         return require('codecompanion.adapters').extend('copilot', {
           schema = {
             model = {
-              default = 'claude-sonnet-4',
+              -- default = 'claude-sonnet-4', -- premium requests (1x)
+              -- default = 'gpt-4o', -- unlimited free
+              default = 'gpt-4.1', -- unlimited free (better at code)
             },
           },
         })

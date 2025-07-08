@@ -701,3 +701,15 @@ function Lpke_active()
       .. helpers.get_buf_name(0)
   )
 end
+
+function Lpke_buf_details(bufnr)
+  local B = {}
+  B.buf_name = helpers.get_buf_name(bufnr)
+  B.file_type = helpers.get_file_type(bufnr)
+  B.normal_buffer = vim.bo.buftype == ''
+  B.oil_buffer = B.file_type == 'oil'
+  B.codecompanion_buffer = B.file_type == 'codecompanion'
+  B.oil_trash = not not string.match(B.buf_name, '^oil%-trash://')
+  B.git_buffer_type = Lpke_git_buf(bufnr) or false
+  return B
+end
