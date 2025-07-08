@@ -1,3 +1,5 @@
+-- TODO: write this custom picker
+
 local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
 local sorters = require('telescope.sorters')

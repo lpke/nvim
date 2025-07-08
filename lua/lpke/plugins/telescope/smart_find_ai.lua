@@ -1,3 +1,5 @@
+-- TODO: refactor then deprecate this file
+
 local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
 local builtin = require('telescope.builtin')
