@@ -54,8 +54,8 @@ local function config()
 
     on_attach = function(_bufnr)
       -- stylua: ignore start
-      -- TODO: keymap for `:Gitsigns blame`, tidy up
       helpers.keymap_set_multi({
+        -- navigate between hunks
         { 'n', ']C', function()
           if vim.wo.diff then
             vim.cmd.normal({ ']c', bang = true })
@@ -77,42 +77,40 @@ local function config()
           gitsigns.nav_hunk('prev', { preview = true, target = 'all' })
         end, { desc = 'Gitsigns: Go to the previous git hunk (staged and unstaged)' } },
 
-        -- Actions
-        -- { 'n', '<leader>hs', gitsigns.stage_hunk, { desc = '' } },
-        -- { 'n', '<leader>hr', gitsigns.reset_hunk, { desc = '' } },
-        --
-        -- { 'v', '<leader>hs', function()
-        --   gitsigns.stage_hunk({ vim.fn.line('.'), vim.fn.line('v') })
+        -- stage/unstage/reset hunks
+        { 'n', 'gss', gitsigns.stage_hunk, { desc = 'Gitsigns: Stage or unstage the hunk under the cursor' } },
+        { 'v', 'gss', function()
+          gitsigns.stage_hunk({ vim.fn.line('.'), vim.fn.line('v') })
+        end, { desc = 'Gitsigns: Stage or unstage the hunk/s in the visual selection' } },
+        { 'n', 'gsX', gitsigns.reset_hunk, { desc = 'Gitsigns: Reset the hunk under the cursor' } },
+        { 'v', 'gsX', function()
+          gitsigns.reset_hunk({ vim.fn.line('.'), vim.fn.line('v') })
+        end, { desc = 'Gitsigns: Reset the hunk/s in the visual selection' } },
+
+        -- stage/unstage/reset buffer
+        { 'n', '<leader>gss', gitsigns.stage_buffer, { desc = 'Gitsigns: Stage all hunks in the current buffer' } },
+        { 'n', '<leader>gsS', gitsigns.reset_buffer_index, { desc = 'Gitsigns: Unstage all hunks in the current buffer' } },
+        { 'n', '<leader>gsX', gitsigns.reset_buffer, { desc = 'Gitsigns: Reset all hunks in the current buffer' } },
+
+        -- preview hunks
+        { 'n', 'gsh', gitsigns.preview_hunk, { desc = 'Gitsigns: Preview hunk under cursor in a floating window' } },
+        { 'n', 'gsl', gitsigns.preview_hunk_inline, { desc = 'Gitsigns: Preview hunk under cursor inline' } },
+
+        -- TODO: keymap for `:Gitsigns blame`
+        -- TODO: unorganised
+        -- { 'n', '<leader>hb', function()
+        --   gitsigns.blame_line({ full = true })
         -- end, { desc = '' } },
-        --
-        -- { 'v', '<leader>hr', function()
-        --   gitsigns.reset_hunk({ vim.fn.line('.'), vim.fn.line('v') })
+        -- { 'n', '<leader>hd', gitsigns.diffthis, { desc = '' } },
+        -- { 'n', '<leader>hD', function()
+        --   gitsigns.diffthis('~')
         -- end, { desc = '' } },
-        --
-        -- { 'n', '<leader>hS', gitsigns.stage_buffer, { desc = '' } },
-        -- { 'n', '<leader>hR', gitsigns.reset_buffer, { desc = '' } },
-
-        { 'n', 'gH', gitsigns.preview_hunk, { desc = 'Gitsigns: Preview hunk under cursor in a floating window' } },
-        { 'n', 'gD', gitsigns.preview_hunk_inline, { desc = 'Gitsigns: Preview hunk under cursor inline' } },
-
-        { 'n', '<leader>hb', function()
-          gitsigns.blame_line({ full = true })
-        end, { desc = '' } },
-
-        { 'n', '<leader>hd', gitsigns.diffthis, { desc = '' } },
-
-        { 'n', '<leader>hD', function()
-          gitsigns.diffthis('~')
-        end, { desc = '' } },
-
-        { 'n', '<leader>hQ', function()
-          gitsigns.setqflist('all')
-        end, { desc = '' } },
-        { 'n', '<leader>hq', gitsigns.setqflist, { desc = '' } },
-
-        -- Toggles
-        { 'n', '<leader>Gb', gitsigns.toggle_current_line_blame, { desc = '' } },
-        { 'n', '<leader>Gw', gitsigns.toggle_word_diff, { desc = '' } },
+        -- { 'n', '<leader>hQ', function()
+        --   gitsigns.setqflist('all')
+        -- end, { desc = '' } },
+        -- { 'n', '<leader>hq', gitsigns.setqflist, { desc = '' } },
+        -- { 'n', '<leader>Gb', gitsigns.toggle_current_line_blame, { desc = '' } },
+        -- { 'n', '<leader>Gw', gitsigns.toggle_word_diff, { desc = '' } },
 
         -- TODO: fix this
         -- Text object

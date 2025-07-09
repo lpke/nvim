@@ -73,10 +73,11 @@ function Lpke_tabline()
       ['codecompanion'] = 'CodeCompanion',
       ['gitcommit'] = 'G:Commit',
       ['diff'] = 'G:Diff',
-      ['fugitive'] = 'G:Status',
-      ['NeogitStatus'] = 'G:NGStatus',
-      ['fugitiveblame'] = 'G:Blame',
-      ['gitsigns-blame'] = 'G:GSBlame',
+      ['fugitive'] = 'G:F-Status',
+      ['NeogitStatus'] = 'G:NG-Status',
+      ['fugitiveblame'] = 'G:F-Blame',
+      ['gitsigns-blame'] = 'G:GS-Blame',
+      ['DiffviewFiles'] = 'G:DV-Files',
     }
     -- filetype dependent titles
     if filetype_tabtitle_maps[b.file_type] then
@@ -92,9 +93,11 @@ function Lpke_tabline()
     -- TODO: improve handling here for more cases
     elseif b.git_buffer_type then
       if b.git_buffer_type == 'neogit' then
-        tab_title = 'G:' .. file_type:gsub('^Neogit', '')
+        tab_title = 'G:NG-' .. file_type:gsub('^Neogit', '')
       elseif b.git_buffer_type == 'diffview' then
-        tab_title = 'G:' .. file_type:gsub('^Diffview', '')
+        -- TODO: improve
+        -- tab_title = 'G:' .. file_type:gsub('^Diffview', '')
+        tab_title = 'G:Diffview'
       elseif b.git_buffer_type == 'fugitive' then
         tab_title = 'G:Fugitive'
       else

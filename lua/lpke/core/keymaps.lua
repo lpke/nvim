@@ -43,8 +43,6 @@ helpers.keymap_set_multi({
   {'n', 'gO', 'O<Esc>', { desc = 'New line above (remain in normal mode)' }},
   {'nv', '=*', 'mzgg=G`z', { desc = 'Indent entire file' }},
   {'nv', '=_', '==', { desc = 'Indent current line or selection only' }},
-  {'nvM', '<C-k>', '8k', { desc = 'Move up 8 lines' }},
-  {'nvM', '<C-j>', '8j', { desc = 'Move down 8 lines' }},
   {'nv', 'ze', 'zt8<C-y>', { desc = 'Centre cursor 8 lines below zt' }},
   {'nC', '<BS>L', 'botright copen', { desc = 'Open quick fix list' }},
   {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.') - 1, 'text': getline('.')}], 'a')",
@@ -188,16 +186,11 @@ helpers.keymap_set_multi({
   {'nv', '<S-Right>', '6zl', { desc = 'Scroll right (6 columns)' }},
   {'nv', '<S-Left>', '6zh', { desc = 'Scroll left (6 columns)' }},
 
-  -- center cursor when down/up page
-  -- trying out not using these for a while:
-  -- {'nvM', '<C-u>', 'M<C-u>zz', { desc = 'Move up half a screen (center cursor)' }},
-  -- {'nvM', '<C-d>', 'M<C-d>zz', { desc = 'Move down half a screen (center cursor)' }},
-  {'nvM', '<C-Up>', 'M4kzz', { desc = 'Move up 4 line (center cursor)' }},
-  {'nvM', '<C-Down>', 'M4jzz', { desc = 'Move down 4 line (center cursor)' }},
-
-  -- center cursor when searching
-  {'n', 'n', 'nzzzv', { desc = 'Next search result (center cursor)' }},
-  {'n', 'N', 'Nzzzv', { desc = 'Previous search result (center cursor)' }},
+  -- moving up/down
+  {'nvM', '<C-Up>', '4k', { desc = 'Move up 4 lines' }},
+  {'nvM', '<C-Down>', '4j', { desc = 'Move down 4 lines' }},
+  {'nvM', '<C-k>', '8k', { desc = 'Move up 8 lines' }},
+  {'nvM', '<C-j>', '8j', { desc = 'Move down 8 lines' }},
 
   -- horizontal mouse scrolling
   {'nv', '<S-ScrollWheelDown>', '6zl', { desc = 'Scroll right' }},
