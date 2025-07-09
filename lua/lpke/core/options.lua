@@ -82,6 +82,7 @@ M.vim_opts = {
   sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions',
   formatoptions = 'jql', -- see `:help fo-table` (I removed 'c' to disable auto-wrap, use gw motion instead)
   timeoutlen = 4000, -- timeout when waiting for next key in a keymap
+  ttimeoutlen = 0, -- no delay after <esc> to interpret it as <alt>
   tabline = '%!v:lua.Lpke_tabline()',
 }
 helpers.set_options(M.vim_opts)

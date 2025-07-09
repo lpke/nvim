@@ -27,11 +27,9 @@ helpers.keymap_set_multi({
   {'c', '<Esc>', '<C-c>', { desc = 'Exit cmd-line with ctrl+c' }},
   {'i', '<C-c>', '<Esc>', { desc = 'Exit insert mode with ctrl+c, but still trigger `InsertLeave` autocmds' }},
 
-  -- Tweaks/extensions of native functionality
-  {'nv', '<leader>y', '"*y', { desc = 'Global yank' }},
-  {'nv', 'gg', 'gg0', { desc = 'Go to very start of buffer' }},
   {'nv', 'G', 'G$', { desc = 'Go to very end of buffer' }},
   {'n', 'Y', 'y$', { desc = 'Yank to end of line' }},
+  {'nv', '<leader>y', '"*y', { desc = 'Global yank' }},
   {'n', '<leader>Y', '"*y$', { desc = 'Global yank to end of line' }},
   {'n', 'ygG', 'mzggyG`z', { desc = 'Yank entire buffer (without moving cursor)' }},
   {'n', '<leader>ygG', 'mzgg"*yG`z', { desc = 'Global yank entire buffer (without moving cursor)' }},
