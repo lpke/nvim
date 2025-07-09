@@ -29,7 +29,6 @@ helpers.keymap_set_multi({
 
   -- Tweaks/extensions of native functionality
   {'nv', '<leader>y', '"*y', { desc = 'Global yank' }},
-  {'nv', '<leader>d', '"_d', { desc = 'Delete without copy' }},
   {'nv', 'gg', 'gg0', { desc = 'Go to very start of buffer' }},
   {'nv', 'G', 'G$', { desc = 'Go to very end of buffer' }},
   {'n', 'Y', 'y$', { desc = 'Yank to end of line' }},

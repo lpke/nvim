@@ -241,6 +241,15 @@ local function config()
     -- stylua: ignore end
   })
 
+  -- stylua: ignore start
+  helpers.keymap_set_multi({
+    { 'n', '<BS>dvv', function()
+      vim.cmd('call feedkeys(":DiffviewOpen ")')
+    end, { desc = 'Diffview: Prepare to open a diff view' } },
+    { 'nC', '<BS>dvm', 'DiffviewOpen main', { desc = 'Diffview: Open compare to main' } },
+    { 'nC', '<BS>dvc', 'DiffviewClose', { desc = 'Diffview: Close diff view' } },
+  })
+
   helpers.set_hl_multi({
     ['DiffViewStatusModified'] = { bg = 'none', fg = tc.rose },
     ['DiffViewStatusAdded'] = { bg = 'none', fg = tc.foam },
@@ -256,6 +265,7 @@ local function config()
     ['DiffViewFilePanelFileName'] = { bg = 'none', fg = tc.text },
     ['DiffViewFilePanelPath'] = { bg = 'none', fg = tc.subtle, italic = false },
   })
+  -- stylua: ignore end
 end
 
 return {
