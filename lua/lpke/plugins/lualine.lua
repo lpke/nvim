@@ -142,6 +142,7 @@ local function config()
 
       -- filetype dependent naming
       local filetype_bufname_maps = {
+        ['qf'] = 'Quickfix List',
         ['TelescopePrompt'] = 'Telescope',
         ['harpoon'] = 'Harpoon Menu',
         ['fugitive'] = 'Fugitive Status',

@@ -101,14 +101,17 @@ local function config()
 
         -- add hunks to quickfix list
         { 'n', 'gsq', function()
-          gitsigns.setqflist()
-        end, { desc = 'Gitsigns: Set quickfix list to location of git hunks (current file)' } },
+          gitsigns.setqflist(0, { open = false })
+          vim.cmd('botright copen')
+        end, { desc = 'Gitsigns: Set quickfix list to location of unstaged git hunks (current file)' } },
         { 'n', '<leader>gsq', function()
-          gitsigns.setqflist('attached')
-        end, { desc = 'Gitsigns: Set quickfix list to location of git hunks (open buffers)' } },
+          gitsigns.setqflist('attached', { open = false })
+          vim.cmd('botright copen')
+        end, { desc = 'Gitsigns: Set quickfix list to location of unstaged git hunks (open buffers)' } },
         { 'n', 'gsQ', function()
-          gitsigns.setqflist('all')
-        end, { desc = 'Gitsigns: Set quickfix list to location of git hunks (all files, all associated git repos)' } },
+          gitsigns.setqflist('all', { open = false })
+          vim.cmd('botright copen')
+        end, { desc = 'Gitsigns: Set quickfix list to location of unstaged git hunks (all files, all associated git repos)' } },
 
         -- TODO: fix this
         -- Text object

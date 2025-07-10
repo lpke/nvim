@@ -41,16 +41,16 @@ helpers.keymap_set_multi({
   {'nv', '=*', 'mzgg=G`z', { desc = 'Indent entire file' }},
   {'nv', '=_', '==', { desc = 'Indent current line or selection only' }},
   {'nv', 'ze', 'zt8<C-y>', { desc = 'Centre cursor 8 lines below zt' }},
-  {'nC', '<BS>L', 'botright copen', { desc = 'Open quick fix list' }},
-  {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.') - 1, 'text': getline('.')}], 'a')",
-    { desc = 'Add current file/position to quick fix list' }},
   {'n', '<C-z>', 'u', { desc = 'Undo' }},
 
   -- quickfix list
-  {'nviC', '<F2><Down>', 'cnext', { desc = 'Next quickfix item' }},
-  {'nviC', '<A-Down>', 'cnext', { desc = 'Next quickfix item' }},
-  {'nviC', '<F2><Up>', 'cprev', { desc = 'Previous quickfix item' }},
-  {'nviC', '<A-Up>', 'cprev', { desc = 'Previous quickfix item' }},
+  {'nC', 'gq', 'botright copen', { desc = 'Open quick fix list' }},
+  {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.') - 1, 'text': getline('.')}], 'a')",
+    { desc = 'Add current file/position to quick fix list' }},
+  {'nvi', '<F2><Down>', function() helpers.safe_call(function() vim.cmd('cnext') end, true) end, { desc = 'Next quickfix item' }},
+  {'nvi', '<A-Down>', function() helpers.safe_call(function() vim.cmd('cnext') end, true) end, { desc = 'Next quickfix item' }},
+  {'nvi', '<F2><Up>', function() helpers.safe_call(function() vim.cmd('cprev') end, true) end, { desc = 'Previous quickfix item' }},
+  {'nvi', '<A-Up>', function() helpers.safe_call(function() vim.cmd('cprev') end, true) end, { desc = 'Previous quickfix item' }},
 
   -- glorified macros
   {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],

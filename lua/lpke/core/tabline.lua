@@ -67,6 +67,7 @@ function Lpke_tabline()
     local b = Lpke_buf_details(cur_bufnr)
     -- filename dependent naming
     local filetype_tabtitle_maps = {
+      ['qf'] = 'Quickfix',
       ['TelescopePrompt'] = 'Telescope',
       ['harpoon'] = 'Harpoon',
       ['undotree'] = 'Undotree',
@@ -87,7 +88,7 @@ function Lpke_tabline()
       tab_title = (oil_trash and 'T:' or '')
         .. helpers.shorten_path(file_path)
         .. '/'
-    elseif b.file_type == '' then
+    elseif b.file_type == '' or b.buf_name == '[No Name]' then
       tab_title = symbols.unnamed
     -- git buffers (not already explicitly handled in the map above)
     -- TODO: improve handling here for more cases
@@ -107,6 +108,10 @@ function Lpke_tabline()
         file_name = file_name:sub(1, (max_fn_len - 4)) .. '…'
       end
       tab_title = file_name .. ((file_ext ~= '') and ('.' .. file_ext) or '')
+    end
+    -- if no tab title, fall back
+    if tab_title == '' then
+      tab_title = symbols.unnamed
     end
 
     -- handle readonly
