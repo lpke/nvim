@@ -290,6 +290,7 @@ local function config()
   })
 
   helpers.set_hl_multi({
+    ['DiffViewStatusUntracked'] = { bg = 'none', fg = tc.pine },
     ['DiffViewStatusModified'] = { bg = 'none', fg = tc.rose },
     ['DiffViewStatusAdded'] = { bg = 'none', fg = tc.foam },
     ['DiffViewStatusRenamed'] = { bg = 'none', fg = tc.iris },
