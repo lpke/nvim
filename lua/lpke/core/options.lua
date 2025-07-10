@@ -60,6 +60,8 @@ M.vim_opts = {
     foldclose = '\u{f054}',
     fold = '\u{2500}',
   }, -- make fold symbols a bit prettier
+  foldopen = "mark,quickfix,tag,undo", -- the things that are allowed to open a fold
+  viewoptions = "folds", -- only remember folds when doing `mkview`
   wrap = false, -- line wrap
   breakindent = true, -- wrapped text is indented to that line's indent level
   laststatus = 3, -- last window has status line - 0:never, 1:only if 2+ wins, 2: always, 3: always and only last win (global)
