@@ -409,30 +409,31 @@ local function config()
     end, { desc = 'Find string under cursor in cwd' }},
 
     -- git
-    {'n', '<BS>gg', function()
-      builtin_pickers.git_status()
-    end, { desc = 'Find git status' }},
-    {'n', '<BS>gc', function()
-      builtin_pickers.git_commits()
-    end, { desc = 'Find git commits' }},
-    {'n', '<leader>gc', function()
-      builtin_pickers.git_bcommits()
-    end, { desc = 'Find buffer git commits' }},
-    {'v', '<leader>gc', function()
-      vim.cmd('normal! \28\14') -- go to normal - saves prev selection `<`/`>` marks
-      local start_line = vim.api.nvim_buf_get_mark(0, "<")[1]
-      local end_line = vim.api.nvim_buf_get_mark(0, ">")[1]
-      builtin_pickers.git_bcommits_range({
-        prompt_title = 'File Commits (L' .. start_line .. '-' .. end_line .. ')',
-        from = start_line, to = end_line
-      })
-    end, { desc = 'Find selection git commits' }},
+    -- using diffview.nvim to do the below now
+    -- {'n', '<BS>gg', function()
+    --   builtin_pickers.git_status()
+    -- end, { desc = 'Find git status' }},
+    -- {'n', '<BS>gc', function()
+    --   builtin_pickers.git_commits()
+    -- end, { desc = 'Find git commits' }},
+    -- {'n', '<leader>gc', function()
+    --   builtin_pickers.git_bcommits()
+    -- end, { desc = 'Find buffer git commits' }},
+    -- {'v', '<leader>gc', function()
+    --   vim.cmd('normal! \28\14') -- go to normal - saves prev selection `<`/`>` marks
+    --   local start_line = vim.api.nvim_buf_get_mark(0, "<")[1]
+    --   local end_line = vim.api.nvim_buf_get_mark(0, ">")[1]
+    --   builtin_pickers.git_bcommits_range({
+    --     prompt_title = 'File Commits (L' .. start_line .. '-' .. end_line .. ')',
+    --     from = start_line, to = end_line
+    --   })
+    -- end, { desc = 'Find selection git commits' }},
     {'n', '<BS>gb', function()
       builtin_pickers.git_branches()
     end, { desc = 'Find git branches' }},
-    {'n', '<BS>gs', function()
-      builtin_pickers.git_stash()
-    end, { desc = 'Find git stash' }},
+    -- {'n', '<BS>gs', function()
+    --   builtin_pickers.git_stash()
+    -- end, { desc = 'Find git stash' }},
 
     -- treesitter
     {'n', '<leader>fs', function()

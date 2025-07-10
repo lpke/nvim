@@ -146,10 +146,9 @@ local function config()
         ['harpoon'] = 'Harpoon Menu',
         ['fugitive'] = 'Fugitive Status',
         ['fugitiveblame'] = 'Fugitive Blame',
-        ['NeogitStatus'] = 'Neogit Status',
-        ['DiffviewFiles'] = 'Diffview Files',
-        ['DiffviewFileHistory'] = 'Diffview File History',
         ['gitsigns-blame'] = 'Gitsigns Blame',
+        ['DiffviewFiles'] = 'Diffview Files (:DiffviewOpen)',
+        ['DiffviewFileHistory'] = 'Diffview File History (:DiffviewFileHistory)',
       }
       if filetype_bufname_maps[b.file_type] then
         return filetype_bufname_maps[b.file_type]

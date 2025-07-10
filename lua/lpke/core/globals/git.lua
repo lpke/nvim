@@ -75,7 +75,7 @@ end
 
 -- returns a string of the git handler or nil if not a git buffer
 ---@param bufnr integer|nil
----@return 'git'|'fugitive'|'neogit'|'diffview'|'gitsigns'|nil
+---@return 'git'|'fugitive'|'diffview'|'gitsigns'|nil
 function Lpke_git_buf(bufnr)
   if not bufnr then
     bufnr = vim.api.nvim_get_current_buf()
@@ -89,8 +89,6 @@ function Lpke_git_buf(bufnr)
   ) or string.match(buf_name, '^git://') or string.match(buf_name, '^git://')
   local fugitive_buffer = string.match(file_type, 'fugitive')
     or string.match(buf_name, '^fugitive://')
-  local neogit_buffer = string.match(file_type, 'Neogit')
-    or string.match(buf_name, '^neogit://')
   local diffview_buffer = string.match(file_type, 'Diffview')
     or string.match(buf_name, '^diffview://')
   local gitsigns_buffer = string.match(file_type, 'gitsigns')
@@ -100,8 +98,6 @@ function Lpke_git_buf(bufnr)
     return 'git'
   elseif fugitive_buffer then
     return 'fugitive'
-  elseif neogit_buffer then
-    return 'neogit'
   elseif diffview_buffer then
     return 'diffview'
   elseif gitsigns_buffer then

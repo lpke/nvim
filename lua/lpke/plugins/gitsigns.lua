@@ -96,6 +96,9 @@ local function config()
         { 'n', 'gsh', gitsigns.preview_hunk, { desc = 'Gitsigns: Preview hunk under cursor in a floating window' } },
         { 'n', 'gsl', gitsigns.preview_hunk_inline, { desc = 'Gitsigns: Preview hunk under cursor inline' } },
 
+        -- open buffer blame
+        { 'n', 'gsb', gitsigns.blame, { desc = 'Gitsigns: Open blame for current buffer' } },
+
         -- TODO: keymap for `:Gitsigns blame`
         -- TODO: unorganised
         -- { 'n', '<leader>hb', function()

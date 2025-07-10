@@ -216,7 +216,7 @@ end
 
 local function config()
   local helpers = require('lpke.core.helpers')
-  -- local tc = Lpke_theme_colors
+  local tc = Lpke_theme_colors
 
   -- stylua: ignore start
   helpers.keymap_set_multi({
@@ -227,7 +227,10 @@ local function config()
   })
   -- stylua: ignore end
 
-  -- TODO: highlighting `FugitiveblameTime`
+  helpers.set_hl_multi({
+    ['FugitiveblameTime'] = { fg = tc.subtle },
+    ['FugitiveblameDelimiter'] = { fg = tc.base },
+  })
 end
 
 return {
