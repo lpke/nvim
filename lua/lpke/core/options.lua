@@ -54,6 +54,12 @@ M.vim_opts = {
   relativenumber = true, -- make the line numbers relative to active line
   numberwidth = 4, -- the width of the number column
   signcolumn = 'yes', -- show signs in signcolumn
+  foldcolumn = 'auto', -- show a fold symbol column when there are folds in the buffer
+  fillchars = {
+    foldopen = '\u{f078}',
+    foldclose = '\u{f054}',
+    fold = '\u{2500}',
+  }, -- make fold symbols a bit prettier
   wrap = false, -- line wrap
   breakindent = true, -- wrapped text is indented to that line's indent level
   laststatus = 3, -- last window has status line - 0:never, 1:only if 2+ wins, 2: always, 3: always and only last win (global)
