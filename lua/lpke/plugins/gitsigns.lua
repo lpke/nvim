@@ -99,21 +99,16 @@ local function config()
         -- open buffer blame
         { 'n', 'gsb', gitsigns.blame, { desc = 'Gitsigns: Open blame for current buffer' } },
 
-        -- TODO: keymap for `:Gitsigns blame`
-        -- TODO: unorganised
-        -- { 'n', '<leader>hb', function()
-        --   gitsigns.blame_line({ full = true })
-        -- end, { desc = '' } },
-        -- { 'n', '<leader>hd', gitsigns.diffthis, { desc = '' } },
-        -- { 'n', '<leader>hD', function()
-        --   gitsigns.diffthis('~')
-        -- end, { desc = '' } },
-        -- { 'n', '<leader>hQ', function()
-        --   gitsigns.setqflist('all')
-        -- end, { desc = '' } },
-        -- { 'n', '<leader>hq', gitsigns.setqflist, { desc = '' } },
-        -- { 'n', '<leader>Gb', gitsigns.toggle_current_line_blame, { desc = '' } },
-        -- { 'n', '<leader>Gw', gitsigns.toggle_word_diff, { desc = '' } },
+        -- add hunks to quickfix list
+        { 'n', 'gsq', function()
+          gitsigns.setqflist()
+        end, { desc = 'Gitsigns: Set quickfix list to location of git hunks (current file)' } },
+        { 'n', '<leader>gsq', function()
+          gitsigns.setqflist('attached')
+        end, { desc = 'Gitsigns: Set quickfix list to location of git hunks (open buffers)' } },
+        { 'n', 'gsQ', function()
+          gitsigns.setqflist('all')
+        end, { desc = 'Gitsigns: Set quickfix list to location of git hunks (all files, all associated git repos)' } },
 
         -- TODO: fix this
         -- Text object

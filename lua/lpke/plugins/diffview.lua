@@ -275,7 +275,6 @@ local function config()
   })
 
   -- stylua: ignore start
-  -- TODO: all maps to have `Diffview: `
   helpers.keymap_set_multi({
     { 'nC', '<leader>gc', 'DiffviewFileHistory %', { desc = 'Diffview: Open file commit history' } },
     { 'nC', '<BS>gc', 'DiffviewFileHistory', { desc = 'Diffview: Open current branch commit history' } },
