@@ -59,6 +59,7 @@ M.vim_opts = {
     foldopen = '\u{f078}',
     foldclose = '\u{f054}',
     fold = '\u{2500}',
+    foldsep = '\u{2503}',
   }, -- make fold symbols a bit prettier
   foldopen = "mark,quickfix,tag,undo", -- the things that are allowed to open a fold
   viewoptions = "folds", -- only remember folds when doing `mkview`
