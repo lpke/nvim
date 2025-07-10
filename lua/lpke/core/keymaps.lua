@@ -44,7 +44,7 @@ helpers.keymap_set_multi({
   {'n', '<C-z>', 'u', { desc = 'Undo' }},
 
   -- quickfix list
-  {'nC', 'gq', 'botright copen', { desc = 'Open quick fix list' }},
+  {'nC', 'K', 'botright copen', { desc = 'Open quick fix list' }},
   {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.') - 1, 'text': getline('.')}], 'a')",
     { desc = 'Add current file/position to quick fix list' }},
   {'nvi', '<F2><Down>', function() helpers.safe_call(function() vim.cmd('cnext') end, true) end, { desc = 'Next quickfix item' }},
