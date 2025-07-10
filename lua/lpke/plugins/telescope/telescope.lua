@@ -409,6 +409,9 @@ local function config()
     end, { desc = 'Find string under cursor in cwd' }},
 
     -- git
+    {'n', '<BS>gb', function()
+      builtin_pickers.git_branches()
+    end, { desc = 'Find git branches' }},
     -- using diffview.nvim to do the below now
     -- {'n', '<BS>gg', function()
     --   builtin_pickers.git_status()
@@ -428,9 +431,6 @@ local function config()
     --     from = start_line, to = end_line
     --   })
     -- end, { desc = 'Find selection git commits' }},
-    {'n', '<BS>gb', function()
-      builtin_pickers.git_branches()
-    end, { desc = 'Find git branches' }},
     -- {'n', '<BS>gs', function()
     --   builtin_pickers.git_stash()
     -- end, { desc = 'Find git stash' }},
