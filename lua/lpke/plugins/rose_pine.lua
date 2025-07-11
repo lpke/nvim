@@ -120,6 +120,7 @@ local function config()
       VertSplit = { bg = 'none', fg = tc.highlight_med },
       WinSeparator = { bg = 'none', fg = tc.highlight_med },
       Folded = { bg = tc.surface, fg = tc.mutedminus },
+      FoldColumn = { bg = 'none', fg = tc.mutedminus },
       Comment = { fg = tc.muted },
       ColorColumn = { bg = tc.rose },
       StatusLine = { fg = tc.subtle, bg = tc.overlay },
