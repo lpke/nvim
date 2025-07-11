@@ -119,6 +119,7 @@ local function config()
       Visual = { bg = tc.highlight_med, inherit = false },
       VertSplit = { bg = 'none', fg = tc.highlight_med },
       WinSeparator = { bg = 'none', fg = tc.highlight_med },
+      Folded = { bg = tc.surface, fg = tc.mutedminus },
       Comment = { fg = tc.muted },
       ColorColumn = { bg = tc.rose },
       StatusLine = { fg = tc.subtle, bg = tc.overlay },
