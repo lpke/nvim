@@ -437,7 +437,7 @@ function M.find_upward_to_git_root_or_cwd(items)
   return nil
 end
 
--- Execute a string as Lua code
+-- execute a string as Lua code
 function M.execute_as_lua(code_string)
   local func, err = load('return ' .. code_string)
   if func then
@@ -445,6 +445,38 @@ function M.execute_as_lua(code_string)
   else
     vim.notify(err or 'unknown error', vim.log.levels.ERROR)
   end
+end
+
+-- quickfix navigation: direction = 1 (next), -1 (prev)
+function M.qf_nav(direction)
+  M.safe_call(function()
+    local qf = vim.fn.getqflist({ idx = 0 })
+    local qf_size = #vim.fn.getqflist()
+    local qf_idx = qf.idx
+    if qf_size == 1 then
+      vim.cmd('cfirst')
+      return
+    end
+    if direction == 1 then
+      if qf_idx == qf_size then
+        vim.cmd('clast')
+        if vim.fn.getqflist({ idx = 0 }).idx == qf_size then
+          vim.notify('Already at last quickfix item', vim.log.levels.INFO)
+        end
+      else
+        vim.cmd('cnext')
+      end
+    else
+      if qf_idx == 1 then
+        vim.cmd('cfirst')
+        if vim.fn.getqflist({ idx = 0 }).idx == 1 then
+          vim.notify('Already at first quickfix item', vim.log.levels.INFO)
+        end
+      else
+        vim.cmd('cprev')
+      end
+    end
+  end, true)
 end
 
 return M

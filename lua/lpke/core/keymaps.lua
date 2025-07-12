@@ -47,10 +47,10 @@ helpers.keymap_set_multi({
   {'nC', 'gq', 'botright copen', { desc = 'Open quick fix list' }},
   {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.') - 1, 'text': getline('.')}], 'a')",
     { desc = 'Add current file/position to quick fix list' }},
-  {'nvi', '<F2><Down>', function() helpers.safe_call(function() vim.cmd('cnext') end, true) end, { desc = 'Next quickfix item' }},
-  {'nvi', '<A-Down>', function() helpers.safe_call(function() vim.cmd('cnext') end, true) end, { desc = 'Next quickfix item' }},
-  {'nvi', '<F2><Up>', function() helpers.safe_call(function() vim.cmd('cprev') end, true) end, { desc = 'Previous quickfix item' }},
-  {'nvi', '<A-Up>', function() helpers.safe_call(function() vim.cmd('cprev') end, true) end, { desc = 'Previous quickfix item' }},
+  {'nvi', '<F2><Down>', function() helpers.qf_nav(1) end, { desc = 'Next quickfix item' }},
+  {'nvi', '<A-Down>', function() helpers.qf_nav(1) end, { desc = 'Next quickfix item' }},
+  {'nvi', '<F2><Up>', function() helpers.qf_nav(-1) end, { desc = 'Previous quickfix item' }},
+  {'nvi', '<A-Up>', function() helpers.qf_nav(-1) end, { desc = 'Previous quickfix item' }},
 
   -- glorified macros
   {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],
