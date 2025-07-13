@@ -1,3 +1,74 @@
+local function get_cur_model()
+  local chat = require('codecompanion').buf_get_chat()
+  if not chat then
+    return nil
+  end
+  local adapter = chat.adapter
+  if not adapter then
+    return nil
+  end
+  local model = adapter.schema.model.default or adapter.opts.model
+  return model
+end
+
+local function toggle_if_already_in_chat()
+  if vim.bo.filetype == 'codecompanion' then
+    vim.cmd('CodeCompanionChat Toggle')
+    return true
+  end
+  return false
+end
+
+-- toggle the codecompanion chat buffer
+function Lpke_toggle_cc()
+    -- stylua: ignore
+    if toggle_if_already_in_chat() then return end
+  -- find and close any codecompanion windows in other tabs
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    if tab ~= vim.api.nvim_get_current_tabpage() then
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+        local buf = vim.api.nvim_win_get_buf(win)
+        if
+          vim.api.nvim_get_option_value('filetype', { buf = buf })
+          == 'codecompanion'
+        then
+          vim.api.nvim_win_close(win, false)
+          break
+        end
+      end
+    end
+  end
+  -- toggle codecompanion chat normally
+  vim.cmd('CodeCompanionChat Toggle')
+  vim.cmd('stopinsert')
+end
+
+-- quickly swap between two AI models (or directly to one if only one provided)
+-- returns name of model swapped to, or nil if error
+-- FIXME: 
+function Lpke_cc_model_swap(model1, model2)
+  local chat_obj = require('codecompanion').buf_get_chat()
+  local chat = chat_obj[1].chat.references.Chat
+  local cur_model = get_cur_model()
+  Lpke_print(cur_model)
+
+  local target_model
+  if model2 then
+    -- Two models provided - swap between them
+    if cur_model == model1 then
+      target_model = model2
+    else
+      target_model = model1
+    end
+  else
+    -- Only one model provided - apply it directly
+    target_model = model1
+  end
+
+  chat:apply_model(target_model)
+  return get_cur_model()
+end
+
 local function config()
   local codecompanion = require('codecompanion')
   local helpers = require('lpke.core.helpers')
@@ -5,46 +76,17 @@ local function config()
   local spinner = require('lpke.plugins.ai.helpers.chat_spinner')
   spinner:init()
 
-  local function toggle_if_already_in_chat()
-    if vim.bo.filetype == 'codecompanion' then
-      vim.cmd('CodeCompanionChat Toggle')
-      return true
-    end
-    return false
-  end
-
-  -- toggle the codecompanion chat buffer
-  function Lpke_toggle_cc()
-    -- stylua: ignore
-    if toggle_if_already_in_chat() then return end
-    -- find and close any codecompanion windows in other tabs
-    for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-      if tab ~= vim.api.nvim_get_current_tabpage() then
-        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
-          local buf = vim.api.nvim_win_get_buf(win)
-          if
-            vim.api.nvim_get_option_value('filetype', { buf = buf })
-            == 'codecompanion'
-          then
-            vim.api.nvim_win_close(win, false)
-            break
-          end
-        end
-      end
-    end
-    -- toggle codecompanion chat normally
-    vim.cmd('CodeCompanionChat Toggle')
-    vim.cmd('stopinsert')
-  end
-
   local function open_new_chat_with_context()
-    -- stylua: ignore
-    if toggle_if_already_in_chat() then return end
+    if toggle_if_already_in_chat() then
+      return
+    end
     vim.cmd('CodeCompanionChat')
     vim.cmd('normal! i#{buffer} #{lsp}')
     vim.cmd('normal! G2o')
     vim.cmd('stopinsert')
-    vim.cmd('normal! i@{grep_search} @{file_search} @{read_file} @{create_file}')
+    vim.cmd(
+      'normal! i@{grep_search} @{file_search} @{read_file} @{create_file}'
+    )
     vim.cmd('normal! Go')
     vim.cmd('stopinsert')
     vim.cmd('normal! i@{insert_edit_into_file} ')
@@ -52,13 +94,16 @@ local function config()
   end
 
   local function open_new_chat_with_context_selection()
-    -- stylua: ignore
-    if toggle_if_already_in_chat() then return end
+    if toggle_if_already_in_chat() then
+      return
+    end
     vim.cmd('CodeCompanionChat')
     vim.cmd('normal! gg}}{i#{buffer} #{lsp}')
     vim.cmd('normal! G2o')
     vim.cmd('stopinsert')
-    vim.cmd('normal! i@{grep_search} @{file_search} @{read_file} @{create_file}')
+    vim.cmd(
+      'normal! i@{grep_search} @{file_search} @{read_file} @{create_file}'
+    )
     vim.cmd('normal! Go')
     vim.cmd('stopinsert')
     vim.cmd('normal! i@{insert_edit_into_file} ')
@@ -66,8 +111,9 @@ local function config()
   end
 
   local function toggle_chat_with_context_selection()
-    -- stylua: ignore
-    if toggle_if_already_in_chat() then return end
+    if toggle_if_already_in_chat() then
+      return
+    end
     -- copy selection
     vim.cmd('normal! "vy')
     local selection = vim.fn.getreg('v')
@@ -113,6 +159,7 @@ local function config()
     vim.api.nvim_input('#{buffer} ')
   end
 
+
   -- stylua: ignore start
   helpers.keymap_set_multi({
     { 'in', '<A-f>', Lpke_toggle_cc, { desc = 'CodeCompanion: Toggle the chat buffer' }},
@@ -125,6 +172,7 @@ local function config()
     { 'v', '<F2>F', open_new_chat_with_context_selection, { desc = 'CodeCompanion: Open a new chat buffer with context and selection' }},
     { 'ni', '<C-l>', open_inline_prompt_with_context, { desc = 'CodeCompanion: Open inline prompt with context' }},
     { 'v', '<C-l>', ":<C-u>'<,'>CodeCompanion<cr>#{buffer} ", { desc = 'CodeCompanion: Open inline prompt with context and selection' }},
+    { 'n', '<leader>am', function() Lpke_cc_model_swap('gpt-4.1', 'gpt-4o') end, { desc = 'CodeCompanion: Swap between AI models' }},
   })
   -- stylua: ignore end
 
