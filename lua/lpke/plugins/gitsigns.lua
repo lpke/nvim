@@ -113,9 +113,8 @@ local function config()
           vim.cmd('botright copen')
         end, { desc = 'Gitsigns: Set quickfix list to location of unstaged git hunks (all files, all associated git repos)' } },
 
-        -- TODO: fix this
         -- Text object
-        -- { 'ox', 'ih', gitsigns.select_hunk, { desc = '' } },
+        { 'ox', 'ih', gitsigns.select_hunk, { desc = '' } },
       })
       -- stylua: ignore end
     end,
