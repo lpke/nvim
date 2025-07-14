@@ -70,6 +70,8 @@ function Lpke_tabline()
       ['qf'] = 'Quickfix',
       ['TelescopePrompt'] = 'Telescope',
       ['harpoon'] = 'Harpoon',
+      ['lazy'] = 'Lazy',
+      ['mason'] = 'Mason',
       ['undotree'] = 'Undotree',
       ['codecompanion'] = 'CodeCompanion',
       ['gitcommit'] = 'G:Commit',

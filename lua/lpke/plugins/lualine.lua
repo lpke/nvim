@@ -145,6 +145,8 @@ local function config()
         ['qf'] = 'Quickfix List',
         ['TelescopePrompt'] = 'Telescope',
         ['harpoon'] = 'Harpoon Menu',
+        ['lazy'] = 'Lazy (Plugin Manager)',
+        ['mason'] = 'Mason (Package Manager)',
         ['fugitive'] = 'Fugitive Status',
         ['fugitiveblame'] = 'Fugitive Blame',
         ['gitsigns-blame'] = 'Gitsigns Blame',
