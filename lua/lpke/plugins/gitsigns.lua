@@ -113,6 +113,10 @@ local function config()
           vim.cmd('botright copen')
         end, { desc = 'Gitsigns: Set quickfix list to location of unstaged git hunks (all files, all associated git repos)' } },
 
+        -- toggles
+        { 'n', '<F2>z', gitsigns.toggle_signs, { desc = 'Gitsigns: Toggle git changes in sign column' } },
+        { 'n', '<A-z>', gitsigns.toggle_signs, { desc = 'Gitsigns: Toggle git changes in sign column' } },
+
         -- Text object
         { 'ox', 'ih', gitsigns.select_hunk, { desc = '' } },
       })
