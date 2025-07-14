@@ -120,6 +120,44 @@ function M.keymap_set_multi(keymaps)
   end
 end
 
+-- same as above but requires a filetype, and optionally accepts a condition function
+function M.ft_keymap_set_multi(filetype_pattern, keymaps, cond_func)
+  vim.api.nvim_create_autocmd({ 'FileType', 'BufEnter' }, {
+    pattern = filetype_pattern,
+    callback = function(event)
+      local bufnr = event.buf
+      -- run `cond_func` if provided
+      if type(cond_func) == 'function' and (not cond_func(bufnr)) then
+        return
+      end
+      -- add `buffer` option to every keymap
+      for i, keymap in ipairs(keymaps) do
+        local mode, lhs, rhs, opts = table.unpack(keymap)
+        opts = opts or {}
+        opts.buffer = bufnr
+        keymaps[i] = { mode, lhs, rhs, opts }
+      end
+      M.keymap_set_multi(keymaps)
+    end,
+  })
+end
+
+function M.telescope_keymap_set_multi(target_title, keymaps, cond_func)
+  M.ft_keymap_set_multi('TelescopePrompt', keymaps, function(bufnr)
+    local ok, actions_state = pcall(require, 'telescope.actions.state')
+    if not ok then
+      return false
+    end
+    local prompt_title = actions_state.get_current_picker(bufnr).prompt_title
+    if
+      type(cond_func) == 'function' and (not cond_func(bufnr, prompt_title))
+    then
+      return false
+    end
+    return string.match(prompt_title, target_title) ~= nil
+  end)
+end
+
 -- parses a table containing custom command args and creates or deletes the command
 function M.command_set(command)
   local flags, name, cmd, opts = table.unpack(command)

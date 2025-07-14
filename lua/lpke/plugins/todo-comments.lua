@@ -79,6 +79,19 @@ local function config()
   }
   todo_comments.setup(opts)
 
+  local telescope_filtered = false
+  local function switch_todo_telescope()
+    if telescope_filtered then
+      vim.cmd('TodoTelescope')
+    else
+      vim.cmd(
+        'TodoTelescope keywords=TODO,FIX,'
+          .. table.concat(opts.keywords.FIX.alt, ',')
+      )
+    end
+    telescope_filtered = not telescope_filtered
+  end
+
   -- stylua: ignore start
   helpers.keymap_set_multi({
     {'n', ']t', function()
@@ -88,49 +101,13 @@ local function config()
       todo_comments.jump_prev()
     end, { desc = 'TodoComments: Previous comment' }},
     {'nC', '<BS>,', 'TodoTelescope', { desc = 'TodoComments: Open Telescope picker for todo comments' }},
-    {'nC', 'g,q', 'TodoQuickFix', { desc = 'TodoComments: Add all todos to the quickfix list' }},
+  })
+  -- telescope-only keymaps
+  helpers.telescope_keymap_set_multi('Find Todo', {
+    { 'ni', '<F2>s', switch_todo_telescope, { desc = 'TodoComments: Toggle Telescope picker to display TODO and FIX only' }},
+    { 'ni', '<A-s>', switch_todo_telescope, { desc = 'TodoComments: Toggle Telescope picker to display TODO and FIX only' }},
   })
   -- stylua: ignore end
-
-  -- telescope-only keymaps
-  local telescope_filtered = false
-  vim.api.nvim_create_autocmd('FileType', {
-    pattern = 'TelescopePrompt',
-    callback = function(event)
-      local bufnr = event.buf
-      local ok, actions_state = pcall(require, 'telescope.actions.state')
-      if not ok then
-        return
-      end
-      local function is_todo_telescope()
-        local prompt_title =
-          actions_state.get_current_picker(bufnr).prompt_title
-        return prompt_title and prompt_title == 'Find Todo'
-      end
-      if not is_todo_telescope() then
-        return
-      end
-      local function switch_todo_telescope()
-        if telescope_filtered then
-          vim.cmd('TodoTelescope')
-        else
-          vim.cmd(
-            'TodoTelescope keywords=TODO,FIX,'
-              .. table.concat(opts.keywords.FIX.alt, ',')
-          )
-        end
-        telescope_filtered = not telescope_filtered
-      end
-      -- stylua: ignore start
-      helpers.keymap_set_multi({
-        { 'ni', '<F2>s', switch_todo_telescope, { buffer = bufnr,
-            desc = 'TodoComments: Toggle Telescope picker to display TODO and FIX only' }},
-        { 'ni', '<A-s>', switch_todo_telescope, { buffer = bufnr,
-            desc = 'TodoComments: Toggle Telescope picker to display TODO and FIX only' }},
-      })
-      -- stylua: ignore end
-    end,
-  })
 end
 
 return {
