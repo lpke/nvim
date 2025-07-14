@@ -92,29 +92,3 @@ vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
   desc = 'load view (folds) when opening file',
   command = 'silent! loadview',
 })
-
--- disable matchparen in insert mode
--- local matchparen_group =
---   vim.api.nvim_create_augroup('MatchParenToggle', { clear = true })
--- vim.api.nvim_create_autocmd('InsertEnter', {
---   group = matchparen_group,
---   pattern = '*',
---   callback = function()
---     if
---       vim.bo.filetype ~= 'TelescopePrompt' and vim.fn.getcmdwintype() == ''
---     then
---       vim.cmd('NoMatchParen')
---     end
---   end,
--- })
--- vim.api.nvim_create_autocmd('InsertLeave', {
---   group = matchparen_group,
---   pattern = '*',
---   callback = function()
---     if
---       vim.bo.filetype ~= 'TelescopePrompt' and vim.fn.getcmdwintype() == ''
---     then
---       vim.cmd('DoMatchParen')
---     end
---   end,
--- })

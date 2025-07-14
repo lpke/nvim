@@ -96,10 +96,10 @@ local function config()
   helpers.keymap_set_multi({
     {'n', ']t', function()
       todo_comments.jump_next()
-    end, { desc = 'TodoComments: Next comment' }},
+    end, { square_repeat = true, desc = 'TodoComments: Next comment' }},
     {'n', '[t', function()
       todo_comments.jump_prev()
-    end, { desc = 'TodoComments: Previous comment' }},
+    end, { square_repeat = true, desc = 'TodoComments: Previous comment' }},
     {'nC', '<BS>,', 'TodoTelescope', { desc = 'TodoComments: Open Telescope picker for todo comments' }},
   })
   -- telescope-only keymaps

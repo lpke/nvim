@@ -145,8 +145,8 @@ local function config()
 
     -- 'l'sp navigation
     { 'nC', '<leader>l', 'Telescope diagnostics bufnr=0', { desc = 'Show buffer diagnostics' }, },
-    { 'n', '[l', function() vim.diagnostic.jump({ count = -1, float = true }) end, { desc = 'Go to previous diagnostic' }, },
-    { 'n', ']l', function() vim.diagnostic.jump({ count = 1, float = true }) end, { desc = 'Go to next diagnostic' }, },
+    { 'n', '[l', function() vim.diagnostic.jump({ count = -1, float = true }) end, { square_repeat = true, desc = 'Go to previous diagnostic' }, },
+    { 'n', ']l', function() vim.diagnostic.jump({ count = 1, float = true }) end, { square_repeat = true, desc = 'Go to next diagnostic' }, },
 
     -- jump/list related code
     { 'nC', '<leader>;', 'Telescope lsp_references', { desc = 'Show LSP references' }, },

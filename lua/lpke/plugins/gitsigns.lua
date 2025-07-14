@@ -62,20 +62,20 @@ local function config()
           else
             gitsigns.nav_hunk('next', { preview = true })
           end
-        end, { desc = 'Gitsigns: Go to the next git hunk (unstaged only)' } },
+        end, { square_repeat = true, desc = 'Gitsigns: Go to the next git hunk (unstaged only)' } },
         { 'n', '[C', function()
           if vim.wo.diff then
             vim.cmd.normal({ '[c', bang = true })
           else
             gitsigns.nav_hunk('prev', { preview = true })
           end
-        end, { desc = 'Gitsigns: Go to the previous git hunk (unstaged only)' } },
+        end, { square_repeat = true, desc = 'Gitsigns: Go to the previous git hunk (unstaged only)' } },
         { 'n', ']c', function()
           gitsigns.nav_hunk('next', { preview = true, target = 'all' })
-        end, { desc = 'Gitsigns: Go to the next git hunk (staged and unstaged)' } },
+        end, { square_repeat = true, desc = 'Gitsigns: Go to the next git hunk (staged and unstaged)' } },
         { 'n', '[c', function()
           gitsigns.nav_hunk('prev', { preview = true, target = 'all' })
-        end, { desc = 'Gitsigns: Go to the previous git hunk (staged and unstaged)' } },
+        end, { square_repeat = true, desc = 'Gitsigns: Go to the previous git hunk (staged and unstaged)' } },
 
         -- stage/unstage/reset hunks
         { 'n', 'gss', gitsigns.stage_hunk, { desc = 'Gitsigns: Stage or unstage the hunk under the cursor' } },

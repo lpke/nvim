@@ -13,6 +13,15 @@ local function config()
     end
   end
 
+  local function prev_conflict(key)
+    actions.prev_conflict()
+    Lpke_square_repeat_key = key
+  end
+  local function next_conflict(key)
+    actions.next_conflict()
+    Lpke_square_repeat_key = key
+  end
+
   diffview.setup({
     diff_binaries = false, -- Show diffs for binaries
     enhanced_diff_hl = false, -- See |diffview-config-enhanced_diff_hl|
@@ -130,8 +139,8 @@ local function config()
         { 'n', '<leader>e',   actions.focus_files,                    { desc = 'Diffview: Bring focus to the file panel' } },
         { 'n', '<leader>b',   actions.toggle_files,                   { desc = 'Diffview: Toggle the file panel.' } },
         { 'n', 'g<C-x>',      actions.cycle_layout,                   { desc = 'Diffview: Cycle through available layouts.' } },
-        { 'n', '[x',          actions.prev_conflict,                  { desc = 'Diffview: In the merge-tool: jump to the previous conflict' } },
-        { 'n', ']x',          actions.next_conflict,                  { desc = 'Diffview: In the merge-tool: jump to the next conflict' } },
+        { 'n', '[x',          function() prev_conflict('x') end,      { desc = 'Diffview: In the merge-tool: jump to the previous conflict' } },
+        { 'n', ']x',          function() next_conflict('x') end,      { desc = 'Diffview: In the merge-tool: jump to the next conflict' } },
         { 'n', '<leader>co',  actions.conflict_choose('ours'),        { desc = 'Diffview: Choose the OURS version of a conflict' } },
         { 'n', '<leader>ct',  actions.conflict_choose('theirs'),      { desc = 'Diffview: Choose the THEIRS version of a conflict' } },
         { 'n', '<leader>cb',  actions.conflict_choose('base'),        { desc = 'Diffview: Choose the BASE version of a conflict' } },
@@ -210,8 +219,8 @@ local function config()
         { 'n', '<leader>e',      actions.focus_files,                    { desc = 'Diffview: Bring focus to the file panel' } },
         { 'n', '<leader>b',      actions.toggle_files,                   { desc = 'Diffview: Toggle the file panel' } },
         { 'n', 'g<C-x>',         actions.cycle_layout,                   { desc = 'Diffview: Cycle available layouts' } },
-        { 'n', '[x',             actions.prev_conflict,                  { desc = 'Diffview: Go to the previous conflict' } },
-        { 'n', ']x',             actions.next_conflict,                  { desc = 'Diffview: Go to the next conflict' } },
+        { 'n', '[x',             function() prev_conflict('x') end,      { desc = 'Diffview: Go to the previous conflict' } },
+        { 'n', ']x',             function() next_conflict('x') end,      { desc = 'Diffview: Go to the next conflict' } },
         { 'n', 'g?',             actions.help('file_panel'),             { desc = 'Diffview: Open the help panel' } },
         { 'n', '<leader>cO',     actions.conflict_choose_all('ours'),    { desc = 'Diffview: Choose the OURS version of a conflict for the whole file' } },
         { 'n', '<leader>cT',     actions.conflict_choose_all('theirs'),  { desc = 'Diffview: Choose the THEIRS version of a conflict for the whole file' } },

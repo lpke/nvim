@@ -79,6 +79,7 @@ function M.keymap_set(keymap)
   local modes = {}
   local delete_only = false
   local mac_lhs = ''
+  local is_cmd = false
 
   for char in mode:gmatch('.') do
     if char == 'R' then
@@ -87,6 +88,7 @@ function M.keymap_set(keymap)
       opts.expr = true
     elseif char == 'C' then
       rhs = '<cmd>' .. rhs .. '<cr>'
+      is_cmd = true
     elseif char == '!' then
       opts.silent = true
     elseif char == 'D' then
@@ -98,6 +100,21 @@ function M.keymap_set(keymap)
     else
       table.insert(modes, char)
     end
+  end
+
+  if
+    opts.square_repeat
+    and not is_cmd
+    and (type(rhs) == 'function')
+    and (string.match(lhs, '^[%[%]][a-zA-Z]$') ~= nil) -- is a "square movement" (eg `[q`)
+  then
+    local orig_rhs = rhs
+    rhs = function()
+      orig_rhs()
+      local movement_key = string.sub(lhs, 2, -1)
+      Lpke_square_repeat_key = movement_key
+    end
+    opts.square_repeat = nil
   end
 
   if delete_only then

@@ -8,6 +8,7 @@ local keymap_set = helpers.keymap_set
               don't want accidental <Esc> triggers when using my keybinds. ]]
 
 vim.g.mapleader = ' '
+Lpke_square_repeat_key = 'c' -- updated on `[]a-z` maps where `square_repeat` is true
 -- stylua: ignore start
 helpers.keymap_set_multi({
   -- removals
@@ -43,6 +44,12 @@ helpers.keymap_set_multi({
   {'nv', 'ze', 'zt8<C-y>', { desc = 'Centre cursor 8 lines below zt' }},
   {'n', '<C-z>', 'u', { desc = 'Undo' }},
 
+  -- "square movement" repeat
+  {'n', '[[', function() vim.api.nvim_feedkeys('[' .. Lpke_square_repeat_key, 't', false) end,
+    { desc = 'Square movement repeat: previous' }},
+  {'n', ']]', function() vim.api.nvim_feedkeys(']' .. Lpke_square_repeat_key, 't', false) end,
+    { desc = 'Square movement repeat: next' }},
+
   -- quickfix list
   {'nC', 'gq', 'botright copen', { desc = 'Open quick fix list' }},
   {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.') - 1, 'text': getline('.')}], 'a')",
@@ -51,8 +58,8 @@ helpers.keymap_set_multi({
   {'nvi', '<A-Down>', function() helpers.qf_nav(1) end, { desc = 'Next quickfix item' }},
   {'nvi', '<F2><Up>', function() helpers.qf_nav(-1) end, { desc = 'Previous quickfix item' }},
   {'nvi', '<A-Up>', function() helpers.qf_nav(-1) end, { desc = 'Previous quickfix item' }},
-  {'nv', ']q', function() helpers.qf_nav(1) end, { desc = 'Next quickfix item' }},
-  {'nv', '[q', function() helpers.qf_nav(-1) end, { desc = 'Previous quickfix item' }},
+  {'nv', ']q', function() helpers.qf_nav(1) end, { square_repeat = true, desc = 'Next quickfix item' }},
+  {'nv', '[q', function() helpers.qf_nav(-1) end, { square_repeat = true, desc = 'Previous quickfix item' }},
 
   -- glorified macros
   {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],
@@ -180,6 +187,10 @@ helpers.keymap_set_multi({
   {'nCM', '<C-w>g<Left>', 'tabmove -1', { desc = 'Move Tab Left' }},
   {'nC', '<M-S-Right>', 'tabmove +1', { desc = 'Move Tab Right' }},
   {'nC', '<M-S-Left>', 'tabmove -1', { desc = 'Move Tab Left' }},
+
+  -- buffer navigation
+  {'n', '[b', function() vim.cmd('bprev') end, { square_repeat = true, desc = 'Jump to previous buffer' }},
+  {'n', ']b', function() vim.cmd('bnext') end, { square_repeat = true, desc = 'Jump to next buffer' }},
 
   -- arrow-key scrolling
   {'nv', '<Down>', '4<C-e>', { desc = 'Scroll down (4 lines)' }},
