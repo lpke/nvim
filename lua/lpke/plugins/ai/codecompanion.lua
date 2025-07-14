@@ -1,15 +1,9 @@
-local function get_cur_model()
-  local chat = require('codecompanion').buf_get_chat()
-  if not chat then
-    return nil
-  end
-  local adapter = chat.adapter
-  if not adapter then
-    return nil
-  end
-  local model = adapter.schema.model.default or adapter.opts.model
-  return model
-end
+local model_maps = {
+  ['son'] = 'claude-sonnet-4',
+  ['son3.7'] = 'claude-3.7-sonnet',
+  ['gpt'] = 'gpt-4.1',
+  ['gem'] = 'gemini-2.0-flash-001',
+}
 
 local function toggle_if_already_in_chat()
   if vim.bo.filetype == 'codecompanion' then
@@ -43,14 +37,34 @@ function Lpke_toggle_cc()
   vim.cmd('stopinsert')
 end
 
+local function get_cur_model(bufnr)
+  local chat = require('codecompanion').buf_get_chat(bufnr)
+  if not chat then
+    return nil
+  end
+  local adapter = chat.adapter
+  if not adapter then
+    return nil
+  end
+  local model = adapter.schema.model.default or adapter.opts.model
+  return model
+end
+
 -- quickly swap between two AI models (or directly to one if only one provided)
 -- returns name of model swapped to, or nil if error
--- FIXME: 
-function Lpke_cc_model_swap(model1, model2)
+function Lpke_cc_model(target_model1, target_model2)
+  if vim.bo.filetype ~= 'codecompanion' then
+    vim.notify(
+      'Lpke_cc_model_swap: Not in a CodeCompanion chat buffer',
+      vim.log.levels.ERROR
+    )
+    return nil
+  end
   local chat_obj = require('codecompanion').buf_get_chat()
   local chat = chat_obj[1].chat.references.Chat
-  local cur_model = get_cur_model()
-  Lpke_print(cur_model)
+  local model1 = model_maps[target_model1] or target_model1
+  local model2 = model_maps[target_model2] or target_model2
+  local cur_model = get_cur_model(0)
 
   local target_model
   if model2 then
@@ -159,7 +173,6 @@ local function config()
     vim.api.nvim_input('#{buffer} ')
   end
 
-
   -- stylua: ignore start
   helpers.keymap_set_multi({
     { 'in', '<A-f>', Lpke_toggle_cc, { desc = 'CodeCompanion: Toggle the chat buffer' }},
@@ -172,7 +185,18 @@ local function config()
     { 'v', '<F2>F', open_new_chat_with_context_selection, { desc = 'CodeCompanion: Open a new chat buffer with context and selection' }},
     { 'ni', '<C-l>', open_inline_prompt_with_context, { desc = 'CodeCompanion: Open inline prompt with context' }},
     { 'v', '<C-l>', ":<C-u>'<,'>CodeCompanion<cr>#{buffer} ", { desc = 'CodeCompanion: Open inline prompt with context and selection' }},
-    { 'n', '<leader>am', function() Lpke_cc_model_swap('gpt-4.1', 'gpt-4o') end, { desc = 'CodeCompanion: Swap between AI models' }},
+  })
+  helpers.ft_keymap_set_multi('codecompanion', {
+    { 'n', '<leader>m', function() Lpke_cc_model('gpt', 'son') end, { desc = 'CodeCompanion: Swap between AI models' }},
+  })
+  helpers.command_set_multi({
+    { '*', 'Model', function(cmd)
+      if #cmd.fargs == 0 then
+        print(':Model <model1> [<model2>] | son|gpt|gem|exact')
+      else
+        Lpke_cc_model(cmd.fargs[1], cmd.fargs[2])
+      end
+    end, { desc = 'CodeCompanion: Swap to (or between) models' } },
   })
   -- stylua: ignore end
 
