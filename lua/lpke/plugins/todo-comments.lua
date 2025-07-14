@@ -105,7 +105,6 @@ local function config()
       local function is_todo_telescope()
         local prompt_title =
           actions_state.get_current_picker(bufnr).prompt_title
-        print(prompt_title)
         return prompt_title and prompt_title == 'Find Todo'
       end
       if not is_todo_telescope() then
