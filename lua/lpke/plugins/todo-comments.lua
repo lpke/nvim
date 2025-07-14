@@ -13,14 +13,22 @@ local function config()
         alt = { 'FIXME', 'BUG', 'FIXIT', 'ISSUE' }, -- a set of other keywords that all map to this FIX keywords
         -- signs = false, -- configure signs for some keywords individually
       },
-      TODO = { icon = '\u{f05a} ', color = 'info' },
-      HACK = { icon = '\u{f050} ', color = 'warning' },
-      WARN = { icon = '\u{f071} ', color = 'warning', alt = { 'WARNING', 'XXX' } },
-      PERF = { icon = '\u{f06d} ', alt = { 'OPTIM', 'PERFORMANCE', 'OPTIMIZE' } },
-      NOTE = { icon = '\u{eabc} ', color = 'hint', alt = { 'INFO' } },
+      TODO = { icon = '\u{f024} ', color = 'info' },
+      HACK = { icon = '\u{f024} ', color = 'warning' },
+      WARN = {
+        icon = '\u{f024} ',
+        color = 'warning',
+        alt = { 'WARNING', 'XXX' },
+      },
+      PERF = {
+        icon = '\u{f024} ',
+        color = 'warning',
+        alt = { 'OPTIM', 'PERFORMANCE', 'OPTIMIZE' },
+      },
+      NOTE = { icon = '\u{f024} ', color = 'hint', alt = { 'INFO' } },
       TEST = {
-        icon = '\u{f499} ',
-        color = 'test',
+        icon = '\u{f024} ',
+        color = 'default',
         alt = { 'TESTING', 'PASSED', 'FAILED' },
       },
     },
@@ -28,7 +36,7 @@ local function config()
       fg = 'NONE', -- The gui style to use for the fg highlight group.
       bg = 'BOLD', -- The gui style to use for the bg highlight group.
     },
-    merge_keywords = true, -- when true, custom keywords will be merged with the defaults
+    merge_keywords = false, -- when true, custom keywords will be merged with the defaults
     -- highlighting of the line containing the todo comment
     -- * before: highlights before the keyword (typically comment characters)
     -- * keyword: highlights of the keyword
@@ -48,12 +56,11 @@ local function config()
     -- list of named colors where we try to extract the guifg from the
     -- list of highlight groups or use the hex color if hl not found as a fallback
     colors = {
-      error = { 'DiagnosticError', 'ErrorMsg', '#DC2626' },
-      warning = { 'DiagnosticWarn', 'WarningMsg', '#FBBF24' },
-      info = { 'DiagnosticInfo', '#2563EB' },
-      hint = { 'DiagnosticHint', '#10B981' },
-      test = { 'Identifier', '#FF00FF' },
-      default = { 'Identifier', '#7C3AED' },
+      error = { 'DiagnosticError', 'ErrorMsg', '#eb6f92' },
+      warning = { 'DiagnosticWarn', 'WarningMsg', '#f6c177' },
+      info = { 'DiagnosticInfo', '#9ccfd8' },
+      hint = { 'DiagnosticHint', '#c4a7e7' },
+      default = { 'Identifier', '#c4a7e7' },
     },
     search = {
       command = 'rg',
