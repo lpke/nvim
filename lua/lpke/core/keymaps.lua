@@ -51,6 +51,8 @@ helpers.keymap_set_multi({
   {'nvi', '<A-Down>', function() helpers.qf_nav(1) end, { desc = 'Next quickfix item' }},
   {'nvi', '<F2><Up>', function() helpers.qf_nav(-1) end, { desc = 'Previous quickfix item' }},
   {'nvi', '<A-Up>', function() helpers.qf_nav(-1) end, { desc = 'Previous quickfix item' }},
+  {'nv', ']q', function() helpers.qf_nav(1) end, { desc = 'Next quickfix item' }},
+  {'nv', '[q', function() helpers.qf_nav(-1) end, { desc = 'Previous quickfix item' }},
 
   -- glorified macros
   {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],
