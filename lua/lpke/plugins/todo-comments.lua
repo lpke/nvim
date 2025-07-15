@@ -14,6 +14,7 @@ local function config()
         -- signs = false, -- configure signs for some keywords individually
       },
       TODO = { icon = '\u{f024} ', color = 'info' },
+      TEMP = { icon = '\u{f024} ', color = 'warning' },
       HACK = { icon = '\u{f024} ', color = 'warning' },
       WARN = {
         icon = '\u{f024} ',
@@ -85,7 +86,7 @@ local function config()
       vim.cmd('TodoTelescope')
     else
       vim.cmd(
-        'TodoTelescope keywords=TODO,FIX,'
+        'TodoTelescope keywords=TODO,TEMP,FIX,'
           .. table.concat(opts.keywords.FIX.alt, ',')
       )
     end
