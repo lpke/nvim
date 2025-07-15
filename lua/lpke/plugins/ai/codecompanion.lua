@@ -50,6 +50,22 @@ local function get_cur_model(bufnr)
   return model
 end
 
+local function get_chat_ref(bufnr)
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+  local chat_obj = require('codecompanion').buf_get_chat()
+  if not chat_obj then
+    return nil
+  end
+  for _, chat in ipairs(chat_obj) do
+    if chat.chat and chat.chat.bufnr == bufnr then
+      return chat.chat.references and chat.chat.references.Chat or nil
+    end
+  end
+  return nil
+end
+
 -- quickly swap between two AI models (or directly to one if only one provided)
 -- returns name of model swapped to, or nil if error
 function Lpke_cc_model(target_model1, target_model2)
@@ -60,8 +76,10 @@ function Lpke_cc_model(target_model1, target_model2)
     )
     return nil
   end
-  local chat_obj = require('codecompanion').buf_get_chat()
-  local chat = chat_obj[1].chat.references.Chat
+  local cur_chat = get_chat_ref(0)
+  if not cur_chat then
+    return nil
+  end
   local model1 = model_maps[target_model1] or target_model1
   local model2 = model_maps[target_model2] or target_model2
   local cur_model = get_cur_model(0)
@@ -79,7 +97,7 @@ function Lpke_cc_model(target_model1, target_model2)
     target_model = model1
   end
 
-  chat:apply_model(target_model)
+  cur_chat:apply_model(target_model)
   return get_cur_model()
 end
 
