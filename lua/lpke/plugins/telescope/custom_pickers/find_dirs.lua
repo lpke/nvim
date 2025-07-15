@@ -2,15 +2,15 @@
 
 local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
-local sorters = require('telescope.sorters')
+-- local sorters = require('telescope.sorters')
 local previewers = require('telescope.previewers')
+local config_values = require('telescope.config').values
 -- local make_entry = require('telescope.make_entry')
--- local config_values = require('telescope.config').values
 
 local tc = Lpke_theme_colors
 
 -- TODO: change back to local variable after testing/complete
-find_dirs = function(opts)
+local find_dirs = function(opts)
   opts = opts or {}
   opts.cwd = opts.cwd or vim.fn.getcwd(-1, -1)
 
@@ -43,16 +43,20 @@ find_dirs = function(opts)
     opts.cwd or '.',
     '-type',
     'd',
-    '-not',
-    '-path',
-    '*/.*',
-    '-not',
-    '-path',
-    '*/node_modules',
-    '-not',
-    '-path',
-    '*/node_modules/*',
+    '(',
+    '-name',
+    '.git',
+    '-o',
+    '-name',
+    'node_modules',
+    ')',
+    '-prune',
+    '-o',
+    '-type',
+    'd',
+    '-print',
   }, {
+    cwd = opts.cwd,
     entry_maker = function(entry)
       if should_ignore_dir(entry) then
         return nil
@@ -116,7 +120,7 @@ find_dirs = function(opts)
       finder = finder,
       debounce = 100, -- for performance / less spam
       previewer = previewer,
-      sorter = sorters.highlighter_only(opts), -- highlight in results
+      sorter = config_values.generic_sorter({}),
     })
     :find()
 end

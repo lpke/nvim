@@ -380,6 +380,10 @@ local function config()
       -- TODO: tidy this up. Original implementation above
       smart_find_ai.smart_find()
     end, { desc = 'Find files in cwd (or directories in oil)' }},
+    -- TEMP:
+    {'n', '<BS>fd', function()
+      custom_pickers.find_dirs()
+    end, { desc = 'Find directories in cwd' }},
     {'n', '<BS>ff', function()
       if Lpke_find_git_root(vim.fn.getcwd(-1, -1)) then
         builtin_pickers.git_files()
