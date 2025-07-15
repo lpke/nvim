@@ -2,6 +2,7 @@ local function config()
   local telescope = require('telescope')
   local actions = require('telescope.actions')
   local actions_state = require('telescope.actions.state')
+  local actions_utils = require('telescope.actions.utils')
   local actions_layout = require('telescope.actions.layout')
   local builtin_pickers = require('telescope.builtin')
   local custom_pickers = require('lpke.plugins.telescope.custom_pickers')
@@ -134,7 +135,23 @@ local function config()
         },
         n = {
           -- HACKS/FIXES
-          ['u'] = { '<cmd>undo<cr>', type = 'command' }, -- didn't work by default
+          ['u'] = function(bufnr)
+            local num_selected = 0
+            actions_utils.map_selections(bufnr, function(_)
+              num_selected = num_selected + 1
+            end)
+            if num_selected > 0 then
+              actions.drop_all(bufnr)
+            else
+              vim.cmd('undo')
+            end
+          end,
+          ['p'] = function()
+            vim.api.nvim_paste(vim.fn.getreg('0'), false, -1)
+            -- not sure why this message appears when pasting in telescope, but
+            -- I don't want to see it!
+            helpers.clear_last_message('Content is not an image.')
+          end,
 
           -- OPENING FILES
           ['<CR>'] = actions.select_default,
@@ -194,7 +211,6 @@ local function config()
             helpers.refresh_picker(bufnr)
           end,
           ['V'] = actions.select_all,
-          ['uv'] = actions.drop_all,
 
           -- QUICKFIX LIST
           ['q'] = function(bufnr)
