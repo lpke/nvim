@@ -3,67 +3,122 @@
 local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
 local sorters = require('telescope.sorters')
-local make_entry = require('telescope.make_entry')
-local config_values = require('telescope.config').values
+local previewers = require('telescope.previewers')
+-- local make_entry = require('telescope.make_entry')
+-- local config_values = require('telescope.config').values
 
-local find_dirs = function(opts)
+local tc = Lpke_theme_colors
+
+-- TODO: change back to local variable after testing/complete
+find_dirs = function(opts)
   opts = opts or {}
   opts.cwd = opts.cwd or vim.fn.getcwd(-1, -1)
 
-  -- local finder = finders.new_async_job({
-  --   cwd = opts.cwd,
-  --   -- What the entry in the results list should show
-  --   -- (using a telescope-provided helper for grepping)
-  --   entry_maker = make_entry.gen_from_vimgrep(opts),
-  --   -- Expects a table list of arg pieces for the command to be run
-  --   -- eg: { 'rg', '-e', 'hello', '-g', '*.lua', '--color=never', ...}
-  --   command_generator = function(prompt)
-  --     if not prompt or prompt == '' then
-  --       return nil
-  --     end
-  --
-  --     -- will hold all parts of the command to be run
-  --     local args = { 'rg' }
-  --
-  --     -- get inputs from the prompt
-  --     local prompt_pieces = vim.split(prompt, '  ')
-  --     local search_str = prompt_pieces[1]
-  --     local filter_str = prompt_pieces[2]
-  --
-  --     -- add inputs to the command
-  --     if search_str then
-  --       table.insert(args, '-e')
-  --       table.insert(args, search_str)
-  --     end
-  --     if filter_str then
-  --       table.insert(args, '-g')
-  --       table.insert(args, filter_str)
-  --     end
-  --
-  --     -- add ripgrep options to the command
-  --     vim.list_extend(args, {
-  --       '--color=never',
-  --       '--no-heading',
-  --       '--with-filename',
-  --       '--line-number',
-  --       '--column',
-  --       '--smart-case',
-  --     })
-  --
-  --     return args
-  --   end,
-  -- })
-  --
-  -- pickers
-  --   .new(opts, {
-  --     prompt_title = 'Find in Filtered Files',
-  --     initial_mode = 'insert',
-  --     finder = finder,
-  --     debounce = 100, -- for performance / less spam
-  --     previewer = config_values.grep_previewer(opts),
-  --     sorter = sorters.highlighter_only(opts), -- highlight in results
-  --   })
-  --   :find()
+  -- Read and prepare .gitignore patterns
+  local gitignore_patterns = {}
+  local gitignore_file = vim.fn.findfile('.gitignore', '.;')
+  if gitignore_file ~= '' then
+    local gitignore_content = vim.fn.readfile(gitignore_file)
+    for _, pattern in ipairs(gitignore_content) do
+      -- Skip empty lines and comments
+      if pattern ~= '' and not pattern:match('^#') then
+        -- Remove trailing slash for directory patterns
+        local clean_pattern = pattern:gsub('/$', '')
+        table.insert(gitignore_patterns, clean_pattern)
+      end
+    end
+  end
+
+  local function should_ignore_dir(dir_path)
+    for _, pattern in ipairs(gitignore_patterns) do
+      if dir_path:match(pattern) or dir_path:match(pattern .. '$') then
+        return true
+      end
+    end
+    return false
+  end
+
+  local finder = finders.new_oneshot_job({
+    'find',
+    opts.cwd or '.',
+    '-type',
+    'd',
+    '-not',
+    '-path',
+    '*/.*',
+    '-not',
+    '-path',
+    '*/node_modules',
+    '-not',
+    '-path',
+    '*/node_modules/*',
+  }, {
+    entry_maker = function(entry)
+      if should_ignore_dir(entry) then
+        return nil
+      end
+      -- Remove './' prefix and append '/' suffix
+      local clean_entry = entry:gsub('^%./', '') .. '/'
+      return {
+        value = entry,
+        display = clean_entry,
+        ordinal = clean_entry,
+      }
+    end,
+  })
+
+  local previewer = previewers.new_buffer_previewer({
+    title = 'Directory Contents',
+    define_preview = function(self, entry)
+      local function scan_directory(path)
+        local ok, entries = pcall(vim.fn.readdir, path, function(name)
+          return name ~= '.' and name ~= '..'
+        end)
+        if not ok then
+          return {}
+        end
+
+        local dirs, files = {}, {}
+        for _, name in ipairs(entries) do
+          local full_path = path .. '/' .. name
+          if vim.fn.isdirectory(full_path) == 1 then
+            table.insert(dirs, name .. '/')
+          else
+            table.insert(files, name)
+          end
+        end
+
+        table.sort(dirs)
+        table.sort(files)
+
+        local result = {}
+        vim.list_extend(result, dirs)
+        vim.list_extend(result, files)
+        return result
+      end
+
+      local entries = scan_directory(entry.value)
+      vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, entries)
+      vim.bo[self.state.bufnr].filetype = 'oil'
+
+      vim.api.nvim_buf_call(self.state.bufnr, function()
+        vim.cmd('syntax clear')
+        vim.cmd('syntax match TelescopePreviewDirectory ".*/$"')
+        vim.api.nvim_set_hl(0, 'TelescopePreviewDirectory', { fg = tc.foam })
+      end)
+    end,
+  })
+
+  pickers
+    .new(opts, {
+      prompt_title = 'Find Directories',
+      initial_mode = 'insert',
+      finder = finder,
+      debounce = 100, -- for performance / less spam
+      previewer = previewer,
+      sorter = sorters.highlighter_only(opts), -- highlight in results
+    })
+    :find()
 end
 
 return find_dirs
