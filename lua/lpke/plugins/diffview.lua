@@ -24,7 +24,7 @@ local function config()
 
   diffview.setup({
     diff_binaries = false, -- Show diffs for binaries
-    enhanced_diff_hl = false, -- See |diffview-config-enhanced_diff_hl|
+    enhanced_diff_hl = true, -- See |diffview-config-enhanced_diff_hl|
     git_cmd = { 'git' }, -- The git executable followed by default args.
     hg_cmd = { 'hg' }, -- The hg executable followed by default args.
     use_icons = true, -- Requires nvim-web-devicons
@@ -196,10 +196,10 @@ local function config()
         { 'n', 'U',              actions.unstage_all,                    { desc = 'Diffview: Unstage all entries' } },
         { 'n', 'X',              actions.restore_entry,                  { desc = 'Diffview: Restore entry to the state on the left side' } },
         { 'n', 'L',              actions.open_commit_log,                { desc = 'Diffview: Open the commit log panel' } },
-        { 'n', 'zo',             actions.open_fold,                      { desc = 'Diffview: Expand fold' } },
+        { 'n', 'za',             actions.open_fold,                      { desc = 'Diffview: Expand fold' } },
         { 'n', 'h',              actions.close_fold,                     { desc = 'Diffview: Collapse fold' } },
         { 'n', 'zc',             actions.close_fold,                     { desc = 'Diffview: Collapse fold' } },
-        { 'n', 'za',             actions.toggle_fold,                    { desc = 'Diffview: Toggle fold' } },
+        { 'n', 'zo',             actions.toggle_fold,                    { desc = 'Diffview: Toggle fold' } },
         { 'n', 'zR',             actions.open_all_folds,                 { desc = 'Diffview: Expand all folds' } },
         { 'n', 'zM',             actions.close_all_folds,                { desc = 'Diffview: Collapse all folds' } },
         { 'n', '<c-b>',          actions.scroll_view(-0.25),             { desc = 'Diffview: Scroll the view up' } },
@@ -237,10 +237,10 @@ local function config()
         { 'n', 'y',             actions.copy_hash,                   { desc = 'Diffview: Copy the commit hash of the entry under the cursor' } },
         { 'n', 'L',             actions.open_commit_log,             { desc = 'Diffview: Show commit details' } },
         { 'n', 'X',             actions.restore_entry,               { desc = 'Diffview: Restore file to the state from the selected entry' } },
-        { 'n', 'zo',            actions.open_fold,                   { desc = 'Diffview: Expand fold' } },
+        { 'n', 'za',            actions.open_fold,                   { desc = 'Diffview: Expand fold' } },
         { 'n', 'zc',            actions.close_fold,                  { desc = 'Diffview: Collapse fold' } },
         { 'n', 'h',             actions.close_fold,                  { desc = 'Diffview: Collapse fold' } },
-        { 'n', 'za',            actions.toggle_fold,                 { desc = 'Diffview: Toggle fold' } },
+        { 'n', 'zo',            actions.toggle_fold,                 { desc = 'Diffview: Toggle fold' } },
         { 'n', 'zR',            actions.open_all_folds,              { desc = 'Diffview: Expand all folds' } },
         { 'n', 'zM',            actions.close_all_folds,             { desc = 'Diffview: Collapse all folds' } },
         { 'n', 'j',             actions.next_entry,                  { desc = 'Diffview: Bring the cursor to the next file entry' } },
