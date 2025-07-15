@@ -182,9 +182,7 @@ local function config()
 
       file_panel = {
         { 'n', 'j',              actions.next_entry,                     { desc = 'Diffview: Bring the cursor to the next file entry' } },
-        { 'n', '<down>',         actions.next_entry,                     { desc = 'Diffview: Bring the cursor to the next file entry' } },
         { 'n', 'k',              actions.prev_entry,                     { desc = 'Diffview: Bring the cursor to the previous file entry' } },
-        { 'n', '<up>',           actions.prev_entry,                     { desc = 'Diffview: Bring the cursor to the previous file entry' } },
         { 'n', '<cr>',           actions.select_entry,                   { desc = 'Diffview: Open the diff for the selected entry' } },
         { 'n', '=',              actions.toggle_fold,                    { desc = 'Diffview: Open the diff for the selected entry' } },
         { 'n', 'o',              actions.select_entry,                   { desc = 'Diffview: Open the diff for the selected entry' } },
