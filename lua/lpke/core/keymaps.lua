@@ -8,7 +8,7 @@ local keymap_set = helpers.keymap_set
               don't want accidental <Esc> triggers when using my keybinds. ]]
 
 vim.g.mapleader = ' '
-Lpke_square_repeat_key = 'c' -- updated on `[]a-z` maps where `square_repeat` is true
+Lpke_square_repeat_key = 'h' -- updated on `[]a-z` maps where `square_repeat` is true
 -- stylua: ignore start
 helpers.keymap_set_multi({
   -- removals

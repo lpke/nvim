@@ -7,18 +7,18 @@ return {
   end,
   settings = {
     rulesCustomizations = {
-      {
-        rule = '*exhaustive-deps',
-        severity = 'off',
-      },
-      {
-        rule = '*no-unused-vars',
-        severity = 'off',
-      },
-      {
-        rule = 'prettier/prettier',
-        severity = 'warn',
-      },
+      -- {
+      --   rule = '*exhaustive-deps',
+      --   severity = 'off',
+      -- },
+      -- {
+      --   rule = '*no-unused-vars',
+      --   severity = 'off',
+      -- },
+      -- {
+      --   rule = 'prettier/prettier',
+      --   severity = 'warn',
+      -- },
     },
   },
 }

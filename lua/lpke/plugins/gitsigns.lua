@@ -58,24 +58,46 @@ local function config()
         -- navigate between hunks
         { 'n', ']C', function()
           if vim.wo.diff then
-            vim.cmd.normal({ ']c', bang = true })
+            gitsigns.nav_hunk('next', { preview = false, target = 'all' })
           else
             gitsigns.nav_hunk('next', { preview = true })
           end
         end, { square_repeat = true, desc = 'Gitsigns: Go to the next git hunk (unstaged only)' } },
         { 'n', '[C', function()
           if vim.wo.diff then
-            vim.cmd.normal({ '[c', bang = true })
+            gitsigns.nav_hunk('prev', { preview = false, target = 'all' })
           else
             gitsigns.nav_hunk('prev', { preview = true })
           end
         end, { square_repeat = true, desc = 'Gitsigns: Go to the previous git hunk (unstaged only)' } },
         { 'n', ']c', function()
-          gitsigns.nav_hunk('next', { preview = true, target = 'all' })
+          if vim.wo.diff then
+            vim.cmd.normal({ ']c', bang = true })
+          else
+            gitsigns.nav_hunk('next', { preview = true, target = 'all' })
+          end
         end, { square_repeat = true, desc = 'Gitsigns: Go to the next git hunk (staged and unstaged)' } },
         { 'n', '[c', function()
-          gitsigns.nav_hunk('prev', { preview = true, target = 'all' })
+          if vim.wo.diff then
+            vim.cmd.normal({ '[c', bang = true })
+          else
+            gitsigns.nav_hunk('prev', { preview = true, target = 'all' })
+          end
         end, { square_repeat = true, desc = 'Gitsigns: Go to the previous git hunk (staged and unstaged)' } },
+        { 'n', ']h', function()
+          if vim.wo.diff then
+            vim.cmd.normal({ ']c', bang = true })
+          else
+            gitsigns.nav_hunk('next', { preview = false, target = 'all' })
+          end
+        end, { square_repeat = true, desc = 'Gitsigns: Go to the next git hunk without preview (staged and unstaged)' } },
+        { 'n', '[h', function()
+          if vim.wo.diff then
+            vim.cmd.normal({ '[c', bang = true })
+          else
+            gitsigns.nav_hunk('prev', { preview = false, target = 'all' })
+          end
+        end, { square_repeat = true, desc = 'Gitsigns: Go to the previous git hunk without preview (staged and unstaged)' } },
 
         -- stage/unstage/reset hunks
         { 'n', 'gss', gitsigns.stage_hunk, { desc = 'Gitsigns: Stage or unstage the hunk under the cursor' } },
