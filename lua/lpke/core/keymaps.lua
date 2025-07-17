@@ -44,12 +44,6 @@ helpers.keymap_set_multi({
   {'nv', 'ze', 'zt8<C-y>', { desc = 'Centre cursor 8 lines below zt' }},
   {'n', '<C-z>', 'u', { desc = 'Undo' }},
 
-  -- "square movement" repeat
-  {'n', '[[', function() vim.api.nvim_feedkeys('[' .. Lpke_square_repeat_key, 't', false) end,
-    { desc = 'Square movement repeat: previous' }},
-  {'n', ']]', function() vim.api.nvim_feedkeys(']' .. Lpke_square_repeat_key, 't', false) end,
-    { desc = 'Square movement repeat: next' }},
-
   -- quickfix list
   {'nC', 'gq', 'botright copen', { desc = 'Open quick fix list' }},
   {'nC', '<leader>q', "call setqflist([{'filename': expand('%'), 'lnum': line('.'), 'col': col('.') - 1, 'text': getline('.')}], 'a')",
@@ -60,6 +54,16 @@ helpers.keymap_set_multi({
   {'nvi', '<A-Up>', function() helpers.qf_nav(-1) end, { desc = 'Previous quickfix item' }},
   {'nv', ']q', function() helpers.qf_nav(1) end, { square_repeat = true, desc = 'Next quickfix item' }},
   {'nv', '[q', function() helpers.qf_nav(-1) end, { square_repeat = true, desc = 'Previous quickfix item' }},
+
+  -- fold navigation
+  {'nv', ']z', function() vim.cmd([[normal! ]z]]) end, { square_repeat = true, desc = 'Move to end of current fold' }},
+  {'nv', '[z', function() vim.cmd([[normal! [z]]) end, { square_repeat = true, desc = 'Move to start of current fold' }},
+
+  -- "square movement" repeat
+  {'n', '[[', function() vim.api.nvim_feedkeys('[' .. Lpke_square_repeat_key, 't', false) end,
+    { desc = 'Square movement repeat: previous' }},
+  {'n', ']]', function() vim.api.nvim_feedkeys(']' .. Lpke_square_repeat_key, 't', false) end,
+    { desc = 'Square movement repeat: next' }},
 
   -- glorified macros
   {'v', '<leader>ev', [[mx"zy<cmd>execute 's/\V' . getreg('z') . '/' . eval(@z) . '/'<CR>`x]],
