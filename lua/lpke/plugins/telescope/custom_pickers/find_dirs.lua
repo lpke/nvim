@@ -9,10 +9,22 @@ local config_values = require('telescope.config').values
 
 local tc = Lpke_theme_colors
 
--- TODO: change back to local variable after testing/complete
 local find_dirs = function(opts)
   opts = opts or {}
-  opts.cwd = opts.cwd or vim.fn.getcwd(-1, -1)
+
+  -- cwd priority order:
+  -- explicit cwd, git_root (if true), current nvim global cwd
+  if not opts.cwd then
+    if opts.git_cwd then
+      opts.cwd = Lpke_find_git_root() or vim.fn.getcwd(-1, -1)
+    else
+      opts.cwd = vim.fn.getcwd(-1, -1)
+    end
+  end
+  -- ensure cwd is valid
+  if not vim.fn.isdirectory(opts.cwd) ~= 1 then
+    opts.cwd = vim.fn.getcwd(-1, -1)
+  end
 
   -- Read and prepare .gitignore patterns
   local gitignore_patterns = {}
@@ -61,8 +73,13 @@ local find_dirs = function(opts)
       if should_ignore_dir(entry) then
         return nil
       end
+      -- Make path relative to git root
+      local relative_path = entry
+      if opts.cwd and entry:sub(1, #opts.cwd) == opts.cwd then
+        relative_path = entry:sub(#opts.cwd + 2) -- +2 to remove the trailing slash
+      end
       -- Remove './' prefix and append '/' suffix
-      local clean_entry = entry:gsub('^%./', '') .. '/'
+      local clean_entry = relative_path:gsub('^%./', '') .. '/'
       return {
         value = entry,
         display = clean_entry,
