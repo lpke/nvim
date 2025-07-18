@@ -62,8 +62,8 @@ local function config()
       },
       merge_tool = {
         -- Config for conflicted files in diff views during a merge or rebase.
-        layout = 'diff4_mixed',
-        disable_diagnostics = true, -- Temporarily disable diagnostics for diff buffers while in the view.
+        layout = 'diff1_plain',
+        disable_diagnostics = false, -- Temporarily disable diagnostics for diff buffers while in the view.
         winbar_info = true, -- See |diffview-config-view.x.winbar_info|
       },
       file_history = {
