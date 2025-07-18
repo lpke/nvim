@@ -50,25 +50,28 @@ local find_dirs = function(opts)
     return false
   end
 
-  local finder = finders.new_oneshot_job({
-    'find',
-    opts.cwd or '.',
-    '-type',
-    'd',
-    '(',
-    '-name',
-    '.git',
-    '-o',
-    '-name',
-    'node_modules',
-    ')',
-    '-prune',
-    '-o',
-    '-type',
-    'd',
-    '-print',
-  }, {
+  local finder = finders.new_async_job({
     cwd = opts.cwd,
+    command_generator = function(_prompt)
+      return {
+        'find',
+        opts.cwd or '.',
+        '-type',
+        'd',
+        '(',
+        '-name',
+        '.git',
+        '-o',
+        '-name',
+        'node_modules',
+        ')',
+        '-prune',
+        '-o',
+        '-type',
+        'd',
+        '-print',
+      }
+    end,
     entry_maker = function(entry)
       if should_ignore_dir(entry) then
         return nil
