@@ -92,7 +92,10 @@ local find_dirs = function(opts)
   })
 
   local previewer = previewers.new_buffer_previewer({
-    title = 'Directory Contents',
+    title = function(test)
+      -- TODO: show condensed cwd
+      return 'Directory Contents'
+    end,
     define_preview = function(self, entry)
       local function scan_directory(path)
         local ok, entries = pcall(vim.fn.readdir, path, function(name)

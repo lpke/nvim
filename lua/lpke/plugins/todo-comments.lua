@@ -3,32 +3,33 @@ local function config()
   local helpers = require('lpke.core.helpers')
 
   local opts = {
-    signs = true, -- show icons in the signs column
+    signs = false, -- show icons in the signs column
     sign_priority = 8, -- sign priority
     -- keywords recognized as todo comments
     keywords = {
       FIX = {
-        icon = '\u{f024} ', -- icon used for the sign, and in search results
+        -- icon = '\u{f024} ', -- icon used for the sign, and in search results
+        icon = '',
         color = 'error', -- can be a hex color, or a named color (see below)
         alt = { 'FIXME', 'BUG', 'FIXIT', 'ISSUE' }, -- a set of other keywords that all map to this FIX keywords
         -- signs = false, -- configure signs for some keywords individually
       },
-      TODO = { icon = '\u{f024} ', color = 'info' },
-      TEMP = { icon = '\u{f024} ', color = 'warning' },
-      HACK = { icon = '\u{f024} ', color = 'warning' },
+      TODO = { icon = '', color = 'info' },
+      TEMP = { icon = '', color = 'warning' },
+      HACK = { icon = '', color = 'warning' },
       WARN = {
-        icon = '\u{f024} ',
+        icon = '',
         color = 'warning',
         alt = { 'WARNING', 'XXX' },
       },
       PERF = {
-        icon = '\u{f024} ',
+        icon = '',
         color = 'warning',
         alt = { 'OPTIM', 'PERFORMANCE', 'OPTIMIZE' },
       },
-      NOTE = { icon = '\u{f024} ', color = 'hint', alt = { 'INFO' } },
+      NOTE = { icon = '', color = 'hint', alt = { 'INFO' } },
       TEST = {
-        icon = '\u{f024} ',
+        icon = '',
         color = 'default',
         alt = { 'TESTING', 'PASSED', 'FAILED' },
       },
