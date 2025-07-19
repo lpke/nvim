@@ -92,9 +92,10 @@ local find_dirs = function(opts)
   })
 
   local previewer = previewers.new_buffer_previewer({
-    title = function(test)
+    title = function()
       -- TODO: show condensed cwd
-      return 'Directory Contents'
+      -- TODO: write helper function that accepts abs path and prettifies it
+      return 'in: ' .. opts.cwd
     end,
     define_preview = function(self, entry)
       local function scan_directory(path)
