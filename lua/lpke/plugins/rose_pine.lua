@@ -137,6 +137,7 @@ local function config()
       Substitute = { fg = tc.base, bg = tc.love },
       MatchParen = { fg = tc.growth, bg = ec.growthminus, blend = 15 },
       Directory = { bold = false },
+      QuickFixLine = { fg = 'none', bg = tc.overlaybump },
 
       -- vim syntax highlight groups (inherited in treesitter config file for `@` groups)
       Keyword = { fg = tc.pine, italic = true },
