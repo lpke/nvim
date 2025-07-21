@@ -305,6 +305,9 @@ helpers.ft_keymap_set_multi('qf', {
     local line = vim.fn.line('.')
     helpers.qf_del(line, line)
   end, { desc = 'Delete quickfix item under cursor' }, },
+  { 'n', 'dgG', function()
+    vim.fn.setqflist({})
+  end, { desc = 'Delete all quickfix items' }, },
   { 'v', 'd', function()
     local start_line = vim.fn.line('v')
     local end_line = vim.fn.line('.')
