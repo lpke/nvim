@@ -1,42 +1,3 @@
--- wrapper for `nvim_replace_termcodes`
----@param string_or_args string|any[]
-function Lpke_replace_termcodes(string_or_args)
-  if type(string_or_args) == 'string' then
-    return vim.api.nvim_replace_termcodes(string_or_args, true, true, true)
-  elseif type(string_or_args) == 'table' then
-    local str = string_or_args[1]
-    local from_part = str[2] ~= nil and str[2] or true
-    local do_lt = str[3] ~= nil and str[3] or true
-    local special = str[4] ~= nil and str[4] or true
-    return vim.api.nvim_replace_termcodes(str, from_part, do_lt, special)
-  else
-    vim.notify(
-      'Lpke_replace_termcodes: `key` must be a string or table',
-      vim.log.levels.ERROR
-    )
-  end
-end
-
----Wrapper for `nvim_feedkeys` which also handles escaping termcodes.
----@param keys_or_args string|any[] String or { args... } to be passed to `nvim_replace_termcodes`
----@param flags? string Mode flags. Any combination of 'm', 'n', 't', 'L', 'i', 'x', '!'. See `:h feedkeys`
----@param escape_ks? boolean Whether to escape termcodes (handled already by default)
-function Lpke_feedkeys(keys_or_args, flags, escape_ks)
-  -- handle defaults based on args
-  local keys
-  if (type(escape_ks) == 'boolean') and (type(keys_or_args) == 'string') then
-    -- if escape_ks is explicitly set, do not `replace_termcodes`
-    keys = keys_or_args
-  else
-    keys = Lpke_replace_termcodes(keys_or_args)
-  end
-  flags = flags or 'm'
-  if escape_ks == nil then
-    escape_ks = false
-  end
-  vim.api.nvim_feedkeys(keys, flags, escape_ks)
-end
-
 -- like print but can print tables
 function Print(
   val,
@@ -83,6 +44,53 @@ function Print(
   if newline_at_end and is_top_level then
     print(' ')
   end
+end
+
+---Check if there are any `regex` matches on `str`
+---@param str string String to test regex on
+---@param regex string Regex string to run on `str`
+---@return boolean matched Whether any matches were found in `str` using `regex`
+function Match(str, regex)
+  return string.match(str, regex) ~= nil
+end
+
+-- wrapper for `nvim_replace_termcodes`
+---@param string_or_args string|any[]
+function Lpke_replace_termcodes(string_or_args)
+  if type(string_or_args) == 'string' then
+    return vim.api.nvim_replace_termcodes(string_or_args, true, true, true)
+  elseif type(string_or_args) == 'table' then
+    local str = string_or_args[1]
+    local from_part = str[2] ~= nil and str[2] or true
+    local do_lt = str[3] ~= nil and str[3] or true
+    local special = str[4] ~= nil and str[4] or true
+    return vim.api.nvim_replace_termcodes(str, from_part, do_lt, special)
+  else
+    vim.notify(
+      'Lpke_replace_termcodes: `key` must be a string or table',
+      vim.log.levels.ERROR
+    )
+  end
+end
+
+---Wrapper for `nvim_feedkeys` which also handles escaping termcodes.
+---@param keys_or_args string|any[] String or { args... } to be passed to `nvim_replace_termcodes`
+---@param flags? string Mode flags. Any combination of 'm', 'n', 't', 'L', 'i', 'x', '!'. See `:h feedkeys`
+---@param escape_ks? boolean Whether to escape termcodes (handled already by default)
+function Lpke_feedkeys(keys_or_args, flags, escape_ks)
+  -- handle defaults based on args
+  local keys
+  if (type(escape_ks) == 'boolean') and (type(keys_or_args) == 'string') then
+    -- if escape_ks is explicitly set, do not `replace_termcodes`
+    keys = keys_or_args
+  else
+    keys = Lpke_replace_termcodes(keys_or_args)
+  end
+  flags = flags or 'm'
+  if escape_ks == nil then
+    escape_ks = false
+  end
+  vim.api.nvim_feedkeys(keys, flags, escape_ks)
 end
 
 -- unload inactive buffers (any not in use)
