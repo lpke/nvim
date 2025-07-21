@@ -397,7 +397,7 @@ local function config()
       custom_pickers.find_dirs()
     end, { desc = 'Find directories in cwd' }},
     {'n', '<BS>ff', function()
-      if Lpke_find_git_root(vim.fn.getcwd(-1, -1)) then
+      if Lpke_find_git_root(vim.fn.getcwd()) then
         builtin_pickers.git_files()
       else
         builtin_pickers.find_files()

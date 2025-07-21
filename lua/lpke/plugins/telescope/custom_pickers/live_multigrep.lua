@@ -8,7 +8,7 @@ local config_values = require('telescope.config').values
 
 local live_multigrep = function(opts)
   opts = opts or {}
-  opts.cwd = opts.cwd or vim.fn.getcwd(-1, -1)
+  opts.cwd = opts.cwd or vim.fn.getcwd()
 
   local finder = finders.new_async_job({
     cwd = opts.cwd,

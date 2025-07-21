@@ -13,17 +13,17 @@ local find_dirs = function(opts)
   opts = opts or {}
 
   -- cwd priority order:
-  -- explicit cwd, git_root (if true), current nvim global cwd
+  -- explicit cwd, git_root (if true), cwd
   if not opts.cwd then
     if opts.git_cwd then
-      opts.cwd = Lpke_find_git_root() or vim.fn.getcwd(-1, -1)
+      opts.cwd = Lpke_find_git_root() or vim.fn.getcwd()
     else
-      opts.cwd = vim.fn.getcwd(-1, -1)
+      opts.cwd = vim.fn.getcwd()
     end
   end
   -- ensure cwd is valid
   if not vim.fn.isdirectory(opts.cwd) ~= 1 then
-    opts.cwd = vim.fn.getcwd(-1, -1)
+    opts.cwd = vim.fn.getcwd()
   end
 
   -- Read and prepare .gitignore patterns
