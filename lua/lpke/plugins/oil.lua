@@ -11,7 +11,7 @@ local function config()
     {'nC', '<F2>>', 'vsplit | Oil', { desc = 'Oil: Open Oil File Browser at current location (v split)' }},
     {'nC', '<A->>', 'vsplit | Oil', { desc = 'Oil: Open Oil File Browser at current location (v split)' }}, -- FIXME
     {'nC', '<F2><', 'split | Oil', { desc = 'Oil: Open Oil File Browser at current location (h split)' }},
-    {'nC', '<A-<>>', 'split | Oil', { desc = 'Oil: Open Oil File Browser at current location (h split)' }}, -- FIXME
+    {'nC', '<A-<>', 'split | Oil', { desc = 'Oil: Open Oil File Browser at current location (h split)' }}, -- FIXME
   })
   -- stylua: ignore end
 
