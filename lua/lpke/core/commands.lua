@@ -29,11 +29,11 @@ helpers.command_set_multi({
   -- printing
   { '?', 'P', function(cmd)
     if #cmd.fargs == 0 then
-      print('PP: buf name | PC: cwd | PG: git root | PW: win details | P <lua>: Lpke_print(lua)')
+      print('PP: buf name | PC: cwd | PG: git root | PW: win details | P <lua>: Print(lua)')
     else
-      Lpke_print(helpers.execute_as_lua(cmd.fargs[1]), 1)
+      Print(helpers.execute_as_lua(cmd.fargs[1]), 1)
     end
-  end, { desc = 'Print help for `P` commands or call Lpke_print(<lua>)' } },
+  end, { desc = 'Print help for `P` commands or call Print(<lua>)' } },
   { '', 'PP', function() print(helpers.get_buf_name()) end, { desc = 'Print the active buffer name' } },
   { '', 'PC', function() print(vim.fn.getcwd()) end, { desc = 'Print the current working directory' } },
   { '', 'PG', function() Lpke_git_root() end, { desc = 'Print the path of the git root of the current file' } },

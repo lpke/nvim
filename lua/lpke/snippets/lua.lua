@@ -143,7 +143,7 @@ return { -- lua
   s({
     trig = 'cll',
     name = 'Lpke "Console Log"',
-  }, fmt('Lpke_print(<>)', { i(1) })),
+  }, fmt('Print(<>)', { i(1) })),
   s({
     trig = ']]',
     name = 'Convert to [[]]',

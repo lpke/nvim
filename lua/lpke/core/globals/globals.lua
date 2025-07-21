@@ -38,7 +38,7 @@ function Lpke_feedkeys(keys_or_args, flags, escape_ks)
 end
 
 -- like print but can print tables
-function Lpke_print(
+function Print(
   val,
   max_depth,
   indent_size,
@@ -66,7 +66,7 @@ function Lpke_print(
       local key = tostring(k)
       if type(v) == 'table' then
         print(indent .. key .. ':')
-        Lpke_print(
+        Print(
           v,
           max_depth,
           indent_size,
