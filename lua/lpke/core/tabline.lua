@@ -86,18 +86,17 @@ function Lpke_tabline()
     if filetype_tabtitle_maps[b.file_type] then
       tab_title = filetype_tabtitle_maps[b.file_type]
     elseif b.file_type == 'oil' then
-      local oil_trash = string.match(b.buf_name, '^oil%-trash://')
-      tab_title = (oil_trash and 'T:' or '')
+      tab_title = (b.custom_buf_type == 'oil_trash' and 'T:' or '')
         .. helpers.shorten_path(file_path)
         .. '/'
     elseif b.file_type == '' or b.buf_name == '[No Name]' then
       tab_title = symbols.unnamed
     -- git buffers (not already explicitly handled in the map above)
     -- TODO: improve handling here for more cases
-    elseif b.git_buf_type then
-      if b.git_buf_type == 'diffview' then
+    elseif Match(b.custom_buf_type, '^git') then
+      if b.custom_buf_type == 'git_diffview' then
         tab_title = 'G:Diffview'
-      elseif b.git_buf_type == 'fugitive' then
+      elseif b.custom_buf_type == 'git_fugitive' then
         tab_title = 'G:Fugitive'
       else
         tab_title = 'G:' .. helpers.shorten_path(file_path)

@@ -72,36 +72,3 @@ function Lpke_diff()
     vim.cmd('wincmd h')
   end)
 end
-
--- returns a string of the git handler or nil if not a git buffer
----@param bufnr integer|nil
----@return 'git'|'fugitive'|'diffview'|'gitsigns'|nil
-function Lpke_git_buf(bufnr)
-  if not bufnr then
-    bufnr = vim.api.nvim_get_current_buf()
-  end
-  local buf_name = helpers.get_buf_name(bufnr)
-  local file_type = helpers.get_file_type(bufnr)
-
-  local git_buffer = vim.tbl_contains(
-    { 'git', 'gitcommit', 'gitui', 'gitmerge', 'gitrebase' },
-    file_type
-  ) or string.match(buf_name, '^git://') or string.match(buf_name, '^git://')
-  local fugitive_buffer = string.match(file_type, 'fugitive')
-    or string.match(buf_name, '^fugitive://')
-  local diffview_buffer = string.match(file_type, 'Diffview')
-    or string.match(buf_name, '^diffview://')
-  local gitsigns_buffer = string.match(file_type, 'gitsigns')
-    or string.match(buf_name, '^gitsigns%-.+://')
-
-  if git_buffer then
-    return 'git'
-  elseif fugitive_buffer then
-    return 'fugitive'
-  elseif diffview_buffer then
-    return 'diffview'
-  elseif gitsigns_buffer then
-    return 'gitsigns'
-  end
-  return nil
-end

@@ -108,11 +108,11 @@ local function config()
   local buffer_tag = {
     function()
       local b = Lpke_buf_details(0)
-      if b.oil_trash then
+      if b.custom_buf_type == 'oil_trash' then
         return '[Trash]'
-      elseif b.git_buf_type then
+      elseif Match(b.custom_buf_type, '^git') then
         return '[Git]'
-      elseif b.codecompanion_buffer then
+      elseif b.custom_buf_type == 'codecompanion' then
         return '[AI]'
       end
       return ''
@@ -120,9 +120,9 @@ local function config()
     padding = { left = 1, right = 0 },
     color = function()
       local b = Lpke_buf_details(0)
-      if b.oil_trash then
+      if b.custom_buf_type == 'oil_trash' then
         return { fg = tc.love }
-      elseif b.codecompanion_buffer then
+      elseif b.custom_buf_type == 'codecompanion' then
         return { fg = tc.iris }
       end
       return { fg = tc.foam }
@@ -164,11 +164,12 @@ local function config()
 
       -- TODO: handle more git related cases + undotree
       -- handle bufs with toggle-able paths
-      local has_path_toggling = b.normal_buffer or b.oil_buffer
+      local has_path_toggling = b.custom_buf_type == 'normal'
+        or Match(b.custom_buf_type, '^oil')
       if has_path_toggling then
         -- long path format
         if Lpke_full_path then
-          if b.oil_buffer then
+          if Match(b.custom_buf_type, '^oil') then
             local rel_path = helpers.transform_path(
               b.buf_name,
               { include_filename = false, cwd_name = false }
@@ -179,7 +180,7 @@ local function config()
           end
         else
           -- short path format
-          if b.oil_buffer then
+          if Match(b.custom_buf_type, '^oil') then
             return helpers.get_path_tail(b.buf_name)
           else
             return helpers.get_path_tail(str)

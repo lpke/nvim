@@ -388,11 +388,9 @@ local function config()
 
     -- files
     {'n', '<BS><BS>', function()
-      -- builtin_pickers.find_files()
       -- TODO: tidy this up. Original implementation above
       smart_find_ai.smart_find()
     end, { desc = 'Find files in cwd (or directories in oil)' }},
-    -- TEMP:
     {'n', '<BS>fd', function()
       custom_pickers.find_dirs()
     end, { desc = 'Find directories in cwd' }},

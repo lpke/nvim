@@ -46,6 +46,7 @@ function Print(
   end
 end
 
+-- TODO: use this throughout config in place of `string.match()`
 ---Check if there are any `regex` matches on `str`
 ---@param str string String to test regex on
 ---@param regex string Regex string to run on `str`
