@@ -14,11 +14,6 @@ function M.get_cwd_folder()
   return M.get_path_tail(cwd)
 end
 
--- check if cwd has .git folder
-function M.cwd_has_git()
-  return vim.fn.glob('.git/') ~= ''
-end
-
 -- remove the protocol (eg `oil://` or `oil-trash://`) from a string
 function M.remove_protocol(str)
   return str:gsub('^.*://', '')
@@ -72,7 +67,10 @@ function M.transform_path(full_path, opts)
   return rel_path
 end
 
-function M.find_upward_to_git_root_or_cwd(items)
+-- return path of first file/dir matching item in `items` if it exists under git root or cwd
+---@param items string[] -- list of items (file or dirs) to search for
+---@return string | nil
+function M.find_file_upward(items)
   local cur_dir = vim.fn.fnamemodify(vim.fn.expand('%:p'), ':h')
   local root = Lpke_find_git_root() or vim.fn.getcwd()
   while cur_dir and cur_dir ~= '/' do

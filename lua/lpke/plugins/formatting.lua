@@ -40,7 +40,7 @@ local function config()
         -- https://github.com/johnnymorganz/stylua#configuration
         prepend_args = function(_self, _ctx)
           if
-            helpers.find_upward_to_git_root_or_cwd({
+            helpers.find_file_upward({
               '.stylua.toml',
               'stylua.toml',
             })
@@ -64,7 +64,7 @@ local function config()
         -- https://taplo.tamasfe.dev/configuration/formatter-options.html
         append_args = function(_self, _ctx)
           if
-            helpers.find_upward_to_git_root_or_cwd({
+            helpers.find_file_upward({
               '.taplo.toml',
               'taplo.toml',
             })
