@@ -31,10 +31,15 @@ function Lpke_buf_details(bufnr)
   local B = {}
   B.buf_name = helpers.get_buf_name(bufnr)
   B.file_type = helpers.get_file_type(bufnr)
+  B.buf_type = helpers.get_buf_type(bufnr)
+  B.custom_buf_type = helpers.get_custom_buf_type(bufnr)
+  B.git_buf_type = Lpke_git_buf(bufnr) or false
+  -- TODO: deprecate this in favour of `custom_buf_type`
   B.normal_buffer = vim.bo.buftype == ''
+  -- TODO: deprecate this in favour of `custom_buf_type`
   B.oil_buffer = B.file_type == 'oil'
+  -- TODO: deprecate this in favour of `custom_buf_type`
   B.codecompanion_buffer = B.file_type == 'codecompanion'
   B.oil_trash = not not string.match(B.buf_name, '^oil%-trash://')
-  B.git_buffer_type = Lpke_git_buf(bufnr) or false
   return B
 end

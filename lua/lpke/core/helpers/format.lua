@@ -20,6 +20,38 @@ function M.get_file_type(bufnr)
   return vim.api.nvim_get_option_value('filetype', { buf = bufnr })
 end
 
+-- get buftype option
+function M.get_buf_type(bufnr)
+  bufnr = bufnr or 0
+  return vim.api.nvim_get_option_value('buftype', { buf = bufnr })
+end
+
+-- TODO: use this in places
+---Get custom "buf type" from buftype opt and custom conditions
+---Custom types that differ from `vim.bo.buftype`:
+---  buftype '': `normal`
+---  takes priority over buftype: `git`, `oil`, `codecompanion`
+---@return 'normal'|'git'|'oil'|'codecompanion'|'acwrite'|'help'|'nofile'|'nowrite'|'quickfix'|'terminal'|'prompt'
+function M.get_custom_buf_type(bufnr)
+  bufnr = bufnr or 0
+  local buf_type_opt = M.get_buf_type(bufnr)
+  local file_type = M.get_file_type(bufnr)
+  if Lpke_git_buf(bufnr) then
+    return 'git'
+  end
+  -- TODO: improve this to also check for buf name protocol (oil:, fugitive:, etc)
+  if file_type == 'oil' then
+    return 'oil'
+  end
+  if file_type == 'codecompanion' then
+    return 'codecompanion'
+  end
+  if buf_type_opt == '' then
+    return 'normal'
+  end
+  return buf_type_opt
+end
+
 -- get buf name (current if omitted), which is usually the path
 function M.get_buf_name(bufnr, remove_protocol)
   bufnr = bufnr or 0

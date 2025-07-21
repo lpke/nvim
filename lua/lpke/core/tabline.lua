@@ -94,10 +94,10 @@ function Lpke_tabline()
       tab_title = symbols.unnamed
     -- git buffers (not already explicitly handled in the map above)
     -- TODO: improve handling here for more cases
-    elseif b.git_buffer_type then
-      if b.git_buffer_type == 'diffview' then
+    elseif b.git_buf_type then
+      if b.git_buf_type == 'diffview' then
         tab_title = 'G:Diffview'
-      elseif b.git_buffer_type == 'fugitive' then
+      elseif b.git_buf_type == 'fugitive' then
         tab_title = 'G:Fugitive'
       else
         tab_title = 'G:' .. helpers.shorten_path(file_path)

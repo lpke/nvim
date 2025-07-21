@@ -110,7 +110,7 @@ local function config()
       local b = Lpke_buf_details(0)
       if b.oil_trash then
         return '[Trash]'
-      elseif b.git_buffer_type then
+      elseif b.git_buf_type then
         return '[Git]'
       elseif b.codecompanion_buffer then
         return '[AI]'
