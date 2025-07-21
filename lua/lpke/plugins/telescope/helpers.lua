@@ -48,7 +48,7 @@ end
 -- workaround since breaking change where this can't be accessed with:
 -- require('auto-session.session-lens.actions').delete_session()
 function M.delete_session(bufnr)
-  local auto_session = require('lpke.plugins.auto_session')
+  local auto_session = require('auto-session')
   local action_state = require('telescope.actions.state')
   local current_picker = action_state.get_current_picker(bufnr)
   current_picker:delete_selection(function(selection)
