@@ -713,3 +713,12 @@ function Lpke_buf_details(bufnr)
   B.git_buffer_type = Lpke_git_buf(bufnr) or false
   return B
 end
+
+-- toggle global status line ('laststatus' option 2/3)
+function Lpke_toggle_global_status()
+  if vim.o.laststatus == 3 then
+    vim.o.laststatus = 2
+  else
+    vim.o.laststatus = 3
+  end
+end

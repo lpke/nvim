@@ -1,11 +1,14 @@
 local function config()
-  require('lpke.core.helpers').keymap_set_multi({
+  local spider = require('spider')
+  local helpers = require('lpke.core.helpers')
+
+  helpers.keymap_set_multi({
     { 'noxC', '<Right>', [[lua require('spider').motion('w')]] },
     { 'noxC', '<Left>', [[lua require('spider').motion('b')]] },
   })
 
   -- options
-  require('spider').setup({
+  spider.setup({
     skipInsignificantPunctuation = true,
   })
 end

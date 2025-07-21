@@ -22,6 +22,7 @@ vim.api.nvim_create_autocmd('InsertLeave', {
   end,
 })
 
+-- TODO: move to keymaps
 -- quickfix-specific keymaps
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'qf',

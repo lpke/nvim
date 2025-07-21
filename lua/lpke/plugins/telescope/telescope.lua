@@ -208,7 +208,7 @@ local function config()
           end,
           ['v'] = function(bufnr)
             actions.toggle_all(bufnr)
-            helpers.refresh_picker(bufnr)
+            ts_helpers.refresh_picker(bufnr)
           end,
           ['V'] = actions.select_all,
 

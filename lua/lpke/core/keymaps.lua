@@ -54,6 +54,7 @@ helpers.keymap_set_multi({
   {'nvi', '<A-Up>', function() helpers.qf_nav(-1) end, { desc = 'Previous quickfix item' }},
   {'nv', ']q', function() helpers.qf_nav(1) end, { square_repeat = true, desc = 'Next quickfix item' }},
   {'nv', '[q', function() helpers.qf_nav(-1) end, { square_repeat = true, desc = 'Previous quickfix item' }},
+  -- TODO: add quickfix keymaps from autocommands.lua
 
   -- fold navigation
   {'nv', ']z', function() vim.cmd([[normal! ]z]]) end, { square_repeat = true, desc = 'Move to end of current fold' }},
@@ -91,9 +92,9 @@ helpers.keymap_set_multi({
   {'nvC', '<F2>r', 'set relativenumber!', { desc = 'Toggle relative numbers' }},
   {'nvC', '<A-r>', 'set relativenumber!', { desc = 'Toggle relative numbers' }},
   -- FIXME: disabled due to lualine bug requiring me to set `globalstatue = true`
-  -- {'n', '<F2>e', function() helpers.toggle_global_status() end,
+  -- {'n', '<F2>e', Lpke_toggle_global_status,
   --   { desc = 'Toggle global status line' }},
-  -- {'n', '<A-e>', function() helpers.toggle_global_status() end,
+  -- {'n', '<A-e>', Lpke_toggle_global_status,
   --   { desc = 'Toggle global status line' }},
   {'n!', '<F2>W', helpers.toggle_show_whitespace, { desc = 'Toggle visible whitespace' }},
   {'n!', '<A-W>', helpers.toggle_show_whitespace, { desc = 'Toggle visible whitespace' }},
