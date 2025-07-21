@@ -423,6 +423,18 @@ local function config()
     {'n', '<BS>fw', function()
       builtin_pickers.grep_string()
     end, { desc = 'Find string under cursor in cwd' }},
+    {'n', '<BS>p<BS>', function()
+      builtin_pickers.find_files({
+        prompt_title = 'Find Plugin Files',
+        cwd = vim.fs.joinpath(vim.fn.stdpath('data'), 'lazy')
+      })
+    end, { desc = 'Find plugin files' }},
+    {'n', '<BS>p/', function()
+      custom_pickers.live_multigrep({
+        prompt_title = 'Find in Plugin Files',
+        cwd = vim.fs.joinpath(vim.fn.stdpath('data'), 'lazy')
+      })
+    end, { desc = 'Find string in plugin files, with file filtering (str  filter)' }},
 
     -- git
     {'n', '<BS>gb', function()
