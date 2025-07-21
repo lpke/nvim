@@ -59,9 +59,9 @@ helpers.keymap_set_multi({
   {'nv', '[z', function() vim.cmd([[normal! [z]]) end, { square_repeat = true, desc = 'Move to start of current fold' }},
 
   -- "square movement" repeat
-  {'n', '[[', function() vim.api.nvim_feedkeys('[' .. Lpke_square_repeat_key, 't', false) end,
+  {'n', '[[', function() Lpke_feedkeys('[' .. Lpke_square_repeat_key, 't', false) end,
     { desc = 'Square movement repeat: previous' }},
-  {'n', ']]', function() vim.api.nvim_feedkeys(']' .. Lpke_square_repeat_key, 't', false) end,
+  {'n', ']]', function() Lpke_feedkeys(']' .. Lpke_square_repeat_key, 't', false) end,
     { desc = 'Square movement repeat: next' }},
 
   -- glorified macros

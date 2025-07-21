@@ -22,11 +22,7 @@ end
 function M.stop_term()
   vim.fn.jobstop(vim.b.terminal_job_id)
   vim.cmd('sleep 100m')
-  vim.api.nvim_feedkeys(
-    vim.api.nvim_replace_termcodes('<Esc>', true, true, true),
-    'n',
-    false
-  )
+  Lpke_feedkeys('<Esc>', 'n')
 end
 
 -- execute a string as Lua code

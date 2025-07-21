@@ -3,6 +3,32 @@ local M = {}
 
 local util = require('lpke.core.helpers.util')
 
+M.is_wsl = vim.fn.exists('$WSL_DISTRO_NAME') == 1
+
+-- get current session name
+function M.get_session_name(fallback)
+  return util.safe_call(
+    require('auto-session.lib').current_session_name,
+    true,
+    fallback
+  )
+end
+
+-- get buf file type (current if omitted)
+function M.get_file_type(bufnr)
+  bufnr = bufnr or 0
+  return vim.api.nvim_get_option_value('filetype', { buf = bufnr })
+end
+
+-- get buf name (current if omitted), which is usually the path
+function M.get_buf_name(bufnr, remove_protocol)
+  bufnr = bufnr or 0
+  local raw_buf_name = vim.api.nvim_buf_get_name(bufnr)
+  local buf_name = remove_protocol and M.remove_protocol(raw_buf_name)
+    or raw_buf_name
+  return buf_name
+end
+
 -- get last segment of a path
 function M.get_path_tail(str)
   return str:match('([^/]+/?/?)$')
@@ -17,15 +43,6 @@ end
 -- remove the protocol (eg `oil://` or `oil-trash://`) from a string
 function M.remove_protocol(str)
   return str:gsub('^.*://', '')
-end
-
--- get buf name (current if omitted), which is usually the path
-function M.get_buf_name(bufnr, remove_protocol)
-  bufnr = bufnr or 0
-  local raw_buf_name = vim.api.nvim_buf_get_name(bufnr)
-  local buf_name = remove_protocol and M.remove_protocol(raw_buf_name)
-    or raw_buf_name
-  return buf_name
 end
 
 -- shorten a path (eg `plugins/lsp/test.lua` to `p/l/test.lua`)
@@ -100,6 +117,13 @@ function M.find_file_upward(items)
     cur_dir = parent
   end
   return nil
+end
+
+-- check if session exists and matches cwd
+function M.session_in_cwd()
+  local cwd = M.get_cwd_folder()
+  local session = M.get_session_name()
+  return session and not (cwd == session)
 end
 
 return M
