@@ -71,4 +71,35 @@ function M.qf_nav(direction)
   end, true)
 end
 
+-- quickfix item deletion by line, maintaining cursor and selection position
+function M.qf_del(start_line, end_line)
+  local qf_list = vim.fn.getqflist()
+  local current_idx = vim.fn.getqflist({ idx = 0 }).idx
+
+  -- Remove items in reverse order to maintain correct indices
+  for i = end_line, start_line, -1 do
+    table.remove(qf_list, i)
+  end
+  vim.fn.setqflist(qf_list, 'r')
+
+  -- Determine the new quickfix index to select
+  local new_idx
+  if current_idx < start_line then
+    -- Current item was before the deleted range, keep same index
+    new_idx = current_idx
+  elseif current_idx > end_line then
+    -- Current item was after the deleted range, adjust for deleted items
+    new_idx = current_idx - (end_line - start_line + 1)
+  else
+    -- Current item was in the deleted range, select the item at start_line position
+    new_idx = math.min(start_line, #qf_list)
+  end
+
+  -- Set the quickfix index and cursor position
+  if new_idx > 0 and #qf_list > 0 then
+    vim.fn.setqflist({}, 'a', { idx = new_idx })
+    vim.fn.cursor(new_idx, 1)
+  end
+end
+
 return M

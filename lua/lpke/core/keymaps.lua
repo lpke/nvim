@@ -1,5 +1,4 @@
 local helpers = require('lpke.core.helpers')
-local keymap_set = helpers.keymap_set
 
 --[[  SYNTAX: {'<modes><R=rec,E=expr,C=:,!=sil,D=delete>', <lhs>, <rhs>, <desc>, {opts}}
 
@@ -54,7 +53,6 @@ helpers.keymap_set_multi({
   {'nvi', '<A-Up>', function() helpers.qf_nav(-1) end, { desc = 'Previous quickfix item' }},
   {'nv', ']q', function() helpers.qf_nav(1) end, { square_repeat = true, desc = 'Next quickfix item' }},
   {'nv', '[q', function() helpers.qf_nav(-1) end, { square_repeat = true, desc = 'Previous quickfix item' }},
-  -- TODO: add quickfix keymaps from autocommands.lua
 
   -- fold navigation
   {'nv', ']z', function() vim.cmd([[normal! ]z]]) end, { square_repeat = true, desc = 'Move to end of current fold' }},
@@ -272,28 +270,70 @@ helpers.keymap_set_multi({
   {'n', 'S*V', [[:'<,'>s/\%V\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]],
     { desc = 'Replace under cursor (prev selection)' }},
 })
+-- stylua: ignore end
 
 -- yank still: prevent cursor movement after yanking
 helpers.keymap_set_yank_still_upwards(100)
 helpers.keymap_set_yank_still_marks()
 
--- convert windows line endings to unix when pasting from global registers
-if helpers.is_wsl then
-  keymap_set({'nv!', '"*p', function() helpers.paste_unix('*') end,
-    { desc = 'Paste from * register (converting to unix line endings)' }})
-  keymap_set({'nv!', '"+p', function() helpers.paste_unix('+') end,
-    { desc = 'Paste from + register (converting to unix line endings)' }})
-  keymap_set({'nv!', '<leader>p', function() helpers.paste_unix('*') end,
-    { desc = 'Paste from * register (converting to unix line endings)' }})
-  keymap_set({'nv!', '<leader>P', function() helpers.paste_unix('*', true) end,
-    { desc = 'Paste to line above from * register (converting to unix line endings)' }})
-else
-  keymap_set({'nv', '<leader>p', '"*p', { desc = 'Global paste' }})
-  keymap_set({'nv', '<leader>P', '"*P', { desc = 'Global paste (before cursor)' }})
-end
+-- quickfix-specific keymaps
+-- stylua: ignore start
+helpers.ft_keymap_set_multi('qf', {
+  -- navigate while keeping focus inside qf window
+  { 'n', 'o', function()
+    local qf_win = vim.fn.win_getid()
+    local qf_list = vim.fn.getqflist()
+    local current_line = vim.fn.line('.')
+    local qf_item = qf_list[current_line]
+    if qf_item and qf_item.valid == 1 then
+      vim.cmd('cc ' .. current_line)
+    end
+    vim.fn.win_gotoid(qf_win)
+  end, { desc = 'Open quickfix item (stay in quickfix)' }, },
+  { 'n', 'J', function()
+    local qf_win = vim.fn.win_getid()
+    helpers.safe_call(function() vim.cmd('cnext') end, true)
+    vim.fn.win_gotoid(qf_win)
+  end, { desc = 'Next quickfix item (stay in quickfix)' }, },
+  { 'n', 'K', function()
+    local qf_win = vim.fn.win_getid()
+    helpers.safe_call(function() vim.cmd('cprev') end, true)
+    vim.fn.win_gotoid(qf_win)
+  end, { desc = 'Previous quickfix item (stay in quickfix)', }, },
+  -- delete quickfix items
+  { 'n', 'dd', function()
+    local line = vim.fn.line('.')
+    helpers.qf_del(line, line)
+  end, { desc = 'Delete quickfix item under cursor' }, },
+  { 'v', 'd', function()
+    local start_line = vim.fn.line('v')
+    local end_line = vim.fn.line('.')
+    if start_line > end_line then
+      start_line, end_line = end_line, start_line
+    end
+    helpers.qf_del(start_line, end_line)
+    helpers.safe_call(function() vim.cmd('normal! <Esc>') end, true)
+  end, { desc = 'Delete visually selected quickfix items' }, },
+})
 -- stylua: ignore end
 
--- disabling shortcuts of :read to prevent accidental activation when typing :reg
-vim.cmd('cabbrev r echo "shorthand for :read disabled"')
-vim.cmd('cabbrev re echo "shorthand for :read disabled"')
-vim.cmd('cabbrev rea echo "shorthand for :read disabled"')
+-- convert windows line endings to unix when pasting from global registers
+-- stylua: ignore start
+if helpers.is_wsl then
+  helpers.keymap_set_multi({
+    {'nv!', '"*p', function() helpers.paste_unix('*') end,
+      { desc = 'Paste from * register (converting to unix line endings)' }},
+    {'nv!', '"+p', function() helpers.paste_unix('+') end,
+      { desc = 'Paste from + register (converting to unix line endings)' }},
+    {'nv!', '<leader>p', function() helpers.paste_unix('*') end,
+      { desc = 'Paste from * register (converting to unix line endings)' }},
+    {'nv!', '<leader>P', function() helpers.paste_unix('*', true) end,
+      { desc = 'Paste to line above from * register (converting to unix line endings)' }},
+  })
+else
+  helpers.keymap_set_multi({
+    {'nv', '<leader>p', '"*p', { desc = 'Global paste' }},
+    {'nv', '<leader>P', '"*P', { desc = 'Global paste (before cursor)' }},
+  })
+end
+-- stylua: ignore end

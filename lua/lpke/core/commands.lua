@@ -4,6 +4,11 @@ Lpke_messages_win_open = false
 Lpke_messages_win_id = nil
 Lpke_messages_buf_id = nil
 
+-- disabling shortcuts of :read to prevent accidental activation when typing :reg
+vim.cmd('cabbrev r echo "shorthand for :read disabled"')
+vim.cmd('cabbrev re echo "shorthand for :read disabled"')
+vim.cmd('cabbrev rea echo "shorthand for :read disabled"')
+
 -- stylua: ignore start
 helpers.command_set_multi({
   { '', 'Bclean', Lpke_clean_buffers, { desc = 'Removes buffers that arent actively shown' } },
