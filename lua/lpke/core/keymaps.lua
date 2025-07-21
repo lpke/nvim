@@ -89,7 +89,7 @@ helpers.keymap_set_multi({
   {'nvC!', '<A-w>', 'set wrap!', { desc = 'Toggle line wrap' }},
   {'nvC', '<F2>r', 'set relativenumber!', { desc = 'Toggle relative numbers' }},
   {'nvC', '<A-r>', 'set relativenumber!', { desc = 'Toggle relative numbers' }},
-  -- FIXME: disabled due to lualine bug requiring me to set `globalstatue = true`
+  -- WARN: disabled due to lualine bug requiring me to set `globalstatue = true`
   -- {'n', '<F2>e', Lpke_toggle_global_status,
   --   { desc = 'Toggle global status line' }},
   -- {'n', '<A-e>', Lpke_toggle_global_status,

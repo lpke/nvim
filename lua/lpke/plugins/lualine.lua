@@ -353,7 +353,7 @@ local function config()
       },
       ignore_focus = {},
       always_divide_middle = false,
-      -- FIXME: this should be false, but it's a workaround to a flicker bug
+      -- WARN: this should be false, but it's a workaround to a flicker bug
       -- https://github.com/nvim-lualine/lualine.nvim/issues/1280
       globalstatus = true,
       refresh = {

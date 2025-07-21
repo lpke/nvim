@@ -163,5 +163,8 @@ end
 return {
   'lewis6991/gitsigns.nvim',
   event = 'BufReadPre',
+  -- TODO: remove after "`get_temp_hl` assertion failed" bug has been fixed
+  -- (caused by transparent background - https://github.com/lewis6991/gitsigns.nvim/issues/1372)
+  commit = '4666d040b60d1dc0e474ccd9a3fd3c4d67b4767c',
   config = config,
 }

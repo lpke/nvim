@@ -96,8 +96,6 @@ function Lpke_tabline()
     -- TODO: improve handling here for more cases
     elseif b.git_buffer_type then
       if b.git_buffer_type == 'diffview' then
-        -- TODO: improve
-        -- tab_title = 'G:' .. file_type:gsub('^Diffview', '')
         tab_title = 'G:Diffview'
       elseif b.git_buffer_type == 'fugitive' then
         tab_title = 'G:Fugitive'

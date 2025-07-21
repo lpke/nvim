@@ -40,35 +40,12 @@ local function config()
 
   -- diagnostics filter
   local function filter_diagnostics(diag) -- diag.source, diag.message, diag.code
-    -- current line diagnostics (not including `diag`) - TODO: no longer needed?
-    -- local ldiag =
-    --   vim.diagnostic.get(0, { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 })
-
     -- lua
     if string.match(diag.source, '^[Ll]ua.*') then
       if string.match(diag.message, 'Unused local `_.+`.') then
         return false
       end
     end
-
-    -- typescript - TODO: no longer needed?
-    -- if diag.source == 'typescript' then
-    --   local esldiag = helpers.arr_filter((ldiag or {}), function(item)
-    --     if type(item) ~= 'table' then
-    --       return false
-    --     end
-    --     return item.source == 'eslint_d' -- deprecated: `eslint_d` linter replaced with `eslint-lsp` (mason)
-    --   end)
-    --
-    --   -- handle TS/eslint diagnostic double-ups
-    --   if #esldiag > 0 then
-    --     -- unused variables
-    --     if diag.code == 6133 then
-    --       return false
-    --     end
-    --   end
-    -- end
-
     return true
   end
 

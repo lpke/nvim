@@ -87,7 +87,7 @@ M.vim_opts = {
   jumpoptions = 'view', -- try and remember view position when jumping
   shortmess = 'filnxtToOFI', -- default up until 'I' (disabling welcome message)
   listchars = [[tab:» ,trail:·,nbsp:·,extends:>,precedes:<]], -- whitespace chars to show when `list` option is toggled on
-  statusline = ' %f %m %= %l:%c ', -- TODO: add percent, other useful stuff
+  statusline = ' %f %m %= %l:%c ',
   sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions',
   formatoptions = 'jql', -- see `:help fo-table` (I removed 'c' to disable auto-wrap, use gw motion instead)
   timeoutlen = 4000, -- timeout when waiting for next key in a keymap
