@@ -539,10 +539,11 @@ return {
     {
       'echasnovski/mini.diff',
       config = function()
-        local diff = require('mini.diff')
-        diff.setup({
-          -- Disabled by default
-          source = diff.gen_source.none(),
+        local mini_diff = require('mini.diff')
+        mini_diff.setup({
+          -- disable default functionality
+          -- (so only codecompanion uses it)
+          source = mini_diff.gen_source.none(),
         })
       end,
     },
