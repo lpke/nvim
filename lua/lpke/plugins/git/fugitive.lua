@@ -74,10 +74,8 @@ Lpke_fdiff_before_win = nil
 Lpke_fdiff_after_win = nil
 Lpke_fdiff_autocmd_id = nil
 ---Fugitive `Gvdiffsplit` wrapper that allows extra options and adds QoL functionality.
--- TODO: handle new_tab option
 function Lpke_toggle_git_diff(opts)
   opts = opts or {}
-  opts.new_tab = opts.new_tab == nil and true or opts.new_tab
   opts.against_staging = opts.against_staging == nil and false
     or opts.against_staging
 
@@ -175,25 +173,22 @@ function Lpke_toggle_git_diff(opts)
   vim.cmd('normal! <C-y>')
 
   -- stylua: ignore start
-  -- Apply window-specific highlight swaps
-  -- Before window highlights
+  -- apply window-specific highlight swaps (equivilent to diffview's `enhanced_diff_hl`)
   vim.api.nvim_win_call(Lpke_fdiff_before_win, function()
     local ns = vim.api.nvim_create_namespace('lpke_fugitive_before_' .. Lpke_fdiff_before_win)
     vim.api.nvim_win_set_hl_ns(Lpke_fdiff_before_win, ns)
-    vim.api.nvim_set_hl(ns, 'DiffAdd', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffAddAsDelete' }))
-    vim.api.nvim_set_hl(ns, 'DiffDelete', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffDeleteDim' }))
-    vim.api.nvim_set_hl(ns, 'DiffChange', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffChange' }))
-    vim.api.nvim_set_hl(ns, 'DiffText', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffText' }))
+    vim.api.nvim_set_hl(ns, 'DiffAdd', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffAddAsDelete' })) ---@diagnostic disable-line: param-type-mismatch
+    vim.api.nvim_set_hl(ns, 'DiffDelete', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffDeleteDim' })) ---@diagnostic disable-line: param-type-mismatch
+    vim.api.nvim_set_hl(ns, 'DiffChange', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffChange' })) ---@diagnostic disable-line: param-type-mismatch
+    vim.api.nvim_set_hl(ns, 'DiffText', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffText' })) ---@diagnostic disable-line: param-type-mismatch
   end)
-
-  -- After window highlights
   vim.api.nvim_win_call(Lpke_fdiff_after_win, function()
     local ns = vim.api.nvim_create_namespace('lpke_fugitive_after_' .. Lpke_fdiff_after_win)
     vim.api.nvim_win_set_hl_ns(Lpke_fdiff_after_win, ns)
-    vim.api.nvim_set_hl(ns, 'DiffDelete', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffDeleteDim' }))
-    vim.api.nvim_set_hl(ns, 'DiffAdd', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffAdd' }))
-    vim.api.nvim_set_hl(ns, 'DiffChange', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffChange' }))
-    vim.api.nvim_set_hl(ns, 'DiffText', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffText' }))
+    vim.api.nvim_set_hl(ns, 'DiffDelete', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffDeleteDim' })) ---@diagnostic disable-line: param-type-mismatch
+    vim.api.nvim_set_hl(ns, 'DiffAdd', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffAdd' })) ---@diagnostic disable-line: param-type-mismatch
+    vim.api.nvim_set_hl(ns, 'DiffChange', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffChange' })) ---@diagnostic disable-line: param-type-mismatch
+    vim.api.nvim_set_hl(ns, 'DiffText', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffText' })) ---@diagnostic disable-line: param-type-mismatch
   end)
   -- stylua: ignore end
 
@@ -247,9 +242,9 @@ local function config()
   helpers.keymap_set_multi({
     {'nv', '<leader>i', function() Lpke_toggle_git_fugitive(true) end, { desc = 'Fugitive: Toggle fugitive window (`:Git` in new tab)' }},
     {'nC', '<leader>gb', 'Git blame', { desc = 'Fugitive: Open blame panel' }},
-    {'nv', '<leader>gdd', function() Lpke_toggle_git_diff({ new_tab = true }) end, { desc = 'Fugitive: Open diff split for current file (against HEAD) in a new tab' }},
-    {'nv', '<leader>gds', function() Lpke_toggle_git_diff({ new_tab = true, against_staging = true }) end, { desc = 'Fugitive: Open diff split for current file (against staging) in a new tab' }},
-    {'nv', 'gsL', function() Lpke_toggle_git_diff({ new_tab = false }) end, { desc = 'Fugitive: Open diff split for current file (against HEAD)' }},
+    {'nv', '<leader>gdd', function() Lpke_toggle_git_diff() end, { desc = 'Fugitive: Open diff split for current file (against HEAD) in a new tab' }},
+    {'nv', 'gsL', function() Lpke_toggle_git_diff() end, { desc = 'Fugitive: Open diff split for current file (against HEAD) in a new tab' }},
+    {'nv', '<leader>gds', function() Lpke_toggle_git_diff({ against_staging = true }) end, { desc = 'Fugitive: Open diff split for current file (against staging) in a new tab' }},
   })
   -- stylua: ignore end
 
