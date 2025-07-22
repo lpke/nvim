@@ -1,4 +1,11 @@
--- like print but can print tables
+---Wrapper for `print` that can handle printing tables nicely
+---@param val any Value to print (can be table or any type)
+---@param max_depth? integer Maximum depth to print nested tables (default: 0)
+---@param indent_size? integer Number of spaces per indent level (default: 2)
+---@param indent? string Current indentation string (default: '')
+---@param newline_at_end? boolean Whether to print a newline at the end (default: false)
+---@param current_depth? integer Current recursion depth (default: 0)
+---@param is_top_level? boolean Whether this is the top-level call (default: true)
 function Print(
   val,
   max_depth,
