@@ -44,7 +44,7 @@ function M.keymap_set(keymap)
     opts.square_repeat
     and not is_cmd
     and (type(rhs) == 'function')
-    and (string.match(lhs, '^[%[%]][a-zA-Z]$') ~= nil) -- is a "square movement" (eg `[q`)
+    and Match(lhs, '^[%[%]][a-zA-Z]$') -- is a "square movement" (eg `[q`)
   then
     local orig_rhs = rhs
     rhs = function()
@@ -109,7 +109,7 @@ function M.telescope_keymap_set_multi(target_title, keymaps, cond_func)
     then
       return false
     end
-    return string.match(prompt_title, target_title) ~= nil
+    return Match(prompt_title, target_title)
   end)
 end
 

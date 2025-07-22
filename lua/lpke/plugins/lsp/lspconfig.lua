@@ -41,8 +41,8 @@ local function config()
   -- diagnostics filter
   local function filter_diagnostics(diag) -- diag.source, diag.message, diag.code
     -- lua
-    if string.match(diag.source, '^[Ll]ua.*') then
-      if string.match(diag.message, 'Unused local `_.+`.') then
+    if Match(diag.source, '^[Ll]ua.*') then
+      if Match(diag.message, 'Unused local `_.+`.') then
         return false
       end
     end

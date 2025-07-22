@@ -48,13 +48,13 @@ function M.get_git_buf_type(bufnr)
   local git_buffer = vim.tbl_contains(
     { 'git', 'gitcommit', 'gitui', 'gitmerge', 'gitrebase' },
     file_type
-  ) or string.match(buf_name, '^git://') or string.match(buf_name, '^git://')
-  local fugitive_buffer = string.match(file_type, 'fugitive')
-    or string.match(buf_name, '^fugitive://')
-  local diffview_buffer = string.match(file_type, 'Diffview')
-    or string.match(buf_name, '^diffview://')
-  local gitsigns_buffer = string.match(file_type, 'gitsigns')
-    or string.match(buf_name, '^gitsigns%-.+://')
+  ) or Match(buf_name, '^git://') or Match(buf_name, '^git://')
+  local fugitive_buffer = Match(file_type, 'fugitive')
+    or Match(buf_name, '^fugitive://')
+  local diffview_buffer = Match(file_type, 'Diffview')
+    or Match(buf_name, '^diffview://')
+  local gitsigns_buffer = Match(file_type, 'gitsigns')
+    or Match(buf_name, '^gitsigns%-.+://')
 
   if git_buffer then
     return 'git'

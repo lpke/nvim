@@ -73,8 +73,8 @@ function Lpke_new_float(opts)
 
   -- stylua: ignore start
   local function extract_num(str) return math.abs(string.match(str, '%-?%d+%.?%d*')) end
-  local function is_proportional(str) return string.match(str, '^(%d%.?%d?%d?%d?%d?)([wh])$') and true or false end
-  local function is_adjust(str) return string.match(str, '^[wh]%-%d+$') and true or false end
+  local function is_proportional(str) return Match(str, '^(%d%.?%d?%d?%d?%d?)([wh])$') end
+  local function is_adjust(str) return Match(str, '^[wh]%-%d+$') end
   -- stylua: ignore end
 
   -- handle special width value
