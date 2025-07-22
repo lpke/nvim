@@ -531,6 +531,9 @@ end
 return {
   'olimorris/codecompanion.nvim',
   config = config,
+  -- TODO: this is the last version that didn't give me errors after each chat
+  -- completion (tool failed or something like that)
+  commit = '28eab4386b04dc222de6c27349ea5ae0d1a92866',
   dependencies = {
     -- required
     'nvim-lua/plenary.nvim',
