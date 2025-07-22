@@ -309,7 +309,7 @@ local function config()
         removed = { fg = tc.love },
       },
       on_click = function()
-        Lpke_toggle_git_diff(true) -- diff to staging
+        Lpke_toggle_git_diff({ against_staging = true })
       end,
       color = { bg = tc.overlaybump },
     },

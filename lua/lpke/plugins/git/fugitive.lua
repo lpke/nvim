@@ -74,7 +74,14 @@ Lpke_fugitive_diff_original_win_id = nil
 Lpke_fugitive_diff_before_win_id = nil
 Lpke_fugitive_diff_after_win_id = nil
 Lpke_fugitive_diff_autocmd_id = nil
-function Lpke_toggle_git_diff(against_staging)
+function Lpke_toggle_git_diff(opts)
+  opts = opts or {}
+  opts.new_tab = opts.new_tab == nil and true or opts.new_tab
+  opts.against_staging = opts.against_staging == nil and false
+    or opts.against_staging
+
+  -- TODO: handle new_tab option
+
   -- handle if a diff is already open
   if
     Lpke_fugitive_diff_original_win_id
@@ -158,13 +165,13 @@ function Lpke_toggle_git_diff(against_staging)
   Lpke_fugitive_diff_original_win_id = vim.api.nvim_get_current_win()
   vim.cmd('tab split')
   Lpke_fugitive_diff_after_win_id = vim.api.nvim_get_current_win()
-  if against_staging then
+  if opts.against_staging then
     vim.cmd('Gvdiffsplit')
   else
     vim.cmd('Gvdiffsplit HEAD')
   end
   Lpke_fugitive_diff_before_win_id = vim.api.nvim_get_current_win()
-  if not against_staging then
+  if not opts.against_staging then
     vim.cmd('wincmd R')
   end
   vim.api.nvim_set_current_win(Lpke_fugitive_diff_after_win_id)
@@ -222,8 +229,9 @@ local function config()
   helpers.keymap_set_multi({
     {'nv', '<leader>i', function() Lpke_toggle_git_fugitive(true) end, { desc = 'Fugitive: Toggle fugitive window (`:Git` in new tab)' }},
     {'nC', '<leader>gb', 'Git blame', { desc = 'Fugitive: Open blame panel' }},
-    {'nv', '<leader>gdd', Lpke_toggle_git_diff, { desc = 'Fugitive: Open diff split for current file (against HEAD) in a new tab' }},
-    {'nv', '<leader>gds', function() Lpke_toggle_git_diff(true) end, { desc = 'Fugitive: Open diff split for current file (against staging) in a new tab' }},
+    {'nv', '<leader>gdd', function() Lpke_toggle_git_diff({ new_tab = true }) end, { desc = 'Fugitive: Open diff split for current file (against HEAD) in a new tab' }},
+    {'nv', '<leader>gds', function() Lpke_toggle_git_diff({ new_tab = true, against_staging = true }) end, { desc = 'Fugitive: Open diff split for current file (against staging) in a new tab' }},
+    {'nv', 'gsL', function() Lpke_toggle_git_diff({ new_tab = false }) end, { desc = 'Fugitive: Open diff split for current file (against HEAD)' }},
   })
   -- stylua: ignore end
 
