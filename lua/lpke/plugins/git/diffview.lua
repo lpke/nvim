@@ -4,11 +4,13 @@ local function config()
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
 
-  -- helpers
+  -- close the diffview tab and ensure the correct previous tab is focused
   local function diffview_close()
+    local dv_tab = vim.fn.tabpagenr()
+    local num_tabs = vim.fn.tabpagenr('$')
     vim.cmd('DiffviewClose')
-    local current_tab = vim.fn.tabpagenr()
-    if current_tab > 1 then
+    local after_tab = vim.fn.tabpagenr()
+    if (dv_tab > 1) and (dv_tab ~= num_tabs) and (after_tab <= num_tabs) then
       vim.cmd('tabprevious')
     end
   end
