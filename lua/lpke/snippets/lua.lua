@@ -135,6 +135,10 @@ return { -- lua
     trig = 'cl',
     name = '"Console Log"',
   }, fmt('print(<>)', { i(1) })),
+  s({
+    trig = 'cld',
+    name = '"Console Log" Debug',
+  }, fmt("print('<>: ' .. <>)", { rep(1), i(1) })),
   _s({
     trig = '/cl',
     name = '"Console Log"',
