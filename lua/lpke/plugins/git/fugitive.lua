@@ -69,115 +69,133 @@ function Lpke_toggle_git_fugitive(new_tab)
   end
 end
 
--- will be diffed against HEAD unless `against_staging` is true
-Lpke_fugitive_diff_original_win_id = nil
-Lpke_fugitive_diff_before_win_id = nil
-Lpke_fugitive_diff_after_win_id = nil
-Lpke_fugitive_diff_autocmd_id = nil
+Lpke_fdiff_orig_win = nil
+Lpke_fdiff_before_win = nil
+Lpke_fdiff_after_win = nil
+Lpke_fdiff_autocmd_id = nil
+---Fugitive `Gvdiffsplit` wrapper that allows extra options and adds QoL functionality.
+-- TODO: handle new_tab option
 function Lpke_toggle_git_diff(opts)
   opts = opts or {}
   opts.new_tab = opts.new_tab == nil and true or opts.new_tab
   opts.against_staging = opts.against_staging == nil and false
     or opts.against_staging
 
-  -- TODO: handle new_tab option
-
   -- handle if a diff is already open
-  if
-    Lpke_fugitive_diff_original_win_id
-    or Lpke_fugitive_diff_before_win_id
-    or Lpke_fugitive_diff_after_win_id
-  then
+  if Lpke_fdiff_orig_win or Lpke_fdiff_before_win or Lpke_fdiff_after_win then
     -- invalid state: warn and reset
     if
-      type(Lpke_fugitive_diff_original_win_id) ~= 'number'
-      or type(Lpke_fugitive_diff_before_win_id) ~= 'number'
-      or type(Lpke_fugitive_diff_after_win_id) ~= 'number'
+      type(Lpke_fdiff_orig_win) ~= 'number'
+      or type(Lpke_fdiff_before_win) ~= 'number'
+      or type(Lpke_fdiff_after_win) ~= 'number'
     then
       vim.notify(
         'Lpke_toggle_git_diff: Invalid fugitive diff window IDs detected. Resetting state.',
         vim.log.levels.WARN
       )
-      if Lpke_fugitive_diff_autocmd_id then
-        vim.api.nvim_del_autocmd(Lpke_fugitive_diff_autocmd_id)
+      if Lpke_fdiff_autocmd_id then
+        vim.api.nvim_del_autocmd(Lpke_fdiff_autocmd_id)
       end
       if
-        Lpke_fugitive_diff_before_win_id
-        and vim.api.nvim_win_is_valid(Lpke_fugitive_diff_before_win_id)
+        Lpke_fdiff_before_win
+        and vim.api.nvim_win_is_valid(Lpke_fdiff_before_win)
       then
-        vim.api.nvim_win_close(Lpke_fugitive_diff_before_win_id, false)
+        vim.api.nvim_win_close(Lpke_fdiff_before_win, false)
       end
       if
-        Lpke_fugitive_diff_after_win_id
-        and vim.api.nvim_win_is_valid(Lpke_fugitive_diff_after_win_id)
+        Lpke_fdiff_after_win
+        and vim.api.nvim_win_is_valid(Lpke_fdiff_after_win)
       then
-        vim.api.nvim_win_close(Lpke_fugitive_diff_after_win_id, false)
+        vim.api.nvim_win_close(Lpke_fdiff_after_win, false)
       end
-      Lpke_fugitive_diff_original_win_id = nil
-      Lpke_fugitive_diff_before_win_id = nil
-      Lpke_fugitive_diff_after_win_id = nil
-      Lpke_fugitive_diff_autocmd_id = nil
+      Lpke_fdiff_orig_win = nil
+      Lpke_fdiff_before_win = nil
+      Lpke_fdiff_after_win = nil
+      Lpke_fdiff_autocmd_id = nil
       return
     else
       local current_win_id = vim.api.nvim_get_current_win()
       -- in original window: focus back to already-open tab
-      if current_win_id == Lpke_fugitive_diff_original_win_id then
-        vim.api.nvim_set_current_win(Lpke_fugitive_diff_after_win_id)
+      if current_win_id == Lpke_fdiff_orig_win then
+        vim.api.nvim_set_current_win(Lpke_fdiff_after_win)
         return
       -- in a diff window already: close windows
       elseif
-        current_win_id == Lpke_fugitive_diff_before_win_id
-        or current_win_id == Lpke_fugitive_diff_after_win_id
+        current_win_id == Lpke_fdiff_before_win
+        or current_win_id == Lpke_fdiff_after_win
       then
         if
-          Lpke_fugitive_diff_before_win_id
-          and vim.api.nvim_win_is_valid(Lpke_fugitive_diff_before_win_id)
+          Lpke_fdiff_before_win
+          and vim.api.nvim_win_is_valid(Lpke_fdiff_before_win)
         then
-          vim.api.nvim_win_close(Lpke_fugitive_diff_before_win_id, false)
+          vim.api.nvim_win_close(Lpke_fdiff_before_win, false)
         end
         if
-          Lpke_fugitive_diff_after_win_id
-          and vim.api.nvim_win_is_valid(Lpke_fugitive_diff_after_win_id)
+          Lpke_fdiff_after_win
+          and vim.api.nvim_win_is_valid(Lpke_fdiff_after_win)
         then
-          vim.api.nvim_win_close(Lpke_fugitive_diff_after_win_id, false)
+          vim.api.nvim_win_close(Lpke_fdiff_after_win, false)
         end
-        vim.api.nvim_set_current_win(Lpke_fugitive_diff_original_win_id)
+        vim.api.nvim_set_current_win(Lpke_fdiff_orig_win)
         return
       else
         -- in a new window: close old diffs and proceed afresh
-        Lpke_fugitive_diff_original_win_id = current_win_id
-        if Lpke_fugitive_diff_autocmd_id then
-          vim.api.nvim_del_autocmd(Lpke_fugitive_diff_autocmd_id)
-          Lpke_fugitive_diff_autocmd_id = nil
+        Lpke_fdiff_orig_win = current_win_id
+        if Lpke_fdiff_autocmd_id then
+          vim.api.nvim_del_autocmd(Lpke_fdiff_autocmd_id)
+          Lpke_fdiff_autocmd_id = nil
         end
-        if vim.api.nvim_win_is_valid(Lpke_fugitive_diff_before_win_id) then
-          vim.api.nvim_win_close(Lpke_fugitive_diff_before_win_id, false)
+        if vim.api.nvim_win_is_valid(Lpke_fdiff_before_win) then
+          vim.api.nvim_win_close(Lpke_fdiff_before_win, false)
         end
-        Lpke_fugitive_diff_before_win_id = nil
-        if vim.api.nvim_win_is_valid(Lpke_fugitive_diff_after_win_id) then
-          vim.api.nvim_win_close(Lpke_fugitive_diff_after_win_id, false)
+        Lpke_fdiff_before_win = nil
+        if vim.api.nvim_win_is_valid(Lpke_fdiff_after_win) then
+          vim.api.nvim_win_close(Lpke_fdiff_after_win, false)
         end
-        Lpke_fugitive_diff_after_win_id = nil
+        Lpke_fdiff_after_win = nil
       end
     end
   end
 
-  Lpke_fugitive_diff_original_win_id = vim.api.nvim_get_current_win()
+  Lpke_fdiff_orig_win = vim.api.nvim_get_current_win()
   vim.cmd('tab split')
-  Lpke_fugitive_diff_after_win_id = vim.api.nvim_get_current_win()
+  Lpke_fdiff_after_win = vim.api.nvim_get_current_win()
   if opts.against_staging then
     vim.cmd('Gvdiffsplit')
   else
     vim.cmd('Gvdiffsplit HEAD')
   end
-  Lpke_fugitive_diff_before_win_id = vim.api.nvim_get_current_win()
+  Lpke_fdiff_before_win = vim.api.nvim_get_current_win()
   if not opts.against_staging then
     vim.cmd('wincmd R')
   end
-  vim.api.nvim_set_current_win(Lpke_fugitive_diff_after_win_id)
+  vim.api.nvim_set_current_win(Lpke_fdiff_after_win)
   vim.cmd('normal! zz')
   vim.cmd('normal! <C-e>')
   vim.cmd('normal! <C-y>')
+
+  -- stylua: ignore start
+  -- Apply window-specific highlight swaps
+  -- Before window highlights
+  vim.api.nvim_win_call(Lpke_fdiff_before_win, function()
+    local ns = vim.api.nvim_create_namespace('lpke_fugitive_before_' .. Lpke_fdiff_before_win)
+    vim.api.nvim_win_set_hl_ns(Lpke_fdiff_before_win, ns)
+    vim.api.nvim_set_hl(ns, 'DiffAdd', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffAddAsDelete' }))
+    vim.api.nvim_set_hl(ns, 'DiffDelete', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffDeleteDim' }))
+    vim.api.nvim_set_hl(ns, 'DiffChange', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffChange' }))
+    vim.api.nvim_set_hl(ns, 'DiffText', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffText' }))
+  end)
+
+  -- After window highlights
+  vim.api.nvim_win_call(Lpke_fdiff_after_win, function()
+    local ns = vim.api.nvim_create_namespace('lpke_fugitive_after_' .. Lpke_fdiff_after_win)
+    vim.api.nvim_win_set_hl_ns(Lpke_fdiff_after_win, ns)
+    vim.api.nvim_set_hl(ns, 'DiffDelete', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffDeleteDim' }))
+    vim.api.nvim_set_hl(ns, 'DiffAdd', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffAdd' }))
+    vim.api.nvim_set_hl(ns, 'DiffChange', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffChange' }))
+    vim.api.nvim_set_hl(ns, 'DiffText', vim.api.nvim_get_hl(0, { name = 'DiffviewDiffText' }))
+  end)
+  -- stylua: ignore end
 
   local close_in_progress = false
   local function close_win_and_focus_original(win_id)
@@ -190,31 +208,31 @@ function Lpke_toggle_git_diff(opts)
         vim.api.nvim_win_close(win_id, false)
       end
       if
-        Lpke_fugitive_diff_original_win_id
-        and vim.api.nvim_win_is_valid(Lpke_fugitive_diff_original_win_id)
+        Lpke_fdiff_orig_win
+        and vim.api.nvim_win_is_valid(Lpke_fdiff_orig_win)
       then
-        vim.api.nvim_set_current_win(Lpke_fugitive_diff_original_win_id)
+        vim.api.nvim_set_current_win(Lpke_fdiff_orig_win)
       end
-      Lpke_fugitive_diff_original_win_id = nil
-      Lpke_fugitive_diff_before_win_id = nil
-      Lpke_fugitive_diff_after_win_id = nil
-      Lpke_fugitive_diff_autocmd_id = nil
+      Lpke_fdiff_orig_win = nil
+      Lpke_fdiff_before_win = nil
+      Lpke_fdiff_after_win = nil
+      Lpke_fdiff_autocmd_id = nil
       close_in_progress = false
     end)
   end
 
   -- ensure both new windows close together and origianl is focused again
-  Lpke_fugitive_diff_autocmd_id = vim.api.nvim_create_autocmd('WinClosed', {
+  Lpke_fdiff_autocmd_id = vim.api.nvim_create_autocmd('WinClosed', {
     pattern = {
-      tostring(Lpke_fugitive_diff_before_win_id),
-      tostring(Lpke_fugitive_diff_after_win_id),
+      tostring(Lpke_fdiff_before_win),
+      tostring(Lpke_fdiff_after_win),
     },
     callback = function(args)
       local closed_win_id = tonumber(args.match)
-      if closed_win_id == Lpke_fugitive_diff_before_win_id then
-        close_win_and_focus_original(Lpke_fugitive_diff_after_win_id)
-      elseif closed_win_id == Lpke_fugitive_diff_after_win_id then
-        close_win_and_focus_original(Lpke_fugitive_diff_before_win_id)
+      if closed_win_id == Lpke_fdiff_before_win then
+        close_win_and_focus_original(Lpke_fdiff_after_win)
+      elseif closed_win_id == Lpke_fdiff_after_win then
+        close_win_and_focus_original(Lpke_fdiff_before_win)
       end
     end,
     once = true,
