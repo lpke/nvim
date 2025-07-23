@@ -92,6 +92,8 @@ local function config()
       ['[['] = 'actions.prev_up',
       [']]'] = 'actions.next_up',
       ['q'] = 'actions.close',
+      ['<C-c>'] = 'actions.close',
+      ['<esc>'] = 'actions.close',
       ['za'] = 'actions.tree_open',
       ['zA'] = 'actions.tree_open_recursive',
       ['zo'] = 'actions.tree_toggle',
@@ -342,6 +344,7 @@ local function config()
         ['l'] = 'actions.right',
         ['<C-c>'] = 'actions.close',
         ['q'] = 'actions.close',
+        ['<esc>'] = 'actions.close',
       },
     },
 
