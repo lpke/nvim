@@ -1,5 +1,6 @@
 local function config()
   local oil = require('oil')
+  local oil_actions = require('oil.actions')
   local helpers = require('lpke.core.helpers')
 
   -- stylua: ignore start
@@ -97,31 +98,27 @@ local function config()
       },
       ['-'] = 'actions.parent',
       ['gd'] = 'actions.open_cwd',
+      ['gD'] = {
+        callback = function()
+          local dir = oil.get_current_dir()
+          local git_root = Lpke_find_git_root(dir)
+          if git_root then
+            oil.open(git_root)
+          else
+            vim.notify(
+              'Oil: No git root found for current dir. Falling back to cwd.',
+              vim.log.levels.WARN
+            )
+            oil_actions.open_cwd.callback()
+          end
+        end,
+        desc = "Oil: Open at current dir's git root",
+      },
       ['gh'] = {
         callback = function()
           oil.open('~/')
         end,
         desc = 'Oil: Open oil in the home (~/) folder',
-        mode = 'n',
-      },
-      -- cd
-      ['cdg'] = {
-        callback = function()
-          local dir = oil.get_current_dir()
-          local git_root = vim.fn
-            .system(
-              'cd '
-                .. vim.fn.shellescape(dir)
-                .. ' && git rev-parse --show-toplevel'
-            )
-            :gsub('\n', '')
-          if vim.v.shell_error == 0 and git_root ~= '' then
-            vim.cmd('cd ' .. vim.fn.fnameescape(git_root))
-          else
-            vim.notify('Not a git repository', vim.log.levels.WARN)
-          end
-        end,
-        desc = 'Oil: :cd to the git root of the current directory',
         mode = 'n',
       },
       -- view/toggles
