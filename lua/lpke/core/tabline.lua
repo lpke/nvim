@@ -72,6 +72,8 @@ function Lpke_tabline()
       ['harpoon'] = 'Harpoon',
       ['lazy'] = 'Lazy',
       ['mason'] = 'Mason',
+      ['aerial'] = 'Aerial',
+      ['aerial-nav'] = 'AerialNav',
       ['undotree'] = 'Undotree',
       ['codecompanion'] = 'CodeCompanion',
       ['gitcommit'] = 'G:Commit',

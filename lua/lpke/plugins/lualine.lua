@@ -147,6 +147,8 @@ local function config()
         ['harpoon'] = 'Harpoon Menu',
         ['lazy'] = 'Lazy (Plugin Manager)',
         ['mason'] = 'Mason (Package Manager)',
+        ['aerial'] = 'Aerial',
+        ['aerial-nav'] = 'Aerial Nav',
         ['fugitive'] = 'Fugitive Status',
         ['fugitiveblame'] = 'Fugitive Blame',
         ['gitsigns-blame'] = 'Gitsigns Blame',
