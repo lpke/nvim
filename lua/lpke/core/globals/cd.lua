@@ -12,21 +12,25 @@ end
 ---@param log boolean? Whether to log the change
 ---@return string # The final working directory
 function Lpke_cd(target_path, target_scope, log)
-  -- default path and scope if not provided or invalid
-  local path = Lpke_find_git_root(vim.fn.getcwd(-1, -1))
-    or vim.fn.getcwd(-1, -1)
   local scope = 'global'
-  if type(target_path) == 'string' and Lpke_path_exists(target_path) then
-    path = target_path
-  else
-    -- assume empty string means deliberately go to root
-    if target_path ~= '' then
+  local nvim_cwd = vim.fn.getcwd(-1, -1)
+  local path = nvim_cwd
+
+  -- determine `path`
+  if type(target_path) == 'string' then
+    if target_path == 'git' then
+      path = Lpke_find_git_root(nvim_cwd) or nvim_cwd
+    elseif Lpke_path_exists(target_path) then
+      path = target_path
+    elseif target_path ~= '' then
       vim.notify(
         'Lpke_cd: Invalid target_path provided. Using: ' .. path,
         vim.log.levels.WARN
       )
     end
   end
+
+  -- determine scope
   if type(target_scope) == 'string' then
     if
       target_scope == 'global'
@@ -100,12 +104,4 @@ function Lpke_cd_here(scope, log)
 
   Lpke_cd(cur_dir, scope, log)
   return vim.fn.getcwd()
-end
-
----Changes working directory to git root (or fallback) for a target scope
----@param scope "global"|"tab"|"window"? The scope for the directory change
----@param log boolean? Whether to log the change
----@return string # The final working directory
-function Lpke_cd_root(scope, log)
-  return Lpke_cd('', scope, log)
 end

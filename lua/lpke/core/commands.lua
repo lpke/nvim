@@ -59,10 +59,13 @@ helpers.command_set_multi({
 
   -- changing directory (cd)
   { '', 'Cd', function() Lpke_cd_here('global') end, { desc = ':cd <current_dir>' } },
-  { '', 'Cdr', function() Lpke_cd_root('global') end, { desc = ':cd <git_root_or_cwd>' } },
+  { '', 'Cdc', function() Lpke_cd('', 'global') end, { desc = ':cd <nvim_global_cwd>' } },
+  { '', 'Cdr', function() Lpke_cd('git', 'global') end, { desc = ':cd <git_root_or_cwd>' } },
   { '', 'Tcd', function() Lpke_cd_here('tab') end, { desc = ':tcd <current_dir>' } },
-  { '', 'Tcdr', function() Lpke_cd_root('tab') end, { desc = ':tcd <git_root_or_cwd>' } },
+  { '', 'Tcdc', function() Lpke_cd('', 'tab') end, { desc = ':tcd <nvim_global_cwd>' } },
+  { '', 'Tcdr', function() Lpke_cd('git', 'tab') end, { desc = ':tcd <git_root_or_cwd>' } },
   { '', 'Lcd', function() Lpke_cd_here('window') end, { desc = ':lcd <current_dir>' } },
-  { '', 'Lcdr', function() Lpke_cd_root('window') end, { desc = ':lcd <git_root_or_cwd>' } },
+  { '', 'Lcdc', function() Lpke_cd('', 'window') end, { desc = ':lcd <nvim_global_cwd>' } },
+  { '', 'Lcdr', function() Lpke_cd('git', 'window') end, { desc = ':lcd <git_root_or_cwd>' } },
 })
 -- stylua: ignore end
