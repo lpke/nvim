@@ -1,5 +1,3 @@
-local helpers = require('lpke.core.helpers')
-
 -- disable next line auto-comment
 vim.cmd('autocmd FileType * set formatoptions-=cro')
 

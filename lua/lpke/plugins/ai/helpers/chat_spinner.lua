@@ -45,7 +45,7 @@ function M:update_spinner(buf)
   state.spinner_index = (state.spinner_index % #self.spinner_symbols) + 1
 
   -- Wrap all buffer operations in pcall to handle race conditions
-  local success, err = pcall(function()
+  local success, _err = pcall(function()
     -- Clear previous virtual text
     vim.api.nvim_buf_clear_namespace(buf, state.namespace_id, 0, -1)
 

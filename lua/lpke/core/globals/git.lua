@@ -1,5 +1,3 @@
-local helpers = require('lpke.core.helpers')
-
 -- find the git root of any path, or current file (if applicable)
 function Lpke_find_git_root(path)
   -- Handle nil or empty path - use current buffer's path
