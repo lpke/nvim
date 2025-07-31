@@ -142,7 +142,7 @@ local find_dirs = function(opts)
       prompt_title = 'Find Directories',
       initial_mode = 'insert',
       finder = finder,
-      debounce = 100, -- for performance / less spam
+      debounce = 50,
       previewer = previewer,
       sorter = config_values.generic_sorter({}),
     })

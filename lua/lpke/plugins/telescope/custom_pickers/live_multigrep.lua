@@ -59,7 +59,7 @@ local live_multigrep = function(opts)
       prompt_title = 'Find in Filtered Files',
       initial_mode = 'insert',
       finder = finder,
-      debounce = 100, -- for performance / less spam
+      debounce = 50,
       previewer = config_values.grep_previewer(opts),
       sorter = sorters.highlighter_only(opts), -- highlight in results
     })

@@ -101,7 +101,7 @@ local function config()
     {'n', '[t', function()
       todo_comments.jump_prev()
     end, { square_repeat = true, desc = 'TodoComments: Previous comment' }},
-    {'nC', '<BS>,', 'TodoTelescope', { desc = 'TodoComments: Open Telescope picker for todo comments' }},
+    {'nC', '<BS>ft', 'TodoTelescope', { desc = 'TodoComments: Open Telescope picker for todo comments' }},
   })
   -- telescope-only keymaps
   helpers.telescope_keymap_set_multi('Find Todo', {
