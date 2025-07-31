@@ -53,7 +53,7 @@ function M.transform_path(full_path, opts)
   if
     opts.dir_tail_slash
     and not opts.include_filename
-    and (string.sub(rel_path, -1) ~= '/')
+    and (Char(rel_path, -1) ~= '/')
   then
     rel_path = rel_path .. '/'
   end
