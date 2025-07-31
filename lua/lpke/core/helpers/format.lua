@@ -24,14 +24,21 @@ function M.shorten_path(path)
   return path:gsub('([^/%w]?[^/])[^/]*/', '%1/')
 end
 
----Transform full path string to a configurable relative path.
+-- check if path has an extension
+function M.path_has_extension(path)
+  local tail = M.get_path_tail(path)
+  return tail and Match(tail, '%.[^/]*$')
+end
+
+---Transform full path string to a configurable path.
 ---@param full_path string The full path to transform
----@param opts? { include_filename?: boolean, dir_tail_slash?: boolean, cwd_name?: boolean, shorten?: boolean } Options table
----@return string rel_path The transformed path
+---@param opts? { relative?: boolean, include_filename?: boolean, dir_tail_slash?: boolean, cwd_name?: boolean, shorten?: boolean } Options table
+---@return string path The transformed path
 function M.transform_path(full_path, opts)
   full_path = M.remove_protocol(full_path)
   opts = opts or {}
   local default_opts = {
+    relative = true,
     include_filename = true,
     dir_tail_slash = true,
     cwd_name = true,
@@ -39,26 +46,28 @@ function M.transform_path(full_path, opts)
   }
   opts = util.merge_tables(default_opts, opts)
 
-  local mods = ':p:~:.' .. (opts.include_filename and '' or ':h')
-  local rel_path = vim.fn.fnamemodify(full_path, mods)
+  local mods = ':p:~'
+    .. (opts.relative and ':.' or '')
+    .. (opts.include_filename and '' or ':h')
+  local path = vim.fn.fnamemodify(full_path, mods)
 
-  if opts.cwd_name and rel_path == '.' then
-    rel_path = M.get_cwd_folder()
+  if opts.cwd_name and path == '.' then
+    path = M.get_cwd_folder()
   end
 
   if opts.shorten then
-    rel_path = M.shorten_path(rel_path)
+    path = M.shorten_path(path)
   end
 
   if
     opts.dir_tail_slash
-    and not opts.include_filename
-    and (Char(rel_path, -1) ~= '/')
+    and (not opts.include_filename or not M.path_has_extension(path))
+    and (Char(path, -1) ~= '/')
   then
-    rel_path = rel_path .. '/'
+    path = path .. '/'
   end
 
-  return rel_path
+  return path
 end
 
 -- return path of first file/dir matching item in `items` if it exists under git root or cwd

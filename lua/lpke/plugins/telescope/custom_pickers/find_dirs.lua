@@ -7,6 +7,7 @@ local previewers = require('telescope.previewers')
 local config_values = require('telescope.config').values
 -- local make_entry = require('telescope.make_entry')
 
+local helpers = require('lpke.core.helpers')
 local tc = Lpke_theme_colors
 
 local find_dirs = function(opts)
@@ -95,7 +96,9 @@ local find_dirs = function(opts)
     title = function()
       -- TODO: show condensed cwd
       -- TODO: write helper function that accepts abs path and prettifies it
-      return 'in: ' .. opts.cwd
+      local cwd = opts.cwd
+      return 'in: '
+        .. helpers.transform_path(cwd, { relative = false, shorten = true })
     end,
     define_preview = function(self, entry)
       local function scan_directory(path)
