@@ -41,6 +41,10 @@ function M.qf_nav(direction)
     local qf = vim.fn.getqflist({ idx = 0 })
     local qf_size = #vim.fn.getqflist()
     local qf_idx = qf.idx
+    if qf_size == 0 then
+      vim.notify('No items in quickfix list', vim.log.levels.INFO)
+      return
+    end
     if qf_size == 1 then
       vim.cmd('cfirst')
       return
