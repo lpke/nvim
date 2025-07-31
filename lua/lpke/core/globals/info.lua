@@ -28,6 +28,7 @@ function Lpke_active()
 end
 
 function Lpke_buf_details(bufnr)
+  bufnr = bufnr or 0
   local B = {}
   B.buf_name = helpers.get_buf_name(bufnr)
   B.file_type = helpers.get_file_type(bufnr)

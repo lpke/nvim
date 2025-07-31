@@ -126,7 +126,7 @@ local function config()
     { 'n', ']l', function() vim.diagnostic.jump({ count = 1, float = true }) end, { square_repeat = true, desc = 'Go to next diagnostic' }, },
 
     -- jump/list related code
-    { 'nC', '<leader>;', 'Telescope lsp_references', { desc = 'Show LSP references' }, },
+    { 'nC', '<leader>*', 'Telescope lsp_references', { desc = 'Show LSP references' }, },
     { 'nC', 'gd', 'Telescope lsp_definitions', { desc = 'Show LSP definitions' }, },
     { 'nC', 'gt', 'Telescope lsp_type_definitions', { desc = 'Show LSP type definitions' }, },
     { 'nC', 'gi', 'Telescope lsp_implementations', { desc = 'Show LSP implementations' }, },
