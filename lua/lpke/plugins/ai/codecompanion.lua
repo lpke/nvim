@@ -564,6 +564,10 @@ return {
     },
     -- extensions
     -- https://codecompanion.olimorris.dev/extensions/history.html
-    'ravitemer/codecompanion-history.nvim',
+    {
+      'ravitemer/codecompanion-history.nvim',
+      -- TODO: locking to this version as it is compatible with the CC version above
+      commit = 'c54e907ac615d4bc2e909abb498739e5d7166729',
+    },
   },
 }
