@@ -24,7 +24,10 @@ function M.shorten_path(path)
   return path:gsub('([^/%w]?[^/])[^/]*/', '%1/')
 end
 
--- transform full path string to a configurable relative path
+---Transform full path string to a configurable relative path.
+---@param full_path string The full path to transform
+---@param opts? { include_filename?: boolean, dir_tail_slash?: boolean, cwd_name?: boolean, shorten?: boolean } Options table
+---@return string rel_path The transformed path
 function M.transform_path(full_path, opts)
   full_path = M.remove_protocol(full_path)
   opts = opts or {}

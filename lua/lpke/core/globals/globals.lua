@@ -61,6 +61,42 @@ function Match(str, regex)
   return string.match(str, regex) ~= nil
 end
 
+---Get the character at a specific index in a string (positive for start, negative for end).
+---@param str string The string to get the character from
+---@param index number The index of the character to get (1-based, negative for end)
+---@return string|nil The character at the specified index, or nil if out of bounds
+function Char(str, index)
+  -- type/arg checking
+  if type(str) ~= 'string' then
+    vim.notify('Char: `str` must be a string', vim.log.levels.ERROR)
+    return nil
+  end
+  if type(index) ~= 'number' then
+    vim.notify('Char: `index` must be a number', vim.log.levels.ERROR)
+    return nil
+  end
+  if not index then
+    vim.notify(
+      'Char: `index` not provided. Using index: `1`',
+      vim.log.levels.WARN
+    )
+    index = 1
+  end
+
+  -- index out of bounds
+  if index == 0 or math.abs(index) > #str then
+    return nil
+  end
+
+  -- get character at `index` (from end)
+  if index < 0 then
+    index = #str + index + 1
+  end
+
+  -- get character at `index` (from start)
+  return str:sub(index, index)
+end
+
 -- wrapper for `nvim_replace_termcodes`
 ---@param string_or_args string|any[]
 function Lpke_replace_termcodes(string_or_args)
