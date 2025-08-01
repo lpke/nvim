@@ -8,9 +8,21 @@ function M.remove_protocol(str)
   return str:gsub('^.*://', '')
 end
 
+function M.get_path_protocol(path)
+  local protocol = path:match('^(.-)://')
+  if protocol then
+    return protocol
+  end
+  return nil
+end
+
 -- get last segment of a path
-function M.get_path_tail(str)
-  return str:match('([^/]+/?/?)$')
+function M.get_path_tail(str, include_trailing_slash)
+  if include_trailing_slash then
+    return str:match('([^/]+/?/?)$')
+  else
+    return str:match('([^/]+)/?/?$')
+  end
 end
 
 -- get cwd folder name
@@ -34,9 +46,6 @@ function M.get_path_filename(path, include_ext)
   local file_ext = M.get_path_extension(path)
   if not file_ext then
     return nil
-  end
-  if Char(tail, -1) == '/' then
-    tail = tail:sub(1, -2)
   end
   if include_ext then
     return tail
@@ -125,9 +134,29 @@ function M.shorten_path(path, shorten_tail)
   return result
 end
 
--- TODO: use path helpers in this function that returns different parts of the path
--- function M.parse_path(path)
--- end
+-- parse and return path segments and info (no formatting)
+function M.parse_path(path)
+  local P = {}
+  P.orig_path = path
+  P.protocol = M.get_path_protocol(path)
+  path = M.remove_protocol(path)
+
+  P.path_full = path
+  P.tail_full = M.get_path_tail(path, true)
+  P.tail = M.get_path_tail(path)
+  P.filename_full = M.get_path_filename(path, true)
+  P.filename = M.get_path_filename(path, false)
+  P.extension = M.get_path_extension(path)
+  P.path_without_tail = path:match('^(.*/)[^/]+/?$') or path
+  P.path_without_file = path:gsub(P.full_filename or '', '')
+
+  P.is_file = M.get_path_extension(path) ~= nil
+  P.is_dir = M.get_path_extension(path) == nil
+
+  P.has_leading_slash = Char(path, 1) == '/'
+  P.has_trailing_slash = Char(path, -1) == '/'
+  return P
+end
 
 ---Transform full path string to a configurable path.
 ---@param full_path string The full path to transform

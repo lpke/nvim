@@ -183,9 +183,9 @@ local function config()
         else
           -- short path format
           if Match(b.custom_buf_type, '^oil') then
-            return helpers.get_path_tail(b.buf_name)
+            return helpers.get_path_tail(b.buf_name, true)
           else
-            return helpers.get_path_tail(str)
+            return helpers.get_path_tail(str, true)
           end
         end
       end
