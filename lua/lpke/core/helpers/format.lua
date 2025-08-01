@@ -158,6 +158,69 @@ function M.parse_path(path)
   return P
 end
 
+-- adds/removes leading/trailing slashes
+---@param path string
+---@param format string String to represent desired output format.
+---  `.` = path
+---  `/` = add slash (omit for remove)
+---  `?` = leave as-is (with or without slash)
+---  eg: `/./`, `?./`, `./`, `.`
+---@return string
+function M.path_surround_slash(path, format)
+  local result = path
+
+  -- safety checks
+  if not Match(format, '%.') then
+    vim.notify(
+      'path_surround_slash: format must contain at least one `.` character',
+      vim.log.levels.ERROR
+    )
+    return path
+  end
+  if Match(format, '[^./?]') then
+    vim.notify(
+      'path_surround_slash: format can only contain `.`, `?`, `/` characters',
+      vim.log.levels.ERROR
+    )
+    return path
+  end
+  if #format > 3 then
+    vim.notify(
+      'path_surround_slash: format can only be up to 3 characters long',
+      vim.log.levels.ERROR
+    )
+    return path
+  end
+
+  -- leading slash
+  local leading_format_char = Char(format, 1)
+  local has_leading_slash = Char(result, 1) == '/'
+  if leading_format_char == '/' then
+    if not has_leading_slash then
+      result = '/' .. result
+    end
+  elseif leading_format_char == '.' then
+    if has_leading_slash then
+      result = result:sub(2)
+    end
+  end
+
+  -- trailing slash
+  local trailing_format_char = format:sub(-1)
+  local has_trailing_slash = Char(result, -1) == '/'
+  if trailing_format_char == '/' then
+    if not has_trailing_slash then
+      result = result .. '/'
+    end
+  elseif trailing_format_char == '.' then
+    if has_trailing_slash then
+      result = result:sub(1, -2)
+    end
+  end
+
+  return result
+end
+
 ---Transform full path string to a configurable path.
 ---@param full_path string The full path to transform
 ---@param opts? { relative?: boolean, include_filename?: boolean, dir_tail_slash?: boolean, cwd_name?: boolean, shorten?: boolean, shorten_tail?: boolean } Options table
