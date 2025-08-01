@@ -89,8 +89,7 @@ function Lpke_tabline()
       tab_title = filetype_tabtitle_maps[b.file_type]
     elseif b.file_type == 'oil' then
       tab_title = (b.custom_buf_type == 'oil_trash' and 'T:' or '')
-        .. helpers.shorten_path(file_path)
-        .. '/'
+        .. helpers.path_surround_slash(helpers.shorten_path(file_path), '?./')
     elseif b.file_type == '' or b.buf_name == '[No Name]' then
       tab_title = symbols.unnamed
     -- git buffers (not already explicitly handled in the map above)

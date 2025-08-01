@@ -251,12 +251,13 @@ function M.transform_path(full_path, opts)
     path = M.shorten_path(path, opts.shorten_tail)
   end
 
+  local is_file = M.get_path_extension(path) ~= nil
   if
-    opts.dir_tail_slash
-    and (not opts.include_filename or not M.get_path_extension(path))
-    and (Char(path, -1) ~= '/')
+    type(opts.dir_tail_slash) == 'boolean'
+    and (is_file or not opts.include_filename)
   then
-    path = path .. '/'
+    path =
+      M.path_surround_slash(path, '?.' .. (opts.dir_tail_slash and '/' or ''))
   end
 
   return path
