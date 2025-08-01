@@ -125,6 +125,10 @@ function M.shorten_path(path, shorten_tail)
   return result
 end
 
+-- TODO: use path helpers in this function that returns different parts of the path
+-- function M.parse_path(path)
+-- end
+
 ---Transform full path string to a configurable path.
 ---@param full_path string The full path to transform
 ---@param opts? { relative?: boolean, include_filename?: boolean, dir_tail_slash?: boolean, cwd_name?: boolean, shorten?: boolean, shorten_tail?: boolean } Options table
