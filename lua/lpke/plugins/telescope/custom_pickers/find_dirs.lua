@@ -4,7 +4,7 @@ local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
 -- local sorters = require('telescope.sorters')
 local previewers = require('telescope.previewers')
-local config_values = require('telescope.config').values
+local sorters = require('telescope.sorters')
 -- local make_entry = require('telescope.make_entry')
 
 local helpers = require('lpke.core.helpers')
@@ -53,41 +53,33 @@ local find_dirs = function(opts)
 
   local finder = finders.new_async_job({
     cwd = opts.cwd,
-    command_generator = function(_prompt)
+    command_generator = function(prompt)
       return {
-        'find',
-        opts.cwd or '.',
-        '-type',
+        'fd',
+        '--hidden', -- do not ignore `.` dirs
+        '--type',
         'd',
-        '(',
-        '-name',
+        '--exclude',
         '.git',
-        '-o',
-        '-name',
+        '--exclude',
         'node_modules',
-        ')',
-        '-prune',
-        '-o',
-        '-type',
-        'd',
-        '-print',
+        prompt,
+        opts.cwd or '.',
       }
     end,
     entry_maker = function(entry)
       if should_ignore_dir(entry) then
         return nil
       end
-      -- Make path relative to git root
+      -- make path relative to cwd
       local relative_path = entry
       if opts.cwd and entry:sub(1, #opts.cwd) == opts.cwd then
         relative_path = entry:sub(#opts.cwd + 2) -- +2 to remove the trailing slash
       end
-      -- Remove './' prefix and append '/' suffix
-      local clean_entry = relative_path:gsub('^%./', '') .. '/'
       return {
         value = entry,
-        display = clean_entry,
-        ordinal = clean_entry,
+        display = relative_path,
+        ordinal = relative_path,
       }
     end,
   })
@@ -147,7 +139,8 @@ local find_dirs = function(opts)
       finder = finder,
       debounce = 50,
       previewer = previewer,
-      sorter = config_values.generic_sorter({}),
+      sorter = sorters.highlighter_only(opts), -- highlight in results
+      -- sorter = config_values.generic_sorter({}),
     })
     :find()
 end

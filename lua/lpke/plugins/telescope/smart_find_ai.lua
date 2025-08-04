@@ -201,30 +201,24 @@ function M.find_directories(opts)
       initial_mode = opts.initial_mode or 'insert',
       default_text = initial_query,
       finder = finders.new_oneshot_job({
-        'find',
-        opts.cwd or '.',
-        '-type',
+        'fd',
+        '--hidden', -- do not ignore `.` dirs
+        '--type',
         'd',
-        '-not',
-        '-path',
-        '*/.*',
-        '-not',
-        '-path',
-        '*/node_modules',
-        '-not',
-        '-path',
-        '*/node_modules/*',
+        '--exclude',
+        '.git',
+        '--exclude',
+        'node_modules',
+        opts.cwd or '.',
       }, {
         entry_maker = function(entry)
           if should_ignore_dir(entry) then
             return nil
           end
-          -- Remove './' prefix and append '/' suffix
-          local clean_entry = entry:gsub('^%./', '') .. '/'
           return {
             value = entry,
-            display = clean_entry,
-            ordinal = clean_entry,
+            display = entry,
+            ordinal = entry,
           }
         end,
       }),
