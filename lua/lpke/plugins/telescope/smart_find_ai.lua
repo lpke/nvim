@@ -5,7 +5,7 @@ local action_state = require('telescope.actions.state')
 local builtin = require('telescope.builtin')
 local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
-local conf = require('telescope.config').values
+local config_values = require('telescope.config').values
 local previewers = require('telescope.previewers')
 
 local tc = Lpke_theme_colors
@@ -209,7 +209,6 @@ function M.find_directories(opts)
         '.git',
         '--exclude',
         'node_modules',
-        opts.cwd or '.',
       }, {
         entry_maker = function(entry)
           if should_ignore_dir(entry) then
@@ -222,7 +221,7 @@ function M.find_directories(opts)
           }
         end,
       }),
-      sorter = conf.generic_sorter({}),
+      sorter = config_values.generic_sorter({}),
       previewer = previewers.new_buffer_previewer({
         title = 'Directory Contents',
         define_preview = function(self, entry)

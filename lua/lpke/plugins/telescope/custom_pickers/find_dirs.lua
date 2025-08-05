@@ -2,9 +2,8 @@
 
 local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
--- local sorters = require('telescope.sorters')
 local previewers = require('telescope.previewers')
-local sorters = require('telescope.sorters')
+local config_values = require('telescope.config').values
 -- local make_entry = require('telescope.make_entry')
 
 local helpers = require('lpke.core.helpers')
@@ -23,7 +22,7 @@ local find_dirs = function(opts)
     end
   end
   -- ensure cwd is valid
-  if not vim.fn.isdirectory(opts.cwd) ~= 1 then
+  if vim.fn.isdirectory(opts.cwd) ~= 1 then
     opts.cwd = vim.fn.getcwd()
   end
 
@@ -51,35 +50,24 @@ local find_dirs = function(opts)
     return false
   end
 
-  local finder = finders.new_async_job({
-    cwd = opts.cwd,
-    command_generator = function(prompt)
-      return {
-        'fd',
-        '--hidden', -- do not ignore `.` dirs
-        '--type',
-        'd',
-        '--exclude',
-        '.git',
-        '--exclude',
-        'node_modules',
-        prompt,
-        opts.cwd or '.',
-      }
-    end,
+  local finder = finders.new_oneshot_job({
+    'fd',
+    '--hidden', -- do not ignore `.` dirs
+    '--type',
+    'd',
+    '--exclude',
+    '.git',
+    '--exclude',
+    'node_modules',
+  }, {
     entry_maker = function(entry)
       if should_ignore_dir(entry) then
         return nil
       end
-      -- make path relative to cwd
-      local relative_path = entry
-      if opts.cwd and entry:sub(1, #opts.cwd) == opts.cwd then
-        relative_path = entry:sub(#opts.cwd + 2) -- +2 to remove the trailing slash
-      end
       return {
         value = entry,
-        display = relative_path,
-        ordinal = relative_path,
+        display = entry,
+        ordinal = entry,
       }
     end,
   })
@@ -135,12 +123,12 @@ local find_dirs = function(opts)
   pickers
     .new(opts, {
       prompt_title = 'Find Directories',
+      cwd = opts.cwd,
       initial_mode = 'insert',
       finder = finder,
       debounce = 50,
       previewer = previewer,
-      sorter = sorters.highlighter_only(opts), -- highlight in results
-      -- sorter = config_values.generic_sorter({}),
+      sorter = config_values.generic_sorter({}),
     })
     :find()
 end
