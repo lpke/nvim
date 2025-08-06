@@ -313,6 +313,20 @@ function M.find_files(opts)
     -- Setup common keymaps
     setup_common_keymaps(prompt_bufnr, map, false)
 
+    -- Open oil window at selected file's directory with <leader><CR>
+    map('n', '<leader><CR>', function()
+      local selection = action_state.get_selected_entry()
+      if selection then
+        local file_path = selection.value or selection.path or selection[1]
+        if file_path then
+          local dir_path = vim.fn.isdirectory(file_path) == 1 and file_path
+            or vim.fn.fnamemodify(file_path, ':h')
+          actions.close(prompt_bufnr)
+          vim.cmd('Oil ' .. dir_path)
+        end
+      end
+    end)
+
     return true
   end
 
