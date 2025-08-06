@@ -200,27 +200,30 @@ function M.find_directories(opts)
       cwd = opts.cwd,
       initial_mode = opts.initial_mode or 'insert',
       default_text = initial_query,
-      finder = finders.new_oneshot_job({
-        'fd',
-        '--hidden', -- do not ignore `.` dirs
-        '--type',
-        'd',
-        '--exclude',
-        '.git',
-        '--exclude',
-        'node_modules',
-      }, {
-        entry_maker = function(entry)
-          if should_ignore_dir(entry) then
-            return nil
-          end
-          return {
-            value = entry,
-            display = entry,
-            ordinal = entry,
-          }
-        end,
-      }),
+      finder = finders.new_oneshot_job(
+        {
+          'fd',
+          '--hidden', -- do not ignore `.` dirs
+          '--type',
+          'd',
+          '--exclude',
+          '.git',
+          '--exclude',
+          'node_modules',
+        },
+        vim.tbl_deep_extend('force', {
+          entry_maker = function(entry)
+            if should_ignore_dir(entry) then
+              return nil
+            end
+            return {
+              value = entry,
+              display = entry,
+              ordinal = entry,
+            }
+          end,
+        }, opts)
+      ),
       sorter = config_values.generic_sorter({}),
       previewer = previewers.new_buffer_previewer({
         title = 'Directory Contents',

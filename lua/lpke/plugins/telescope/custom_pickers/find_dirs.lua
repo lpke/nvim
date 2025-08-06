@@ -50,27 +50,30 @@ local find_dirs = function(opts)
     return false
   end
 
-  local finder = finders.new_oneshot_job({
-    'fd',
-    '--hidden', -- do not ignore `.` dirs
-    '--type',
-    'd',
-    '--exclude',
-    '.git',
-    '--exclude',
-    'node_modules',
-  }, {
-    entry_maker = function(entry)
-      if should_ignore_dir(entry) then
-        return nil
-      end
-      return {
-        value = entry,
-        display = entry,
-        ordinal = entry,
-      }
-    end,
-  })
+  local finder = finders.new_oneshot_job(
+    {
+      'fd',
+      '--hidden', -- do not ignore `.` dirs
+      '--type',
+      'd',
+      '--exclude',
+      '.git',
+      '--exclude',
+      'node_modules',
+    },
+    vim.tbl_deep_extend('force', {
+      entry_maker = function(entry)
+        if should_ignore_dir(entry) then
+          return nil
+        end
+        return {
+          value = entry,
+          display = entry,
+          ordinal = entry,
+        }
+      end,
+    }, opts)
+  )
 
   local previewer = previewers.new_buffer_previewer({
     title = function()
