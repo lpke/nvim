@@ -134,7 +134,9 @@ function M.shorten_path(path, shorten_tail)
   return result
 end
 
--- parse and return path segments and info (no formatting)
+---Parse and return path segments and info (no formatting).
+---@param path string The path to parse
+---@return { orig_path: string, protocol: string | nil, path_full: string, tail_full: string, tail: string, filename_full: string | nil, filename: string | nil, extension: string | nil, path_without_tail: string, path_without_file: string, is_file: boolean, is_dir: boolean, has_leading_slash: boolean, has_trailing_slash: boolean }
 function M.parse_path(path)
   local P = {}
   P.orig_path = path
@@ -158,7 +160,7 @@ function M.parse_path(path)
   return P
 end
 
--- adds/removes leading/trailing slashes
+---Adds/removes leading/trailing slashes.
 ---@param path string
 ---@param format string String to represent desired output format.
 ---  `.` = path
@@ -219,6 +221,93 @@ function M.path_surround_slash(path, format)
   end
 
   return result
+end
+
+---Format path into a style defined in `opts`.
+---@param path string The path to transform
+---@param opts? { relative?: false|'cwd_local'|'cwd_global'|'git_local'|'git_global'|string, relative_parent?: boolean, abbrev_home?: boolean, shorten?: boolean, shorten_tail?: boolean } Options table
+---@return string path The formatted path
+function M.format_path(path, opts)
+  -- default options
+  opts = opts
+    or {
+      relative = 'cwd_local',
+      relative_parent = false,
+      abbrev_home = true,
+      shorten = false,
+      shorten_tail = false,
+    }
+  if opts.relative == nil then
+    opts.relative = 'cwd_local'
+  end
+
+  local cwd_local = vim.fn.getcwd()
+  local cwd_global = vim.fn.getcwd(-1, -1)
+
+  -- get full path
+  local full_path = vim.fn.fnamemodify(path, ':p')
+
+  -- determine location the path should be made relative to
+  local relative_to = nil
+  if opts.relative then
+    -- cwd relative paths
+    if opts.relative == 'cwd_local' then
+      relative_to = cwd_local
+    elseif opts.relative == 'cwd_global' then
+      relative_to = cwd_global
+    -- git root relative paths (with cwd as fallback)
+    elseif opts.relative == 'git_local' then
+      relative_to = Lpke_find_git_root() or cwd_local
+    elseif opts.relative == 'git_global' then
+      relative_to = Lpke_find_git_root(cwd_global) or cwd_global
+    -- custom relative path
+    elseif type(opts.relative) == 'string' then
+      relative_to = opts.relative
+    end
+  end
+
+  -- convert relative_to to full path
+  if type(relative_to) == 'string' then
+    relative_to = vim.fn.fnamemodify(relative_to, ':p')
+  end
+
+  -- verify that relative_to actually exists
+  if type(relative_to) == 'string' and not Lpke_path_exists(relative_to) then
+    vim.notify(
+      'format_path: `relative_to` path does not exist: `'
+        .. tostring(relative_to)
+        .. '`. Path will not be made relative.',
+      vim.log.levels.WARN
+    )
+    relative_to = nil
+  end
+
+  -- remove `relative_to` substring from `full_path`
+  local relative_path = nil
+  if type(relative_to) == 'string' and Match(full_path, '^' .. relative_to) then
+    if opts.relative == '/' then
+      relative_path = full_path
+    elseif opts.relative == '~' then
+      relative_path = vim.fn.fnamemodify(full_path, ':~')
+    else
+      local to_replace = opts.relative_parent
+          and relative_to:gsub(M.get_path_tail(relative_to, true), '')
+        or relative_to
+      relative_path = full_path:gsub('^' .. to_replace, '')
+    end
+  end
+
+  -- format path according to options
+  local formatted_path = type(relative_path) == 'string' and relative_path
+    or full_path
+  if opts.abbrev_home then
+    formatted_path = formatted_path:gsub('^' .. vim.fn.expand('~') .. '/', '~/')
+  end
+  if opts.shorten then
+    formatted_path = M.shorten_path(formatted_path, opts.shorten_tail)
+  end
+
+  return formatted_path or relative_path or full_path or path
 end
 
 ---Transform full path string to a configurable path.
