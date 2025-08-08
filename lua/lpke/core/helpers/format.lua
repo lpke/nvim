@@ -241,8 +241,6 @@ function M.format_path(path, opts)
     opts.relative = 'cwd_local'
   end
 
-  print('path: ' .. path)
-
   local cwd_local = vim.fn.getcwd()
   local cwd_global = vim.fn.getcwd(-1, -1)
 
@@ -284,9 +282,6 @@ function M.format_path(path, opts)
     relative_to = nil
   end
 
-  print('full_path: ' .. full_path)
-  print('relative_to: ' .. tostring(relative_to))
-
   -- remove `relative_to` substring from `full_path`
   local relative_path = nil
   if type(relative_to) == 'string' and Match(full_path, '^' .. relative_to) then
@@ -304,11 +299,9 @@ function M.format_path(path, opts)
       local to_replace = opts.relative_parent
           and relative_to:gsub(M.get_path_tail(relative_to, true), '')
         or relative_to
-      print('to_replace: ' .. to_replace)
       relative_path = full_path:gsub('^' .. to_replace, '')
     end
   end
-  print('relative_path: ' .. tostring(relative_path))
 
   -- format path according to options
   local formatted_path = type(relative_path) == 'string' and relative_path
@@ -319,8 +312,6 @@ function M.format_path(path, opts)
   if opts.shorten then
     formatted_path = M.shorten_path(formatted_path, opts.shorten_tail)
   end
-
-  print('formatted_path: ' .. formatted_path)
 
   return formatted_path or relative_path or full_path or path
 end
