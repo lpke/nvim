@@ -29,10 +29,10 @@ helpers.keymap_set_multi({
 
   {'nv', 'G', 'G$', { desc = 'Go to very end of buffer' }},
   {'n', 'Y', 'y$', { desc = 'Yank to end of line' }},
-  {'nv', '<leader>y', '"*y', { desc = 'Global yank' }},
-  {'n', '<leader>Y', '"*y$', { desc = 'Global yank to end of line' }},
+  {'nv', '<leader>y', '"+y', { desc = 'Global clipboard yank' }},
+  {'n', '<leader>Y', '"+y$', { desc = 'Global clipboard yank to end of line' }},
   {'n', 'ygG', 'mzggyG`z', { desc = 'Yank entire buffer (without moving cursor)' }},
-  {'n', '<leader>ygG', 'mzgg"*yG`z', { desc = 'Global yank entire buffer (without moving cursor)' }},
+  {'n', '<leader>ygG', 'mzgg"+yG`z', { desc = 'Global clipboard yank entire buffer (without moving cursor)' }},
   {'n', 'J', 'mzJ`z', { desc = 'Join lines (without moving cursor)' }},
   {'n', 'gJ', 'mzgJ`z', { desc = 'Join lines without modification (without moving cursor)' }},
   {'n', '<leader>J', 'mzgJi<Space><Esc>diW`z', { desc = 'Join lines without any spaces (without moving cursor)' }},
@@ -335,8 +335,8 @@ if helpers.is_wsl then
   })
 else
   helpers.keymap_set_multi({
-    {'nv', '<leader>p', '"*p', { desc = 'Global paste' }},
-    {'nv', '<leader>P', '"*P', { desc = 'Global paste (before cursor)' }},
+    {'nv', '<leader>p', '"+p', { desc = 'Global clipboard paste' }},
+    {'nv', '<leader>P', '"+P', { desc = 'Global clipboard paste (before cursor)' }},
   })
 end
 -- stylua: ignore end
