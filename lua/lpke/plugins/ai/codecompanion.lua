@@ -1,8 +1,30 @@
+-- this is for use in the `Lpke_cc_model` function below (for shorthand args)
+-- for the lualine short names and the model multipliers, see
+-- `plugins/lualine.lua`
 local model_maps = {
-  ['son'] = 'claude-sonnet-4',
-  ['son3.7'] = 'claude-3.7-sonnet',
-  ['gpt'] = 'gpt-4.1',
-  ['gem'] = 'gemini-2.0-flash-001',
+  -- the defaults switched between with `<leader>m` in codecompanion
+  ['son'] = 'claude-sonnet-4.5',
+  ['gpt'] = 'gpt-5-mini', -- unlimited
+  -- other defaults (duplicates for specific versions below)
+  ['opus'] = 'claude-opus-4.5',
+  ['haiku'] = 'claude-haiku-4.5',
+  ['gem'] = 'gemini-2.5-pro',
+  ['grok'] = 'grok-code-fast-1',
+
+  -- others, if running `Lpke_cc_model` manually
+  ['opus4.5'] = 'claude-opus-4.5',
+  ['son4.5'] = 'claude-sonnet-4.5',
+  ['son4'] = 'claude-sonnet-4',
+  ['haiku4.5'] = 'claude-haiku-4.5',
+  ['gpt5.2'] = 'gpt-5.2',
+  ['gpt5.1'] = 'gpt-5.1',
+  ['gpt5.1cM'] = 'gpt-5.1-codex-max',
+  ['gpt5.1c'] = 'gpt-5.1-codex',
+  ['gpt5m'] = 'gpt-5-mini', -- unlimited
+  ['gpt4.1'] = 'gpt-4.1', -- unlimited
+  ['gpt4o'] = 'gpt-4o', -- unlimited
+  ['gem2.5'] = 'gemini-2.5-pro',
+  ['grok1'] = 'grok-code-fast-1',
 }
 
 local function toggle_if_already_in_chat()
@@ -224,9 +246,10 @@ local function config()
         return require('codecompanion.adapters').extend('copilot', {
           schema = {
             model = {
-              default = 'claude-sonnet-4', -- premium requests (1x)
+              default = 'claude-sonnet-4.5', -- premium requests (x1)
               -- default = 'gpt-4o', -- unlimited free
               -- default = 'gpt-4.1', -- unlimited free (better at code)
+              -- default = 'gpt-5-mini', -- unlimited free (smarter than 4.1 but dumb contextually)
             },
           },
         })

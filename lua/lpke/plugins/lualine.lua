@@ -276,18 +276,24 @@ local function config()
         return nil
       end
       local model = adapter.schema.model.default or adapter.opts.model
+      -- the multiplier at the end indicates the copilot premium request
+      -- multiplier as at 16/01/2026.
+      -- https://docs.github.com/en/copilot/concepts/billing/copilot-requests
+      -- for model maps for `Lpke_cc_model`, see `plugins/ai/codecompanion.lua`
       local model_display_maps = {
-        ['claude-sonnet-4'] = 'sonnet-4',
-        ['claude-3.5-sonnet'] = 'sonnet-3.5',
-        ['gemini-2.0-flash-001'] = 'gemini-2-flash',
-        ['gpt-4.1'] = 'GPT-4.1',
-        ['o1'] = 'o1',
-        ['claude-3.7-sonnet'] = 'sonnet-3.7',
-        ['gemini-2.5-pro'] = 'gemini-2.5-pro',
-        ['gpt-4o'] = 'GPT-4o',
-        ['o3-mini'] = 'o3-mini',
-        ['o4-mini'] = 'o4-mini',
-        ['claude-3.7-sonnet-thought'] = 'sonnet-3.7-think',
+        ['claude-opus-4.5'] = 'opus-4.5 (x3)',
+        ['claude-sonnet-4.5'] = 'sonnet-4.5 (x1)',
+        ['claude-sonnet-4'] = 'sonnet-4 (x1)',
+        ['claude-haiku-4.5'] = 'haiku-4.5 (x0.33)',
+        ['gpt-5.2'] = 'GPT-5.2 (x1)',
+        ['gpt-5.1'] = 'GPT-5.1 (x1)',
+        ['gpt-5.1-codex-max'] = 'GPT-5.1cM (x1)',
+        ['gpt-5.1-codex'] = 'GPT-5.1c (x1)',
+        ['gpt-5-mini'] = 'GPT-5m (∞)',
+        ['gpt-4.1'] = 'GPT-4.1 (∞)',
+        ['gpt-4o'] = 'GPT-4o (∞)',
+        ['gemini-2.5-pro'] = 'gemini-2.5p (x1)',
+        ['grok-code-fast-1'] = 'grok-fast-1 (x0.25)',
       }
       return model_display_maps[model] or model
     end,
