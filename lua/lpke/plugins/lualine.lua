@@ -17,12 +17,6 @@ local modes = {
   { 'SELECT', 'SEL' },
   { 'S-LINE', 'S-L' },
 }
-local filetypes = {
-  { 'javascript', 'js' },
-  { 'typescript', 'ts' },
-  { 'javascriptreact', 'jsreact' },
-  { 'typescriptreact', 'tsreact' },
-}
 
 local function config()
   local lualine = require('lualine')
@@ -463,7 +457,7 @@ local function config()
         {
           'filetype',
           fmt = function(str)
-            return helpers.map_string(str, filetypes)
+            return str
           end,
           on_click = function()
             Lpke_show_encoding = not Lpke_show_encoding

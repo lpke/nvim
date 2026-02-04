@@ -9,7 +9,9 @@ return {
     'graphql',
     'gql',
     'svelte',
+    'tsx',
     'typescriptreact',
+    'jsx',
     'javascriptreact',
   },
 }

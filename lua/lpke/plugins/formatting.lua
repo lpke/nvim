@@ -5,9 +5,13 @@ local function config()
   conform.setup({
     -- Formatters are installed by Mason (see `:Mason`)
     formatters_by_ft = {
+      js = { 'prettier' },
       javascript = { 'prettier' },
+      ts = { 'prettier' },
       typescript = { 'prettier' },
+      jsx = { 'prettier' },
       javascriptreact = { 'prettier' },
+      tsx = { 'prettier' },
       typescriptreact = { 'prettier' },
       svelte = { 'prettier' },
       css = { 'prettier' },

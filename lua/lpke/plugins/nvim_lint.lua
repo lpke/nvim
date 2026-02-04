@@ -6,9 +6,13 @@ local function config()
 
   lint.linters_by_ft = {
     -- uncomment if you want to use `eslint_d` instead of `eslint-lsp`:
+    -- js = { 'eslint_d' },
     -- javascript = { 'eslint_d' },
+    -- ts = { 'eslint_d' },
     -- typescript = { 'eslint_d' },
+    -- jsx = { 'eslint_d' },
     -- javascriptreact = { 'eslint_d' },
+    -- tsx = { 'eslint_d' },
     -- typescriptreact = { 'eslint_d' },
     python = { 'pylint' },
   }
