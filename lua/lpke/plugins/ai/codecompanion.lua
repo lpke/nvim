@@ -2,11 +2,10 @@
 -- for the lualine short names and the model multipliers, see
 -- `plugins/lualine.lua`
 local model_maps = {
-  -- the defaults switched between with `<leader>m` in codecompanion
+  -- defaults (duplicates for specific versions below)
   ['son'] = 'claude-sonnet-4.5',
-  ['gpt'] = 'gpt-5-mini', -- unlimited
-  -- other defaults (duplicates for specific versions below)
   ['opus'] = 'claude-opus-4.5',
+  ['gpt'] = 'gpt-5-mini', -- unlimited
   ['haiku'] = 'claude-haiku-4.5',
   ['gem'] = 'gemini-2.5-pro',
   ['grok'] = 'grok-code-fast-1',
@@ -88,9 +87,9 @@ local function get_chat_ref(bufnr)
   return nil
 end
 
--- quickly swap between two AI models (or directly to one if only one provided)
+-- cycle through AI models provided in an array (or apply directly if only one)
 -- returns name of model swapped to, or nil if error
-function Lpke_cc_model(target_model1, target_model2)
+function Lpke_cc_model(models)
   if vim.bo.filetype ~= 'codecompanion' then
     vim.notify(
       'Lpke_cc_model_swap: Not in a CodeCompanion chat buffer',
@@ -102,21 +101,39 @@ function Lpke_cc_model(target_model1, target_model2)
   if not cur_chat then
     return nil
   end
-  local model1 = model_maps[target_model1] or target_model1
-  local model2 = model_maps[target_model2] or target_model2
+
+  -- Normalize input to array
+  if type(models) ~= 'table' then
+    models = { models }
+  end
+
+  -- Resolve all model names through model_maps
+  local resolved_models = {}
+  for i, m in ipairs(models) do
+    resolved_models[i] = model_maps[m] or m
+  end
+
   local cur_model = get_cur_model(0)
 
   local target_model
-  if model2 then
-    -- Two models provided - swap between them
-    if cur_model == model1 then
-      target_model = model2
-    else
-      target_model = model1
-    end
-  else
+  if #resolved_models == 1 then
     -- Only one model provided - apply it directly
-    target_model = model1
+    target_model = resolved_models[1]
+  else
+    -- Multiple models - find current and cycle to next
+    local cur_index = nil
+    for i, m in ipairs(resolved_models) do
+      if m == cur_model then
+        cur_index = i
+        break
+      end
+    end
+    -- Cycle to next model (or first if not found/at end)
+    if cur_index and cur_index < #resolved_models then
+      target_model = resolved_models[cur_index + 1]
+    else
+      target_model = resolved_models[1]
+    end
   end
 
   cur_chat:apply_model(target_model)
@@ -227,14 +244,14 @@ local function config()
     { 'v', '<C-l>', ":<C-u>'<,'>CodeCompanion<cr>#{buffer} ", { desc = 'CodeCompanion: Open inline prompt with context and selection' }},
   })
   helpers.ft_keymap_set_multi('codecompanion', {
-    { 'n', '<leader>m', function() Lpke_cc_model('gpt', 'son') end, { desc = 'CodeCompanion: Swap between AI models' }},
+      { 'n', '<leader>m', function() Lpke_cc_model({ 'son', 'opus', 'gpt' }) end, { desc = 'CodeCompanion: Cycle between AI models' }},
   })
   helpers.command_set_multi({
     { '*', 'Model', function(cmd)
       if #cmd.fargs == 0 then
-        print(':Model <model1> [<model2>] | son|gpt|gem|exact')
+        print(':Model <model1> [<model2>...] | eg: son|opus|gpt|gem|<exact>')
       else
-        Lpke_cc_model(cmd.fargs[1], cmd.fargs[2])
+        Lpke_cc_model(cmd.fargs)
       end
     end, { desc = 'CodeCompanion: Swap to (or between) models' } },
   })
