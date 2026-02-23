@@ -337,7 +337,9 @@ end
 -- use find_files or find_directories depending on if editing a file or in oil buffer
 function M.smart_find()
   if vim.bo.filetype == 'oil' then
-    M.find_directories()
+    -- M.find_directories()
+    -- revert to 'find_files' default for now
+    M.find_files()
   else
     M.find_files()
   end
