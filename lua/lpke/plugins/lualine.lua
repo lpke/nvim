@@ -275,7 +275,9 @@ local function config()
       -- https://docs.github.com/en/copilot/concepts/billing/copilot-requests
       -- for model maps for `Lpke_cc_model`, see `plugins/ai/codecompanion.lua`
       local model_display_maps = {
+        ['claude-opus-4.6'] = 'opus-4.6 (x3)',
         ['claude-opus-4.5'] = 'opus-4.5 (x3)',
+        ['claude-sonnet-4.6'] = 'sonnet-4.6 (x1)',
         ['claude-sonnet-4.5'] = 'sonnet-4.5 (x1)',
         ['claude-sonnet-4'] = 'sonnet-4 (x1)',
         ['claude-haiku-4.5'] = 'haiku-4.5 (x0.33)',

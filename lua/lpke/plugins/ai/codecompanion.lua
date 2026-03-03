@@ -3,15 +3,17 @@
 -- `plugins/lualine.lua`
 local model_maps = {
   -- defaults (duplicates for specific versions below)
-  ['son'] = 'claude-sonnet-4.5',
-  ['opus'] = 'claude-opus-4.5',
+  ['son'] = 'claude-sonnet-4.6',
+  ['opus'] = 'claude-opus-4.6',
   ['gpt'] = 'gpt-5-mini', -- unlimited
   ['haiku'] = 'claude-haiku-4.5',
   ['gem'] = 'gemini-2.5-pro',
   ['grok'] = 'grok-code-fast-1',
 
   -- others, if running `Lpke_cc_model` manually
+  ['opus4.6'] = 'claude-opus-4.6',
   ['opus4.5'] = 'claude-opus-4.5',
+  ['son4.6'] = 'claude-sonnet-4.6',
   ['son4.5'] = 'claude-sonnet-4.5',
   ['son4'] = 'claude-sonnet-4',
   ['haiku4.5'] = 'claude-haiku-4.5',
@@ -263,7 +265,7 @@ local function config()
         return require('codecompanion.adapters').extend('copilot', {
           schema = {
             model = {
-              default = 'claude-sonnet-4.5', -- premium requests (x1)
+              default = 'claude-sonnet-4.6', -- premium requests (x1)
               -- default = 'gpt-4o', -- unlimited free
               -- default = 'gpt-4.1', -- unlimited free (better at code)
               -- default = 'gpt-5-mini', -- unlimited free (smarter than 4.1 but dumb contextually)
