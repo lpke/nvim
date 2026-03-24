@@ -58,7 +58,7 @@ end
 ---@param regex string Regex string to run on `str`
 ---@return boolean matched Whether any matches were found in `str` using `regex`
 function Match(str, regex)
-  return string.match(str, regex) ~= nil
+  return string.match(tostring(str), regex) ~= nil
 end
 
 ---Get the character at a specific index in a string (positive for start, negative for end).
