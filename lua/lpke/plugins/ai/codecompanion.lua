@@ -166,7 +166,7 @@ local function config()
     )
     vim.cmd('normal! Go')
     vim.cmd('stopinsert')
-    vim.cmd('normal! i@{insert_edit_into_file} @{web_search} @{fetch_webpage} ')
+    vim.cmd('normal! i@{insert_edit_into_file} @{fetch_webpage} ')
     vim.cmd('stopinsert')
   end
 
@@ -183,7 +183,7 @@ local function config()
     )
     vim.cmd('normal! Go')
     vim.cmd('stopinsert')
-    vim.cmd('normal! i@{insert_edit_into_file} @{web_search} @{fetch_webpage} ')
+    vim.cmd('normal! i@{insert_edit_into_file} @{fetch_webpage} ')
     vim.cmd('stopinsert')
   end
 
