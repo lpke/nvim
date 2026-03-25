@@ -38,8 +38,8 @@ end
 
 -- toggle the codecompanion chat buffer
 function Lpke_toggle_cc()
-    -- stylua: ignore
-    if toggle_if_already_in_chat() then return end
+  -- stylua: ignore
+  if toggle_if_already_in_chat() then return end
   -- find and close any codecompanion windows in other tabs
   for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
     if tab ~= vim.api.nvim_get_current_tabpage() then
@@ -60,7 +60,17 @@ function Lpke_toggle_cc()
   vim.cmd('stopinsert')
 end
 
+local function get_chat_ref(bufnr)
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+  return require('codecompanion').buf_get_chat(bufnr)
+end
+
 local function get_cur_model(bufnr)
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
   local chat = require('codecompanion').buf_get_chat(bufnr)
   if not chat then
     return nil
@@ -69,24 +79,7 @@ local function get_cur_model(bufnr)
   if not adapter then
     return nil
   end
-  local model = adapter.schema.model.default or adapter.opts.model
-  return model
-end
-
-local function get_chat_ref(bufnr)
-  if bufnr == 0 then
-    bufnr = vim.api.nvim_get_current_buf()
-  end
-  local chat_obj = require('codecompanion').buf_get_chat()
-  if not chat_obj then
-    return nil
-  end
-  for _, chat in ipairs(chat_obj) do
-    if chat.chat and chat.chat.bufnr == bufnr then
-      return chat.chat.references and chat.chat.references.Chat or nil
-    end
-  end
-  return nil
+  return adapter.schema.model.default or adapter.opts.model
 end
 
 -- cycle through AI models provided in an array (or apply directly if only one)
@@ -138,7 +131,7 @@ function Lpke_cc_model(models)
     end
   end
 
-  cur_chat:apply_model(target_model)
+  cur_chat:change_model({ model = target_model })
   return get_cur_model()
 end
 
@@ -154,7 +147,7 @@ local function config()
       return
     end
     vim.cmd('CodeCompanionChat')
-    vim.cmd('normal! i#{buffer} #{lsp}')
+    vim.cmd('normal! i#{buffer} #{diagnostics}')
     vim.cmd('normal! G2o')
     vim.cmd('stopinsert')
     vim.cmd(
@@ -171,7 +164,7 @@ local function config()
       return
     end
     vim.cmd('CodeCompanionChat')
-    vim.cmd('normal! gg}}{i#{buffer} #{lsp}')
+    vim.cmd('normal! gg}}{i#{buffer} #{diagnostics}')
     vim.cmd('normal! G2o')
     vim.cmd('stopinsert')
     vim.cmd(
@@ -213,7 +206,7 @@ local function config()
     end
     -- insert selection in a code block
     if selection ~= '' then
-      vim.cmd('normal! Go#{buffer} #{lsp}')
+      vim.cmd('normal! Go#{buffer} #{diagnostics}')
       vim.cmd('stopinsert')
       local code_block_lines = { '```' .. filetype }
       vim.list_extend(code_block_lines, vim.split(selection, '\n'))
@@ -246,7 +239,7 @@ local function config()
     { 'v', '<C-l>', ":<C-u>'<,'>CodeCompanion<cr>#{buffer} ", { desc = 'CodeCompanion: Open inline prompt with context and selection' }},
   })
   helpers.ft_keymap_set_multi('codecompanion', {
-      { 'n', '<leader>m', function() Lpke_cc_model({ 'son', 'opus', 'gpt' }) end, { desc = 'CodeCompanion: Cycle between AI models' }},
+    { 'n', '<leader>m', function() Lpke_cc_model({ 'son', 'opus', 'gpt' }) end, { desc = 'CodeCompanion: Cycle between AI models' }},
   })
   helpers.command_set_multi({
     { '*', 'Model', function(cmd)
@@ -261,22 +254,24 @@ local function config()
 
   codecompanion.setup({
     adapters = {
-      copilot = function()
-        return require('codecompanion.adapters').extend('copilot', {
-          schema = {
-            model = {
-              default = 'claude-sonnet-4.6', -- premium requests (x1)
-              -- default = 'gpt-4o', -- unlimited free
-              -- default = 'gpt-4.1', -- unlimited free (better at code)
-              -- default = 'gpt-5-mini', -- unlimited free (smarter than 4.1 but dumb contextually)
+      http = {
+        copilot = function()
+          return require('codecompanion.adapters').extend('copilot', {
+            schema = {
+              model = {
+                default = 'claude-sonnet-4.6', -- premium requests (x1)
+                -- default = 'gpt-4o', -- unlimited free
+                -- default = 'gpt-4.1', -- unlimited free (better at code)
+                -- default = 'gpt-5-mini', -- unlimited free (smarter than 4.1 but dumb contextually)
+              },
             },
-          },
-        })
-      end,
-      opts = {
-        show_defaults = false,
-        show_model_choices = true,
-      },
+          })
+        end,
+        opts = {
+          show_presets = false,
+          show_model_choices = true,
+        },
+      }
     },
     display = {
       chat = {
@@ -284,27 +279,23 @@ local function config()
         show_header_separator = false,
       },
     },
-    tools = {
-      opts = {
-        wait_timeout = 120000, -- time to accept edit
-      },
-    },
-    strategies = {
+    interactions = {
       -- CHAT STRATEGY ----------------------------------------------------------
       chat = {
+        tools = {
+          opts = {
+            wait_timeout = 120000, -- time to accept edit
+          },
+        },
         keymaps = {
           options = {
-            modes = {
-              n = 'g?',
-            },
+            modes = { n = 'g?' },
             callback = 'keymaps.options',
             description = 'Options',
             hide = true,
           },
           completion = {
-            modes = {
-              i = '<C-_>',
-            },
+            modes = { i = '<C-_>' },
             index = 1,
             callback = 'keymaps.completion',
             description = 'Completion Menu',
@@ -314,174 +305,145 @@ local function config()
               n = { '<CR>', '<C-s>' },
               i = '<C-s>',
             },
+            index = 2,
             callback = function(chat)
               vim.cmd('stopinsert')
               chat:submit()
             end,
-            index = 2,
             description = 'Send',
           },
           regenerate = {
-            modes = {
-              n = 'gr',
-            },
+            modes = { n = 'gr' },
             index = 3,
             callback = 'keymaps.regenerate',
             description = 'Regenerate the last response',
           },
           close = {
-            modes = {
-              n = '<C-c>',
-              i = '<C-c>',
-            },
+            modes = { n = '<C-c>', i = '<C-c>' },
             index = 4,
             callback = 'keymaps.close',
             description = 'Close Chat',
           },
           stop = {
-            modes = {
-              n = 'q',
-            },
+            modes = { n = 'q' },
             index = 5,
             callback = 'keymaps.stop',
             description = 'Stop Request',
           },
           clear = {
-            modes = {
-              n = 'gx',
-            },
+            modes = { n = 'gx' },
             index = 6,
             callback = 'keymaps.clear',
             description = 'Clear Chat',
           },
           codeblock = {
-            modes = {
-              n = 'gc',
-            },
+            modes = { n = 'gc' },
             index = 7,
             callback = 'keymaps.codeblock',
             description = 'Insert Codeblock',
           },
           yank_code = {
-            modes = {
-              n = 'gy',
-            },
+            modes = { n = 'gy' },
             index = 8,
             callback = 'keymaps.yank_code',
             description = 'Yank Code',
           },
-          pin = {
-            modes = {
-              n = 'gp',
-            },
+          -- pin and watch no longer exist in v19
+          -- replaced by buffer_sync_all and buffer_sync_diff
+          buffer_sync_all = {
+            modes = { n = 'gp' },
             index = 9,
-            callback = 'keymaps.pin_reference',
-            description = 'Pin Reference',
+            callback = 'keymaps.buffer_sync_all',
+            description = 'Toggle buffer syncing',
           },
-          watch = {
-            modes = {
-              n = 'gw',
-            },
+          buffer_sync_diff = {
+            modes = { n = 'gw' },
             index = 10,
-            callback = 'keymaps.toggle_watch',
-            description = 'Watch Buffer',
+            callback = 'keymaps.buffer_sync_diff',
+            description = 'Toggle buffer diff syncing',
           },
           next_chat = {
-            modes = {
-              n = 'g.',
-            },
+            modes = { n = 'g.' },
             index = 11,
             callback = 'keymaps.next_chat',
             description = 'Next Chat',
           },
           previous_chat = {
-            modes = {
-              n = 'g,',
-            },
+            modes = { n = 'g,' },
             index = 12,
             callback = 'keymaps.previous_chat',
             description = 'Previous Chat',
           },
           next_header = {
-            modes = {
-              n = ']]',
-            },
+            modes = { n = ']]' },
             index = 13,
             callback = 'keymaps.next_header',
             description = 'Next Header',
           },
           previous_header = {
-            modes = {
-              n = '[[',
-            },
+            modes = { n = '[[' },
             index = 14,
             callback = 'keymaps.previous_header',
             description = 'Previous Header',
           },
           change_adapter = {
-            modes = {
-              n = 'ga',
-            },
+            modes = { n = 'ga' },
             index = 15,
             callback = 'keymaps.change_adapter',
             description = 'Change adapter',
           },
           fold_code = {
-            modes = {
-              n = 'gf',
-            },
+            modes = { n = 'gf' },
             index = 15,
             callback = 'keymaps.fold_code',
             description = 'Fold code',
           },
           debug = {
-            modes = {
-              n = 'gD',
-            },
+            modes = { n = 'gD' },
             index = 16,
             callback = 'keymaps.debug',
             description = 'View debug info',
           },
           system_prompt = {
-            modes = {
-              n = 'gs',
-            },
+            modes = { n = 'gs' },
             index = 17,
             callback = 'keymaps.toggle_system_prompt',
             description = 'Toggle the system prompt',
           },
-          auto_tool_mode = {
-            modes = {
-              n = 'gta',
-            },
-            index = 18,
-            callback = 'keymaps.auto_tool_mode',
-            description = 'Toggle automatic tool mode',
+          -- auto_tool_mode no longer exists in v19
+          -- replaced by yolo_mode and clear_approvals
+          yolo_mode = {
+            modes = { n = 'gta' },
+            index = 20,
+            callback = 'keymaps.yolo_mode',
+            description = 'Toggle YOLO mode',
+          },
+          clear_approvals = {
+            modes = { n = 'gtx' },
+            index = 19,
+            callback = 'keymaps.clear_approvals',
+            description = 'Clear approvals',
           },
           goto_file_under_cursor = {
             modes = { n = 'gd' },
-            index = 19,
+            index = 21,
             callback = 'keymaps.goto_file_under_cursor',
             description = 'Open the file under cursor in a new tab.',
           },
           new_chat = {
-            modes = {
-              n = 'gn',
-            },
-            index = 20,
+            modes = { n = 'gn' },
+            index = 22,
             callback = function()
               vim.cmd('CodeCompanionChat')
             end,
             description = 'Open a new chat',
           },
           delete_chat = {
-            modes = {
-              n = 'gX',
-            },
-            index = 21,
+            modes = { n = 'gX' },
+            index = 23,
             callback = function()
               local cur_chat =
-                require('codecompanion.strategies.chat').buf_get_chat(0)
+                require('codecompanion.interactions.chat').buf_get_chat(0)
               local save_id = cur_chat.opts.save_id
               require('codecompanion').extensions.history.delete_chat(save_id)
               cur_chat:close()
@@ -498,7 +460,7 @@ local function config()
               if handle ~= nil then
                 local result = handle:read('*a')
                 handle:close()
-                chat:add_reference(
+                chat:add_context(
                   { role = 'user', content = result },
                   'git',
                   '<git_files>'
@@ -516,18 +478,15 @@ local function config()
             },
           },
         },
-        variables = {
-          ['buffer'] = {
-            opts = {
-              default_params = 'watch',
+        shared = {
+          editor_context = {
+            ['buffer'] = {
+              opts = {
+                default_params = 'diff',
+              },
             },
           },
-          ['lsp'] = {
-            opts = {
-              default_params = 'watch',
-            },
-          },
-        },
+        }
       },
       -- INLINE STRATEGY --------------------------------------------------------
       inline = {},
@@ -573,25 +532,11 @@ end
 return {
   'olimorris/codecompanion.nvim',
   config = config,
-  -- TODO: this is the last version that didn't give me errors after each chat
-  -- completion (tool failed or something like that)
-  commit = '28eab4386b04dc222de6c27349ea5ae0d1a92866',
   dependencies = {
     -- required
     'nvim-lua/plenary.nvim',
     'nvim-treesitter/nvim-treesitter',
     -- optionals
-    {
-      'echasnovski/mini.diff',
-      config = function()
-        local mini_diff = require('mini.diff')
-        mini_diff.setup({
-          -- disable default functionality
-          -- (so only codecompanion uses it)
-          source = mini_diff.gen_source.none(),
-        })
-      end,
-    },
     {
       'HakonHarnes/img-clip.nvim',
       opts = {
@@ -608,8 +553,6 @@ return {
     -- https://codecompanion.olimorris.dev/extensions/history.html
     {
       'ravitemer/codecompanion-history.nvim',
-      -- TODO: locking to this version as it is compatible with the CC version above
-      commit = 'c54e907ac615d4bc2e909abb498739e5d7166729',
     },
   },
 }
