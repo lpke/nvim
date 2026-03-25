@@ -296,7 +296,26 @@ local function config()
       -- CHAT STRATEGY ----------------------------------------------------------
       chat = {
         tools = {
+          -- Override tool descriptions to support absolute paths outside cwd,
+          -- but ONLY when the user has explicitly shared an external directory
+          -- via the /external_files slash command.
+          ['read_file'] = {
+            description = 'Read the contents of a file in the current working directory. Also supports absolute paths for files in external directories, but ONLY if the user has explicitly shared that directory via the /external_files slash command.',
+          },
+          ['create_file'] = {
+            description = 'Create a new file in the current working directory. Also supports absolute paths for files in external directories, but ONLY if the user has explicitly shared that directory via the /external_files slash command.',
+          },
+          ['insert_edit_into_file'] = {
+            description = 'Edit existing files with multiple automatic fallback interactions. Works on files in the current working directory. Also supports absolute paths for files in external directories, but ONLY if the user has explicitly shared that directory via the /external_files slash command.',
+          },
+          ['file_search'] = {
+            description = 'Search for files by glob pattern in the current working directory. For searching in external directories, use run_command instead.',
+          },
+          ['grep_search'] = {
+            description = 'Search for text in files in the current working directory. For searching in external directories, use run_command instead.',
+          },
           ['delete_file'] = {
+            description = 'Delete a file. Only works for files within the current working directory.',
             opts = {
               allowed_in_yolo_mode = true,
             },
@@ -503,6 +522,122 @@ local function config()
                   { title = 'CodeCompanion' }
                 )
               end
+            end,
+            opts = {
+              contains_code = false,
+            },
+          },
+          -- vibe-coded. Be careful...
+          ['external_files'] = {
+            description = 'Add an external directory as context (files outside cwd)',
+            callback = function(chat)
+              local function add_dir_context(dir)
+                if not dir or dir == '' then
+                  return
+                end
+                dir = vim.fn.expand(dir)
+                dir = vim.fs.normalize(dir)
+                if vim.fn.isdirectory(dir) ~= 1 then
+                  return vim.notify(
+                    'Not a valid directory: ' .. dir,
+                    vim.log.levels.ERROR,
+                    { title = 'CodeCompanion' }
+                  )
+                end
+                -- list files in the directory (respecting .gitignore if in a git repo)
+                local files_output
+                local git_check = vim.fn.system(
+                  'git -C '
+                    .. vim.fn.shellescape(dir)
+                    .. ' rev-parse --is-inside-work-tree 2>/dev/null'
+                )
+                if vim.v.shell_error == 0 and git_check:match('true') then
+                  files_output = vim.fn.system(
+                    'git -C ' .. vim.fn.shellescape(dir) .. ' ls-files'
+                  )
+                else
+                  files_output = vim.fn.system(
+                    'find '
+                      .. vim.fn.shellescape(dir)
+                      .. ' -type f -not -path "*/.*" | head -500'
+                  )
+                end
+                local context_content = string.format(
+                  'The user has given you access to an additional directory outside the current working directory.\n'
+                    .. 'External directory: %s\n\n'
+                    .. 'You can use absolute paths to read, edit, create, and search files in this directory.\n'
+                    .. 'Files in this directory:\n```\n%s```',
+                  dir,
+                  files_output or '(could not list files)'
+                )
+                chat:add_context(
+                  { role = 'user', content = context_content },
+                  'directory',
+                  '<cd:' .. dir .. '>'
+                )
+                vim.notify(
+                  'Added external directory: ' .. dir,
+                  vim.log.levels.INFO,
+                  { title = 'CodeCompanion' }
+                )
+              end
+
+              local function pick_with_input()
+                vim.ui.input(
+                  { prompt = 'Directory path: ', completion = 'dir' },
+                  add_dir_context
+                )
+              end
+
+              local function pick_with_telescope()
+                local actions = require('telescope.actions')
+                local action_state = require('telescope.actions.state')
+                local pickers = require('telescope.pickers')
+                local finders = require('telescope.finders')
+                local config_values = require('telescope.config').values
+
+                local home = vim.fn.expand('~')
+                pickers
+                  .new({}, {
+                    prompt_title = '/external_files - Select Directory',
+                    cwd = home,
+                    finder = finders.new_oneshot_job({
+                      'fd',
+                      '--type',
+                      'd',
+                      '--hidden',
+                      '--exclude',
+                      '.git',
+                      '--exclude',
+                      'node_modules',
+                    }, { cwd = home }),
+                    sorter = config_values.generic_sorter({}),
+                    attach_mappings = function(prompt_bufnr)
+                      actions.select_default:replace(function()
+                        local entry = action_state.get_selected_entry()
+                        actions.close(prompt_bufnr)
+                        if entry then
+                          local selected = vim.fs.joinpath(home, entry.value)
+                          add_dir_context(selected)
+                        end
+                      end)
+                      return true
+                    end,
+                  })
+                  :find()
+              end
+
+              vim.ui.select(
+                { 'Telescope picker', 'Absolute path input' },
+                { prompt = '/external_files - Choose method:' },
+                function(choice)
+                  if choice == 'Telescope picker' then
+                    pick_with_telescope()
+                  elseif choice == 'Absolute path input' then
+                    pick_with_input()
+                  end
+                end
+              )
             end,
             opts = {
               contains_code = false,
