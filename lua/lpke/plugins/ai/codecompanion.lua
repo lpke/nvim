@@ -148,7 +148,9 @@ local function config()
     callback = function(args)
       local bufnr = args.data and args.data.bufnr
       if bufnr then
-        require('codecompanion.interactions.chat.tools.approvals'):toggle_yolo_mode(bufnr)
+        require('codecompanion.interactions.chat.tools.approvals'):toggle_yolo_mode(
+          bufnr
+        )
       end
     end,
   })
@@ -282,7 +284,7 @@ local function config()
           show_presets = false,
           show_model_choices = true,
         },
-      }
+      },
     },
     display = {
       chat = {
@@ -293,8 +295,8 @@ local function config()
     interactions = {
       -- CHAT STRATEGY ----------------------------------------------------------
       chat = {
-      tools = {
-          ["delete_file"] = {
+        tools = {
+          ['delete_file'] = {
             opts = {
               allowed_in_yolo_mode = true,
             },
@@ -430,7 +432,8 @@ local function config()
             modes = { n = 'gta' },
             index = 20,
             callback = function(chat)
-              local approvals = require('codecompanion.interactions.chat.tools.approvals')
+              local approvals =
+                require('codecompanion.interactions.chat.tools.approvals')
               approvals:toggle_yolo_mode(chat.bufnr)
               require('lualine').refresh()
             end,
@@ -504,7 +507,7 @@ local function config()
               },
             },
           },
-        }
+        },
       },
       -- INLINE STRATEGY --------------------------------------------------------
       inline = {},
