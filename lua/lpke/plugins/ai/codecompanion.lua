@@ -474,6 +474,16 @@ local function config()
           },
         },
         slash_commands = {
+          ['image'] = {
+            opts = {
+              dirs = {
+                vim.fn.expand('~/Pictures'),
+                vim.fn.expand('~/Screenshots'),
+                vim.fn.expand('~/Downloads'),
+                vim.fn.expand('~/Videos'),
+              },
+            },
+          },
           ['git_files'] = {
             description = 'List git files',
             callback = function(chat)
