@@ -142,6 +142,17 @@ local function config()
   local spinner = require('lpke.plugins.ai.helpers.chat_spinner')
   spinner:init()
 
+  -- Enable YOLO mode by default on every new chat buffer
+  vim.api.nvim_create_autocmd('User', {
+    pattern = 'CodeCompanionChatCreated',
+    callback = function(args)
+      local bufnr = args.data and args.data.bufnr
+      if bufnr then
+        require('codecompanion.interactions.chat.tools.approvals'):toggle_yolo_mode(bufnr)
+      end
+    end,
+  })
+
   local function open_new_chat_with_context()
     if toggle_if_already_in_chat() then
       return
@@ -155,7 +166,7 @@ local function config()
     )
     vim.cmd('normal! Go')
     vim.cmd('stopinsert')
-    vim.cmd('normal! i@{insert_edit_into_file} ')
+    vim.cmd('normal! i@{insert_edit_into_file} @{web_search} @{fetch_webpage} ')
     vim.cmd('stopinsert')
   end
 
@@ -172,7 +183,7 @@ local function config()
     )
     vim.cmd('normal! Go')
     vim.cmd('stopinsert')
-    vim.cmd('normal! i@{insert_edit_into_file} ')
+    vim.cmd('normal! i@{insert_edit_into_file} @{web_search} @{fetch_webpage} ')
     vim.cmd('stopinsert')
   end
 
@@ -282,7 +293,12 @@ local function config()
     interactions = {
       -- CHAT STRATEGY ----------------------------------------------------------
       chat = {
-        tools = {
+      tools = {
+          ["delete_file"] = {
+            opts = {
+              allowed_in_yolo_mode = true,
+            },
+          },
           opts = {
             wait_timeout = 120000, -- time to accept edit
           },
@@ -415,7 +431,11 @@ local function config()
           yolo_mode = {
             modes = { n = 'gta' },
             index = 20,
-            callback = 'keymaps.yolo_mode',
+            callback = function(chat)
+              local approvals = require('codecompanion.interactions.chat.tools.approvals')
+              approvals:toggle_yolo_mode(chat.bufnr)
+              require('lualine').refresh()
+            end,
             description = 'Toggle YOLO mode',
           },
           clear_approvals = {
@@ -498,7 +518,7 @@ local function config()
           -- Keymap to open history from chat buffer (default: gh)
           keymap = 'gh',
           -- Keymap to save the current chat manually (when auto_save is disabled)
-          save_chat_keymap = 'sc',
+          save_chat_keymap = 'gsc',
           -- Save all chats by default (disable to save only manually using 'sc')
           auto_save = true,
           -- Number of days after which chats are automatically deleted (0 to disable)

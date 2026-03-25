@@ -258,6 +258,31 @@ local function config()
     },
   }
 
+  local llm_yolo_status = {
+    function()
+      local bufnr = vim.api.nvim_get_current_buf()
+      local approvals = require('codecompanion.interactions.chat.tools.approvals')
+      if approvals:is_approved(bufnr) then
+        return 'Y:'
+      else
+        return 'A:'
+      end
+    end,
+    cond = function()
+      return vim.bo.filetype == 'codecompanion'
+    end,
+    padding = { left = 1, right = 0 },
+    color = function()
+      local bufnr = vim.api.nvim_get_current_buf()
+      local approvals = require('codecompanion.interactions.chat.tools.approvals')
+      if approvals:is_approved(bufnr) then
+        return { fg = tc.growthminus }
+      else
+        return { fg = tc.muted }
+      end
+    end,
+  }
+
   local llm_model = {
     function()
       local bufnr = vim.api.nvim_get_current_buf()
@@ -466,6 +491,7 @@ local function config()
             refresh()
           end,
         },
+        llm_yolo_status,
         llm_model,
       },
       lualine_y = {
