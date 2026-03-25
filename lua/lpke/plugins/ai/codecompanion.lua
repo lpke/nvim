@@ -160,15 +160,13 @@ local function config()
       return
     end
     vim.cmd('CodeCompanionChat')
-    vim.cmd('normal! i#{buffer} #{diagnostics}')
+    vim.cmd('normal! i#{buffer}')
+    vim.cmd('normal! o#{diagnostics}')
+    vim.cmd('normal! o')
+    vim.cmd('normal! o@{agent}')
+    vim.cmd('normal! o@{fetch_webpage}')
+    vim.cmd('normal! o@{web_search}')
     vim.cmd('normal! G2o')
-    vim.cmd('stopinsert')
-    vim.cmd(
-      'normal! i@{grep_search} @{file_search} @{read_file} @{create_file}'
-    )
-    vim.cmd('normal! Go')
-    vim.cmd('stopinsert')
-    vim.cmd('normal! i@{insert_edit_into_file} @{fetch_webpage} ')
     vim.cmd('stopinsert')
   end
 
@@ -177,15 +175,14 @@ local function config()
       return
     end
     vim.cmd('CodeCompanionChat')
-    vim.cmd('normal! gg}}{i#{buffer} #{diagnostics}')
+    vim.cmd('normal! gg}}{i#{buffer}')
+    vim.cmd('normal! o#{diagnostics}')
+    vim.cmd('normal! o')
+    vim.cmd('normal! o@{agent}')
+    vim.cmd('normal! o@{fetch_webpage}')
+    vim.cmd('normal! o@{web_search}')
+    vim.cmd('normal! o')
     vim.cmd('normal! G2o')
-    vim.cmd('stopinsert')
-    vim.cmd(
-      'normal! i@{grep_search} @{file_search} @{read_file} @{create_file}'
-    )
-    vim.cmd('normal! Go')
-    vim.cmd('stopinsert')
-    vim.cmd('normal! i@{insert_edit_into_file} @{fetch_webpage} ')
     vim.cmd('stopinsert')
   end
 
@@ -219,8 +216,13 @@ local function config()
     end
     -- insert selection in a code block
     if selection ~= '' then
-      vim.cmd('normal! Go#{buffer} #{diagnostics}')
-      vim.cmd('stopinsert')
+      vim.cmd('normal! o#{buffer}')
+      vim.cmd('normal! o#{diagnostics}')
+      vim.cmd('normal! o')
+      vim.cmd('normal! o@{agent}')
+      vim.cmd('normal! o@{fetch_webpage}')
+      vim.cmd('normal! o@{web_search}')
+      vim.cmd('normal! o')
       local code_block_lines = { '```' .. filetype }
       vim.list_extend(code_block_lines, vim.split(selection, '\n'))
       vim.list_extend(code_block_lines, { '```' })
@@ -253,6 +255,16 @@ local function config()
   })
   helpers.ft_keymap_set_multi('codecompanion', {
     { 'n', '<leader>m', function() Lpke_cc_model({ 'son', 'opus', 'gpt' }) end, { desc = 'CodeCompanion: Cycle between AI models' }},
+    { 'in', '<A-a>', function() vim.api.nvim_put({'@{agent} '}, 'c', false, true) end, { desc = 'CodeCompanion: Insert agent tool' }},
+    { 'in', '<F2>a', function() vim.api.nvim_put({'@{agent} '}, 'c', false, true) end, { desc = 'CodeCompanion: Insert agent tool' }},
+    { 'in', '<A-A>', function() vim.api.nvim_put({'@{agent} @{web_search} @{fetch_webpage} '}, 'c', false, true) end, { desc = 'CodeCompanion: Insert agent + web tools' }},
+    { 'in', '<F2>A', function() vim.api.nvim_put({'@{agent} @{web_search} @{fetch_webpage} '}, 'c', false, true) end, { desc = 'CodeCompanion: Insert agent + web tools' }},
+    { 'in', '<A-S>', function() vim.api.nvim_put({'@{web_search} @{fetch_webpage} '}, 'c', false, true) end, { desc = 'CodeCompanion: Insert web tools' }},
+    { 'in', '<F2>S', function() vim.api.nvim_put({'@{web_search} @{fetch_webpage} '}, 'c', false, true) end, { desc = 'CodeCompanion: Insert web tools' }},
+    { 'in', '<A-b>', function() vim.api.nvim_put({'#{buffer} '}, 'c', false, true) end, { desc = 'CodeCompanion: Insert buffer context' }},
+    { 'in', '<F2>b', function() vim.api.nvim_put({'#{buffer} '}, 'c', false, true) end, { desc = 'CodeCompanion: Insert buffer context' }},
+    { 'in', '<A-B>', function() vim.api.nvim_put({'#{buffers} '}, 'c', false, true) end, { desc = 'CodeCompanion: Insert all buffers context' }},
+    { 'in', '<F2>B', function() vim.api.nvim_put({'#{buffers} '}, 'c', false, true) end, { desc = 'CodeCompanion: Insert all buffers context' }},
   })
   helpers.command_set_multi({
     { '*', 'Model', function(cmd)
@@ -340,42 +352,61 @@ local function config()
                 -- or subshells.
                 local unsafe_patterns = {
                   -- file/directory destruction
-                  'rm ', 'rm$',
+                  'rm ',
+                  'rm$',
                   'rmdir ',
                   'shred ',
                   'unlink ',
                   -- disk / filesystem
-                  'mkfs', 'fdisk', 'dd ',
+                  'mkfs',
+                  'fdisk',
+                  'dd ',
                   -- privilege escalation
-                  'sudo ', 'su ',
+                  'sudo ',
+                  'su ',
                   'doas ',
                   'pkexec ',
                   -- package management (installs, removes, upgrades)
-                  'apt ', 'apt%-get ',
+                  'apt ',
+                  'apt%-get ',
                   'dpkg ',
                   'pacman ',
-                  'yay ', 'paru ',
-                  'dnf ', 'yum ',
+                  'yay ',
+                  'paru ',
+                  'dnf ',
+                  'yum ',
                   'snap ',
                   'flatpak ',
-                  'pip install', 'pip uninstall',
-                  'pip3 install', 'pip3 uninstall',
-                  'npm install %-g', 'npm i %-g',
+                  'pip install',
+                  'pip uninstall',
+                  'pip3 install',
+                  'pip3 uninstall',
+                  'npm install %-g',
+                  'npm i %-g',
                   'npm uninstall',
                   'cargo install',
                   -- system services / init
                   'systemctl ',
                   'service ',
-                  'reboot', 'shutdown', 'poweroff', 'halt',
+                  'reboot',
+                  'shutdown',
+                  'poweroff',
+                  'halt',
                   'init ',
                   -- networking / firewall
-                  'iptables ', 'nft ',
+                  'iptables ',
+                  'nft ',
                   'ufw ',
                   -- user / group management
-                  'useradd', 'userdel', 'usermod',
-                  'groupadd', 'groupdel', 'groupmod',
+                  'useradd',
+                  'userdel',
+                  'usermod',
+                  'groupadd',
+                  'groupdel',
+                  'groupmod',
                   'passwd',
-                  'chown ', 'chmod ',
+                  'chown ',
+                  'chmod ',
                   -- writing to arbitrary files
                   'tee ',
                   'truncate ',
@@ -383,19 +414,28 @@ local function config()
                   'docker run',
                   'podman run',
                   -- process manipulation
-                  'kill ', 'killall ', 'pkill ',
+                  'kill ',
+                  'killall ',
+                  'pkill ',
                   -- shell eval / code execution from string
                   'eval ',
-                  'bash %-c', 'sh %-c', 'zsh %-c',
+                  'bash %-c',
+                  'sh %-c',
+                  'zsh %-c',
                   -- cURL/wget that could POST or overwrite files
-                  'curl %-X', 'curl %-%-request',
-                  'curl %-d', 'curl %-%-data',
+                  'curl %-X',
+                  'curl %-%-request',
+                  'curl %-d',
+                  'curl %-%-data',
                   'curl .*|', -- piped curl output
-                  'wget %-O', 'wget %-%-output',
+                  'wget %-O',
+                  'wget %-%-output',
                   -- git destructive operations
-                  'git push %-%-force', 'git push %-f ',
+                  'git push %-%-force',
+                  'git push %-f ',
                   'git reset %-%-hard',
-                  'git clean %-fd', 'git clean %-f',
+                  'git clean %-fd',
+                  'git clean %-f',
                   'git checkout %-%-',
                   -- misc dangerous
                   'mv / ', -- moving root
@@ -412,67 +452,129 @@ local function config()
                 -- Read-only, informational, or low-risk commands.
                 local safe_patterns = {
                   -- filesystem browsing
-                  '^ls', '^exa ', '^eza ',
+                  '^ls',
+                  '^exa ',
+                  '^eza ',
                   '^tree ',
                   '^find ',
                   '^fd ',
                   '^stat ',
                   '^file ',
-                  '^du ', '^df ',
-                  '^realpath ', '^readlink ',
-                  '^basename ', '^dirname ',
+                  '^du ',
+                  '^df ',
+                  '^realpath ',
+                  '^readlink ',
+                  '^basename ',
+                  '^dirname ',
                   -- reading files
-                  '^cat ', '^bat ',
-                  '^head ', '^tail ',
-                  '^less ', '^more ',
+                  '^cat ',
+                  '^bat ',
+                  '^head ',
+                  '^tail ',
+                  '^less ',
+                  '^more ',
                   '^wc ',
-                  '^md5sum ', '^sha256sum ',
+                  '^md5sum ',
+                  '^sha256sum ',
                   -- text search
-                  '^grep ', '^egrep ', '^fgrep ',
-                  '^rg ', '^ag ',
-                  '^awk ', '^sed %-n',
+                  '^grep ',
+                  '^egrep ',
+                  '^fgrep ',
+                  '^rg ',
+                  '^ag ',
+                  '^awk ',
+                  '^sed %-n',
                   -- output / formatting
-                  '^echo ', '^printf ',
-                  '^date', '^cal$', '^cal ',
-                  '^env$', '^env ',
+                  '^echo ',
+                  '^printf ',
+                  '^date',
+                  '^cal$',
+                  '^cal ',
+                  '^env$',
+                  '^env ',
                   '^printenv',
                   '^pwd$',
-                  '^whoami$', '^id$', '^id ',
+                  '^whoami$',
+                  '^id$',
+                  '^id ',
                   '^hostname',
                   '^uname',
                   -- git read-only
-                  '^git status', '^git diff', '^git log',
-                  '^git show', '^git branch',
-                  '^git remote %-v', '^git remote show',
-                  '^git tag', '^git stash list',
-                  '^git ls%-files', '^git ls%-tree',
-                  '^git rev%-parse', '^git describe',
-                  '^git blame', '^git shortlog',
+                  '^git status',
+                  '^git diff',
+                  '^git log',
+                  '^git show',
+                  '^git branch',
+                  '^git remote %-v',
+                  '^git remote show',
+                  '^git tag',
+                  '^git stash list',
+                  '^git ls%-files',
+                  '^git ls%-tree',
+                  '^git rev%-parse',
+                  '^git describe',
+                  '^git blame',
+                  '^git shortlog',
                   -- build / test / lint (common project commands)
-                  '^make ', '^make$',
-                  '^cargo test', '^cargo check', '^cargo clippy', '^cargo build', '^cargo fmt',
-                  '^go test', '^go vet', '^go build', '^go fmt',
-                  '^python[23]? %-m pytest', '^pytest',
+                  '^make ',
+                  '^make$',
+                  '^cargo test',
+                  '^cargo check',
+                  '^cargo clippy',
+                  '^cargo build',
+                  '^cargo fmt',
+                  '^go test',
+                  '^go vet',
+                  '^go build',
+                  '^go fmt',
+                  '^python[23]? %-m pytest',
+                  '^pytest',
                   '^python[23]? %-m unittest',
                   '^python[23]? %-c ',
-                  '^npm test', '^npm run ', '^npx ',
-                  '^yarn test', '^yarn run ',
-                  '^pnpm test', '^pnpm run ',
-                  '^bun test', '^bun run ',
-                  '^luacheck ', '^selene ',
+                  '^npm test',
+                  '^npm run ',
+                  '^npx ',
+                  '^yarn test',
+                  '^yarn run ',
+                  '^pnpm test',
+                  '^pnpm run ',
+                  '^bun test',
+                  '^bun run ',
+                  '^luacheck ',
+                  '^selene ',
                   '^stylua %-%-check',
-                  '^eslint ', '^prettier %-%-check',
-                  '^rubocop ', '^rspec ',
+                  '^eslint ',
+                  '^prettier %-%-check',
+                  '^rubocop ',
+                  '^rspec ',
                   -- misc safe utilities
-                  '^which ', '^whereis ', '^type ',
-                  '^man ', '^help ',
-                  '^sort ', '^uniq ', '^cut ', '^tr ',
-                  '^diff ', '^comm ', '^cmp ',
-                  '^jq ', '^yq ',
-                  '^column ', '^paste ',
-                  '^seq ', '^yes ', '^true$', '^false$',
-                  '^nproc$', '^free ', '^uptime$',
-                  '^lscpu', '^lsblk', '^lspci', '^lsusb',
+                  '^which ',
+                  '^whereis ',
+                  '^type ',
+                  '^man ',
+                  '^help ',
+                  '^sort ',
+                  '^uniq ',
+                  '^cut ',
+                  '^tr ',
+                  '^diff ',
+                  '^comm ',
+                  '^cmp ',
+                  '^jq ',
+                  '^yq ',
+                  '^column ',
+                  '^paste ',
+                  '^seq ',
+                  '^yes ',
+                  '^true$',
+                  '^false$',
+                  '^nproc$',
+                  '^free ',
+                  '^uptime$',
+                  '^lscpu',
+                  '^lsblk',
+                  '^lspci',
+                  '^lsusb',
                 }
                 for _, pattern in ipairs(safe_patterns) do
                   if cmd:match(pattern) then
