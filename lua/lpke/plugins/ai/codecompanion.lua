@@ -426,8 +426,6 @@ local function config()
             callback = 'keymaps.toggle_system_prompt',
             description = 'Toggle the system prompt',
           },
-          -- auto_tool_mode no longer exists in v19
-          -- replaced by yolo_mode and clear_approvals
           yolo_mode = {
             modes = { n = 'gta' },
             index = 20,
@@ -529,9 +527,9 @@ local function config()
           auto_generate_title = true,
           title_generation_opts = {
             ---Adapter for generating titles (defaults to active chat's adapter, if nil)
-            adapter = nil, -- e.g "copilot"
+            adapter = 'copilot', -- e.g "copilot"
             ---Model for generating titles (defaults to active chat's model, if nil)
-            model = 'gpt-4o', -- e.g "gpt-4o"
+            model = 'gpt-5-mini', -- e.g "gpt-5-mini"
             refresh_every_n_prompts = 1,
             max_refreshes = 3,
           },
