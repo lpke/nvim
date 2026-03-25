@@ -857,6 +857,19 @@ local function config()
       },
     },
   })
+
+  -- Suppress CodeCompanion's notify log handler to prevent blocking
+  -- "Press Enter" prompts on tool errors. Errors are still written to
+  -- the log file (~/.local/state/nvim/codecompanion.log).
+  local root_logger = require('codecompanion.utils.log').get_root()
+  if root_logger then
+    for _, handler in ipairs(root_logger:get_handlers()) do
+      if handler.type == 'notify' then
+        handler.handle = function() end
+        break
+      end
+    end
+  end
 end
 
 return {
