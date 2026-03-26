@@ -780,17 +780,18 @@ local function config()
               },
             },
           },
-          ['git_files'] = {
-            description = 'List git files',
+          ['git_files_list'] = {
+            description = 'List git files (not their contents)',
             callback = function(chat)
               local handle = io.popen('git ls-files')
               if handle ~= nil then
                 local result = handle:read('*a')
                 handle:close()
+                local file_count = #vim.split(vim.trim(result), '\n')
                 chat:add_context(
                   { role = 'user', content = result },
                   'git',
-                  '<git_files>'
+                  '<git-files-list files="' .. file_count .. '" />'
                 )
               else
                 return vim.notify(
@@ -850,7 +851,7 @@ local function config()
                 chat:add_context(
                   { role = 'user', content = context_content },
                   'directory',
-                  '<cd:' .. dir .. '>'
+                  '<external-files>' .. dir .. '</external-files>'
                 )
                 vim.notify(
                   'Added external directory: ' .. dir,
@@ -918,6 +919,346 @@ local function config()
             end,
             opts = {
               contains_code = false,
+            },
+          },
+          ['git_commit_logs'] = {
+            description = 'Add recent git commit messages and metadata to context',
+            callback = function(chat)
+              vim.ui.input(
+                { prompt = 'Number of commits (default 20): ' },
+                function(input)
+                  if input == nil then
+                    return
+                  end
+                  local cleaned = vim.trim(input):gsub('^%((.-)%)$', '%1')
+                  local count = tonumber(cleaned)
+                  if not count or count < 1 then
+                    count = 20
+                  end
+                  local cmd = string.format(
+                    'git log -n %d --pretty=format:"%%h %%ai %%an %%d %%s"',
+                    count
+                  )
+                  local handle = io.popen(cmd)
+                  if not handle then
+                    return vim.notify(
+                      'Failed to run git log',
+                      vim.log.levels.ERROR,
+                      { title = 'CodeCompanion' }
+                    )
+                  end
+                  local result = handle:read('*a')
+                  handle:close()
+                  if not result or result == '' then
+                    return vim.notify(
+                      'No git commits found',
+                      vim.log.levels.INFO,
+                      { title = 'CodeCompanion' }
+                    )
+                  end
+                  local content = string.format(
+                    'Recent git commits (last %d):\n```\n%s\n```',
+                    count,
+                    result
+                  )
+                  chat:add_context(
+                    { role = 'user', content = content },
+                    'git',
+                    '<git-commit-logs commits="' .. count .. '" />'
+                  )
+                  vim.notify(
+                    string.format('Added %d git commits to context', count),
+                    vim.log.levels.INFO,
+                    { title = 'CodeCompanion' }
+                  )
+                end
+              )
+            end,
+            opts = {
+              contains_code = false,
+            },
+          },
+          ['git_commit_history'] = {
+            description = 'Add full diffs for recent git commits',
+            callback = function(chat)
+              vim.ui.input(
+                { prompt = 'Number of commits with diffs (default 5): ' },
+                function(input)
+                  if input == nil then
+                    return
+                  end
+                  local cleaned =
+                    vim.trim(input):gsub('^%((.-)%)$', '%1')
+                  local count = tonumber(cleaned)
+                  if not count or count < 1 then
+                    count = 5
+                  end
+
+                  -- Get the last N commit hashes
+                  local log_cmd = string.format(
+                    'git log -n %d --pretty=format:"%%H"',
+                    count
+                  )
+                  local log_handle = io.popen(log_cmd)
+                  if not log_handle then
+                    return vim.notify(
+                      'Failed to run git log',
+                      vim.log.levels.ERROR,
+                      { title = 'CodeCompanion' }
+                    )
+                  end
+                  local hashes_raw = log_handle:read('*a')
+                  log_handle:close()
+                  local hashes =
+                    vim.split(vim.trim(hashes_raw), '\n')
+                  if
+                    #hashes == 0
+                    or (hashes[1] == '' and #hashes == 1)
+                  then
+                    return vim.notify(
+                      'No git commits found',
+                      vim.log.levels.INFO,
+                      { title = 'CodeCompanion' }
+                    )
+                  end
+
+                  -- Build full diffs for each commit
+                  local parts = {}
+                  for i, hash in ipairs(hashes) do
+                    -- Get commit metadata
+                    local meta_cmd = string.format(
+                      'git log -1 --pretty=format:"%%h %%ai %%an %%s" %s',
+                      hash
+                    )
+                    local meta_handle = io.popen(meta_cmd)
+                    local meta = meta_handle
+                        and meta_handle:read('*a')
+                      or ''
+                    if meta_handle then
+                      meta_handle:close()
+                    end
+
+                    -- Get full diff for this commit
+                    local diff_cmd = string.format(
+                      'git diff %s~1..%s 2>/dev/null',
+                      hash,
+                      hash
+                    )
+                    local diff_handle = io.popen(diff_cmd)
+                    local diff = diff_handle
+                        and diff_handle:read('*a')
+                      or ''
+                    if diff_handle then
+                      diff_handle:close()
+                    end
+
+                    if diff == '' then
+                      diff =
+                        '(initial commit or no parent diff available)'
+                    end
+
+                    table.insert(
+                      parts,
+                      string.format(
+                        '--- Commit %d: %s ---\n```diff\n%s\n```',
+                        i,
+                        vim.trim(meta),
+                        vim.trim(diff)
+                      )
+                    )
+                  end
+
+                  local content = string.format(
+                    'Git commit history with full diffs (last %d commits):\n\n%s',
+                    #hashes,
+                    table.concat(parts, '\n\n')
+                  )
+                  chat:add_context(
+                    { role = 'user', content = content },
+                    'git',
+                    '<git-commit-history versions="'
+                      .. #hashes
+                      .. '" />'
+                  )
+                  vim.notify(
+                    string.format(
+                      'Added %d commits with diffs to context',
+                      #hashes
+                    ),
+                    vim.log.levels.INFO,
+                    { title = 'CodeCompanion' }
+                  )
+                end
+              )
+            end,
+            opts = {
+              contains_code = true,
+            },
+          },
+          ['git_file_history'] = {
+            description = 'Add git diffs for a file going back N versions',
+            callback = function(chat)
+              local actions = require('telescope.actions')
+              local action_state = require('telescope.actions.state')
+              local pickers = require('telescope.pickers')
+              local finders = require('telescope.finders')
+              local config_values = require('telescope.config').values
+
+              -- Step 1: Pick a file using telescope (git ls-files)
+              local handle = io.popen('git ls-files')
+              if not handle then
+                return vim.notify(
+                  'Failed to list git files',
+                  vim.log.levels.ERROR,
+                  { title = 'CodeCompanion' }
+                )
+              end
+              local files_raw = handle:read('*a')
+              handle:close()
+              local files = vim.split(vim.trim(files_raw), '\n')
+              if #files == 0 or (files[1] == '' and #files == 1) then
+                return vim.notify(
+                  'No git-tracked files found',
+                  vim.log.levels.INFO,
+                  { title = 'CodeCompanion' }
+                )
+              end
+
+              pickers
+                .new({}, {
+                  prompt_title = '/git_file_history - Select File',
+                  finder = finders.new_table({ results = files }),
+                  sorter = config_values.generic_sorter({}),
+                  attach_mappings = function(prompt_bufnr)
+                    actions.select_default:replace(function()
+                      local entry = action_state.get_selected_entry()
+                      actions.close(prompt_bufnr)
+                      if not entry then
+                        return
+                      end
+                      local selected_file = entry.value
+
+                      -- Step 2: Ask how many versions back
+                      vim.ui.input({
+                        prompt = 'Versions back for "'
+                          .. selected_file
+                          .. '" (default 5): ',
+                      }, function(input)
+                        if input == nil then
+                          return
+                        end
+                        local cleaned = vim.trim(input):gsub('^%((.-)%)$', '%1')
+                        local count = tonumber(cleaned)
+                        if not count or count < 1 then
+                          count = 5
+                        end
+
+                        -- Get the last N commits that touched this file
+                        local log_cmd = string.format(
+                          'git log -n %d --pretty=format:"%%H" -- %s',
+                          count,
+                          vim.fn.shellescape(selected_file)
+                        )
+                        local log_handle = io.popen(log_cmd)
+                        if not log_handle then
+                          return vim.notify(
+                            'Failed to get file history',
+                            vim.log.levels.ERROR,
+                            { title = 'CodeCompanion' }
+                          )
+                        end
+                        local hashes_raw = log_handle:read('*a')
+                        log_handle:close()
+                        local hashes = vim.split(vim.trim(hashes_raw), '\n')
+                        if
+                          #hashes == 0
+                          or (hashes[1] == '' and #hashes == 1)
+                        then
+                          return vim.notify(
+                            'No history found for ' .. selected_file,
+                            vim.log.levels.INFO,
+                            { title = 'CodeCompanion' }
+                          )
+                        end
+
+                        -- Build diffs for each commit
+                        local parts = {}
+                        for i, hash in ipairs(hashes) do
+                          -- Get commit metadata
+                          local meta_cmd = string.format(
+                            'git log -1 --pretty=format:"%%h %%ai %%an %%s" %s',
+                            hash
+                          )
+                          local meta_handle = io.popen(meta_cmd)
+                          local meta = meta_handle and meta_handle:read('*a')
+                            or ''
+                          if meta_handle then
+                            meta_handle:close()
+                          end
+
+                          -- Get diff for this commit
+                          local diff_cmd = string.format(
+                            'git diff %s~1..%s -- %s 2>/dev/null',
+                            hash,
+                            hash,
+                            vim.fn.shellescape(selected_file)
+                          )
+                          local diff_handle = io.popen(diff_cmd)
+                          local diff = diff_handle and diff_handle:read('*a')
+                            or ''
+                          if diff_handle then
+                            diff_handle:close()
+                          end
+
+                          if diff == '' then
+                            diff =
+                              '(initial commit or no parent diff available)'
+                          end
+
+                          table.insert(
+                            parts,
+                            string.format(
+                              '--- Version %d: %s ---\n```diff\n%s\n```',
+                              i,
+                              vim.trim(meta),
+                              vim.trim(diff)
+                            )
+                          )
+                        end
+
+                        local content = string.format(
+                          'Git file history for `%s` (last %d versions):\n\n%s',
+                          selected_file,
+                          #hashes,
+                          table.concat(parts, '\n\n')
+                        )
+                        chat:add_context(
+                          { role = 'user', content = content },
+                          'git',
+                          '<git-file-history versions="'
+                            .. #hashes
+                            .. '">'
+                            .. selected_file
+                            .. '</git-file-history>'
+                        )
+                        vim.notify(
+                          string.format(
+                            'Added %d versions of %s to context',
+                            #hashes,
+                            selected_file
+                          ),
+                          vim.log.levels.INFO,
+                          { title = 'CodeCompanion' }
+                        )
+                      end)
+                    end)
+                    return true
+                  end,
+                })
+                :find()
+            end,
+            opts = {
+              contains_code = true,
             },
           },
         },
