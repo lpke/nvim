@@ -27,6 +27,7 @@ helpers.keymap_set_multi({
   {'c', '<Esc>', '<C-c>', { desc = 'Exit cmd-line with ctrl+c' }},
   {'i', '<C-c>', '<Esc>', { desc = 'Exit insert mode with ctrl+c, but still trigger `InsertLeave` autocmds' }},
 
+  {'nv', 'gg', 'gg^', { desc = 'Go to very start of buffer' }},
   {'nv', 'G', 'G$', { desc = 'Go to very end of buffer' }},
   {'n', 'Y', 'y$', { desc = 'Yank to end of line' }},
   {'nv', '<leader>y', '"+y', { desc = 'Global clipboard yank' }},
