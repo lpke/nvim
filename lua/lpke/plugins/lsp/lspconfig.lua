@@ -97,6 +97,7 @@ local function config()
     { 'nD', 'grr', '' },
     { 'nD', 'gri', '' },
     { 'nvD', 'gra', '' },
+    { 'nD', 'grt', '' },
 
     -- info/toggle/reload
     { 'nC', '<BS>ip', 'LspInfo', { desc = 'Open LSP info window' } },
