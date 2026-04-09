@@ -312,6 +312,11 @@ local function config()
     },
   })
 
+  -- Patch the ask_questions tool to use a Telescope picker with
+  -- wrapped text and a preview pane instead of the default vim.ui.select
+  -- which truncates long questions and option descriptions.
+  require('lpke.plugins.ai.helpers.ask_questions_ui').patch()
+
   -- Suppress CodeCompanion's notify log handler to prevent blocking
   -- "Press Enter" prompts on tool errors. Errors are still written to
   -- the log file (~/.local/state/nvim/codecompanion.log).
