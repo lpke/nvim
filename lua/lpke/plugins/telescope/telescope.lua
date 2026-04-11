@@ -438,10 +438,10 @@ local function config()
     {'n', '<BS>gb', function()
       builtin_pickers.git_branches()
     end, { desc = 'Find git branches' }},
+    {'n', '<BS>gg', function()
+      builtin_pickers.git_status()
+    end, { desc = 'Find git status' }},
     -- using diffview.nvim to do the below now
-    -- {'n', '<BS>gg', function()
-    --   builtin_pickers.git_status()
-    -- end, { desc = 'Find git status' }},
     -- {'n', '<BS>gc', function()
     --   builtin_pickers.git_commits()
     -- end, { desc = 'Find git commits' }},
