@@ -3,6 +3,8 @@ local function config()
   local Rule = require('nvim-autopairs.rule')
   local cond = require('nvim-autopairs.conds')
 
+  local helpers = require('lpke.core.helpers')
+
   -- add autoclose functionality when selecting cmp items
   local cmp_autopairs = require('nvim-autopairs.completion.cmp')
   local cmp = require('cmp')
@@ -48,18 +50,24 @@ local function config()
   autopairs.remove_rule('(')
   autopairs.add_rule(
     Rule('(', ')')
-      :with_pair(cond.not_after_regex('[()%w]'))
+      :with_pair(cond.not_after_regex('[%w]'))
       :with_pair(cond.not_inside_quote())
+      :with_pair(cond.is_bracket_line())
       :with_move(cond.move_right())
+      :with_move(cond.is_bracket_line_move())
   )
 
   autopairs.remove_rule('{')
   autopairs.add_rule(
     Rule('{', '}')
-      :with_pair(cond.not_after_regex('[{}%w]'))
+      :with_pair(cond.not_after_regex('[%w]'))
       :with_pair(cond.not_inside_quote())
+      :with_pair(cond.is_bracket_line())
       :with_move(cond.move_right())
+      :with_move(cond.is_bracket_line_move())
   )
+
+  helpers.keymap_set({ 'i', '<M-BS>', '<BS>', { desc = 'Autopairs: Raw backspace (no autopairs)' } })
 end
 
 return {
