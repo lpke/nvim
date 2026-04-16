@@ -17,7 +17,7 @@ local function config()
       css = { 'prettier' },
       html = { 'prettier' },
       json = { 'prettier' },
-      jsonc = { 'prettier' },
+      jsonc = { 'prettier_jsonc' },
       yaml = { 'prettier' },
       markdown = { 'prettier' },
       graphql = { 'prettier' },
@@ -30,6 +30,23 @@ local function config()
     },
     -- Default overrides (including config)
     formatters = {
+      prettier_jsonc = {
+        command = 'prettier',
+        args = {
+          '--config-precedence',
+          'file-override',
+          '--single-quote',
+          '--tab-width',
+          '2',
+          '--trailing-comma',
+          'none',
+          '--parser',
+          'json',
+          '--stdin-filepath',
+          '$FILENAME',
+        },
+        stdin = true,
+      },
       prettier = {
         -- https://prettier.io/docs/cli
         -- https://prettier.io/docs/options
