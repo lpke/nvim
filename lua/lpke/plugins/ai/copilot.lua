@@ -74,36 +74,20 @@ local function config()
   function Lpke_toggle_copilot(bool)
     -- which direction to toggle is based on focused file's status
     local is_attached = client.buf_is_attached(0)
-    -- :Copilot enable|disable (global)
-    if bool == nil then
-      if is_attached then
-        cmd.disable()
-      else
-        cmd.enable()
-      end
+    local should_disable = (bool == false) or (bool == nil and is_attached)
+
+    if should_disable then
+      -- disable globally and detach all buffers
+      cmd.disable()
     else
-      if bool == false then
-        cmd.disable()
-      else
+      -- enable globally only if currently disabled (avoid restart)
+      if client.is_disabled() then
         cmd.enable()
       end
-    end
-    -- :Copilot attach|detach (for each active buffer)
-    local client_id = vim.lsp.start(client.config)
-    local bufs = Lpke_get_active_bufs()
-    for buf, _ in pairs(bufs) do
-      if bool == nil then
-        if is_attached then
-          Lpke_copilot_buf_detach(buf, client_id)
-        else
-          Lpke_copilot_buf_attach(buf, client_id, cfg)
-        end
-      else
-        if bool == false then
-          Lpke_copilot_buf_detach(buf, client_id)
-        else
-          Lpke_copilot_buf_attach(buf, client_id, cfg)
-        end
+      -- attach to all active buffers
+      local bufs = Lpke_get_active_bufs()
+      for buf, _ in pairs(bufs) do
+        Lpke_copilot_buf_attach(buf)
       end
     end
     -- update lualine
@@ -188,9 +172,15 @@ local function config()
     server_opts_overrides = {},
   })
 
-  -- ensure copilot is activated on all active buffers after startup
+  -- ensure copilot is attached to all active buffers after startup
   vim.defer_fn(function()
-    Lpke_toggle_copilot(true)
+    local bufs = Lpke_get_active_bufs()
+    for buf, _ in pairs(bufs) do
+      Lpke_copilot_buf_attach(buf)
+    end
+    pcall(function()
+      require('lualine').refresh()
+    end)
   end, 1500)
 end
 
