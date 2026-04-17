@@ -37,6 +37,7 @@ local function config()
               model = {
                 default = 'claude-opus-4.6', -- premium requests (x3)
                 -- default = 'claude-sonnet-4.6', -- premium requests (x1)
+                -- default = 'claude-opus-4.7', -- premium requests (x7.5)
                 -- default = 'gpt-4o', -- unlimited free
                 -- default = 'gpt-4.1', -- unlimited free (better at code)
                 -- default = 'gpt-5-mini', -- unlimited free (smarter than 4.1 but dumb contextually)

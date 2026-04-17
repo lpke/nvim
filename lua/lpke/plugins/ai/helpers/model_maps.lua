@@ -11,6 +11,7 @@ return {
   ['grok'] = 'grok-code-fast-1',
 
   -- others, if running `Lpke_cc_model` manually
+  ['opus4.7'] = 'claude-opus-4.7',
   ['opus4.6'] = 'claude-opus-4.6',
   ['opus4.5'] = 'claude-opus-4.5',
   ['son4.6'] = 'claude-sonnet-4.6',
