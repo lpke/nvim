@@ -133,7 +133,7 @@ local function config()
             description = 'Close Chat',
           },
           stop = {
-            modes = { n = 'Q' },
+            modes = { n = '<leader>Q' },
             index = 5,
             callback = 'keymaps.stop',
             description = 'Stop Request',
