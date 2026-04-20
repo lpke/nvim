@@ -1,6 +1,5 @@
--- Global functions (Lpke_toggle_cc, Lpke_cc_model) are defined as side
--- effects of requiring these modules.
-require('lpke.plugins.ai.helpers.chat_functions')
+-- Global function (Lpke_cc_model) is defined as a side effect of requiring
+-- this module.
 require('lpke.plugins.ai.helpers.model_swap')
 
 local cmd_approval = require('lpke.plugins.ai.helpers.cmd_approval')

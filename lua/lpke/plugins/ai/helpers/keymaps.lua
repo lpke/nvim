@@ -6,10 +6,10 @@ local M = {}
 function M.setup()
   -- stylua: ignore start
   helpers.keymap_set_multi({
-    { 'in', '<A-f>', Lpke_toggle_cc, { desc = 'CodeCompanion: Toggle the chat buffer' }},
-    { 'in', '<F2>f', Lpke_toggle_cc, { desc = 'CodeCompanion: Toggle the chat buffer' }},
-    { 'in', '<A-F>', chat_fns.open_new_chat_with_context, { desc = 'CodeCompanion: Open new chat buffer with context' }},
-    { 'in', '<F2>F', chat_fns.open_new_chat_with_context, { desc = 'CodeCompanion: Open new chat buffer with context' }},
+    { 'in', '<A-f>', chat_fns.toggle_cc_with_default_tools, { desc = 'CodeCompanion: Toggle chat buffer with default tools' }},
+    { 'in', '<F2>f', chat_fns.toggle_cc_with_default_tools, { desc = 'CodeCompanion: Toggle chat buffer with default tools' }},
+    { 'in', '<A-F>', chat_fns.open_new_chat_with_tools, { desc = 'CodeCompanion: Open new chat with default tools' }},
+    { 'in', '<F2>F', chat_fns.open_new_chat_with_tools, { desc = 'CodeCompanion: Open new chat with default tools' }},
     { 'v', '<A-f>', chat_fns.toggle_chat_with_context_selection, { desc = 'CodeCompanion: Toggle chat buffer, add context and selection' }},
     { 'v', '<F2>f', chat_fns.toggle_chat_with_context_selection, { desc = 'CodeCompanion: Toggle chat buffer, add context and selection' }},
     { 'v', '<A-F>', chat_fns.open_new_chat_with_context_selection, { desc = 'CodeCompanion: Open a new chat buffer with context and selection' }},
