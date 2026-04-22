@@ -18,7 +18,7 @@ function M.setup()
     { 'v', '<C-l>', ":<C-u>'<,'>CodeCompanion<cr>#{buffer} ", { desc = 'CodeCompanion: Open inline prompt with context and selection' }},
   })
   helpers.ft_keymap_set_multi('codecompanion', {
-    { 'n', '<leader>m', function() Lpke_cc_model({ 'opus', 'son', 'gpt' }) end,
+    { 'n', '<leader>m', function() Lpke_cc_model({ 'son', 'gpt' }) end,
       { desc = 'CodeCompanion: Cycle between AI models' }},
     { 'in', '<A-a>', function() vim.api.nvim_put({'@{agent} '}, 'c', vim.fn.mode() == 'n', true) end,
       { desc = 'CodeCompanion: Insert agent tool' }},

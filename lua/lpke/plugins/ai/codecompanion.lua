@@ -34,9 +34,9 @@ local function config()
           return require('codecompanion.adapters').extend('copilot', {
             schema = {
               model = {
-                default = 'claude-opus-4.6', -- premium requests (x3)
-                -- default = 'claude-sonnet-4.6', -- premium requests (x1)
-                -- default = 'claude-opus-4.7', -- premium requests (x7.5)
+                default = 'claude-sonnet-4.6', -- premium requests (x1)
+                -- default = 'claude-opus-4.6', -- premium requests (x3) NO LONGER AVAILABLE - 20th April 2026
+                -- default = 'claude-opus-4.7', -- premium requests (x7.5) AVAILABLE ON PRO+ ONLY - 20th April 2026
                 -- default = 'gpt-4o', -- unlimited free
                 -- default = 'gpt-4.1', -- unlimited free (better at code)
                 -- default = 'gpt-5-mini', -- unlimited free (smarter than 4.1 but dumb contextually)
