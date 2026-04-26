@@ -5,7 +5,7 @@ return {
   -- defaults (duplicates for specific versions below)
   ['son'] = 'claude-sonnet-4.6',
   ['opus'] = 'claude-opus-4.6',
-  ['gpt'] = 'gpt-5-mini', -- unlimited
+  ['gpt'] = 'gpt-5-mini', -- copilot unlimited
   ['haiku'] = 'claude-haiku-4.5',
   ['gem'] = 'gemini-2.5-pro',
   ['grok'] = 'grok-code-fast-1',
@@ -18,13 +18,19 @@ return {
   ['son4.5'] = 'claude-sonnet-4.5',
   ['son4'] = 'claude-sonnet-4',
   ['haiku4.5'] = 'claude-haiku-4.5',
+  ['gpt5.5'] = 'gpt-5.5',
+  ['gpt5.4'] = 'gpt-5.4',
+  ['gpt5.4m'] = 'gpt-5.4-mini',
+  ['gpt5.3c'] = 'gpt-5.3-codex',
+  ['gpt5.3cs'] = 'gpt-5.3-codex-spark',
+  ['gpt5.2c'] = 'gpt-5.2-codex',
   ['gpt5.2'] = 'gpt-5.2',
   ['gpt5.1'] = 'gpt-5.1',
   ['gpt5.1cM'] = 'gpt-5.1-codex-max',
   ['gpt5.1c'] = 'gpt-5.1-codex',
-  ['gpt5m'] = 'gpt-5-mini', -- unlimited
-  ['gpt4.1'] = 'gpt-4.1', -- unlimited
-  ['gpt4o'] = 'gpt-4o', -- unlimited
+  ['gpt5m'] = 'gpt-5-mini', -- copilot unlimited
+  ['gpt4.1'] = 'gpt-4.1', -- copilot unlimited
+  ['gpt4o'] = 'gpt-4o', -- copilot unlimited
   ['gem2.5'] = 'gemini-2.5-pro',
   ['grok1'] = 'grok-code-fast-1',
 }

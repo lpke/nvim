@@ -49,6 +49,22 @@ local function config()
           show_model_choices = true,
         },
       },
+      acp = {
+        codex = function()
+          return require('codecompanion.adapters').extend('codex', {
+            commands = {
+              default = { 'codex-acp' },
+            },
+            defaults = {
+              auth_method = 'chatgpt',
+              session_config_options = {
+                model = 'gpt-5.5',
+                mode = 'Full Access',
+              },
+            },
+          })
+        end,
+      },
     },
     display = {
       chat = {

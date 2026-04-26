@@ -2,6 +2,14 @@ local model_maps = require('lpke.plugins.ai.helpers.model_maps')
 
 local M = {}
 
+function M.is_acp_adapter(adapter)
+  return adapter and adapter.type == 'acp'
+end
+
+function M.is_codex_adapter(adapter)
+  return M.is_acp_adapter(adapter) and adapter.name == 'codex'
+end
+
 function M.get_chat_ref(bufnr)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
@@ -21,7 +29,61 @@ function M.get_cur_model(bufnr)
   if not adapter then
     return nil
   end
+
+  if M.is_acp_adapter(adapter) then
+    if chat.acp_connection then
+      local models = chat.acp_connection:get_models()
+      if models and models.currentModelId then
+        return models.currentModelId
+      end
+    end
+
+    local defaults = adapter.defaults or {}
+    local session_config_options = defaults.session_config_options or {}
+    return session_config_options.model or defaults.model
+  end
+
   return adapter.schema.model.default or adapter.opts.model
+end
+
+function M.get_cur_acp_mode(bufnr)
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+  local chat = require('codecompanion').buf_get_chat(bufnr)
+  if not chat or not M.is_acp_adapter(chat.adapter) then
+    return nil
+  end
+
+  if chat.acp_connection then
+    for _, opt in ipairs(chat.acp_connection:get_config_options() or {}) do
+      if opt.category == 'mode' then
+        local current_value = opt.currentValue
+        local values =
+          require('codecompanion.acp').flatten_config_options(opt.options or {})
+        for _, val in ipairs(values) do
+          if val.value == current_value then
+            return val.name or val.value
+          end
+        end
+        return current_value
+      end
+    end
+  end
+
+  local defaults = chat.adapter.defaults or {}
+  local session_config_options = defaults.session_config_options or {}
+  return session_config_options.mode or defaults.mode
+end
+
+function M.is_acp_chat(bufnr)
+  local chat = M.get_chat_ref(bufnr)
+  return chat and M.is_acp_adapter(chat.adapter)
+end
+
+function M.is_codex_chat(bufnr)
+  local chat = M.get_chat_ref(bufnr)
+  return chat and M.is_codex_adapter(chat.adapter)
 end
 
 -- cycle through AI models provided in an array (or apply directly if only one)

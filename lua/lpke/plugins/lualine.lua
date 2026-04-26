@@ -22,6 +22,7 @@ local function config()
   local lualine = require('lualine')
   local tc = Lpke_theme_colors
   local llm_spinner = require('lpke.plugins.ai.helpers.lualine_spinner')
+  local model_swap = require('lpke.plugins.ai.helpers.model_swap')
   local refresh = lualine.refresh
 
   local custom_theme = {
@@ -261,7 +262,8 @@ local function config()
   local llm_yolo_status = {
     function()
       local bufnr = vim.api.nvim_get_current_buf()
-      local approvals = require('codecompanion.interactions.chat.tools.approvals')
+      local approvals =
+        require('codecompanion.interactions.chat.tools.approvals')
       if approvals:is_approved(bufnr) then
         return 'Y:'
       else
@@ -269,13 +271,59 @@ local function config()
       end
     end,
     cond = function()
-      return vim.bo.filetype == 'codecompanion'
+      if vim.bo.filetype ~= 'codecompanion' then
+        return false
+      end
+
+      local chat = require('codecompanion').buf_get_chat(0)
+      return chat and chat.adapter and chat.adapter.type == 'http'
     end,
     padding = { left = 1, right = 0 },
     color = function()
       local bufnr = vim.api.nvim_get_current_buf()
-      local approvals = require('codecompanion.interactions.chat.tools.approvals')
+      local approvals =
+        require('codecompanion.interactions.chat.tools.approvals')
       if approvals:is_approved(bufnr) then
+        return { fg = tc.growthminus }
+      else
+        return { fg = tc.muted }
+      end
+    end,
+  }
+
+  local function llm_codex_mode_is_full()
+    local mode = model_swap.get_cur_acp_mode(0)
+    return mode and mode:lower():find('full', 1, true) ~= nil
+  end
+
+  local llm_codex_mode_status = {
+    function()
+      local mode = model_swap.get_cur_acp_mode(0)
+      if not mode then
+        return nil
+      end
+
+      local mode_lower = mode:lower()
+      if mode_lower:find('default', 1, true) then
+        return 'D:'
+      elseif mode_lower:find('read', 1, true) then
+        return 'R:'
+      elseif mode_lower:find('full', 1, true) then
+        return 'F:'
+      end
+
+      return mode:sub(1, 1):upper() .. ':'
+    end,
+    cond = function()
+      if vim.bo.filetype ~= 'codecompanion' then
+        return false
+      end
+
+      return model_swap.is_codex_chat(0)
+    end,
+    padding = { left = 1, right = 0 },
+    color = function()
+      if llm_codex_mode_is_full() then
         return { fg = tc.growthminus }
       else
         return { fg = tc.muted }
@@ -290,11 +338,7 @@ local function config()
       if not chat then
         return nil
       end
-      local adapter = chat.adapter
-      if not adapter then
-        return nil
-      end
-      local model = adapter.schema.model.default or adapter.opts.model
+      local model = model_swap.get_cur_model(bufnr)
       -- the multiplier at the end indicates the copilot premium request
       -- multiplier as at 16/01/2026.
       -- https://docs.github.com/en/copilot/concepts/billing/copilot-requests
@@ -307,6 +351,12 @@ local function config()
         ['claude-sonnet-4.5'] = 'sonnet-4.5 (x1)',
         ['claude-sonnet-4'] = 'sonnet-4 (x1)',
         ['claude-haiku-4.5'] = 'haiku-4.5 (x0.33)',
+        ['gpt-5.5'] = 'GPT-5.5',
+        ['gpt-5.4'] = 'GPT-5.4',
+        ['gpt-5.4-mini'] = 'GPT-5.4m',
+        ['gpt-5.3-codex'] = 'GPT-5.3c',
+        ['gpt-5.3-codex-spark'] = 'GPT-5.3cs',
+        ['gpt-5.2-codex'] = 'GPT-5.2c',
         ['gpt-5.2'] = 'GPT-5.2 (x1)',
         ['gpt-5.1'] = 'GPT-5.1 (x1)',
         ['gpt-5.1-codex-max'] = 'GPT-5.1cM (x1)',
@@ -493,6 +543,7 @@ local function config()
           end,
         },
         llm_yolo_status,
+        llm_codex_mode_status,
         llm_model,
       },
       lualine_y = {

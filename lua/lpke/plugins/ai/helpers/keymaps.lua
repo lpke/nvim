@@ -1,5 +1,6 @@
 local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
 local helpers = require('lpke.core.helpers')
+local model_swap = require('lpke.plugins.ai.helpers.model_swap')
 
 local M = {}
 
@@ -18,7 +19,13 @@ function M.setup()
     { 'v', '<C-l>', ":<C-u>'<,'>CodeCompanion<cr>#{buffer} ", { desc = 'CodeCompanion: Open inline prompt with context and selection' }},
   })
   helpers.ft_keymap_set_multi('codecompanion', {
-    { 'n', '<leader>m', function() Lpke_cc_model({ 'son', 'gpt' }) end,
+    { 'n', '<leader>m', function()
+      if model_swap.is_codex_chat(0) then
+        Lpke_cc_model({ 'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini' })
+      else
+        Lpke_cc_model({ 'son', 'gpt' })
+      end
+    end,
       { desc = 'CodeCompanion: Cycle between AI models' }},
     { 'in', '<A-a>', function() vim.api.nvim_put({'@{agent} '}, 'c', vim.fn.mode() == 'n', true) end,
       { desc = 'CodeCompanion: Insert agent tool' }},
