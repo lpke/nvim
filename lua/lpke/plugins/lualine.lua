@@ -22,6 +22,7 @@ local function config()
   local lualine = require('lualine')
   local tc = Lpke_theme_colors
   local llm_spinner = require('lpke.plugins.ai.helpers.lualine_spinner')
+  local ai_config = require('lpke.plugins.ai.helpers.config')
   local model_swap = require('lpke.plugins.ai.helpers.model_swap')
   local refresh = lualine.refresh
 
@@ -339,35 +340,10 @@ local function config()
         return nil
       end
       local model = model_swap.get_cur_model(bufnr)
-      -- the multiplier at the end indicates the copilot premium request
-      -- multiplier as at 16/01/2026.
-      -- https://docs.github.com/en/copilot/concepts/billing/copilot-requests
-      -- for model maps for `Lpke_cc_model`, see `plugins/ai/codecompanion.lua`
-      local model_display_maps = {
-        ['claude-opus-4.7'] = 'opus-4.7 (x7.5)',
-        ['claude-opus-4.6'] = 'opus-4.6 (x3)',
-        ['claude-opus-4.5'] = 'opus-4.5 (x3)',
-        ['claude-sonnet-4.6'] = 'sonnet-4.6 (x1)',
-        ['claude-sonnet-4.5'] = 'sonnet-4.5 (x1)',
-        ['claude-sonnet-4'] = 'sonnet-4 (x1)',
-        ['claude-haiku-4.5'] = 'haiku-4.5 (x0.33)',
-        ['gpt-5.5'] = 'GPT-5.5',
-        ['gpt-5.4'] = 'GPT-5.4',
-        ['gpt-5.4-mini'] = 'GPT-5.4m',
-        ['gpt-5.3-codex'] = 'GPT-5.3c',
-        ['gpt-5.3-codex-spark'] = 'GPT-5.3cs',
-        ['gpt-5.2-codex'] = 'GPT-5.2c',
-        ['gpt-5.2'] = 'GPT-5.2 (x1)',
-        ['gpt-5.1'] = 'GPT-5.1 (x1)',
-        ['gpt-5.1-codex-max'] = 'GPT-5.1cM (x1)',
-        ['gpt-5.1-codex'] = 'GPT-5.1c (x1)',
-        ['gpt-5-mini'] = 'GPT-5m (∞)',
-        ['gpt-4.1'] = 'GPT-4.1 (∞)',
-        ['gpt-4o'] = 'GPT-4o (∞)',
-        ['gemini-2.5-pro'] = 'gemini-2.5p (x1)',
-        ['grok-code-fast-1'] = 'grok-fast-1 (x0.25)',
-      }
-      return model_display_maps[model] or model
+      return ai_config.lualine_model_name(
+        model,
+        chat.adapter and chat.adapter.name
+      )
     end,
     cond = function()
       return vim.bo.filetype == 'codecompanion'

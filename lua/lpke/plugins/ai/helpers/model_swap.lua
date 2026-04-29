@@ -1,4 +1,4 @@
-local model_maps = require('lpke.plugins.ai.helpers.model_maps')
+local ai_config = require('lpke.plugins.ai.helpers.config')
 
 local M = {}
 
@@ -106,10 +106,10 @@ function Lpke_cc_model(models)
     models = { models }
   end
 
-  -- Resolve all model names through model_maps
+  -- Resolve all model names through the shared AI config
   local resolved_models = {}
   for i, m in ipairs(models) do
-    resolved_models[i] = model_maps[m] or m
+    resolved_models[i] = ai_config.model_id(m)
   end
 
   local cur_model = M.get_cur_model(0)

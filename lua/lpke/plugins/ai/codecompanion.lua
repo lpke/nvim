@@ -3,6 +3,7 @@
 require('lpke.plugins.ai.helpers.model_swap')
 
 local cmd_approval = require('lpke.plugins.ai.helpers.cmd_approval')
+local ai_config = require('lpke.plugins.ai.helpers.config')
 local slash_commands = require('lpke.plugins.ai.helpers.slash_commands')
 
 local function config()
@@ -34,12 +35,7 @@ local function config()
           return require('codecompanion.adapters').extend('copilot', {
             schema = {
               model = {
-                default = 'claude-sonnet-4.6', -- premium requests (x1)
-                -- default = 'claude-opus-4.6', -- premium requests (x3) NO LONGER AVAILABLE - 20th April 2026
-                -- default = 'claude-opus-4.7', -- premium requests (x7.5) AVAILABLE ON PRO+ ONLY - 20th April 2026
-                -- default = 'gpt-4o', -- unlimited free
-                -- default = 'gpt-4.1', -- unlimited free (better at code)
-                -- default = 'gpt-5-mini', -- unlimited free (smarter than 4.1 but dumb contextually)
+                default = ai_config.adapter_default_model('copilot'),
               },
             },
           })
@@ -58,7 +54,7 @@ local function config()
             defaults = {
               auth_method = 'chatgpt',
               session_config_options = {
-                model = 'gpt-5.5',
+                model = ai_config.adapter_default_model('codex'),
                 mode = 'Full Access',
               },
             },
@@ -75,6 +71,7 @@ local function config()
     interactions = {
       -- CHAT STRATEGY ----------------------------------------------------------
       chat = {
+        adapter = ai_config.defaults.chat_adapter,
         tools = {
           -- Override tool descriptions to support absolute paths outside cwd,
           -- but ONLY when the user has explicitly shared an external directory
@@ -290,7 +287,12 @@ local function config()
         },
       },
       -- INLINE STRATEGY --------------------------------------------------------
-      inline = {},
+      inline = {
+        adapter = ai_config.defaults.inline_adapter,
+      },
+      cmd = {
+        adapter = ai_config.defaults.cmd_adapter,
+      },
     },
     extensions = {
       history = {
@@ -310,9 +312,11 @@ local function config()
           auto_generate_title = true,
           title_generation_opts = {
             ---Adapter for generating titles (defaults to active chat's adapter, if nil)
-            adapter = 'copilot', -- e.g "copilot"
+            adapter = ai_config.defaults.title_generation_adapter,
             ---Model for generating titles (defaults to active chat's model, if nil)
-            model = 'gpt-5-mini', -- e.g "gpt-5-mini"
+            model = ai_config.model_id(
+              ai_config.defaults.title_generation_model
+            ),
             refresh_every_n_prompts = 1,
             max_refreshes = 3,
           },

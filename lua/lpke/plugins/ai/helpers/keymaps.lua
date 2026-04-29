@@ -1,5 +1,6 @@
 local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
 local helpers = require('lpke.core.helpers')
+local ai_config = require('lpke.plugins.ai.helpers.config')
 local model_swap = require('lpke.plugins.ai.helpers.model_swap')
 
 local M = {}
@@ -21,9 +22,9 @@ function M.setup()
   helpers.ft_keymap_set_multi('codecompanion', {
     { 'n', '<leader>m', function()
       if model_swap.is_codex_chat(0) then
-        Lpke_cc_model({ 'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini' })
+        Lpke_cc_model(ai_config.adapter_model_cycle('codex'))
       else
-        Lpke_cc_model({ 'son', 'gpt' })
+        Lpke_cc_model(ai_config.adapter_model_cycle('copilot'))
       end
     end,
       { desc = 'CodeCompanion: Cycle between AI models' }},
