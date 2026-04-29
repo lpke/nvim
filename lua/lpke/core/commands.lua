@@ -38,6 +38,18 @@ helpers.command_set_multi({
   { '', 'PC', function() print(vim.fn.getcwd()) end, { desc = 'Print the current working directory' } },
   { '', 'PG', function() Lpke_git_root() end, { desc = 'Print the path of the git root of the current file' } },
   { '', 'PW', Lpke_active, { desc = 'Print details about the currently active tab/buffer/window' } },
+  { '', 'CodexUsage', function()
+    local script = vim.fn.expand('~/.local/bin/codex-usage')
+
+    if vim.fn.executable(script) ~= 1 then
+      vim.api.nvim_echo({ { script .. ' is not executable', 'ErrorMsg' } }, true, {})
+      return
+    end
+
+    local output = vim.fn.systemlist({ script })
+    local hl = vim.v.shell_error == 0 and 'None' or 'ErrorMsg'
+    vim.api.nvim_echo({ { table.concat(output, '\n'), hl } }, true, {})
+  end, { desc = 'Print Codex usage' } },
 
   -- yanking
   { '', 'Y', function() print('YP/p: buf name | YD/d: cwd | YG/g: git root | YL/l: location | YT/t: tab ID | YB/b: buf ID | YW/w: win ID') end,
