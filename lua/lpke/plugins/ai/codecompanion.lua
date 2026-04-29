@@ -321,9 +321,17 @@ local function config()
             end,
             description = 'Open a new chat',
           },
+          history_or_resume = {
+            modes = { n = 'gh' },
+            index = 23,
+            callback = function(chat)
+              require('lpke.plugins.ai.helpers.history_or_resume').open(chat)
+            end,
+            description = 'Open chat history',
+          },
           delete_chat = {
             modes = { n = 'gX' },
-            index = 23,
+            index = 24,
             callback = function()
               local cur_chat =
                 require('codecompanion.interactions.chat').buf_get_chat(0)
@@ -358,8 +366,11 @@ local function config()
       history = {
         enabled = true,
         opts = {
-          -- Keymap to open history from chat buffer (default: gh)
-          keymap = 'gh',
+          -- Native codecompanion-history option for untitled autosaved chats.
+          default_buf_title = '[CodeCompanion]  ',
+          -- Keep the extension mapping out of the way. The public `gh`
+          -- mapping above can choose between ACP `/resume` and saved history.
+          keymap = '<Plug>(CodeCompanionHistory)',
           -- Keymap to save the current chat manually (when auto_save is disabled)
           save_chat_keymap = 'gsc',
           -- Save all chats by default (disable to save only manually using 'sc')
@@ -391,6 +402,43 @@ local function config()
         },
       },
     },
+  })
+
+  -- codecompanion-history hard-codes a leading "✨ " when it renames chat
+  -- buffers. It fires this event with the unprefixed title immediately after
+  -- setting the name, so use that as a narrow post-processing hook.
+  vim.api.nvim_create_autocmd('User', {
+    pattern = 'CodeCompanionHistoryTitleSet',
+    group = vim.api.nvim_create_augroup('CodeCompanionHistoryTitleClean', {
+      clear = true,
+    }),
+    callback = function(args)
+      local data = args.data or {}
+      local bufnr = data.bufnr
+      local title = data.title
+
+      if
+        type(bufnr) ~= 'number'
+        or type(title) ~= 'string'
+        or not vim.api.nvim_buf_is_valid(bufnr)
+      then
+        return
+      end
+
+      local function try_title(candidate)
+        return pcall(vim.api.nvim_buf_set_name, bufnr, candidate)
+      end
+
+      if try_title(title) then
+        return
+      end
+
+      for attempt = 1, 10 do
+        if try_title(title .. ' (' .. attempt .. ')') then
+          return
+        end
+      end
+    end,
   })
 
   -- Patch the ask_questions tool to use a Telescope picker with
