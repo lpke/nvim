@@ -60,6 +60,9 @@ local function config()
             },
           })
         end,
+        opts = {
+          show_presets = false,
+        },
       },
     },
     display = {
