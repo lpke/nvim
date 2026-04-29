@@ -64,7 +64,7 @@ local function config()
     },
     display = {
       chat = {
-        intro_message = 'g? for options',
+        intro_message = '',
         show_header_separator = false,
       },
     },
@@ -209,7 +209,62 @@ local function config()
           change_adapter = {
             modes = { n = 'ga' },
             index = 15,
-            callback = 'keymaps.change_adapter',
+            callback = function(chat)
+              local cc_config = require('codecompanion.config')
+              local utils = require('codecompanion.utils')
+              local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
+              local change_adapter = require(
+                'codecompanion.interactions.chat.keymaps.change_adapter'
+              )
+
+              if cc_config.display.chat.show_settings then
+                return utils.notify(
+                  "Adapter can't be changed when `display.chat.show_settings = true`",
+                  vim.log.levels.WARN
+                )
+              end
+
+              local from_adapter = chat.adapter
+              local current_adapter = chat.adapter.name
+              local adapters_list =
+                change_adapter.get_adapters_list(current_adapter)
+
+              vim.ui.select(adapters_list, {
+                prompt = 'Select Adapter',
+                kind = 'codecompanion.nvim',
+                format_item = function(adapter)
+                  if adapter == current_adapter then
+                    return '* ' .. adapter
+                  end
+                  return '  ' .. adapter
+                end,
+              }, function(selected_adapter)
+                if not selected_adapter then
+                  return
+                end
+
+                local function on_adapter_ready()
+                  chat_fns.sync_http_tools_for_adapter_change(
+                    chat.bufnr,
+                    from_adapter,
+                    chat.adapter
+                  )
+
+                  if not chat.opts.ignore_system_prompt then
+                    change_adapter.update_system_prompt(chat)
+                  end
+
+                  return change_adapter.select_model(chat)
+                end
+
+                if current_adapter ~= selected_adapter then
+                  chat.acp_connection = nil
+                  chat:change_adapter(selected_adapter, on_adapter_ready)
+                else
+                  return on_adapter_ready()
+                end
+              end)
+            end,
             description = 'Change adapter',
           },
           fold_code = {
@@ -257,7 +312,9 @@ local function config()
             modes = { n = 'gn' },
             index = 22,
             callback = function()
-              vim.cmd('CodeCompanionChat')
+              require('lpke.plugins.ai.helpers.chat_functions').open_new_chat_with_tools({
+                from_chat_keymap = true,
+              })
             end,
             description = 'Open a new chat',
           },

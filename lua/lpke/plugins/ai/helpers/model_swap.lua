@@ -6,8 +6,114 @@ function M.is_acp_adapter(adapter)
   return adapter and adapter.type == 'acp'
 end
 
+function M.is_http_adapter(adapter)
+  return adapter and adapter.type == 'http'
+end
+
 function M.is_codex_adapter(adapter)
   return M.is_acp_adapter(adapter) and adapter.name == 'codex'
+end
+
+local function adapter_name(adapter)
+  return adapter and (adapter.name or adapter.formatted_name or adapter.type)
+    or 'unknown'
+end
+
+local function resolve_http_model_choices(adapter)
+  local model_schema = adapter and adapter.schema and adapter.schema.model
+  local choices = model_schema and model_schema.choices
+
+  if type(choices) == 'function' then
+    local ok, resolved = pcall(choices, adapter, { async = false })
+    if not ok then
+      ok, resolved = pcall(choices, adapter)
+    end
+    choices = ok and resolved or nil
+  end
+
+  return choices
+end
+
+local function model_choice_id(key, value)
+  if type(value) == 'table' then
+    return value.id or value.modelId or key
+  end
+
+  if type(key) == 'number' then
+    return value
+  end
+
+  return key
+end
+
+local function available_model_ids(chat)
+  if not chat or not chat.adapter then
+    return nil
+  end
+
+  local adapter = chat.adapter
+  local ids = {}
+
+  if M.is_acp_adapter(adapter) then
+    local models = chat.acp_connection and chat.acp_connection:get_models()
+    if not models or type(models.availableModels) ~= 'table' then
+      return nil
+    end
+
+    for _, model in ipairs(models.availableModels) do
+      local id = type(model) == 'table' and model.modelId or model
+      if id then
+        ids[id] = true
+      end
+    end
+
+    return ids
+  end
+
+  if M.is_http_adapter(adapter) then
+    local choices = resolve_http_model_choices(adapter)
+    if type(choices) ~= 'table' then
+      return nil
+    end
+
+    for key, value in pairs(choices) do
+      local id = model_choice_id(key, value)
+      if type(id) == 'string' then
+        ids[id] = true
+      end
+    end
+
+    return ids
+  end
+end
+
+function M.is_model_available(chat, model)
+  local ids = available_model_ids(chat)
+  if not ids then
+    return true
+  end
+
+  return ids[model] == true, ids
+end
+
+function M.notify_unavailable_model(chat, model, ids)
+  local available = vim.tbl_keys(ids or {})
+  table.sort(available)
+
+  local suffix = ''
+  if #available > 0 then
+    suffix = '\nAvailable: ' .. table.concat(available, ', ')
+  end
+
+  vim.notify(
+    string.format(
+      'Model "%s" is not available for adapter "%s".%s',
+      model,
+      adapter_name(chat and chat.adapter),
+      suffix
+    ),
+    vim.log.levels.ERROR
+  )
 end
 
 function M.get_chat_ref(bufnr)
@@ -81,6 +187,11 @@ function M.is_acp_chat(bufnr)
   return chat and M.is_acp_adapter(chat.adapter)
 end
 
+function M.is_http_chat(bufnr)
+  local chat = M.get_chat_ref(bufnr)
+  return chat and M.is_http_adapter(chat.adapter)
+end
+
 function M.is_codex_chat(bufnr)
   local chat = M.get_chat_ref(bufnr)
   return chat and M.is_codex_adapter(chat.adapter)
@@ -133,6 +244,12 @@ function Lpke_cc_model(models)
     else
       target_model = resolved_models[1]
     end
+  end
+
+  local ok, ids = M.is_model_available(cur_chat, target_model)
+  if not ok then
+    M.notify_unavailable_model(cur_chat, target_model, ids)
+    return nil
   end
 
   cur_chat:change_model({ model = target_model })

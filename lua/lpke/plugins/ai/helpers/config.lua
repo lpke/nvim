@@ -1,16 +1,5 @@
 local M = {}
 
-M.generic_models = {
-  opus = 'opus_4_7',
-  son = 'sonnet_4_6',
-  sonnet = 'sonnet_4_6',
-  haiku = 'haiku_4_5',
-  gpt = 'gpt_5_mini',
-  gem = 'gemini_3_1_pro',
-  gemini = 'gemini_3_1_pro',
-  grok = 'grok_code_fast_1',
-}
-
 M.adapters = {
   copilot = {
     default_model = 'sonnet',
@@ -23,14 +12,25 @@ M.adapters = {
 }
 
 M.defaults = {
-  chat_adapter = 'copilot',
+  chat_adapter = 'codex',
   inline_adapter = 'copilot',
   cmd_adapter = 'copilot',
   title_generation_adapter = 'copilot',
   title_generation_model = 'gpt',
 }
 
--- Copilot-specific display names include premium request multipliers as at 29/04/2026.
+M.preferred_models = {
+  opus = 'opus_4_7',
+  son = 'sonnet_4_6',
+  sonnet = 'sonnet_4_6',
+  haiku = 'haiku_4_5',
+  gpt = 'gpt_5_mini',
+  gem = 'gemini_3_1_pro',
+  gemini = 'gemini_3_1_pro',
+  grok = 'grok_code_fast_1',
+}
+
+-- Note: Copilot-specific display names include premium request multipliers as at 29/04/2026.
 -- https://docs.github.com/en/copilot/concepts/billing/copilot-requests
 M.models = {
   opus_4_7 = {
@@ -149,13 +149,13 @@ M.models = {
     adapter_display = { copilot = 'GPT-4o (∞)' },
   },
   gemini_3_1_pro = {
-    id = 'gemini-3.1-pro',
+    id = 'gemini-3.1-pro-preview',
     aliases = { 'gem3.1' },
     display = 'gemini-3.1p',
     adapter_display = { copilot = 'gemini-3.1p (x1)' },
   },
   gemini_3_flash = {
-    id = 'gemini-3-flash',
+    id = 'gemini-3-flash-preview',
     aliases = { 'gem3' },
     display = 'gemini-3f',
     adapter_display = { copilot = 'gemini-3f (x0.33)' },
@@ -177,7 +177,7 @@ M.models = {
 local model_lookup = {}
 
 local function build_model_lookup()
-  for alias, key in pairs(M.generic_models) do
+  for alias, key in pairs(M.preferred_models) do
     model_lookup[alias] = M.models[key]
   end
 
