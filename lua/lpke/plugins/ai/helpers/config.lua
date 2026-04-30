@@ -6,8 +6,8 @@ M.adapters = {
     model_cycle = { 'sonnet', 'gpt' },
   },
   codex = {
-    default_model = 'gpt_5_5',
-    model_cycle = { 'gpt_5_5', 'gpt_5_4', 'gpt_5_3_codex_spark' },
+    default_model = 'gpt_5_3_codex_spark',
+    model_cycle = { 'gpt_5_3_codex_spark', 'gpt_5_5' },
   },
 }
 
