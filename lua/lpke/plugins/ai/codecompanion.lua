@@ -1,9 +1,10 @@
--- Global function (Lpke_cc_model) is defined as a side effect of requiring
--- this module.
+-- Global functions (Lpke_cc_model, Lpke_cc_adapter) are defined as side effects
+-- of requiring this module.
 require('lpke.plugins.ai.helpers.model_swap')
 
 local cmd_approval = require('lpke.plugins.ai.helpers.cmd_approval')
 local ai_config = require('lpke.plugins.ai.helpers.config')
+local caveman = require('lpke.plugins.ai.helpers.caveman')
 local slash_commands = require('lpke.plugins.ai.helpers.slash_commands')
 
 local function config()
@@ -75,6 +76,16 @@ local function config()
       -- CHAT STRATEGY ----------------------------------------------------------
       chat = {
         adapter = ai_config.defaults.chat_adapter,
+        roles = {
+          llm = function(adapter)
+            return caveman.llm_role(adapter)
+          end,
+        },
+        opts = {
+          system_prompt = function(ctx)
+            return caveman.system_prompt(ctx)
+          end,
+        },
         tools = {
           -- Override tool descriptions to support absolute paths outside cwd,
           -- but ONLY when the user has explicitly shared an external directory
@@ -253,9 +264,7 @@ local function config()
                     chat.adapter
                   )
 
-                  if not chat.opts.ignore_system_prompt then
-                    change_adapter.update_system_prompt(chat)
-                  end
+                  caveman.refresh_system_prompt(chat)
 
                   return change_adapter.select_model(chat)
                 end

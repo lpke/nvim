@@ -3,7 +3,7 @@ local M = {}
 local model_swap = require('lpke.plugins.ai.helpers.model_swap')
 
 local DEFAULT_HTTP_TOOL_LINES = {
-  '@{fetch_webpage} @{web_search}',
+  '@{agent} @{fetch_webpage} @{web_search}',
 }
 
 local EMPTY_CHAT_TRAILING_BLANKS = 2

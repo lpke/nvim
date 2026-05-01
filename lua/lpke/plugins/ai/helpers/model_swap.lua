@@ -152,6 +152,17 @@ function M.get_cur_model(bufnr)
   return adapter.schema.model.default or adapter.opts.model
 end
 
+function M.get_cur_adapter(bufnr)
+  local chat = M.get_chat_ref(bufnr)
+  return chat and chat.adapter and chat.adapter.name
+end
+
+function M.is_adapter_configured(adapter)
+  local cc_config = require('codecompanion.config')
+  return (cc_config.adapters.acp and cc_config.adapters.acp[adapter])
+    or (cc_config.adapters.http and cc_config.adapters.http[adapter])
+end
+
 function M.get_cur_acp_mode(bufnr)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
@@ -254,6 +265,90 @@ function Lpke_cc_model(models)
 
   cur_chat:change_model({ model = target_model })
   return M.get_cur_model()
+end
+
+-- cycle through AI adapters provided in an array (or apply directly if only one)
+-- returns name of adapter swapped to, or nil if error
+function Lpke_cc_adapter(adapters)
+  if vim.bo.filetype ~= 'codecompanion' then
+    vim.notify(
+      'Lpke_cc_adapter_swap: Not in a CodeCompanion chat buffer',
+      vim.log.levels.ERROR
+    )
+    return nil
+  end
+  local cur_chat = M.get_chat_ref(0)
+  if not cur_chat then
+    return nil
+  end
+
+  if type(adapters) ~= 'table' then
+    adapters = { adapters }
+  end
+
+  local cur_adapter = M.get_cur_adapter(0)
+  local from_adapter = cur_chat.adapter
+
+  local target_adapter
+  if #adapters == 1 then
+    target_adapter = adapters[1]
+  else
+    local cur_index = nil
+    for i, adapter in ipairs(adapters) do
+      if adapter == cur_adapter then
+        cur_index = i
+        break
+      end
+    end
+    if cur_index and cur_index < #adapters then
+      target_adapter = adapters[cur_index + 1]
+    else
+      target_adapter = adapters[1]
+    end
+  end
+
+  if not target_adapter then
+    return nil
+  end
+
+  if not M.is_adapter_configured(target_adapter) then
+    vim.notify(
+      string.format('Adapter "%s" is not configured.', target_adapter),
+      vim.log.levels.ERROR
+    )
+    return nil
+  end
+
+  local default_model = ai_config.adapter_default_model(target_adapter)
+
+  local function on_adapter_ready()
+    require('lpke.plugins.ai.helpers.chat_functions').sync_http_tools_for_adapter_change(
+      cur_chat.bufnr,
+      from_adapter,
+      cur_chat.adapter
+    )
+
+    require('lpke.plugins.ai.helpers.caveman').refresh_system_prompt(cur_chat)
+
+    if default_model then
+      local ok, ids = M.is_model_available(cur_chat, default_model)
+      if not ok then
+        M.notify_unavailable_model(cur_chat, default_model, ids)
+        return
+      end
+
+      cur_chat:change_model({ model = default_model })
+    end
+  end
+
+  if cur_adapter ~= target_adapter then
+    cur_chat.acp_connection = nil
+    cur_chat:change_adapter(target_adapter, on_adapter_ready)
+  else
+    on_adapter_ready()
+  end
+
+  return target_adapter
 end
 
 return M

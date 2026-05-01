@@ -10,6 +10,7 @@ M.adapters = {
     model_cycle = { 'gpt_5_5', 'gpt_5_3_codex_spark' },
   },
 }
+M.adapter_cycle = { 'codex', 'copilot' }
 
 M.defaults = {
   chat_adapter = 'codex',

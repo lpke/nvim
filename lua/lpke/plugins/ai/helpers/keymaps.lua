@@ -28,6 +28,8 @@ function M.setup()
       end
     end,
       { desc = 'CodeCompanion: Cycle between AI models' }},
+    { 'n', '<leader>M', function() Lpke_cc_adapter(ai_config.adapter_cycle) end,
+      { desc = 'CodeCompanion: Cycle between AI adapters' }},
     { 'in', '<A-a>', function() chat_fns.insert_http_tool_text('@{agent} ') end,
       { desc = 'CodeCompanion: Insert agent tool' }},
     { 'in', '<F2>a', function() chat_fns.insert_http_tool_text('@{agent} ') end,
@@ -57,6 +59,13 @@ function M.setup()
         Lpke_cc_model(cmd.fargs)
       end
     end, { desc = 'CodeCompanion: Swap to (or between) models' } },
+    { '*', 'Adapter', function(cmd)
+      if #cmd.fargs == 0 then
+        print(':Adapter <adapter1> [<adapter2>...] | eg: codex|copilot')
+      else
+        Lpke_cc_adapter(cmd.fargs)
+      end
+    end, { desc = 'CodeCompanion: Swap to (or between) adapters' } },
   })
   -- stylua: ignore end
 end

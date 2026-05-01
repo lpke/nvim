@@ -1,4 +1,19 @@
+local caveman = require('lpke.plugins.ai.helpers.caveman')
+
 return {
+  ['caveman'] = {
+    description = 'Toggle caveman response mode for HTTP adapters',
+    enabled = function(opts)
+      local adapter = opts and opts.adapter
+      return type(adapter) == 'table' and adapter.type == 'http'
+    end,
+    callback = function(chat)
+      caveman.slash(chat)
+    end,
+    opts = {
+      contains_code = false,
+    },
+  },
   ['image'] = {
     opts = {
       dirs = {
