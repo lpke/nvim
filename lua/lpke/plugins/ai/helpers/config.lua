@@ -2,10 +2,12 @@ local M = {}
 
 M.adapters = {
   copilot = {
+    display = 'Copilot',
     default_model = 'sonnet',
     model_cycle = { 'sonnet', 'gpt' },
   },
   codex = {
+    display = 'Codex',
     default_model = 'gpt_5_5',
     model_cycle = { 'gpt_5_5', 'gpt_5_3_codex_spark' },
   },
@@ -206,6 +208,11 @@ end
 function M.adapter_default_model(adapter)
   local adapter_config = M.adapters[adapter] or {}
   return M.model_id(adapter_config.default_model)
+end
+
+function M.adapter_display_name(adapter)
+  local adapter_config = M.adapters[adapter] or {}
+  return adapter_config.display or adapter
 end
 
 function M.adapter_model_cycle(adapter)

@@ -332,6 +332,21 @@ local function config()
     end,
   }
 
+  local llm_adapter = {
+    function()
+      local adapter = model_swap.get_cur_adapter(0)
+      if not adapter then
+        return nil
+      end
+
+      return ai_config.adapter_display_name(adapter)
+    end,
+    cond = function()
+      return vim.bo.filetype == 'codecompanion'
+    end,
+    color = { fg = tc.subtleplus },
+  }
+
   local llm_model = {
     function()
       local bufnr = vim.api.nvim_get_current_buf()
@@ -518,6 +533,7 @@ local function config()
             refresh()
           end,
         },
+        llm_adapter,
         llm_yolo_status,
         llm_codex_mode_status,
         llm_model,
