@@ -41,9 +41,14 @@ local function config()
       Lpke_silent(function()
         vim.lsp.buf_detach_client(bufnr, c_id)
       end)
+      require('copilot.suggestion').unset_keymap(bufnr)
+      require('copilot.nes').unset_keymap(bufnr)
     end)
     if not ok then
-      vim.notify('Error detaching buffer ' .. bufnr .. ': ' .. result, vim.log.levels.ERROR)
+      vim.notify(
+        'Error detaching buffer ' .. bufnr .. ': ' .. result,
+        vim.log.levels.ERROR
+      )
     end
   end
 
@@ -63,10 +68,15 @@ local function config()
       should_attach = not is_ft_disabled(filetype, cfg.filetypes)
       if should_attach or force then
         vim.lsp.buf_attach_client(bufnr, c_id)
+        require('copilot.suggestion').set_keymap(bufnr)
+        require('copilot.nes').set_keymap(bufnr)
       end
     end)
     if not ok then
-      vim.notify('Error attaching buffer ' .. bufnr .. ': ' .. result, vim.log.levels.ERROR)
+      vim.notify(
+        'Error attaching buffer ' .. bufnr .. ': ' .. result,
+        vim.log.levels.ERROR
+      )
     end
   end
 
@@ -156,8 +166,10 @@ local function config()
       },
     },
     filetypes = {
+      markdown = true,
+      codecompanion = true,
+      codecompanion_input = true,
       yaml = false,
-      markdown = false,
       help = false,
       gitcommit = false,
       gitrebase = false,
@@ -168,7 +180,7 @@ local function config()
       fugitive = false,
       ['.'] = false,
     },
-    copilot_node_command = 'node', -- Node.js version must be > 18.x
+    copilot_node_command = 'node',
     server_opts_overrides = {},
   })
 
