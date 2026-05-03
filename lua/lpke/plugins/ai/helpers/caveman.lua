@@ -10,7 +10,7 @@ local levels = {
 
 local state = {
   enabled = true,
-  level = 'full',
+  level = 'lite',
 }
 
 local prompt_cache = {}
