@@ -260,6 +260,12 @@ function M.open_new_chat_with_tools(opts)
   if not opts.from_chat_keymap and M.toggle_if_already_in_chat() then
     return
   end
+  if opts.from_chat_keymap then
+    require('lpke.plugins.ai.helpers.acp_lifecycle').suspend_current_chat({
+      stop_request = true,
+      delay_ms = 100,
+    })
+  end
   vim.cmd('CodeCompanionChat')
   if M.insert_http_tools() then
     vim.cmd('normal! G2o')

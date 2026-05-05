@@ -270,7 +270,13 @@ local function config()
                 end
 
                 if current_adapter ~= selected_adapter then
-                  chat.acp_connection = nil
+                  require('lpke.plugins.ai.helpers.acp_lifecycle').suspend_chat(
+                    chat,
+                    {
+                      stop_request = true,
+                      delay_ms = 100,
+                    }
+                  )
                   chat:change_adapter(selected_adapter, on_adapter_ready)
                 else
                   return on_adapter_ready()
@@ -412,6 +418,8 @@ local function config()
       },
     },
   })
+
+  require('lpke.plugins.ai.helpers.acp_lifecycle').setup()
 
   -- codecompanion-history hard-codes a leading "✨ " when it renames chat
   -- buffers. It fires this event with the unprefixed title immediately after

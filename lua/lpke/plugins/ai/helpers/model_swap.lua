@@ -342,7 +342,10 @@ function Lpke_cc_adapter(adapters)
   end
 
   if cur_adapter ~= target_adapter then
-    cur_chat.acp_connection = nil
+    require('lpke.plugins.ai.helpers.acp_lifecycle').suspend_chat(cur_chat, {
+      stop_request = true,
+      delay_ms = 100,
+    })
     cur_chat:change_adapter(target_adapter, on_adapter_ready)
   else
     on_adapter_ready()
