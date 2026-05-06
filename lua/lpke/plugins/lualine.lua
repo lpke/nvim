@@ -23,6 +23,8 @@ local function config()
   local tc = Lpke_theme_colors
   local llm_spinner = require('lpke.plugins.ai.helpers.lualine_spinner')
   local ai_config = require('lpke.plugins.ai.helpers.config')
+  local acp_session_options =
+    require('lpke.plugins.ai.helpers.acp_session_options')
   local model_swap = require('lpke.plugins.ai.helpers.model_swap')
   local refresh = lualine.refresh
 
@@ -355,10 +357,14 @@ local function config()
         return nil
       end
       local model = model_swap.get_cur_model(bufnr)
-      return ai_config.lualine_model_name(
-        model,
-        chat.adapter and chat.adapter.name
-      )
+      local display =
+        ai_config.lualine_model_name(model, chat.adapter and chat.adapter.name)
+      local reasoning =
+        acp_session_options.get_current_value('reasoning', bufnr)
+      if reasoning then
+        display = display .. ' ' .. reasoning:lower()
+      end
+      return display
     end,
     cond = function()
       return vim.bo.filetype == 'codecompanion'

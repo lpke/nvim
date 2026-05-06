@@ -1,6 +1,8 @@
 local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
 local helpers = require('lpke.core.helpers')
 local ai_config = require('lpke.plugins.ai.helpers.config')
+local acp_session_options =
+  require('lpke.plugins.ai.helpers.acp_session_options')
 local model_swap = require('lpke.plugins.ai.helpers.model_swap')
 
 local M = {}
@@ -30,6 +32,10 @@ function M.setup()
       { desc = 'CodeCompanion: Cycle between AI models' }},
     { 'n', '<leader>M', function() Lpke_cc_adapter(ai_config.adapter_cycle) end,
       { desc = 'CodeCompanion: Cycle between AI adapters' }},
+    { 'n', '<leader>r', acp_session_options.show_reasoning,
+      { desc = 'CodeCompanion: ACP reasoning effort' }},
+    { 'n', '<leader>a', acp_session_options.show_approval,
+      { desc = 'CodeCompanion: ACP approval preset' }},
     { 'in', '<A-a>', function() chat_fns.insert_http_tool_text('@{agent} ') end,
       { desc = 'CodeCompanion: Insert agent tool' }},
     { 'in', '<F2>a', function() chat_fns.insert_http_tool_text('@{agent} ') end,

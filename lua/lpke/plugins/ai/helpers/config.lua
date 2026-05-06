@@ -14,6 +14,44 @@ M.adapters = {
 }
 M.adapter_cycle = { 'codex', 'copilot' }
 
+-- Enables direct CodeCompanion ACP session-option pickers for selected adapters.
+-- Keymaps such as <leader>r and <leader>a only work when the active ACP
+-- adapter is listed here, and each entry defines how to find that adapter's
+-- session options in the ACP configOptions payload.
+M.acp_session_options = {
+  adapters = {
+    codex = {
+      display = 'Codex ACP',
+      options = {
+        approval = {
+          display = 'approval preset',
+          exact_ids = {
+            'approval_policy',
+            'approval_preset',
+            'approval',
+          },
+          patterns = {
+            'approval.*preset',
+            'approval.*policy',
+            'approval',
+          },
+        },
+        reasoning = {
+          display = 'reasoning effort',
+          exact_ids = {
+            'reasoning_effort',
+            'reasoning',
+          },
+          patterns = {
+            'reasoning.*effort',
+            'reasoning',
+          },
+        },
+      },
+    },
+  },
+}
+
 M.defaults = {
   chat_adapter = 'codex',
   inline_adapter = 'copilot',
