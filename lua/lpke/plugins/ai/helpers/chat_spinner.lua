@@ -15,10 +15,26 @@ local M = {
   filetype = 'codecompanion',
 }
 
+local request_event =
+  require('lpke.plugins.ai.helpers.codecompanion_request_event')
+
+function M:is_chat_buf(buf)
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
+    return false
+  end
+
+  local ok, filetype = pcall(function()
+    return vim.bo[buf].filetype
+  end)
+
+  return ok and filetype == self.filetype
+end
+
 function M:get_buffer_state(buf)
   if not self.buffers[buf] then
     self.buffers[buf] = {
       processing = false,
+      active_requests = {},
       spinner_index = 1,
       namespace_id = vim.api.nvim_create_namespace(
         'CodeCompanionSpinner_' .. buf
@@ -30,15 +46,18 @@ function M:get_buffer_state(buf)
 end
 
 function M:update_spinner(buf)
-  local state = self:get_buffer_state(buf)
-
-  if not state.processing then
-    self:stop_spinner(buf)
+  local state = self.buffers[buf]
+  if not state then
     return
   end
 
-  if not vim.api.nvim_buf_is_valid(buf) then
+  if not self:is_chat_buf(buf) then
     self:cleanup_buffer(buf)
+    return
+  end
+
+  if not state.processing then
+    self:stop_spinner(buf)
     return
   end
 
@@ -69,8 +88,18 @@ function M:update_spinner(buf)
   end
 end
 
-function M:start_spinner(buf)
+function M:start_spinner(buf, request_key)
+  if not self:is_chat_buf(buf) then
+    return
+  end
+
   local state = self:get_buffer_state(buf)
+  state.active_requests[request_key or tostring(buf)] = true
+
+  if state.processing and state.timer then
+    return
+  end
+
   state.processing = true
   state.spinner_index = 0
 
@@ -90,9 +119,19 @@ function M:start_spinner(buf)
   )
 end
 
-function M:stop_spinner(buf)
+function M:stop_spinner(buf, request_key)
   local state = self.buffers[buf]
   if not state then
+    return
+  end
+
+  if request_key then
+    state.active_requests[request_key] = nil
+  else
+    state.active_requests = {}
+  end
+
+  if next(state.active_requests) then
     return
   end
 
@@ -117,37 +156,47 @@ function M:cleanup_buffer(buf)
   end
 end
 
+function M:setup_request_autocmds()
+  local group =
+    vim.api.nvim_create_augroup('CodeCompanionChatSpinnerRequests', {
+      clear = true,
+    })
+
+  vim.api.nvim_create_autocmd('User', {
+    pattern = {
+      'CodeCompanionRequestStarted',
+      'CodeCompanionRequestFinished',
+      'CodeCompanionChatStopped',
+      'CodeCompanionChatClosed',
+    },
+    group = group,
+    callback = function(args)
+      local buf = request_event.bufnr(args)
+      if not buf or not self:is_chat_buf(buf) then
+        return
+      end
+
+      if args.match == 'CodeCompanionRequestStarted' then
+        if request_event.is_chat(args, buf) then
+          self:start_spinner(buf, request_event.key(args, buf))
+        end
+      elseif args.match == 'CodeCompanionRequestFinished' then
+        self:stop_spinner(buf, request_event.key(args, buf))
+      else
+        self:stop_spinner(buf)
+      end
+    end,
+  })
+end
+
 function M:setup_buffer_autocmds(buf)
   local group = vim.api.nvim_create_augroup(
     'CodeCompanionChatSpinner_' .. buf,
     { clear = true }
   )
 
-  vim.api.nvim_create_autocmd({ 'User' }, {
-    pattern = 'CodeCompanionRequest*',
-    group = group,
-    callback = function(request)
-      -- Only handle events for the current buffer
-      local current_buf_valid, current_buf = pcall(vim.api.nvim_get_current_buf)
-      local buf_filetype_valid, buf_filetype = pcall(function()
-        return vim.bo[buf] and vim.bo[buf].filetype
-      end)
-
-      if
-        (current_buf_valid and current_buf == buf)
-        or (buf_filetype_valid and buf_filetype == self.filetype)
-      then
-        if request.match == 'CodeCompanionRequestStarted' then
-          self:start_spinner(buf)
-        elseif request.match == 'CodeCompanionRequestFinished' then
-          self:stop_spinner(buf)
-        end
-      end
-    end,
-  })
-
-  -- Clean up when buffer is deleted
-  vim.api.nvim_create_autocmd('BufDelete', {
+  -- Clean up when buffer is removed.
+  vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout' }, {
     buffer = buf,
     group = group,
     callback = function()
@@ -157,12 +206,16 @@ function M:setup_buffer_autocmds(buf)
 end
 
 function M:init()
+  self:setup_request_autocmds()
+
   -- Set up autocmd to initialize spinner for codecompanion buffers
-  vim.api.nvim_create_augroup('CodeCompanionSpinnerInit', { clear = true })
+  local init_group = vim.api.nvim_create_augroup('CodeCompanionSpinnerInit', {
+    clear = true,
+  })
 
   vim.api.nvim_create_autocmd('FileType', {
     pattern = self.filetype,
-    group = vim.api.nvim_create_augroup('CodeCompanionSpinnerInit', {}),
+    group = init_group,
     callback = function(args)
       self:setup_buffer_autocmds(args.buf)
     end,
@@ -170,9 +223,7 @@ function M:init()
 
   -- Also set up for any existing codecompanion buffers
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if
-      vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].filetype == self.filetype
-    then
+    if self:is_chat_buf(buf) then
       self:setup_buffer_autocmds(buf)
     end
   end
