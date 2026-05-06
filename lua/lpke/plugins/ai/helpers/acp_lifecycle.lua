@@ -9,7 +9,6 @@ local augroup = api.nvim_create_augroup('LpkeCodeCompanionACPLifecycle', {
 })
 
 local tracked = {}
-local buffer_cleanup = {}
 local patched = false
 
 local function is_acp_chat(chat)
@@ -368,6 +367,7 @@ end
 
 function M.cleanup_stale_orphans()
   local cwd = vim.fn.getcwd()
+  local killed = 0
 
   for _, pid in ipairs(list_proc_pids()) do
     local cmdline = proc_cmdline(pid)
@@ -377,12 +377,16 @@ function M.cleanup_stale_orphans()
       and parent_is_user_manager(pid)
     then
       local entry = proc_entry(pid)
-      kill_recorded_pid(pid, entry, 15)
+      if kill_recorded_pid(pid, entry, 15) then
+        killed = killed + 1
+      end
       vim.defer_fn(function()
         kill_recorded_pid(pid, entry, 9)
       end, 300)
     end
   end
+
+  return killed
 end
 
 local function disconnect_connection(conn)
@@ -443,6 +447,12 @@ function M.suspend_chat(chat, opts)
     disconnect_connection(conn)
   end
 
+  if opts.close_chat ~= false then
+    pcall(function()
+      chat:close()
+    end)
+  end
+
   return true
 end
 
@@ -458,6 +468,92 @@ function M.suspend_current_chat(opts)
   end
 
   return M.suspend_chat(chat, opts)
+end
+
+local function open_chats()
+  local ok, codecompanion = pcall(require, 'codecompanion')
+  if not ok or type(codecompanion.buf_get_chat) ~= 'function' then
+    return {}
+  end
+
+  local chats = {}
+  for _, item in ipairs(codecompanion.buf_get_chat() or {}) do
+    if item.chat then
+      table.insert(chats, item.chat)
+    end
+  end
+  return chats
+end
+
+local function connection_root_pid(chat)
+  if not is_acp_chat(chat) or not chat.acp_connection then
+    return nil
+  end
+  return remember_connection(chat.acp_connection)
+end
+
+function M.suspend_acp_chats(current_chat, opts)
+  opts = opts or {}
+  local include_current = opts.include_current == true
+  local keep_root_pid = nil
+  if not include_current then
+    keep_root_pid = connection_root_pid(current_chat)
+  end
+  local sweep_tracked_roots = include_current
+    or not is_acp_chat(current_chat)
+    or keep_root_pid
+  local result = {
+    matched = 0,
+    suspended = 0,
+    already_disconnected = 0,
+    killed_tracked_roots = 0,
+    skipped_tracked_roots = false,
+  }
+
+  for _, chat in ipairs(open_chats()) do
+    if is_acp_chat(chat) and (include_current or chat ~= current_chat) then
+      result.matched = result.matched + 1
+      if M.suspend_chat(chat, opts) then
+        result.suspended = result.suspended + 1
+      else
+        result.already_disconnected = result.already_disconnected + 1
+      end
+    end
+  end
+
+  local root_pids = {}
+  if sweep_tracked_roots then
+    for root_pid in pairs(tracked) do
+      if root_pid ~= keep_root_pid then
+        table.insert(root_pids, root_pid)
+      end
+    end
+  else
+    result.skipped_tracked_roots = true
+  end
+
+  for _, root_pid in ipairs(root_pids) do
+    kill_tracked_tree(root_pid, 15)
+    result.killed_tracked_roots = result.killed_tracked_roots + 1
+    vim.defer_fn(function()
+      kill_tracked_tree(root_pid, 9)
+      prune_tree(root_pid)
+    end, 300)
+  end
+
+  return result
+end
+
+function M.suspend_other_acp_chats(current_chat, opts)
+  opts = opts or {}
+  opts.include_current = false
+  return M.suspend_acp_chats(current_chat, opts)
+end
+
+function M.suspend_all_acp_chats(current_chat, opts)
+  opts = opts or {}
+  opts.include_current = true
+  return M.suspend_acp_chats(current_chat, opts)
 end
 
 local function chat_is_visible(chat)
@@ -539,6 +635,9 @@ function M.close_disposable_chat(chat)
   pcall(function()
     chat:close()
   end)
+  vim.notify('Disposable chat closed', vim.log.levels.INFO, {
+    title = 'CodeCompanion',
+  })
   return true
 end
 
@@ -645,6 +744,9 @@ local function patch_codecompanion()
             chat:update_metadata()
           end)
           M.track_chat(chat)
+          vim.notify('ACP session resumed', vim.log.levels.INFO, {
+            title = 'CodeCompanion',
+          })
           return true
         end
       end
@@ -725,54 +827,9 @@ chat_for_buf = function(bufnr)
   return chat_module.buf_get_chat(bufnr)
 end
 
-local function setup_buffer_cleanup(chat)
-  if not is_acp_chat(chat) or not chat.bufnr or buffer_cleanup[chat.bufnr] then
-    return
-  end
-
-  local bufnr = chat.bufnr
-  buffer_cleanup[bufnr] = true
-  api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout' }, {
-    group = augroup,
-    buffer = bufnr,
-    callback = function()
-      vim.schedule(function()
-        if buffer_cleanup[bufnr] == 'closing' then
-          return
-        end
-
-        -- Completion/picker flows can emit buffer cleanup events while the
-        -- chat buffer remains alive. Only treat this as a real close once
-        -- Neovim has actually unloaded or invalidated the chat buffer.
-        if api.nvim_buf_is_valid(bufnr) and api.nvim_buf_is_loaded(bufnr) then
-          return
-        end
-
-        buffer_cleanup[bufnr] = 'closing'
-        M.suspend_chat(chat, {
-          cancel_prompt = true,
-        })
-
-        pcall(function()
-          if chat_for_buf(bufnr) == chat then
-            chat:close()
-          end
-        end)
-      end)
-    end,
-  })
-end
-
 local function scan_open_chats()
-  local ok, codecompanion = pcall(require, 'codecompanion')
-  if not ok or type(codecompanion.buf_get_chat) ~= 'function' then
-    return
-  end
-
-  for _, item in ipairs(codecompanion.buf_get_chat() or {}) do
-    local chat = item.chat
+  for _, chat in ipairs(open_chats()) do
     if is_acp_chat(chat) then
-      setup_buffer_cleanup(chat)
       M.track_chat(chat)
     end
   end
@@ -780,7 +837,18 @@ end
 
 function M.setup()
   patch_codecompanion()
-  M.cleanup_stale_orphans()
+  local killed = M.cleanup_stale_orphans()
+  if killed > 0 then
+    vim.notify(
+      string.format(
+        'Killed %d stale ACP process%s',
+        killed,
+        killed == 1 and '' or 'es'
+      ),
+      vim.log.levels.INFO,
+      { title = 'CodeCompanion' }
+    )
+  end
 
   api.nvim_create_autocmd('User', {
     group = augroup,
@@ -790,8 +858,14 @@ function M.setup()
       if not is_acp_chat(chat) then
         return
       end
+      if vim.g.lpke_cc_chat_create_notified then
+        vim.g.lpke_cc_chat_create_notified = nil
+        return
+      end
+      vim.notify('ACP chat created', vim.log.levels.INFO, {
+        title = 'CodeCompanion',
+      })
 
-      setup_buffer_cleanup(chat)
       vim.defer_fn(function()
         M.track_chat(chat)
       end, 500)
@@ -812,19 +886,6 @@ function M.setup()
         M.track_chat(chat)
       else
         scan_open_chats()
-      end
-    end,
-  })
-
-  api.nvim_create_autocmd('User', {
-    group = augroup,
-    pattern = 'CodeCompanionChatClosed',
-    callback = function(args)
-      local chat = chat_for_buf(args.data and args.data.bufnr)
-      if chat then
-        M.suspend_chat(chat, {
-          cancel_prompt = true,
-        })
       end
     end,
   })

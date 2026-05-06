@@ -17,6 +17,57 @@ local function put_text(text)
   vim.api.nvim_put({ text }, 'c', vim.fn.mode() == 'n', true)
 end
 
+local function notify(msg)
+  vim.notify(msg, vim.log.levels.INFO, { title = 'CodeCompanion' })
+end
+
+local function notify_later(msg)
+  vim.defer_fn(function()
+    notify(msg)
+  end, 20)
+end
+
+local function open_chats()
+  local ok, codecompanion = pcall(require, 'codecompanion')
+  if not ok or type(codecompanion.buf_get_chat) ~= 'function' then
+    return {}
+  end
+
+  local chats = {}
+  for _, item in ipairs(codecompanion.buf_get_chat() or {}) do
+    if item.chat then
+      table.insert(chats, item.chat)
+    end
+  end
+  return chats
+end
+
+local function new_chat_msg(prefix)
+  return string.format('%s (%d)', prefix, #open_chats())
+end
+
+local function sorted_chat_entries()
+  local registry = require('codecompanion.interactions.shared.registry')
+  local entries = vim.tbl_filter(function(entry)
+    return entry.interaction == 'chat'
+  end, registry.list())
+
+  table.sort(entries, function(a, b)
+    return a.bufnr < b.bufnr
+  end)
+
+  return entries
+end
+
+local function chat_index(bufnr, entries)
+  for i, entry in ipairs(entries) do
+    if entry.bufnr == bufnr then
+      return i
+    end
+  end
+  return nil
+end
+
 local function is_http_tool_line(line)
   return DEFAULT_HTTP_TOOL_LINE_SET[line] == true
 end
@@ -203,7 +254,11 @@ function M.sync_http_tools_for_adapter_change(bufnr, from_adapter, to_adapter)
     and model_swap.is_acp_adapter(to_adapter)
     and M.is_chat_only_http_tool_context(bufnr)
   then
-    return M.remove_http_tool_context(bufnr)
+    local changed = M.remove_http_tool_context(bufnr)
+    if changed then
+      notify('Chat tools removed')
+    end
+    return changed
   end
 
   if
@@ -211,7 +266,11 @@ function M.sync_http_tools_for_adapter_change(bufnr, from_adapter, to_adapter)
     and model_swap.is_http_adapter(to_adapter)
     and M.is_empty_chat(bufnr)
   then
-    return M.add_http_tool_context(bufnr)
+    local changed = M.add_http_tool_context(bufnr)
+    if changed then
+      notify('Chat tools added')
+    end
+    return changed
   end
 
   return false
@@ -249,6 +308,7 @@ function M.toggle_cc_with_default_tools()
     vim.cmd('normal! G')
     if M.insert_http_tools() then
       vim.cmd('normal! G2o')
+      notify('Chat tools added')
     end
   end
   vim.cmd('stopinsert')
@@ -260,15 +320,13 @@ function M.open_new_chat_with_tools(opts)
   if not opts.from_chat_keymap and M.toggle_if_already_in_chat() then
     return
   end
-  if opts.from_chat_keymap then
-    require('lpke.plugins.ai.helpers.acp_lifecycle').suspend_current_chat({
-      stop_request = true,
-      delay_ms = 100,
-    })
-  end
+  vim.g.lpke_cc_chat_create_notified = true
   vim.cmd('CodeCompanionChat')
   if M.insert_http_tools() then
     vim.cmd('normal! G2o')
+    notify_later(new_chat_msg('New chat with tools'))
+  else
+    notify_later(new_chat_msg('New chat'))
   end
   vim.cmd('stopinsert')
 end
@@ -281,8 +339,15 @@ function M.open_new_chat_with_context_selection()
   vim.cmd('normal! "vy')
   local selection = vim.fn.getreg('v')
   local filetype = vim.bo.filetype
+  vim.g.lpke_cc_chat_create_notified = true
   vim.cmd('CodeCompanionChat')
   local inserted_tools = M.insert_http_tools()
+  notify_later(
+    new_chat_msg(
+      inserted_tools and 'New chat with selection/tools'
+        or 'New chat with selection'
+    )
+  )
   if selection ~= '' then
     vim.cmd(inserted_tools and 'normal! 2o' or 'normal! Go')
     vim.api.nvim_put(M.build_code_block(selection, filetype), 'l', true, true)
@@ -323,8 +388,10 @@ function M.toggle_chat_with_context_selection()
     local is_fresh = M.is_empty_chat(vim.api.nvim_get_current_buf())
     if is_fresh and M.insert_http_tools() then
       vim.cmd('normal! 2o')
+      notify('Chat selection added with tools')
     else
       vim.cmd('normal! Go')
+      notify('Chat selection added')
     end
     vim.api.nvim_put(M.build_code_block(selection, filetype), 'l', true, true)
     vim.cmd('normal! 2o')
@@ -338,6 +405,68 @@ function M.open_inline_prompt_with_context()
   end
   vim.cmd('CodeCompanion')
   vim.api.nvim_input('#{buffer} ')
+end
+
+function M.swap_chat(chat, direction)
+  local entries = sorted_chat_entries()
+  local total = #entries
+  if total <= 1 then
+    notify('No other chats')
+    return
+  end
+
+  local current_idx = chat_index(chat.bufnr, entries)
+  if not current_idx then
+    notify('Chat not found')
+    return
+  end
+
+  local next_idx = direction > 0 and (current_idx % total) + 1
+    or ((current_idx - 2 + total) % total) + 1
+  require('codecompanion.interactions.shared.registry').move(
+    chat.bufnr,
+    direction
+  )
+
+  notify(string.format('Chat %d/%d', next_idx, total))
+end
+
+function M.delete_current_chat(chat)
+  chat = chat or require('codecompanion.interactions.chat').buf_get_chat(0)
+  if not chat then
+    return
+  end
+
+  local others = vim.tbl_filter(function(other)
+    return other ~= chat
+  end, open_chats())
+
+  local save_id = chat.opts and chat.opts.save_id
+  if save_id then
+    pcall(function()
+      require('codecompanion').extensions.history.delete_chat(save_id)
+    end)
+  end
+
+  if #others > 0 then
+    local target = others[1]
+    pcall(function()
+      if chat.ui then
+        chat.ui:hide()
+      end
+      if target.ui then
+        target.ui:open()
+      end
+    end)
+    chat:close()
+    notify('Chat deleted')
+    return
+  end
+
+  chat:close()
+  vim.g.lpke_cc_chat_create_notified = true
+  vim.cmd('CodeCompanionChat')
+  notify_later(new_chat_msg('Chat deleted; new chat'))
 end
 
 return M

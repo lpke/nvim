@@ -345,6 +345,7 @@ function Lpke_cc_adapter(adapters)
     require('lpke.plugins.ai.helpers.acp_lifecycle').suspend_chat(cur_chat, {
       stop_request = true,
       delay_ms = 100,
+      close_chat = false,
     })
     cur_chat:change_adapter(target_adapter, on_adapter_ready)
   else

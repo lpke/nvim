@@ -1,5 +1,6 @@
 local M = {}
 
+local ai_config = require('lpke.plugins.ai.helpers.config')
 local lifecycle = require('lpke.plugins.ai.helpers.acp_lifecycle')
 
 local function has_sent_user_message(chat)
@@ -139,6 +140,9 @@ local function open_existing_chat(current_chat, target_chat)
   lifecycle.ensure_chat_connection(target_chat, nil, {
     keep_visible = true,
   })
+  vim.notify('Open chat resumed', vim.log.levels.INFO, {
+    title = 'CodeCompanion',
+  })
 
   if current_chat and current_chat ~= target_chat then
     close_disposable_resume_chat(current_chat)
@@ -185,11 +189,9 @@ local function load_acp_session(chat, selected)
     },
   })
 
-  vim.notify(
-    'Resumed session: ' .. (selected.title or selected.sessionId),
-    vim.log.levels.INFO,
-    { title = 'CodeCompanion' }
-  )
+  vim.notify('ACP session resumed', vim.log.levels.INFO, {
+    title = 'CodeCompanion',
+  })
 end
 
 local function acp_sessions(chat, open_entries)
@@ -273,6 +275,38 @@ local function run_resume(chat)
   )
 end
 
+local function open_acp_resume_chat(source_chat, cb)
+  if source_chat and source_chat.ui then
+    pcall(function()
+      source_chat.ui:hide()
+    end)
+  end
+
+  vim.g.lpke_cc_chat_create_notified = true
+  vim.cmd('CodeCompanionChat')
+  vim.notify('ACP resume chat opened', vim.log.levels.INFO, {
+    title = 'CodeCompanion',
+  })
+
+  local chat = require('codecompanion.interactions.chat').buf_get_chat(0)
+  if not chat then
+    return
+  end
+
+  local adapter = ai_config.defaults.chat_adapter
+  if chat.adapter and chat.adapter.type == 'acp' then
+    cb(chat)
+    return
+  end
+
+  chat:change_adapter(adapter, function()
+    require('lpke.plugins.ai.helpers.chat_functions').remove_http_tool_context(
+      chat.bufnr
+    )
+    cb(chat)
+  end)
+end
+
 local choices = {
   {
     display = 'ACP resume',
@@ -291,6 +325,9 @@ local function handle_choice(chat, choice)
 
   local value = type(choice) == 'table' and choice.value or choice
   if value == 'resume' then
+    if not (chat and chat.adapter and chat.adapter.type == 'acp') then
+      return open_acp_resume_chat(chat, run_resume)
+    end
     run_resume(chat)
   elseif value == 'history' then
     open_codecompanion_history()
@@ -300,6 +337,7 @@ end
 local function pick_history_action(chat)
   vim.ui.select(choices, {
     prompt = 'Chat History',
+    kind = 'codecompanion.nvim',
     format_item = function(item)
       return item.display
     end,
@@ -309,12 +347,7 @@ local function pick_history_action(chat)
 end
 
 function M.open(chat)
-  if chat and chat.adapter and chat.adapter.type == 'acp' then
-    pick_history_action(chat)
-    return
-  end
-
-  open_codecompanion_history()
+  pick_history_action(chat)
 end
 
 return M

@@ -7,6 +7,10 @@ local ai_config = require('lpke.plugins.ai.helpers.config')
 local caveman = require('lpke.plugins.ai.helpers.caveman')
 local slash_commands = require('lpke.plugins.ai.helpers.slash_commands')
 
+local function notify(msg)
+  vim.notify(msg, vim.log.levels.INFO, { title = 'CodeCompanion' })
+end
+
 local function config()
   local codecompanion = require('codecompanion')
 
@@ -22,6 +26,7 @@ local function config()
         require('codecompanion.interactions.chat.tools.approvals'):toggle_yolo_mode(
           bufnr
         )
+        notify('Chat approvals enabled')
       end
     end,
   })
@@ -144,31 +149,57 @@ local function config()
             callback = function(chat)
               vim.cmd('stopinsert')
               chat:submit()
+              notify('Chat submitted')
             end,
             description = 'Send',
           },
           regenerate = {
             modes = { n = 'gr' },
             index = 3,
-            callback = 'keymaps.regenerate',
+            callback = function(chat)
+              chat:regenerate()
+              notify('Chat regenerated')
+            end,
             description = 'Regenerate the last response',
           },
           close = {
             modes = { n = '<C-c>', i = '<C-c>' },
             index = 4,
-            callback = 'keymaps.close',
+            callback = function(chat)
+              chat:close()
+              notify('Chat closed')
+
+              local chats = require('codecompanion').buf_get_chat()
+              if vim.tbl_count(chats) == 0 then
+                return
+              end
+
+              local window_opts = chat.ui.window_opts or { default = true }
+              chats[1].chat.ui:open({ window_opts = window_opts })
+              notify('Chat opened')
+            end,
             description = 'Close Chat',
           },
           stop = {
             modes = { n = '<leader>Q' },
             index = 5,
-            callback = 'keymaps.stop',
+            callback = function(chat)
+              if chat.current_request then
+                chat:stop()
+                notify('Chat stopped')
+              else
+                notify('No request to stop')
+              end
+            end,
             description = 'Stop Request',
           },
           clear = {
             modes = { n = 'gx' },
             index = 6,
-            callback = 'keymaps.clear',
+            callback = function(chat)
+              chat:clear()
+              notify('Chat cleared')
+            end,
             description = 'Clear Chat',
           },
           codeblock = {
@@ -200,13 +231,23 @@ local function config()
           next_chat = {
             modes = { n = 'g.' },
             index = 11,
-            callback = 'keymaps.next_chat',
+            callback = function(chat)
+              require('lpke.plugins.ai.helpers.chat_functions').swap_chat(
+                chat,
+                1
+              )
+            end,
             description = 'Next Chat',
           },
           previous_chat = {
             modes = { n = 'g,' },
             index = 12,
-            callback = 'keymaps.previous_chat',
+            callback = function(chat)
+              require('lpke.plugins.ai.helpers.chat_functions').swap_chat(
+                chat,
+                -1
+              )
+            end,
             description = 'Previous Chat',
           },
           next_header = {
@@ -276,9 +317,11 @@ local function config()
                     {
                       stop_request = true,
                       delay_ms = 100,
+                      close_chat = false,
                     }
                   )
                   chat:change_adapter(selected_adapter, on_adapter_ready)
+                  notify('Chat adapter changed')
                 else
                   return on_adapter_ready()
                 end
@@ -301,7 +344,10 @@ local function config()
           system_prompt = {
             modes = { n = 'gs' },
             index = 17,
-            callback = 'keymaps.toggle_system_prompt',
+            callback = function(chat)
+              chat:toggle_system_prompt()
+              notify('System prompt toggled')
+            end,
             description = 'Toggle the system prompt',
           },
           yolo_mode = {
@@ -312,13 +358,19 @@ local function config()
                 require('codecompanion.interactions.chat.tools.approvals')
               approvals:toggle_yolo_mode(chat.bufnr)
               require('lualine').refresh()
+              notify('Chat approvals toggled')
             end,
             description = 'Toggle YOLO mode',
           },
           clear_approvals = {
             modes = { n = 'gtx' },
             index = 19,
-            callback = 'keymaps.clear_approvals',
+            callback = function(chat)
+              local approvals =
+                require('codecompanion.interactions.chat.tools.approvals')
+              approvals:reset(chat.bufnr)
+              notify('Chat approvals cleared')
+            end,
             description = 'Clear approvals',
           },
           goto_file_under_cursor = {
@@ -348,15 +400,12 @@ local function config()
           delete_chat = {
             modes = { n = 'gX' },
             index = 24,
-            callback = function()
-              local cur_chat =
-                require('codecompanion.interactions.chat').buf_get_chat(0)
-              local save_id = cur_chat.opts.save_id
-              require('codecompanion').extensions.history.delete_chat(save_id)
-              cur_chat:close()
-              vim.cmd('CodeCompanionChat')
+            callback = function(chat)
+              require('lpke.plugins.ai.helpers.chat_functions').delete_current_chat(
+                chat
+              )
             end,
-            description = 'Delete current chat and open a new one',
+            description = 'Delete current chat',
           },
         },
         slash_commands = slash_commands,

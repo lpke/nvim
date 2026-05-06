@@ -35,6 +35,24 @@ local function config()
     nui = {
       position = '0%', -- appears at start of cursor pos
     },
+
+    select = {
+      builtin = {
+        override = function(conf)
+          -- Dressing's statuscolumn padding consumes one display column, so
+          -- content-fitted select windows need one extra column to avoid truncation.
+          conf.width = conf.width + 1
+          return conf
+        end,
+      },
+      get_config = function(opts)
+        if opts.kind == 'codecompanion.nvim' then
+          return {
+            backend = { 'builtin' },
+          }
+        end
+      end,
+    },
   })
 end
 
