@@ -249,21 +249,29 @@ local function config()
             end,
             description = 'Previous Chat',
           },
+          chat_picker = {
+            modes = { n = 'gl' },
+            index = 13,
+            callback = function()
+              require('lpke.plugins.ai.helpers.chat_picker').open()
+            end,
+            description = 'Open Chat Picker',
+          },
           next_header = {
             modes = { n = ']]' },
-            index = 13,
+            index = 14,
             callback = 'keymaps.next_header',
             description = 'Next Header',
           },
           previous_header = {
             modes = { n = '[[' },
-            index = 14,
+            index = 15,
             callback = 'keymaps.previous_header',
             description = 'Previous Header',
           },
           change_adapter = {
             modes = { n = 'ga' },
-            index = 15,
+            index = 16,
             callback = function(chat)
               local cc_config = require('codecompanion.config')
               local utils = require('codecompanion.utils')
@@ -330,19 +338,19 @@ local function config()
           },
           fold_code = {
             modes = { n = 'gf' },
-            index = 15,
+            index = 17,
             callback = 'keymaps.fold_code',
             description = 'Fold code',
           },
           debug = {
             modes = { n = 'gD' },
-            index = 16,
+            index = 18,
             callback = 'keymaps.debug',
             description = 'View debug info',
           },
           system_prompt = {
             modes = { n = 'gs' },
-            index = 17,
+            index = 19,
             callback = function(chat)
               chat:toggle_system_prompt()
               notify('System prompt toggled')
@@ -351,7 +359,7 @@ local function config()
           },
           yolo_mode = {
             modes = { n = 'gta' },
-            index = 20,
+            index = 21,
             callback = function(chat)
               local approvals =
                 require('codecompanion.interactions.chat.tools.approvals')
@@ -363,7 +371,7 @@ local function config()
           },
           clear_approvals = {
             modes = { n = 'gtx' },
-            index = 19,
+            index = 20,
             callback = function(chat)
               local approvals =
                 require('codecompanion.interactions.chat.tools.approvals')
@@ -374,13 +382,13 @@ local function config()
           },
           goto_file_under_cursor = {
             modes = { n = 'gd' },
-            index = 21,
+            index = 22,
             callback = 'keymaps.goto_file_under_cursor',
             description = 'Open the file under cursor in a new tab.',
           },
           new_chat = {
             modes = { n = 'gn' },
-            index = 22,
+            index = 23,
             callback = function()
               require('lpke.plugins.ai.helpers.chat_functions').open_new_chat_with_tools({
                 from_chat_keymap = true,
@@ -390,7 +398,7 @@ local function config()
           },
           history_or_resume = {
             modes = { n = 'gh' },
-            index = 23,
+            index = 24,
             callback = function(chat)
               require('lpke.plugins.ai.helpers.history_or_resume').open(chat)
             end,
@@ -398,7 +406,7 @@ local function config()
           },
           delete_chat = {
             modes = { n = 'gX' },
-            index = 24,
+            index = 25,
             callback = function(chat)
               require('lpke.plugins.ai.helpers.chat_functions').delete_current_chat(
                 chat

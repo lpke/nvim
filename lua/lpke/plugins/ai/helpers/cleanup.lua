@@ -145,7 +145,7 @@ local function is_empty_chat(chat)
     or chat_fns.is_chat_only_http_tool_context(chat.bufnr)
 end
 
-local function close_empty_chats(current)
+function M.close_empty_chats(current)
   local closed = 0
 
   for _, chat in ipairs(open_chats()) do
@@ -168,6 +168,8 @@ local function close_empty_chats(current)
     vim.log.levels.INFO,
     { title = 'CodeCompanion' }
   )
+
+  return closed
 end
 
 local function handle_choice(chat, choice)
@@ -190,7 +192,7 @@ local function handle_choice(chat, choice)
   elseif choice.value == 'stop_current_request' then
     stop_current_request(chat)
   elseif choice.value == 'close_empty_chats' then
-    close_empty_chats(chat)
+    M.close_empty_chats(chat)
   end
 end
 

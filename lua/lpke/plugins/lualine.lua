@@ -269,9 +269,9 @@ local function config()
       local approvals =
         require('codecompanion.interactions.chat.tools.approvals')
       if approvals:is_approved(bufnr) then
-        return 'Y:'
+        return 'Y'
       else
-        return 'A:'
+        return 'A'
       end
     end,
     cond = function()
@@ -282,7 +282,7 @@ local function config()
       local chat = require('codecompanion').buf_get_chat(0)
       return chat and chat.adapter and chat.adapter.type == 'http'
     end,
-    padding = { left = 1, right = 0 },
+    padding = { left = 0, right = 1 },
     color = function()
       local bufnr = vim.api.nvim_get_current_buf()
       local approvals =
@@ -309,14 +309,14 @@ local function config()
 
       local mode_lower = mode:lower()
       if mode_lower:find('default', 1, true) then
-        return 'D:'
+        return 'D'
       elseif mode_lower:find('read', 1, true) then
-        return 'R:'
+        return 'R'
       elseif mode_lower:find('full', 1, true) then
-        return 'F:'
+        return 'F'
       end
 
-      return mode:sub(1, 1):upper() .. ':'
+      return mode:sub(1, 1):upper()
     end,
     cond = function()
       if vim.bo.filetype ~= 'codecompanion' then
@@ -325,7 +325,7 @@ local function config()
 
       return model_swap.is_codex_chat(0)
     end,
-    padding = { left = 1, right = 0 },
+    padding = { left = 0, right = 1 },
     color = function()
       if llm_codex_mode_is_full() then
         return { fg = tc.growthminus }
@@ -559,9 +559,9 @@ local function config()
         },
         llm_chat_position,
         llm_adapter,
+        llm_model,
         llm_yolo_status,
         llm_codex_mode_status,
-        llm_model,
       },
       lualine_y = {
         'progress',
