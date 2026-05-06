@@ -70,6 +70,22 @@ local function proc_ppid(pid)
   return tonumber(fields[2])
 end
 
+local function proc_cwd(pid)
+  local ok, cwd = pcall(uv.fs_readlink, '/proc/' .. pid .. '/cwd')
+  return ok and cwd or nil
+end
+
+local function proc_fd_targets(pid)
+  local targets = {}
+  for _, fd in ipairs({ 0, 1, 2 }) do
+    local ok, target = pcall(uv.fs_readlink, '/proc/' .. pid .. '/fd/' .. fd)
+    if ok and target then
+      targets[fd] = target
+    end
+  end
+  return targets
+end
+
 local function handle_pid(handle)
   if type(handle) ~= 'table' then
     return nil
@@ -96,6 +112,12 @@ local function is_codex_acp_cmd(cmdline)
   return type(cmdline) == 'string' and cmdline:find('codex%-acp') ~= nil
 end
 
+local function is_native_codex_acp_cmd(cmdline)
+  return is_codex_acp_cmd(cmdline)
+    and cmdline:find('node%s+') == nil
+    and cmdline:find('/bin/codex%-acp') ~= nil
+end
+
 local function proc_entry(pid)
   local cmdline = proc_cmdline(pid)
   if not is_codex_acp_cmd(cmdline) then
@@ -104,6 +126,8 @@ local function proc_entry(pid)
 
   return {
     cmdline = cmdline,
+    cwd = proc_cwd(pid),
+    fd_targets = proc_fd_targets(pid),
     start_time = proc_start_time(pid),
   }
 end
@@ -154,6 +178,41 @@ local function collect_descendants(root_pid)
   return descendants
 end
 
+local function fd_targets_overlap(a, b)
+  if not a or not b then
+    return false
+  end
+
+  for _, left in pairs(a) do
+    for _, right in pairs(b) do
+      if left == right then
+        return true
+      end
+    end
+  end
+  return false
+end
+
+local function related_codex_pids(root_pid, root_entry)
+  local related = {}
+  if not root_entry then
+    return related
+  end
+
+  for _, pid in ipairs(list_proc_pids()) do
+    if pid ~= root_pid then
+      local entry = proc_entry(pid)
+      if
+        entry and fd_targets_overlap(root_entry.fd_targets, entry.fd_targets)
+      then
+        related[pid] = entry
+      end
+    end
+  end
+
+  return related
+end
+
 local function remember_pid(root_pid, pid, entry)
   if not entry then
     return
@@ -176,9 +235,13 @@ local function remember_connection(conn)
     return nil
   end
 
-  remember_pid(root_pid, root_pid, proc_entry(root_pid))
+  local root_entry = proc_entry(root_pid)
+  remember_pid(root_pid, root_pid, root_entry)
   for _, pid in ipairs(collect_descendants(root_pid)) do
     remember_pid(root_pid, pid, proc_entry(pid))
+  end
+  for pid, entry in pairs(related_codex_pids(root_pid, root_entry)) do
+    remember_pid(root_pid, pid, entry)
   end
   return root_pid
 end
@@ -196,6 +259,18 @@ local function pid_matches_record(pid, record)
   return is_codex_acp_cmd(cmdline)
 end
 
+local function parent_is_user_manager(pid)
+  local ppid = proc_ppid(pid)
+  if not ppid then
+    return false
+  end
+
+  local parent_cmd = proc_cmdline(ppid)
+  return type(parent_cmd) == 'string'
+    and parent_cmd:find('systemd', 1, true) ~= nil
+    and parent_cmd:find('%-%-user') ~= nil
+end
+
 local function kill_recorded_pid(pid, record, signal)
   if not pid_matches_record(pid, record) then
     return false
@@ -209,6 +284,13 @@ local function kill_tracked_tree(root_pid, signal)
   local record = tracked[root_pid]
   if not record then
     return
+  end
+
+  for _, pid in ipairs(collect_descendants(root_pid)) do
+    remember_pid(root_pid, pid, proc_entry(pid))
+  end
+  for pid, entry in pairs(related_codex_pids(root_pid, record.root)) do
+    remember_pid(root_pid, pid, entry)
   end
 
   for pid, entry in pairs(record.children or {}) do
@@ -277,7 +359,30 @@ function M.track_chat(chat)
   end
 
   M.remember_session(chat)
-  remember_connection(chat.acp_connection)
+  local conn = chat.acp_connection
+  remember_connection(conn)
+  vim.defer_fn(function()
+    remember_connection(conn)
+  end, 1000)
+end
+
+function M.cleanup_stale_orphans()
+  local cwd = vim.fn.getcwd()
+
+  for _, pid in ipairs(list_proc_pids()) do
+    local cmdline = proc_cmdline(pid)
+    if
+      is_native_codex_acp_cmd(cmdline)
+      and proc_cwd(pid) == cwd
+      and parent_is_user_manager(pid)
+    then
+      local entry = proc_entry(pid)
+      kill_recorded_pid(pid, entry, 15)
+      vim.defer_fn(function()
+        kill_recorded_pid(pid, entry, 9)
+      end, 300)
+    end
+  end
 end
 
 local function disconnect_connection(conn)
@@ -486,6 +591,9 @@ local function patch_codecompanion()
         vim.defer_fn(function()
           remember_connection(self)
         end, 250)
+        vim.defer_fn(function()
+          remember_connection(self)
+        end, 1000)
       end
       return ok
     end
@@ -672,6 +780,7 @@ end
 
 function M.setup()
   patch_codecompanion()
+  M.cleanup_stale_orphans()
 
   api.nvim_create_autocmd('User', {
     group = augroup,
