@@ -4,58 +4,72 @@ local runner_config = {
   javascript = {
     run_command = 'node',
     dependencies = { 'node' },
+    temp_file_extension = 'js',
   },
   js = {
     run_command = 'node',
     dependencies = { 'node' },
+    temp_file_extension = 'js',
   },
   typescript = {
-    run_command = 'ts-node',
-    dependencies = { 'ts-node' },
+    run_command = 'tsx',
+    dependencies = { 'tsx' },
+    temp_file_extension = 'ts',
   },
   ts = {
-    run_command = 'ts-node',
-    dependencies = { 'ts-node' },
+    run_command = 'tsx',
+    dependencies = { 'tsx' },
+    temp_file_extension = 'ts',
   },
   python = {
     run_command = 'python3',
     dependencies = { 'python3' },
+    temp_file_extension = 'py',
   },
   lua = {
     run_command = 'lua',
     dependencies = { 'lua' },
+    temp_file_extension = 'lua',
   },
   sh = {
     run_command = 'bash',
     dependencies = { 'bash' },
+    temp_file_extension = 'sh',
   },
   bash = {
     run_command = 'bash',
     dependencies = { 'bash' },
+    temp_file_extension = 'bash',
   },
   zsh = {
     run_command = 'zsh',
     dependencies = { 'zsh' },
+    temp_file_extension = 'zsh',
   },
   ruby = {
     run_command = 'ruby',
     dependencies = { 'ruby' },
+    temp_file_extension = 'rb',
   },
   go = {
     run_command = 'go run',
     dependencies = { 'go' },
+    temp_file_extension = 'go',
   },
   rust = {
     run_command = 'cargo run',
     dependencies = { 'cargo' },
+    temp_file_extension = 'rs',
   },
   php = {
     run_command = 'php',
     dependencies = { 'php' },
+    temp_file_extension = 'php',
   },
   perl = {
     run_command = 'perl',
     dependencies = { 'perl' },
+    temp_file_extension = 'pl',
   },
   -- stylua: ignore start
   html = {
@@ -89,7 +103,8 @@ local runner_config = {
         'originalConsole.error(\'[HTML Error]\', e.error?.message || e.message); ' ..
       '}); ' ..
       'setTimeout(() => process.exit(0), 1000);"',
-    dependencies = { 'node' }
+    dependencies = { 'node' },
+    temp_file_extension = 'html',
   },
   -- stylua: ignore end
 }
@@ -133,7 +148,6 @@ function Lpke_run_buf()
 
   -- Check if filetype is supported
   local config = runner_config[filetype]
-  local command = runner_config[filetype].run_command
   if not config then
     vim.notify(
       'Runner: No command configured for filetype: '
@@ -143,6 +157,7 @@ function Lpke_run_buf()
     return
   end
 
+  local command = config.run_command
   local dependencies = config.dependencies or {}
 
   -- Check if the required dependencies are available
@@ -179,6 +194,9 @@ function Lpke_run_buf()
     -- Create temporary file for unsaved/modified buffers
     use_temp_file = true
     temp_file = vim.fn.tempname()
+    if config.temp_file_extension then
+      temp_file = temp_file .. '.' .. config.temp_file_extension
+    end
     file_to_run = temp_file
 
     -- Get buffer contents and write to temp file
