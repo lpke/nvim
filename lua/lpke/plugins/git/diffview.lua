@@ -24,6 +24,46 @@ local function config()
     Lpke_square_repeat_key = key
   end
 
+  local function open_fugitive_commit_from_diffview()
+    local diffview_tab = vim.api.nvim_get_current_tabpage()
+
+    Lpke_toggle_git_fugitive(true)
+
+    vim.schedule(function()
+      if vim.api.nvim_get_current_tabpage() == diffview_tab then
+        return
+      end
+
+      if vim.api.nvim_tabpage_is_valid(diffview_tab) then
+        local current_tab = vim.api.nvim_get_current_tabpage()
+        local ok, diffview_tabnr =
+          pcall(vim.api.nvim_tabpage_get_number, diffview_tab)
+
+        if ok then
+          pcall(vim.cmd, diffview_tabnr .. 'tabclose')
+        end
+
+        if vim.api.nvim_tabpage_is_valid(current_tab) then
+          vim.api.nvim_set_current_tabpage(current_tab)
+        end
+      end
+
+      vim.schedule(function()
+        local keys = vim.api.nvim_replace_termcodes('cc', true, false, true)
+        vim.api.nvim_feedkeys(keys, 'm', false)
+      end)
+    end)
+  end
+
+  local function focus_after_buffer()
+    local view = require('diffview.lib').get_current_view()
+    local main_win = view and view.cur_layout and view.cur_layout:get_main_win()
+
+    if main_win and main_win:is_valid() then
+      main_win:focus()
+    end
+  end
+
   diffview.setup({
     diff_binaries = false, -- Show diffs for binaries
     enhanced_diff_hl = true, -- See |diffview-config-enhanced_diff_hl|
@@ -153,6 +193,7 @@ local function config()
         { 'n', '<leader>cB',  actions.conflict_choose_all('base'),    { desc = 'Diffview: Choose the BASE version of a conflict for the whole file' } },
         { 'n', '<leader>cA',  actions.conflict_choose_all('all'),     { desc = 'Diffview: Choose all the versions of a conflict for the whole file' } },
         { 'n', 'dX',          actions.conflict_choose_all('none'),    { desc = 'Diffview: Delete the conflict region for the whole file' } },
+        { 'n', '<leader>i',   diffview_close,                         { desc = 'Diffview: Close the Diffview tab' } },
         { 'n', '<A-/>',       diffview_close,                         { desc = 'Diffview: Close the Diffview tab' } },
         { 'n', '<F2>/',       diffview_close,                         { desc = 'Diffview: Close the Diffview tab' } },
       },
@@ -195,6 +236,7 @@ local function config()
         { 'n', 'S',              actions.stage_all,                      { desc = 'Diffview: Stage all entries' } },
         { 'n', 'U',              actions.unstage_all,                    { desc = 'Diffview: Unstage all entries' } },
         { 'n', 'X',              actions.restore_entry,                  { desc = 'Diffview: Restore entry to the state on the left side' } },
+        { 'n', 'cc',             open_fugitive_commit_from_diffview,     { desc = 'Diffview: Commit in fugitive' } },
         { 'n', 'L',              actions.open_commit_log,                { desc = 'Diffview: Open the commit log panel' } },
         { 'n', 'za',             actions.open_fold,                      { desc = 'Diffview: Expand fold' } },
         { 'n', 'h',              actions.close_fold,                     { desc = 'Diffview: Collapse fold' } },
@@ -202,8 +244,8 @@ local function config()
         { 'n', 'zo',             actions.toggle_fold,                    { desc = 'Diffview: Toggle fold' } },
         { 'n', 'zR',             actions.open_all_folds,                 { desc = 'Diffview: Expand all folds' } },
         { 'n', 'zM',             actions.close_all_folds,                { desc = 'Diffview: Collapse all folds' } },
-        { 'n', '<c-b>',          actions.scroll_view(-0.25),             { desc = 'Diffview: Scroll the view up' } },
-        { 'n', '<c-f>',          actions.scroll_view(0.25),              { desc = 'Diffview: Scroll the view down' } },
+        { 'n', '<C-k>',          actions.scroll_view(-0.25),             { desc = 'Diffview: Scroll the view up' } },
+        { 'n', '<C-j>',          actions.scroll_view(0.25),              { desc = 'Diffview: Scroll the view down' } },
         { 'n', '<tab>',          actions.select_next_entry,              { desc = 'Diffview: Open the diff for the next file' } },
         { 'n', 'J',              actions.select_next_entry,              { desc = 'Diffview: Open the diff for the next file' } },
         { 'n', '<s-tab>',        actions.select_prev_entry,              { desc = 'Diffview: Open the diff for the previous file' } },
@@ -216,7 +258,7 @@ local function config()
         { 'n', 'i',              actions.listing_style,                  { desc = "Diffview: Toggle between 'list' and 'tree' views" } },
         { 'n', 'f',              actions.toggle_flatten_dirs,            { desc = 'Diffview: Flatten empty subdirectories in tree listing style' } },
         { 'n', 'R',              actions.refresh_files,                  { desc = 'Diffview: Update stats and entries in the file list' } },
-        { 'n', '<leader>e',      actions.focus_files,                    { desc = 'Diffview: Bring focus to the file panel' } },
+        { 'n', '<leader>e',      focus_after_buffer,                     { desc = 'Diffview: Bring focus to the after buffer' } },
         { 'n', '<leader>b',      actions.toggle_files,                   { desc = 'Diffview: Toggle the file panel' } },
         { 'n', 'g<C-x>',         actions.cycle_layout,                   { desc = 'Diffview: Cycle available layouts' } },
         { 'n', '[x',             function() prev_conflict('x') end,      { desc = 'Diffview: Go to the previous conflict' } },
@@ -227,6 +269,7 @@ local function config()
         { 'n', '<leader>cB',     actions.conflict_choose_all('base'),    { desc = 'Diffview: Choose the BASE version of a conflict for the whole file' } },
         { 'n', '<leader>cA',     actions.conflict_choose_all('all'),     { desc = 'Diffview: Choose all the versions of a conflict for the whole file' } },
         { 'n', 'dX',             actions.conflict_choose_all('none'),    { desc = 'Diffview: Delete the conflict region for the whole file' } },
+        { 'n', '<leader>i',      diffview_close,                         { desc = 'Diffview: Close the Diffview tab' } },
         { 'n', '<A-/>',          diffview_close,                         { desc = 'Diffview: Close the Diffview tab' } },
         { 'n', '<F2>/',          diffview_close,                         { desc = 'Diffview: Close the Diffview tab' } },
       },
@@ -250,8 +293,8 @@ local function config()
         { 'n', 'o',             actions.select_entry,                { desc = 'Diffview: Open the diff for the selected entry' } },
         { 'n', 'l',             actions.select_entry,                { desc = 'Diffview: Open the diff for the selected entry' } },
         { 'n', '<2-LeftMouse>', actions.select_entry,                { desc = 'Diffview: Open the diff for the selected entry' } },
-        { 'n', '<c-b>',         actions.scroll_view(-0.25),          { desc = 'Diffview: Scroll the view up' } },
-        { 'n', '<c-f>',         actions.scroll_view(0.25),           { desc = 'Diffview: Scroll the view down' } },
+        { 'n', '<C-k>',         actions.scroll_view(-0.25),          { desc = 'Diffview: Scroll the view up' } },
+        { 'n', '<C-j>',         actions.scroll_view(0.25),           { desc = 'Diffview: Scroll the view down' } },
         { 'n', '<tab>',         actions.select_next_entry,           { desc = 'Diffview: Open the diff for the next file' } },
         { 'n', 'J',             actions.select_next_entry,           { desc = 'Diffview: Open the diff for the next file' } },
         { 'n', '<s-tab>',       actions.select_prev_entry,           { desc = 'Diffview: Open the diff for the previous file' } },
@@ -265,6 +308,7 @@ local function config()
         { 'n', '<leader>b',     actions.toggle_files,                { desc = 'Diffview: Toggle the file panel' } },
         { 'n', 'g<C-x>',        actions.cycle_layout,                { desc = 'Diffview: Cycle available layouts' } },
         { 'n', 'g?',            actions.help('file_history_panel'),  { desc = 'Diffview: Open the help panel' } },
+        { 'n', '<leader>i',     diffview_close,                      { desc = 'Diffview: Close the Diffview tab' } },
         { 'n', '<A-/>',         diffview_close,                      { desc = 'Diffview: Close the Diffview tab' } },
         { 'n', '<F2>/',         diffview_close,                      { desc = 'Diffview: Close the Diffview tab' } },
       },
@@ -289,7 +333,7 @@ local function config()
     { 'nC', '<BS>gc', 'DiffviewFileHistory', { desc = 'Diffview: Open current branch commit history' } },
     { 'nC', '<BS>gs', 'DiffviewFileHistory -g --range=stash', { desc = 'Diffview: Open stashes in a file history view' } },
     { 'nC', '<BS>gd', 'DiffviewOpen', { desc = 'Diffview: Open diff view for current changed/staged' } },
-    { 'nC', '<leader>I', 'DiffviewOpen', { desc = 'Diffview: Open diff view for current changed/staged' } },
+    { 'nC', '<leader>i', 'DiffviewOpen', { desc = 'Diffview: Open diff view for current changed/staged' } },
     { 'n', '<BS>gH', function()
       vim.cmd('call feedkeys(":DiffviewFileHistory ")')
     end, { desc = 'Diffview: Prepare to open a file history view (provide paths)' } },
