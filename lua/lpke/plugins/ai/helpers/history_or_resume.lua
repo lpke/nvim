@@ -136,6 +136,10 @@ local function open_existing_chat(current_chat, target_chat)
     target_chat.ui:open()
   end)
 
+  lifecycle.ensure_chat_connection(target_chat, nil, {
+    keep_visible = true,
+  })
+
   if current_chat and current_chat ~= target_chat then
     close_disposable_resume_chat(current_chat)
   end

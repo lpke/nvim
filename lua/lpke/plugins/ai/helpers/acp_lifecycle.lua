@@ -2,6 +2,7 @@ local M = {}
 
 local api = vim.api
 local uv = vim.uv
+local unpack = unpack or table.unpack
 
 local augroup = api.nvim_create_augroup('LpkeCodeCompanionACPLifecycle', {
   clear = true,
@@ -354,6 +355,67 @@ function M.suspend_current_chat(opts)
   return M.suspend_chat(chat, opts)
 end
 
+local function chat_is_visible(chat)
+  if not (chat and chat.ui and type(chat.ui.is_visible) == 'function') then
+    return false
+  end
+
+  local ok, visible = pcall(chat.ui.is_visible, chat.ui)
+  return ok and visible == true
+end
+
+local function connection_has_session(conn)
+  if not conn then
+    return false
+  end
+
+  if type(conn.is_connected) == 'function' then
+    local ok, connected = pcall(conn.is_connected, conn)
+    if ok then
+      return connected == true
+    end
+  end
+
+  if type(conn.is_ready) ~= 'function' then
+    return false
+  end
+
+  local ok, ready = pcall(conn.is_ready, conn)
+  return ok and ready == true and conn.session_id ~= nil
+end
+
+function M.ensure_chat_connection(chat, cb, opts)
+  cb = cb or function() end
+  opts = opts or {}
+  if not is_acp_chat(chat) then
+    return false
+  end
+
+  local keep_visible = opts.keep_visible and chat_is_visible(chat)
+
+  local function run_cb()
+    if keep_visible and chat.ui and not chat_is_visible(chat) then
+      pcall(chat.ui.open, chat.ui)
+    end
+    cb()
+  end
+
+  if connection_has_session(chat.acp_connection) then
+    M.track_chat(chat)
+    run_cb()
+    return true
+  end
+
+  require('codecompanion.interactions.chat.helpers').create_acp_connection(
+    chat,
+    function()
+      M.track_chat(chat)
+      run_cb()
+    end
+  )
+  return true
+end
+
 function M.close_disposable_chat(chat)
   if not is_acp_chat(chat) then
     return false
@@ -387,6 +449,23 @@ local function link_buffer_to_session(chat)
       session_id
     )
   end)
+end
+
+local chat_for_buf
+
+local function guard_chat_visible(chat, ms)
+  if not is_acp_chat(chat) or not chat_is_visible(chat) then
+    return
+  end
+
+  local token = {}
+  chat._lpke_keep_visible_token = token
+
+  vim.defer_fn(function()
+    if chat._lpke_keep_visible_token == token then
+      chat._lpke_keep_visible_token = nil
+    end
+  end, ms or 2000)
 end
 
 local function patch_codecompanion()
@@ -470,9 +549,67 @@ local function patch_codecompanion()
       return ok
     end
   end
+
+  local ok_ui, ChatUI = pcall(require, 'codecompanion.interactions.chat.ui')
+  if ok_ui and not ChatUI._lpke_keep_visible_guard then
+    ChatUI._lpke_keep_visible_guard = true
+
+    local original_hide = ChatUI.hide
+    ChatUI.hide = function(self, ...)
+      local chat = chat_for_buf and chat_for_buf(self.chat_bufnr)
+      if chat and chat._lpke_keep_visible_token and chat_is_visible(chat) then
+        return
+      end
+
+      return original_hide(self, ...)
+    end
+  end
+
+  local ok_session_options, SessionOptions = pcall(
+    require,
+    'codecompanion.interactions.chat.slash_commands.builtin.acp_session_options'
+  )
+  if ok_session_options and not SessionOptions._lpke_ensure_connection then
+    SessionOptions._lpke_ensure_connection = true
+
+    local original_show_values = SessionOptions.show_values
+    SessionOptions.show_values = function(self, ...)
+      guard_chat_visible(self.Chat)
+      return original_show_values(self, ...)
+    end
+
+    local original_execute = SessionOptions.execute
+    SessionOptions.execute = function(self, ...)
+      local args = { ... }
+      guard_chat_visible(self.Chat)
+
+      vim.schedule(function()
+        local chat = chat_for_buf(0)
+        if not is_acp_chat(chat) then
+          chat = self.Chat
+        end
+
+        if not is_acp_chat(chat) then
+          return original_execute(self, unpack(args))
+        end
+
+        self.Chat = chat
+        guard_chat_visible(chat)
+        M.ensure_chat_connection(chat, function()
+          self.Chat = chat
+          guard_chat_visible(chat)
+          original_execute(self, unpack(args))
+        end, {
+          keep_visible = true,
+        })
+      end)
+
+      return true
+    end
+  end
 end
 
-local function chat_for_buf(bufnr)
+chat_for_buf = function(bufnr)
   local ok, chat_module = pcall(require, 'codecompanion.interactions.chat')
   if not ok then
     return nil
@@ -485,23 +622,33 @@ local function setup_buffer_cleanup(chat)
     return
   end
 
-  buffer_cleanup[chat.bufnr] = true
+  local bufnr = chat.bufnr
+  buffer_cleanup[bufnr] = true
   api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout' }, {
     group = augroup,
-    buffer = chat.bufnr,
+    buffer = bufnr,
     callback = function()
-      if buffer_cleanup[chat.bufnr] == 'closing' then
-        return
-      end
-
-      buffer_cleanup[chat.bufnr] = 'closing'
-      M.suspend_chat(chat, {
-        cancel_prompt = true,
-      })
-
       vim.schedule(function()
+        if buffer_cleanup[bufnr] == 'closing' then
+          return
+        end
+
+        -- Completion/picker flows can emit buffer cleanup events while the
+        -- chat buffer remains alive. Only treat this as a real close once
+        -- Neovim has actually unloaded or invalidated the chat buffer.
+        if api.nvim_buf_is_valid(bufnr) and api.nvim_buf_is_loaded(bufnr) then
+          return
+        end
+
+        buffer_cleanup[bufnr] = 'closing'
+        M.suspend_chat(chat, {
+          cancel_prompt = true,
+        })
+
         pcall(function()
-          chat:close()
+          if chat_for_buf(bufnr) == chat then
+            chat:close()
+          end
         end)
       end)
     end,
@@ -557,23 +704,6 @@ function M.setup()
       else
         scan_open_chats()
       end
-    end,
-  })
-
-  api.nvim_create_autocmd('User', {
-    group = augroup,
-    pattern = 'CodeCompanionChatStopped',
-    callback = function(args)
-      local chat = chat_for_buf(args.data and args.data.bufnr)
-      if not is_acp_chat(chat) then
-        return
-      end
-
-      vim.defer_fn(function()
-        M.suspend_chat(chat, {
-          cancel_prompt = false,
-        })
-      end, 150)
     end,
   })
 
