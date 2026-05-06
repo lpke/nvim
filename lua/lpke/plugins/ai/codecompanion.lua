@@ -50,7 +50,8 @@ local function config()
         codex = function()
           return require('codecompanion.adapters').extend('codex', {
             commands = {
-              default = { 'codex-acp' },
+              -- default reasoning set here to override last-used setting from `codex` CLI
+              default = { 'codex-acp', '-c', 'model_reasoning_effort="low"' },
             },
             defaults = {
               auth_method = 'chatgpt',
