@@ -263,6 +263,8 @@ local function config()
     },
   }
 
+  local llm_panel_bg = tc.overlaybump
+
   local llm_yolo_status = {
     function()
       local bufnr = vim.api.nvim_get_current_buf()
@@ -288,9 +290,9 @@ local function config()
       local approvals =
         require('codecompanion.interactions.chat.tools.approvals')
       if approvals:is_approved(bufnr) then
-        return { fg = tc.growthminus }
+        return { bg = llm_panel_bg, fg = tc.growthminus }
       else
-        return { fg = tc.muted }
+        return { bg = llm_panel_bg, fg = tc.muted }
       end
     end,
   }
@@ -325,12 +327,12 @@ local function config()
 
       return model_swap.is_codex_chat(0)
     end,
-    padding = { left = 0, right = 1 },
+    padding = { left = 1, right = 0 },
     color = function()
       if llm_codex_mode_is_full() then
-        return { fg = tc.growthminus }
+        return { bg = llm_panel_bg, fg = tc.growthminus }
       else
-        return { fg = tc.muted }
+        return { bg = llm_panel_bg, fg = tc.muted }
       end
     end,
   }
@@ -347,8 +349,8 @@ local function config()
     cond = function()
       return vim.bo.filetype == 'codecompanion'
     end,
-    padding = { left = 0, right = 0 },
-    color = { fg = tc.subtleplus },
+    padding = { left = 1, right = 0 },
+    color = { bg = llm_panel_bg, fg = tc.subtleplus },
   }
 
   local llm_chat_position = {
@@ -364,7 +366,7 @@ local function config()
       return vim.bo.filetype == 'codecompanion'
     end,
     padding = { left = 0, right = 1 },
-    color = { fg = tc.mutedplus },
+    -- color = { fg = tc.mutedplus },
   }
 
   local llm_model = {
@@ -382,7 +384,8 @@ local function config()
     cond = function()
       return vim.bo.filetype == 'codecompanion'
     end,
-    color = { fg = tc.text },
+    padding = { left = 1, right = 1 },
+    color = { bg = llm_panel_bg, fg = tc.text },
   }
 
   local llm_reasoning = {
@@ -396,7 +399,7 @@ local function config()
       return vim.bo.filetype == 'codecompanion'
     end,
     padding = { left = 0, right = 1 },
-    color = { fg = tc.subtleplus },
+    color = { bg = llm_panel_bg, fg = tc.subtleplus },
   }
 
   local git_components = {
@@ -570,16 +573,18 @@ local function config()
           end,
         },
         llm_chat_position,
-        llm_adapter,
-        llm_model,
-        llm_reasoning,
-        llm_yolo_status,
-        llm_codex_mode_status,
       },
       lualine_y = {
         'progress',
         {
           'location',
+          fmt = function(str)
+            if vim.bo.filetype == 'codecompanion' then
+              return str:match('^%s*(.-)%s*$')
+            end
+
+            return str
+          end,
           on_click = function()
             Lpke_show_git = not Lpke_show_git
             refresh()
@@ -587,6 +592,12 @@ local function config()
         },
         git_components[1],
         git_components[2],
+        -- codecompanion details
+        llm_yolo_status,
+        llm_codex_mode_status,
+        llm_adapter,
+        llm_model,
+        llm_reasoning,
         -- copilot status
         {
           function()
