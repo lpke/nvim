@@ -377,17 +377,26 @@ local function config()
       local model = model_swap.get_cur_model(bufnr)
       local display =
         ai_config.lualine_model_name(model, chat.adapter and chat.adapter.name)
-      local reasoning =
-        acp_session_options.get_current_value('reasoning', bufnr)
-      if reasoning then
-        display = display .. ' ' .. reasoning:lower()
-      end
       return display
     end,
     cond = function()
       return vim.bo.filetype == 'codecompanion'
     end,
     color = { fg = tc.text },
+  }
+
+  local llm_reasoning = {
+    function()
+      local bufnr = vim.api.nvim_get_current_buf()
+      local reasoning =
+        acp_session_options.get_current_value('reasoning', bufnr)
+      return reasoning and reasoning:lower() or nil
+    end,
+    cond = function()
+      return vim.bo.filetype == 'codecompanion'
+    end,
+    padding = { left = 0, right = 1 },
+    color = { fg = tc.subtleplus },
   }
 
   local git_components = {
@@ -550,6 +559,9 @@ local function config()
         {
           'filetype',
           fmt = function(str)
+            if vim.bo.filetype == 'codecompanion' then
+              return 'cc'
+            end
             return str
           end,
           on_click = function()
@@ -560,6 +572,7 @@ local function config()
         llm_chat_position,
         llm_adapter,
         llm_model,
+        llm_reasoning,
         llm_yolo_status,
         llm_codex_mode_status,
       },
