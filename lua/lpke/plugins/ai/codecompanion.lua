@@ -149,7 +149,6 @@ local function config()
             callback = function(chat)
               vim.cmd('stopinsert')
               chat:submit()
-              notify('Chat submitted')
             end,
             description = 'Send',
           },

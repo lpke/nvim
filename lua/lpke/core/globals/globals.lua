@@ -136,13 +136,18 @@ function Lpke_feedkeys(keys_or_args, flags, escape_ks)
   vim.api.nvim_feedkeys(keys, flags, escape_ks)
 end
 
+local function lpke_is_codecompanion_buffer(buf)
+  local filetype = vim.api.nvim_get_option_value('filetype', { buf = buf })
+  return filetype == 'codecompanion' or filetype == 'codecompanion_input'
+end
+
 -- unload inactive buffers (any not in use)
 function Lpke_clean_buffers()
   local active_bufs = Lpke_get_active_bufs()
 
   -- unload buffers that are not in active_bufs
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if not active_bufs[buf] then
+    if not active_bufs[buf] and not lpke_is_codecompanion_buffer(buf) then
       -- dont unload if buffer has unsaved changes
       local modifiable =
         vim.api.nvim_get_option_value('modifiable', { buf = buf })

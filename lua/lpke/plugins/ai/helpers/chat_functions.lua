@@ -68,6 +68,22 @@ local function chat_index(bufnr, entries)
   return nil
 end
 
+function M.chat_position(bufnr)
+  if not bufnr or bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+
+  local entries = sorted_chat_entries()
+  local total = #entries
+  local idx = chat_index(bufnr, entries)
+
+  if not idx or total == 0 then
+    return nil
+  end
+
+  return idx, total
+end
+
 local function is_http_tool_line(line)
   return DEFAULT_HTTP_TOOL_LINE_SET[line] == true
 end

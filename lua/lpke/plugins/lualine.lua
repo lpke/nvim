@@ -25,6 +25,7 @@ local function config()
   local ai_config = require('lpke.plugins.ai.helpers.config')
   local acp_session_options =
     require('lpke.plugins.ai.helpers.acp_session_options')
+  local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
   local model_swap = require('lpke.plugins.ai.helpers.model_swap')
   local refresh = lualine.refresh
 
@@ -341,12 +342,29 @@ local function config()
         return nil
       end
 
-      return ai_config.adapter_display_name(adapter)
+      return ai_config.adapter_display_name(adapter) .. ':'
     end,
     cond = function()
       return vim.bo.filetype == 'codecompanion'
     end,
+    padding = { left = 0, right = 0 },
     color = { fg = tc.subtleplus },
+  }
+
+  local llm_chat_position = {
+    function()
+      local idx, total = chat_fns.chat_position(0)
+      if not idx then
+        return ''
+      end
+
+      return string.format('(%d/%d)', idx, total)
+    end,
+    cond = function()
+      return vim.bo.filetype == 'codecompanion'
+    end,
+    padding = { left = 0, right = 1 },
+    color = { fg = tc.mutedplus },
   }
 
   local llm_model = {
@@ -539,6 +557,7 @@ local function config()
             refresh()
           end,
         },
+        llm_chat_position,
         llm_adapter,
         llm_yolo_status,
         llm_codex_mode_status,
