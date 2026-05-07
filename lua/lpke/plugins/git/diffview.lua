@@ -181,6 +181,17 @@ local function config()
     end
   end
 
+  local function toggle_diffview_wrap()
+    local wrap = not vim.wo.wrap
+    vim.wo.wrap = wrap
+
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if vim.api.nvim_win_is_valid(win) and vim.wo[win].diff then
+        vim.wo[win].wrap = wrap
+      end
+    end
+  end
+
   local function toggle_files_equalized()
     actions.toggle_files()
     vim.schedule(function()
@@ -473,6 +484,8 @@ local function config()
         { 'n', 'i',              actions.listing_style,                  { desc = "Diffview: Toggle between 'list' and 'tree' views" } },
         { 'n', 'f',              actions.toggle_flatten_dirs,            { desc = 'Diffview: Flatten empty subdirectories in tree listing style' } },
         { 'n', 'R',              actions.refresh_files,                  { desc = 'Diffview: Update stats and entries in the file list' } },
+        { 'n', '<F2>w',          toggle_diffview_wrap,                   { desc = 'Diffview: Toggle line wrap' } },
+        { 'n', '<A-w>',          toggle_diffview_wrap,                   { desc = 'Diffview: Toggle line wrap' } },
         { 'n', 'zi',             diff_buffer_normal('zi'),               { desc = 'Diffview: Toggle diff buffer folds' } },
         { 'n', '<leader>e',      focus_after_buffer,                     { desc = 'Diffview: Bring focus to the after buffer' } },
         { 'n', '<leader>b',      toggle_files_equalized,                 { desc = 'Diffview: Toggle the file panel' } },
