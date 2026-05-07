@@ -141,6 +141,21 @@ local function config()
     end
   end
 
+  local function diff_buffer_normal(command)
+    return function()
+      local view = require('diffview.lib').get_current_view()
+      local main_win = view
+        and view.cur_layout
+        and view.cur_layout:get_main_win()
+
+      if main_win and main_win:is_valid() then
+        vim.api.nvim_win_call(main_win.id, function()
+          vim.cmd('normal! ' .. command)
+        end)
+      end
+    end
+  end
+
   local function select_or_open_selected_file_tab()
     local view = require('diffview.lib').get_current_view()
     if not (view and view.panel and view.panel:is_open()) then
@@ -162,6 +177,37 @@ local function config()
     else
       actions.select_entry()
     end
+  end
+
+  local function intent_to_add_entry()
+    local view = require('diffview.lib').get_current_view()
+    if not (view and view.panel and view.panel:is_open()) then
+      return
+    end
+
+    local item = view.panel:get_item_at_cursor()
+    if not item or type(item.collapsed) == 'boolean' or not item.path then
+      return
+    end
+
+    local toplevel = item.adapter
+      and item.adapter.ctx
+      and item.adapter.ctx.toplevel
+    local cmd = toplevel
+        and { 'git', '-C', toplevel, 'add', '-N', '--', item.path }
+      or { 'git', 'add', '-N', '--', item.path }
+    local output = vim.fn.system(cmd)
+
+    if vim.v.shell_error ~= 0 then
+      vim.notify(
+        vim.trim(output),
+        vim.log.levels.ERROR,
+        { title = 'Diffview: intent to add failed' }
+      )
+      return
+    end
+
+    view:update_files()
   end
 
   diffview.setup({
@@ -333,6 +379,7 @@ local function config()
         { 'n', '<2-LeftMouse>',  actions.select_entry,                   { desc = 'Diffview: Open the diff for the selected entry' } },
         { 'n', '-',              actions.toggle_stage_entry,             { desc = 'Diffview: Stage / unstage the selected entry' } },
         { 'n', 's',              actions.toggle_stage_entry,             { desc = 'Diffview: Stage / unstage the selected entry' } },
+        { 'n', 'I',              intent_to_add_entry,                    { desc = 'Diffview: Intent to add the selected entry' } },
         { 'n', 'S',              actions.stage_all,                      { desc = 'Diffview: Stage all entries' } },
         { 'n', 'U',              actions.unstage_all,                    { desc = 'Diffview: Unstage all entries' } },
         { 'n', 'X',              actions.restore_entry,                  { desc = 'Diffview: Restore entry to the state on the left side' } },
@@ -358,6 +405,7 @@ local function config()
         { 'n', 'i',              actions.listing_style,                  { desc = "Diffview: Toggle between 'list' and 'tree' views" } },
         { 'n', 'f',              actions.toggle_flatten_dirs,            { desc = 'Diffview: Flatten empty subdirectories in tree listing style' } },
         { 'n', 'R',              actions.refresh_files,                  { desc = 'Diffview: Update stats and entries in the file list' } },
+        { 'n', 'zi',             diff_buffer_normal('zi'),               { desc = 'Diffview: Toggle diff buffer folds' } },
         { 'n', '<leader>e',      focus_after_buffer,                     { desc = 'Diffview: Bring focus to the after buffer' } },
         { 'n', '<leader>b',      actions.toggle_files,                   { desc = 'Diffview: Toggle the file panel' } },
         { 'n', 'g<C-x>',         actions.cycle_layout,                   { desc = 'Diffview: Cycle available layouts' } },
