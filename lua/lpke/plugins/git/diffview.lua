@@ -210,6 +210,15 @@ local function config()
     view:update_files()
   end
 
+  local function use_absolute_numbers(_, winid)
+    if not vim.api.nvim_win_is_valid(winid) then
+      return
+    end
+
+    vim.wo[winid].number = true
+    vim.wo[winid].relativenumber = false
+  end
+
   diffview.setup({
     diff_binaries = false, -- Show diffs for binaries
     enhanced_diff_hl = true, -- See |diffview-config-enhanced_diff_hl|
@@ -306,7 +315,9 @@ local function config()
       DiffviewFileHistory = {},
     },
 
-    hooks = {}, -- See |diffview-config-hooks|
+    hooks = { -- See |diffview-config-hooks|
+      diff_buf_win_enter = use_absolute_numbers,
+    },
 
     -- stylua: ignore start
     keymaps = {
