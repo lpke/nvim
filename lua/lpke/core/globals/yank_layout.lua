@@ -24,9 +24,71 @@ function Lpke_paste_buffer()
 end
 
 -- close current window but save info (so it can be quickly restored)
+local function notify_close_error(msg)
+  vim.schedule(function()
+    vim.api.nvim_echo({ { msg, 'ErrorMsg' } }, false, {})
+  end)
+end
+
+local function close_last_win_to_oil()
+  local old_buf = vim.api.nvim_get_current_buf()
+  local ok, oil = pcall(require, 'oil')
+  if not ok then
+    notify_close_error('Cannot close last window: oil.nvim is unavailable')
+    return
+  end
+
+  local opened, err = pcall(oil.open, vim.fn.getcwd(-1, -1))
+  if not opened then
+    notify_close_error('Cannot close last window: ' .. tostring(err))
+    return
+  end
+
+  if
+    vim.api.nvim_buf_is_valid(old_buf)
+    and old_buf ~= vim.api.nvim_get_current_buf()
+  then
+    local deleted, delete_err = pcall(vim.api.nvim_buf_delete, old_buf, {
+      force = false,
+    })
+    if not deleted then
+      notify_close_error(
+        'Cannot close previous buffer: ' .. tostring(delete_err)
+      )
+    end
+  end
+end
+
+local function non_float_wins()
+  return vim.tbl_filter(function(win)
+    return vim.api.nvim_win_is_valid(win)
+      and vim.api.nvim_win_get_config(win).relative == ''
+  end, vim.api.nvim_list_wins())
+end
+
+local function current_tab_non_float_wins()
+  return vim.tbl_filter(function(win)
+    return vim.api.nvim_win_is_valid(win)
+      and vim.api.nvim_win_get_config(win).relative == ''
+  end, vim.api.nvim_tabpage_list_wins(0))
+end
+
 function Lpke_close_win()
   Lpke_copy_buffer()
-  vim.api.nvim_win_close(0, false)
+  if #non_float_wins() == 1 then
+    close_last_win_to_oil()
+    return
+  end
+
+  local ok, err
+  if #current_tab_non_float_wins() == 1 then
+    ok, err = pcall(vim.cmd.tabclose)
+  else
+    ok, err = pcall(vim.api.nvim_win_close, 0, false)
+  end
+  if not ok then
+    notify_close_error(tostring(err))
+  end
 end
 
 Lpke_copied_layout = {}
