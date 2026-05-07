@@ -59,8 +59,33 @@ local function config()
     end)
   end
 
+  local function patch_diffview_panel_headings()
+    local RenderComponent = require('diffview.renderer').RenderComponent
+
+    if RenderComponent._lpke_panel_headings then
+      return
+    end
+
+    RenderComponent._lpke_panel_headings = true
+    RenderComponent._lpke_add_text = RenderComponent.add_text
+
+    function RenderComponent:add_text(text, hl_group)
+      if text == 'Changes ' and hl_group == 'DiffviewFilePanelTitle' then
+        text = 'Unstaged '
+      elseif
+        text == 'Staged changes ' and hl_group == 'DiffviewFilePanelTitle'
+      then
+        text = 'Staged '
+        hl_group = 'DiffviewFilePanelStagedTitle'
+      end
+
+      return self:_lpke_add_text(text, hl_group)
+    end
+  end
+
   patch_diffview_open_flicker()
   patch_diffview_buffer_redraw_flicker()
+  patch_diffview_panel_headings()
 
   -- close the diffview tab and ensure the correct previous tab is focused
   local function diffview_close()
@@ -154,6 +179,37 @@ local function config()
         end)
       end
     end
+  end
+
+  local function toggle_files_equalized()
+    actions.toggle_files()
+    vim.schedule(function()
+      vim.cmd('wincmd =')
+    end)
+  end
+
+  local function toggle_whitespace_diff()
+    local diffopt = vim.split(
+      vim.api.nvim_get_option_value('diffopt', {}),
+      ',',
+      { plain = true, trimempty = true }
+    )
+    local next_diffopt = vim.tbl_filter(function(value)
+      return value ~= 'iwhite' and value ~= 'iwhiteall' and value ~= 'iwhiteeol'
+    end, diffopt)
+    local enabled = #next_diffopt ~= #diffopt
+
+    if not enabled then
+      table.insert(next_diffopt, 'iwhiteall')
+    end
+
+    vim.opt.diffopt = next_diffopt
+    vim.cmd('diffupdate')
+    vim.notify(
+      enabled and 'Whitespace diffing enabled' or 'Whitespace diffing disabled',
+      vim.log.levels.INFO,
+      { title = 'Diffview' }
+    )
   end
 
   local function select_or_open_selected_file_tab()
@@ -336,7 +392,8 @@ local function config()
         { 'n', '<C-w><C-f>',  actions.goto_file_split,                { desc = 'Diffview: Open the file in a new split' } },
         { 'n', '<C-w>gf',     actions.goto_file_tab,                  { desc = 'Diffview: Open the file in a new tabpage' } },
         { 'n', '<leader>e',   actions.focus_files,                    { desc = 'Diffview: Bring focus to the file panel' } },
-        { 'n', '<leader>b',   actions.toggle_files,                   { desc = 'Diffview: Toggle the file panel.' } },
+        { 'n', '<leader>b',   toggle_files_equalized,                 { desc = 'Diffview: Toggle the file panel.' } },
+        { 'n', 'gw',          toggle_whitespace_diff,                  { desc = 'Diffview: Toggle whitespace diffing' } },
         { 'n', 'g<C-x>',      actions.cycle_layout,                   { desc = 'Diffview: Cycle through available layouts.' } },
         { 'n', '[x',          function() prev_conflict('x') end,      { desc = 'Diffview: In the merge-tool: jump to the previous conflict' } },
         { 'n', ']x',          function() next_conflict('x') end,      { desc = 'Diffview: In the merge-tool: jump to the next conflict' } },
@@ -418,7 +475,8 @@ local function config()
         { 'n', 'R',              actions.refresh_files,                  { desc = 'Diffview: Update stats and entries in the file list' } },
         { 'n', 'zi',             diff_buffer_normal('zi'),               { desc = 'Diffview: Toggle diff buffer folds' } },
         { 'n', '<leader>e',      focus_after_buffer,                     { desc = 'Diffview: Bring focus to the after buffer' } },
-        { 'n', '<leader>b',      actions.toggle_files,                   { desc = 'Diffview: Toggle the file panel' } },
+        { 'n', '<leader>b',      toggle_files_equalized,                 { desc = 'Diffview: Toggle the file panel' } },
+        { 'n', 'gw',             toggle_whitespace_diff,                  { desc = 'Diffview: Toggle whitespace diffing' } },
         { 'n', 'g<C-x>',         actions.cycle_layout,                   { desc = 'Diffview: Cycle available layouts' } },
         { 'n', '[x',             function() prev_conflict('x') end,      { desc = 'Diffview: Go to the previous conflict' } },
         { 'n', ']x',             function() next_conflict('x') end,      { desc = 'Diffview: Go to the next conflict' } },
@@ -464,7 +522,8 @@ local function config()
         { 'n', '<C-w><C-f>',    actions.goto_file_split,             { desc = 'Diffview: Open the file in a new split' } },
         { 'n', '<C-w>gf',       actions.goto_file_tab,               { desc = 'Diffview: Open the file in a new tabpage' } },
         { 'n', '<leader>e',     actions.focus_files,                 { desc = 'Diffview: Bring focus to the file panel' } },
-        { 'n', '<leader>b',     actions.toggle_files,                { desc = 'Diffview: Toggle the file panel' } },
+        { 'n', '<leader>b',     toggle_files_equalized,              { desc = 'Diffview: Toggle the file panel' } },
+        { 'n', 'gw',            toggle_whitespace_diff,               { desc = 'Diffview: Toggle whitespace diffing' } },
         { 'n', 'g<C-x>',        actions.cycle_layout,                { desc = 'Diffview: Cycle available layouts' } },
         { 'n', 'g?',            actions.help('file_history_panel'),  { desc = 'Diffview: Open the help panel' } },
         { 'n', '<leader>i',     diffview_close,                      { desc = 'Diffview: Close the Diffview tab' } },
@@ -511,6 +570,7 @@ local function config()
     ['DiffViewStatusBroken'] = { bg = 'none', fg = tc.love },
     ['DiffViewStatusUnknown'] = { bg = 'none', fg = tc.love },
     ['DiffViewFilePanelSelected'] = { bg = 'none', fg = tc.iris, bold = true },
+    ['DiffviewFilePanelStagedTitle'] = { bg = 'none', fg = tc.foam, bold = true },
     ['DiffViewFilePanelInsertions'] = { bg = 'none', fg = tc.foam },
     ['DiffViewFilePanelDeletions'] = { bg = 'none', fg = tc.love },
     ['DiffViewFilePanelCounter'] = { bg = 'none', fg = tc.text, bold = false },
