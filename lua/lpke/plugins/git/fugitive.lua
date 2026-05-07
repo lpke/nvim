@@ -1,4 +1,27 @@
 Lpke_fugitive_prev_win_id = nil
+
+local function focus_win_or_fallback(win_id)
+  if win_id and vim.api.nvim_win_is_valid(win_id) then
+    vim.api.nvim_set_current_win(win_id)
+    return true
+  end
+
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    if vim.api.nvim_tabpage_is_valid(tab) then
+      local wins = vim.api.nvim_tabpage_list_wins(tab)
+      for _, win in ipairs(wins) do
+        if vim.api.nvim_win_is_valid(win) then
+          vim.api.nvim_set_current_tabpage(tab)
+          vim.api.nvim_set_current_win(win)
+          return true
+        end
+      end
+    end
+  end
+
+  return false
+end
+
 function Lpke_toggle_git_fugitive(new_tab)
   local fugitive_open = false
   local fugitive_win = nil
@@ -37,9 +60,8 @@ function Lpke_toggle_git_fugitive(new_tab)
     -- close if active
     if fugitive_tab == cur_tab and fugitive_win == cur_win then
       vim.api.nvim_win_close(fugitive_win, false)
-      if Lpke_fugitive_prev_win_id then
-        vim.api.nvim_set_current_win(Lpke_fugitive_prev_win_id)
-      end
+      focus_win_or_fallback(Lpke_fugitive_prev_win_id)
+      Lpke_fugitive_prev_win_id = nil
     else
       -- focus if not active
       vim.api.nvim_set_current_tabpage(fugitive_tab)
