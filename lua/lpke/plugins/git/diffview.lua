@@ -124,40 +124,156 @@ local function config()
     Lpke_square_repeat_key = key
   end
 
+  local focus_after_buffer
+  local diff_buffer_normal
+  local toggle_whitespace_diff
+  local get_diffview_commit_win
+
   local function open_fugitive_commit_from_diffview()
-    local diffview_tab = vim.api.nvim_get_current_tabpage()
+    local commit_win = get_diffview_commit_win(0)
+    if commit_win then
+      vim.api.nvim_set_current_win(commit_win)
+      return
+    end
 
-    Lpke_toggle_git_fugitive(true)
+    if Lpke_find_git_root(vim.fn.getcwd()) == nil then
+      vim.notify(
+        'Diffview commit: Not in a git repository.',
+        vim.log.levels.ERROR
+      )
+      return
+    end
 
-    vim.schedule(function()
-      if vim.api.nvim_get_current_tabpage() == diffview_tab then
-        return
-      end
-
-      if vim.api.nvim_tabpage_is_valid(diffview_tab) then
-        local current_tab = vim.api.nvim_get_current_tabpage()
-        local ok, diffview_tabnr =
-          pcall(vim.api.nvim_tabpage_get_number, diffview_tab)
-
-        if ok then
-          pcall(function()
-            vim.cmd(diffview_tabnr .. 'tabclose')
-          end)
-        end
-
-        if vim.api.nvim_tabpage_is_valid(current_tab) then
-          vim.api.nvim_set_current_tabpage(current_tab)
-        end
-      end
-
-      vim.schedule(function()
-        local keys = vim.api.nvim_replace_termcodes('cc', true, false, true)
-        vim.api.nvim_feedkeys(keys, 'm', false)
-      end)
-    end)
+    vim.t.lpke_diffview_commit_pending = true
+    vim.cmd('botright Git commit')
   end
 
-  local function focus_after_buffer()
+  local function get_diffview_file_panel_win(tabpage)
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tabpage or 0)) do
+      if vim.api.nvim_win_is_valid(win) then
+        local bufnr = vim.api.nvim_win_get_buf(win)
+        local filetype =
+          vim.api.nvim_get_option_value('filetype', { buf = bufnr })
+
+        if filetype == 'DiffviewFiles' then
+          return win
+        end
+      end
+    end
+  end
+
+  local function focus_diffview_file_panel()
+    local win = get_diffview_file_panel_win(0)
+    if win then
+      vim.api.nvim_set_current_win(win)
+    end
+  end
+
+  function get_diffview_commit_win(tabpage)
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tabpage or 0)) do
+      if vim.api.nvim_win_is_valid(win) then
+        local bufnr = vim.api.nvim_win_get_buf(win)
+        if vim.b[bufnr].lpke_diffview_commit_buffer then
+          return win
+        end
+      end
+    end
+  end
+
+  local function toggle_diffview_commit_or_after_buffer()
+    local commit_win = get_diffview_commit_win(0)
+
+    if commit_win and commit_win ~= vim.api.nvim_get_current_win() then
+      vim.api.nvim_set_current_win(commit_win)
+      return
+    end
+
+    focus_after_buffer()
+  end
+
+  local function call_in_diffview_file_panel(callback)
+    local current_win = vim.api.nvim_get_current_win()
+    local panel_win = get_diffview_file_panel_win(0)
+
+    if not panel_win then
+      vim.notify(
+        'Diffview commit: File panel not found.',
+        vim.log.levels.WARN,
+        { title = 'Diffview' }
+      )
+      return
+    end
+
+    local ok, err = pcall(vim.api.nvim_win_call, panel_win, callback)
+
+    if vim.api.nvim_win_is_valid(current_win) then
+      vim.api.nvim_set_current_win(current_win)
+    end
+
+    if not ok then
+      error(err)
+    end
+  end
+
+  local function install_diffview_commit_keymaps(bufnr)
+    local opts = function(desc)
+      return { buffer = bufnr, desc = desc, noremap = true }
+    end
+
+    vim.keymap.set('n', 'J', function()
+      call_in_diffview_file_panel(actions.select_next_entry)
+    end, opts('Diffview: Open the diff for the next file'))
+
+    vim.keymap.set('n', 'K', function()
+      call_in_diffview_file_panel(actions.select_prev_entry)
+    end, opts('Diffview: Open the diff for the previous file'))
+
+    vim.keymap.set('n', 'zi', function()
+      diff_buffer_normal('zi')()
+    end, opts('Diffview: Toggle diff buffer folds'))
+
+    vim.keymap.set('n', '<C-j>', function()
+      local scroll = actions.scroll_view(0.5)
+      if type(scroll) == 'function' then
+        scroll()
+      end
+    end, opts('Diffview: Scroll the view down'))
+
+    vim.keymap.set('n', '<C-k>', function()
+      local scroll = actions.scroll_view(-0.5)
+      if type(scroll) == 'function' then
+        scroll()
+      end
+    end, opts('Diffview: Scroll the view up'))
+
+    vim.keymap.set(
+      'n',
+      'gw',
+      toggle_whitespace_diff,
+      opts('Diffview: Toggle whitespace diffing')
+    )
+
+    vim.keymap.set('n', '-', function()
+      call_in_diffview_file_panel(actions.toggle_stage_entry)
+    end, opts('Diffview: Stage / unstage the selected entry'))
+
+    vim.keymap.set('n', 's', function()
+      call_in_diffview_file_panel(actions.toggle_stage_entry)
+    end, opts('Diffview: Stage / unstage the selected entry'))
+
+    vim.keymap.set('n', 'S', function()
+      call_in_diffview_file_panel(actions.stage_all)
+    end, opts('Diffview: Stage all entries'))
+
+    vim.keymap.set(
+      'n',
+      '<leader>e',
+      focus_diffview_file_panel,
+      opts('Diffview: Bring focus to the file panel')
+    )
+  end
+
+  function focus_after_buffer()
     local view = require('diffview.lib').get_current_view()
     local main_win = view and view.cur_layout and view.cur_layout:get_main_win()
 
@@ -166,7 +282,7 @@ local function config()
     end
   end
 
-  local function diff_buffer_normal(command)
+  function diff_buffer_normal(command)
     return function()
       local view = require('diffview.lib').get_current_view()
       local main_win = view
@@ -199,7 +315,7 @@ local function config()
     end)
   end
 
-  local function toggle_whitespace_diff()
+  function toggle_whitespace_diff()
     local diffopt = vim.split(
       vim.api.nvim_get_option_value('diffopt', {}),
       ',',
@@ -285,6 +401,23 @@ local function config()
     vim.wo[winid].number = true
     vim.wo[winid].relativenumber = false
   end
+
+  vim.api.nvim_create_autocmd('User', {
+    group = vim.api.nvim_create_augroup(
+      'LpkeDiffviewFugitiveCommit',
+      { clear = true }
+    ),
+    pattern = 'FugitiveEditor',
+    callback = function(event)
+      if not vim.t.lpke_diffview_commit_pending then
+        return
+      end
+
+      vim.t.lpke_diffview_commit_pending = nil
+      vim.b[event.buf].lpke_diffview_commit_buffer = true
+      install_diffview_commit_keymaps(event.buf)
+    end,
+  })
 
   diffview.setup({
     diff_binaries = false, -- Show diffs for binaries
@@ -487,7 +620,7 @@ local function config()
         { 'n', '<F2>w',          toggle_diffview_wrap,                   { desc = 'Diffview: Toggle line wrap' } },
         { 'n', '<A-w>',          toggle_diffview_wrap,                   { desc = 'Diffview: Toggle line wrap' } },
         { 'n', 'zi',             diff_buffer_normal('zi'),               { desc = 'Diffview: Toggle diff buffer folds' } },
-        { 'n', '<leader>e',      focus_after_buffer,                     { desc = 'Diffview: Bring focus to the after buffer' } },
+        { 'n', '<leader>e',      toggle_diffview_commit_or_after_buffer,  { desc = 'Diffview: Toggle commit buffer or after buffer' } },
         { 'n', '<leader>b',      toggle_files_equalized,                 { desc = 'Diffview: Toggle the file panel' } },
         { 'n', 'gw',             toggle_whitespace_diff,                  { desc = 'Diffview: Toggle whitespace diffing' } },
         { 'n', 'g<C-x>',         actions.cycle_layout,                   { desc = 'Diffview: Cycle available layouts' } },
