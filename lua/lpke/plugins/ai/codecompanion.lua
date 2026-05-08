@@ -477,6 +477,7 @@ local function config()
   })
 
   require('lpke.plugins.ai.helpers.acp_lifecycle').setup()
+  require('lpke.plugins.ai.helpers.drafts').setup()
 
   -- codecompanion-history hard-codes a leading "✨ " when it renames chat
   -- buffers. It fires this event with the unprefixed title immediately after

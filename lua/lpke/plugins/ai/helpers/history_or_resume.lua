@@ -316,6 +316,10 @@ local choices = {
     display = 'CodeCompanion history',
     value = 'history',
   },
+  {
+    display = 'Draft prompts',
+    value = 'drafts',
+  },
 }
 
 local function handle_choice(chat, choice)
@@ -331,6 +335,8 @@ local function handle_choice(chat, choice)
     run_resume(chat)
   elseif value == 'history' then
     open_codecompanion_history()
+  elseif value == 'drafts' then
+    require('lpke.plugins.ai.helpers.drafts').open_picker(chat)
   end
 end
 
