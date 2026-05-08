@@ -128,6 +128,231 @@ local function config()
   local diff_buffer_normal
   local toggle_whitespace_diff
   local get_diffview_commit_win
+  local install_diffview_commit_keymaps
+  local diffview_commit_augroup =
+    vim.api.nvim_create_augroup('LpkeDiffviewFugitiveCommit', { clear = true })
+
+  local function git_command(root, args, opts)
+    opts = opts or {}
+
+    local cmd = { 'git', '-C', root }
+    vim.list_extend(cmd, args)
+
+    local result = vim
+      .system(cmd, {
+        text = true,
+        stdin = opts.stdin,
+        env = opts.env,
+      })
+      :wait()
+
+    local output =
+      vim.trim(table.concat({ result.stdout or '', result.stderr or '' }, ''))
+
+    return result.code, output, result
+  end
+
+  local function git_path(root, path)
+    local code, output = git_command(root, { 'rev-parse', '--git-path', path })
+    if code ~= 0 or output == '' then
+      return nil, output
+    end
+
+    if output:match('^/') then
+      return output
+    end
+
+    return vim.fn.fnamemodify(root .. '/' .. output, ':p')
+  end
+
+  local function clean_commit_message(root, lines)
+    local input = table.concat(lines, '\n') .. '\n'
+    local code, output, result = git_command(
+      root,
+      { 'stripspace', '--strip-comments' },
+      { stdin = input }
+    )
+
+    if code ~= 0 then
+      return nil, output
+    end
+
+    return vim.split(
+      result.stdout or '',
+      '\n',
+      { plain = true, trimempty = true }
+    )
+  end
+
+  local function refresh_diffview_files()
+    local ok, lib = pcall(require, 'diffview.lib')
+    if not ok then
+      return
+    end
+
+    local view = lib.get_current_view()
+    if view then
+      view:update_files()
+    end
+  end
+
+  local function setup_diffview_commit_buffer(
+    bufnr,
+    root,
+    message_file,
+    initial_message,
+    mark_modified
+  )
+    vim.bo[bufnr].bufhidden = 'wipe'
+    vim.bo[bufnr].filetype = 'gitcommit'
+    vim.b[bufnr].lpke_diffview_commit_buffer = true
+    vim.b[bufnr].lpke_diffview_commit_root = root
+    vim.b[bufnr].lpke_diffview_commit_message_file = message_file
+    vim.b[bufnr].lpke_diffview_commit_initial_message = initial_message
+    vim.b[bufnr].lpke_diffview_commit_written = false
+
+    install_diffview_commit_keymaps(bufnr)
+
+    vim.api.nvim_create_autocmd('BufWritePost', {
+      group = diffview_commit_augroup,
+      buffer = bufnr,
+      callback = function(event)
+        vim.b[event.buf].lpke_diffview_commit_written = true
+      end,
+    })
+
+    vim.api.nvim_create_autocmd('BufDelete', {
+      group = diffview_commit_augroup,
+      buffer = bufnr,
+      once = true,
+      callback = function(event)
+        local commit_info = {
+          root = vim.b[event.buf].lpke_diffview_commit_root,
+          message_file = vim.b[event.buf].lpke_diffview_commit_message_file,
+          initial_message = vim.b[event.buf].lpke_diffview_commit_initial_message,
+          written = vim.b[event.buf].lpke_diffview_commit_written,
+        }
+
+        if not commit_info.written then
+          vim.notify(
+            'Aborting commit due to empty commit message.',
+            vim.log.levels.WARN,
+            { title = 'Diffview commit' }
+          )
+          return
+        end
+
+        vim.schedule(function()
+          local lines = vim.fn.readfile(commit_info.message_file)
+          local cleaned, clean_error =
+            clean_commit_message(commit_info.root, lines)
+
+          if not cleaned then
+            vim.notify(
+              clean_error,
+              vim.log.levels.ERROR,
+              { title = 'Diffview commit' }
+            )
+            return
+          end
+
+          local message = table.concat(cleaned, '\n')
+          local function reopen()
+            vim.cmd(
+              'botright split ' .. vim.fn.fnameescape(commit_info.message_file)
+            )
+            setup_diffview_commit_buffer(
+              vim.api.nvim_get_current_buf(),
+              commit_info.root,
+              commit_info.message_file,
+              commit_info.initial_message,
+              true
+            )
+          end
+
+          if vim.trim(message) == '' then
+            vim.notify(
+              'Aborting commit due to empty commit message.',
+              vim.log.levels.WARN,
+              { title = 'Diffview commit' }
+            )
+            return
+          end
+
+          if
+            commit_info.initial_message ~= ''
+            and message == commit_info.initial_message
+          then
+            vim.notify(
+              'Aborting commit; commit message was not edited.',
+              vim.log.levels.WARN,
+              { title = 'Diffview commit' }
+            )
+            return
+          end
+
+          local cleaned_file = vim.fn.tempname()
+          vim.fn.writefile(cleaned, cleaned_file)
+          local code, output = git_command(commit_info.root, {
+            'commit',
+            '--file',
+            cleaned_file,
+            '--cleanup=verbatim',
+          })
+          vim.fn.delete(cleaned_file)
+
+          if code == 0 then
+            vim.notify(
+              output ~= '' and output or 'Commit created.',
+              vim.log.levels.INFO,
+              { title = 'Diffview commit' }
+            )
+            refresh_diffview_files()
+          else
+            vim.notify(
+              output,
+              vim.log.levels.ERROR,
+              { title = 'Diffview commit' }
+            )
+            reopen()
+          end
+        end)
+      end,
+    })
+
+    if mark_modified then
+      vim.bo[bufnr].modified = true
+    end
+  end
+
+  local function prepare_diffview_commit_message(root)
+    local message_file, path_error = git_path(root, 'COMMIT_EDITMSG')
+    if not message_file then
+      return nil, path_error
+    end
+
+    vim.fn.delete(message_file)
+
+    git_command(root, { 'commit', '--allow-empty', '--no-verify' }, {
+      env = {
+        GIT_EDITOR = 'false',
+        GIT_SEQUENCE_EDITOR = 'false',
+      },
+    })
+
+    if vim.fn.filereadable(message_file) ~= 1 then
+      return nil, 'Failed to prepare COMMIT_EDITMSG.'
+    end
+
+    local cleaned, clean_error =
+      clean_commit_message(root, vim.fn.readfile(message_file))
+
+    if not cleaned then
+      return nil, clean_error
+    end
+
+    return message_file, table.concat(cleaned, '\n')
+  end
 
   local function open_fugitive_commit_from_diffview()
     local commit_win = get_diffview_commit_win(0)
@@ -136,7 +361,8 @@ local function config()
       return
     end
 
-    if Lpke_find_git_root(vim.fn.getcwd()) == nil then
+    local root = Lpke_find_git_root(vim.fn.getcwd())
+    if root == nil then
       vim.notify(
         'Diffview commit: Not in a git repository.',
         vim.log.levels.ERROR
@@ -144,8 +370,26 @@ local function config()
       return
     end
 
-    vim.t.lpke_diffview_commit_pending = true
-    vim.cmd('botright Git commit')
+    -- Fugitive's live :Git commit job snapshots the index before the editor.
+    -- Open a gitcommit buffer now, but start git commit only after it closes.
+    local message_file, initial_message = prepare_diffview_commit_message(root)
+    if not message_file then
+      vim.notify(
+        initial_message,
+        vim.log.levels.ERROR,
+        { title = 'Diffview commit' }
+      )
+      return
+    end
+
+    vim.cmd('botright split ' .. vim.fn.fnameescape(message_file))
+    setup_diffview_commit_buffer(
+      vim.api.nvim_get_current_buf(),
+      root,
+      message_file,
+      initial_message,
+      false
+    )
   end
 
   local function get_diffview_file_panel_win(tabpage)
@@ -215,7 +459,7 @@ local function config()
     end
   end
 
-  local function install_diffview_commit_keymaps(bufnr)
+  function install_diffview_commit_keymaps(bufnr)
     local opts = function(desc)
       return { buffer = bufnr, desc = desc, noremap = true }
     end
@@ -401,23 +645,6 @@ local function config()
     vim.wo[winid].number = true
     vim.wo[winid].relativenumber = false
   end
-
-  vim.api.nvim_create_autocmd('User', {
-    group = vim.api.nvim_create_augroup(
-      'LpkeDiffviewFugitiveCommit',
-      { clear = true }
-    ),
-    pattern = 'FugitiveEditor',
-    callback = function(event)
-      if not vim.t.lpke_diffview_commit_pending then
-        return
-      end
-
-      vim.t.lpke_diffview_commit_pending = nil
-      vim.b[event.buf].lpke_diffview_commit_buffer = true
-      install_diffview_commit_keymaps(event.buf)
-    end,
-  })
 
   diffview.setup({
     diff_binaries = false, -- Show diffs for binaries
