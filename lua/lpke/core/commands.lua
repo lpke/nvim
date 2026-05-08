@@ -9,6 +9,44 @@ vim.cmd('cabbrev r echo "shorthand for :read disabled"')
 vim.cmd('cabbrev re echo "shorthand for :read disabled"')
 vim.cmd('cabbrev rea echo "shorthand for :read disabled"')
 
+local function codex_usage()
+  local script = vim.fn.expand('~/.local/bin/codex-usage')
+
+  if vim.fn.executable(script) ~= 1 then
+    vim.api.nvim_echo({ { script .. ' is not executable', 'ErrorMsg' } }, true, {})
+    return
+  end
+
+  local function echo_output(output, code)
+    vim.schedule(function()
+      local hl = code == 0 and 'None' or 'ErrorMsg'
+      vim.api.nvim_echo({ { output, hl } }, true, {})
+    end)
+  end
+
+  if vim.system then
+    vim.system({ script }, { text = true }, function(result)
+      echo_output(vim.trim(result.stdout ~= '' and result.stdout or result.stderr), result.code)
+    end)
+    return
+  end
+
+  local output = {}
+  vim.fn.jobstart({ script }, {
+    stdout_buffered = true,
+    stderr_buffered = true,
+    on_stdout = function(_, data)
+      vim.list_extend(output, vim.tbl_filter(function(line) return line ~= '' end, data))
+    end,
+    on_stderr = function(_, data)
+      vim.list_extend(output, vim.tbl_filter(function(line) return line ~= '' end, data))
+    end,
+    on_exit = function(_, code)
+      echo_output(table.concat(output, '\n'), code)
+    end,
+  })
+end
+
 -- stylua: ignore start
 helpers.command_set_multi({
   { '', 'Bclean', Lpke_clean_buffers, { desc = 'Removes buffers that arent actively shown' } },
@@ -38,18 +76,8 @@ helpers.command_set_multi({
   { '', 'PC', function() print(vim.fn.getcwd()) end, { desc = 'Print the current working directory' } },
   { '', 'PG', function() Lpke_git_root() end, { desc = 'Print the path of the git root of the current file' } },
   { '', 'PW', Lpke_active, { desc = 'Print details about the currently active tab/buffer/window' } },
-  { '', 'CodexUsage', function()
-    local script = vim.fn.expand('~/.local/bin/codex-usage')
-
-    if vim.fn.executable(script) ~= 1 then
-      vim.api.nvim_echo({ { script .. ' is not executable', 'ErrorMsg' } }, true, {})
-      return
-    end
-
-    local output = vim.fn.systemlist({ script })
-    local hl = vim.v.shell_error == 0 and 'None' or 'ErrorMsg'
-    vim.api.nvim_echo({ { table.concat(output, '\n'), hl } }, true, {})
-  end, { desc = 'Print Codex usage' } },
+  { '', 'CU', codex_usage, { desc = 'Print Codex usage' } },
+  { '', 'CodexUsage', codex_usage, { desc = 'Print Codex usage' } },
 
   -- yanking
   { '', 'Y', function() print('YP/p: buf name | YD/d: cwd | YG/g: git root | YL/l: location | YT/t: tab ID | YB/b: buf ID | YW/w: win ID') end,
