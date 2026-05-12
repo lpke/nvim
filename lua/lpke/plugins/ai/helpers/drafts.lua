@@ -297,6 +297,88 @@ local function chat_for_buf(bufnr)
   return chat_module.buf_get_chat(bufnr)
 end
 
+local function visible_context_lines(bufnr)
+  local chat = chat_for_buf(bufnr)
+  if not chat or type(chat.context_items) ~= 'table' then
+    return nil
+  end
+
+  local config = cc_config()
+  local icons = config
+      and config.display
+      and config.display.chat
+      and config.display.chat.icons
+    or {}
+
+  local lines = {}
+  for _, context in ipairs(chat.context_items) do
+    if
+      context
+      and type(context.id) == 'string'
+      and context.id ~= ''
+      and not (context.opts and context.opts.visible == false)
+    then
+      local icon = ''
+      if context.opts and context.opts.sync_all then
+        icon = icons.buffer_sync_all or ''
+      elseif context.opts and context.opts.sync_diff then
+        icon = icons.buffer_sync_diff or ''
+      end
+
+      table.insert(lines, '> - ' .. icon .. context.id)
+    end
+  end
+
+  return #lines > 0 and lines or nil
+end
+
+local function strip_leading_context_block(bufnr, lines)
+  local context_lines = visible_context_lines(bufnr)
+  if not context_lines then
+    return lines
+  end
+
+  local start = 1
+  while lines[start] and vim.trim(lines[start]) == '' do
+    start = start + 1
+  end
+
+  if lines[start] ~= '> Context:' then
+    return lines
+  end
+
+  local cursor = start + 1
+  for _, context_line in ipairs(context_lines) do
+    if lines[cursor] ~= context_line then
+      return lines
+    end
+
+    cursor = cursor + 1
+  end
+
+  if
+    lines[cursor]
+    and lines[cursor] ~= ''
+    and lines[cursor]:match('^>%s*%-%s+')
+  then
+    return lines
+  end
+
+  local remove_to = cursor - 1
+  if lines[cursor] == '' then
+    remove_to = cursor
+  end
+
+  local stripped = {}
+  for i, line in ipairs(lines) do
+    if i < start or i > remove_to then
+      table.insert(stripped, line)
+    end
+  end
+
+  return stripped
+end
+
 local function llm_role(bufnr)
   local config = cc_config()
   local role = config
@@ -360,7 +442,10 @@ local function active_prompt(bufnr)
 
   return {
     header = last_role_header.line,
-    lines = vim.list_slice(lines, last_role_header.line + 1),
+    lines = strip_leading_context_block(
+      bufnr,
+      vim.list_slice(lines, last_role_header.line + 1)
+    ),
   }
 end
 
