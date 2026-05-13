@@ -10,13 +10,15 @@ local function config()
   })
   -- stylua: ignore end
 
+  local no_session = vim.env.LPKE_NVIM_NO_SESSION == '1'
+
   auto_session.setup({
     enabled = true,
     suppressed_dirs = { '/', '~/', '~/Downloads' },
     root_dir = vim.fn.stdpath('data') .. '/sessions/',
     auto_restore_last_session = false, -- load last session for cwd if doesnt exist
-    auto_save = true,
-    auto_restore = true,
+    auto_save = not no_session,
+    auto_restore = not no_session,
     git_use_branch_name = false, -- differentiate by git branch name (false because worktrees are better)
     bypass_save_filetypes = { '' }, -- dont auto-save when only buffer open is one of these file types
     log_level = 'error',

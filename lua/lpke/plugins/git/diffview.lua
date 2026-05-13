@@ -115,6 +115,107 @@ local function config()
     vim.cmd('DiffviewOpen')
   end
 
+  function Lpke_diffview_git_ui()
+    pcall(function()
+      require('auto-session').DisableAutoSave()
+    end)
+
+    local augroup =
+      vim.api.nvim_create_augroup('LpkeDiffviewGitUi', { clear = true })
+
+    local function quit_diffview_git_ui()
+      pcall(function()
+        require('auto-session').DisableAutoSave()
+      end)
+      vim.cmd('qa')
+    end
+
+    local function map_quit(bufnr)
+      vim.keymap.set('n', 'Q', quit_diffview_git_ui, {
+        buffer = bufnr,
+        desc = 'Quit Diffview git UI',
+        nowait = true,
+        noremap = true,
+        silent = true,
+      })
+      vim.keymap.set('n', '<leader>i', quit_diffview_git_ui, {
+        buffer = bufnr,
+        desc = 'Quit Diffview git UI',
+        nowait = true,
+        noremap = true,
+        silent = true,
+      })
+    end
+
+    vim.api.nvim_create_autocmd('FileType', {
+      group = augroup,
+      pattern = 'Diffview*',
+      callback = function(event)
+        map_quit(event.buf)
+      end,
+    })
+
+    vim.api.nvim_create_autocmd('BufWinEnter', {
+      group = augroup,
+      callback = function(event)
+        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          if vim.api.nvim_win_is_valid(win) then
+            local bufnr = vim.api.nvim_win_get_buf(win)
+            local filetype =
+              vim.api.nvim_get_option_value('filetype', { buf = bufnr })
+
+            if filetype == 'DiffviewFiles' then
+              map_quit(event.buf)
+              return
+            end
+          end
+        end
+      end,
+    })
+
+    vim.api.nvim_create_autocmd('FileType', {
+      group = augroup,
+      pattern = 'DiffviewFiles',
+      once = true,
+      callback = function(event)
+        map_quit(event.buf)
+        vim.schedule(function()
+          local target_tab
+          for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+            for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+              if vim.api.nvim_win_is_valid(win) then
+                local bufnr = vim.api.nvim_win_get_buf(win)
+                local filetype =
+                  vim.api.nvim_get_option_value('filetype', { buf = bufnr })
+
+                if filetype == 'DiffviewFiles' then
+                  target_tab = tab
+                  break
+                end
+              end
+            end
+
+            if target_tab then
+              break
+            end
+          end
+
+          if target_tab and vim.api.nvim_tabpage_is_valid(target_tab) then
+            vim.api.nvim_set_current_tabpage(target_tab)
+            vim.cmd('silent! tabonly')
+            for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+              if vim.api.nvim_win_is_valid(win) then
+                map_quit(vim.api.nvim_win_get_buf(win))
+              end
+            end
+          end
+        end)
+      end,
+    })
+
+    diffview_open_or_focus()
+  end
+
   local function prev_conflict(key)
     actions.prev_conflict()
     Lpke_square_repeat_key = key
@@ -126,6 +227,7 @@ local function config()
 
   local focus_after_buffer
   local diff_buffer_normal
+  local toggle_diffview_wrap
   local toggle_whitespace_diff
   local get_diffview_commit_win
   local install_diffview_commit_keymaps
@@ -497,6 +599,20 @@ local function config()
       opts('Diffview: Toggle whitespace diffing')
     )
 
+    vim.keymap.set(
+      'n',
+      '<A-w>',
+      toggle_diffview_wrap,
+      opts('Diffview: Toggle line wrap')
+    )
+
+    vim.keymap.set(
+      'n',
+      '<F2>w',
+      toggle_diffview_wrap,
+      opts('Diffview: Toggle line wrap')
+    )
+
     vim.keymap.set('n', '-', function()
       call_in_diffview_file_panel(actions.toggle_stage_entry)
     end, opts('Diffview: Stage / unstage the selected entry'))
@@ -541,7 +657,7 @@ local function config()
     end
   end
 
-  local function toggle_diffview_wrap()
+  function toggle_diffview_wrap()
     local wrap = not vim.wo.wrap
     vim.wo.wrap = wrap
 
@@ -954,10 +1070,14 @@ local function config()
     ['DiffviewFolderName'] = { bg = 'none', fg = tc.muted },
   })
   -- stylua: ignore end
+
+  if vim.env.LPKE_NVIM_DIFFVIEW_GIT_UI == '1' then
+    vim.schedule(Lpke_diffview_git_ui)
+  end
 end
 
 return {
   'sindrets/diffview.nvim',
-  event = 'VeryLazy',
+  event = vim.env.LPKE_NVIM_DIFFVIEW_GIT_UI == '1' and 'VimEnter' or 'VeryLazy',
   config = config,
 }
