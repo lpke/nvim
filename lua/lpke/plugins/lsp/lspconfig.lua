@@ -1,12 +1,14 @@
-Lpke_diagnostic_config = {
-  signs = {
-    text = {
-      [vim.diagnostic.severity.ERROR] = '■',
-      [vim.diagnostic.severity.WARN] = '▲',
-      [vim.diagnostic.severity.INFO] = '◆',
-      [vim.diagnostic.severity.HINT] = '●',
-    },
+Lpke_diagnostic_signs_config = {
+  text = {
+    [vim.diagnostic.severity.ERROR] = '■',
+    [vim.diagnostic.severity.WARN] = '▲',
+    [vim.diagnostic.severity.INFO] = '◆',
+    [vim.diagnostic.severity.HINT] = '●',
   },
+}
+
+Lpke_diagnostic_config = {
+  signs = false,
   virtual_text = {
     prefix = '■',
     virt_text_pos = 'eol_right_align',
@@ -103,8 +105,8 @@ local function config()
     { 'nC', '<BS>ip', 'LspInfo', { desc = 'Open LSP info window' } },
     { 'nv', '<F2>d', Lpke_toggle_diagnostics, { desc = 'Toggle diagnostics visibility' }},
     { 'nv', '<A-d>', Lpke_toggle_diagnostics, { desc = 'Toggle diagnostics visibility' }},
-    { 'nv', '<F2>v', Lpke_toggle_virtual_text, { desc = 'Toggle virtual text for current line only' }},
-    { 'nv', '<A-v>', Lpke_toggle_virtual_text, { desc = 'Toggle virtual text for current line only' }},
+    { 'nv', '<F2>v', Lpke_toggle_diagnostic_signs, { desc = 'Toggle diagnostic signs' }},
+    { 'nv', '<A-v>', Lpke_toggle_diagnostic_signs, { desc = 'Toggle diagnostic signs' }},
     { 'nv', '<F2>e', Lpke_toggle_virtual_text_current_line, { desc = 'Toggle virtual text for current line only' }},
     { 'nv', '<A-e>', Lpke_toggle_virtual_text_current_line, { desc = 'Toggle virtual text for current line only' }},
     { 'nv', '<F2>t', Lpke_toggle_dim_virtual_text, { desc = 'Toggle diagnostics virtual text brightness' }},

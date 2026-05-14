@@ -200,6 +200,20 @@ function Lpke_toggle_virtual_text()
   end
 end
 
+-- toggle diagnostic signs
+function Lpke_toggle_diagnostic_signs()
+  local cur_config = vim.diagnostic.config() or {}
+  if cur_config.signs == false then
+    vim.diagnostic.config({
+      signs = Lpke_diagnostic_signs_config,
+    })
+  else
+    vim.diagnostic.config({
+      signs = false,
+    })
+  end
+end
+
 -- toggle LSP diagnostic virtual text globally
 Lpke_diagnostics_virtual_text_enabled = true
 function Lpke_toggle_dim_virtual_text()
