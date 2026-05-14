@@ -72,7 +72,10 @@ end
 
 return {
   'windwp/nvim-autopairs',
+  commit = '23320e75953ac82e559c610bec5a90d9c6dfa743',
   event = 'InsertEnter',
-  dependencies = { 'hrsh7th/nvim-cmp' },
+  dependencies = {
+    { 'hrsh7th/nvim-cmp', commit = 'b5311ab3ed9c846b585c0c15b7559be131ec4be9' },
+  },
   config = config,
 }

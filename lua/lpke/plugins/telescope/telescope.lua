@@ -497,10 +497,18 @@ end
 
 return {
   'nvim-telescope/telescope.nvim',
+  commit = 'b4da76be54691e854d3e0e02c36b0245f945c2c7',
   dependencies = {
-    'nvim-lua/plenary.nvim',
+    {
+      'nvim-lua/plenary.nvim',
+      commit = 'b9fd5226c2f76c951fc8ed5923d85e4de065e509',
+    },
     -- improves sorting performance (as per docs):
-    { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
+    {
+      'nvim-telescope/telescope-fzf-native.nvim',
+      commit = '1f08ed60cafc8f6168b72b80be2b2ea149813e55',
+      build = 'make',
+    },
   },
   config = config,
 }

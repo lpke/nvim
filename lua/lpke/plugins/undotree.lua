@@ -31,6 +31,7 @@ end
 
 return {
   'mbbill/undotree',
+  commit = '28f2f54a34baff90ea6f4a735ef1813ad875c743',
   lazy = false,
   config = config,
 }

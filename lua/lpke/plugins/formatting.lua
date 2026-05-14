@@ -124,6 +124,7 @@ end
 
 return {
   'stevearc/conform.nvim',
+  commit = '973f3cb73887d510321653044791d7937c7ec0fa',
   lazy = true,
   event = { 'BufReadPre', 'BufNewFile' },
   config = config,

@@ -35,5 +35,6 @@ end
 
 return {
   'chrisgrieser/nvim-various-textobjs',
+  commit = '1a3e524c01c26e0174a1eeb69e45d0bd74b1ef94',
   config = config,
 }

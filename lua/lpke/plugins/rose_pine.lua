@@ -168,6 +168,7 @@ end
 
 return {
   'rose-pine/neovim',
+  commit = '72befaffeac38db7bdd49e0549eaa2c4806dd878',
   name = 'rose-pine',
   lazy = false,
   priority = 1000,

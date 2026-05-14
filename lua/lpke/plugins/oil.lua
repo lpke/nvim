@@ -261,5 +261,6 @@ end
 
 return {
   'stevearc/oil.nvim',
+  commit = 'bbad9a76b2617ce1221d49619e4e4b659b3c61fc',
   config = config,
 }

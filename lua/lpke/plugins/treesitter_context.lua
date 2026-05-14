@@ -32,6 +32,7 @@ end
 
 return {
   'nvim-treesitter/nvim-treesitter-context',
+  commit = '02fd97c803962108d129cf42e05adc5eff7f89c1',
   event = 'VeryLazy',
   config = config,
 }

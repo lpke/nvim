@@ -537,14 +537,22 @@ end
 
 return {
   'olimorris/codecompanion.nvim',
+  commit = 'cdc69269cf4878983604d5c8093e2963753d1cfe',
   config = config,
   dependencies = {
     -- required
-    'nvim-lua/plenary.nvim',
-    'nvim-treesitter/nvim-treesitter',
+    {
+      'nvim-lua/plenary.nvim',
+      commit = 'b9fd5226c2f76c951fc8ed5923d85e4de065e509',
+    },
+    {
+      'nvim-treesitter/nvim-treesitter',
+      commit = '42fc28ba918343ebfd5565147a42a26580579482',
+    },
     -- optionals
     {
       'HakonHarnes/img-clip.nvim',
+      commit = 'd8b6b030672f9f551a0e3526347699985a779d93',
       opts = {
         filetypes = {
           codecompanion = {
@@ -559,6 +567,7 @@ return {
     -- https://codecompanion.olimorris.dev/extensions/history.html
     {
       'ravitemer/codecompanion-history.nvim',
+      commit = 'bc1b4fe06eaaf0aa2399be742e843c22f7f1652a',
     },
   },
 }

@@ -286,13 +286,23 @@ end
 
 return {
   'hrsh7th/nvim-cmp',
+  commit = 'b5311ab3ed9c846b585c0c15b7559be131ec4be9',
   event = 'VeryLazy',
   dependencies = {
-    'hrsh7th/cmp-buffer', -- source for text in buffer
-    'hrsh7th/cmp-path', -- source for file system paths
-    'hrsh7th/cmp-cmdline', -- source for cmdline : suggestions
-    'L3MON4D3/LuaSnip', -- snippet engine
-    'saadparwaiz1/cmp_luasnip', -- snippet autocompletion
+    {
+      'hrsh7th/cmp-buffer',
+      commit = 'b74fab3656eea9de20a9b8116afa3cfc4ec09657',
+    }, -- source for text in buffer
+    { 'hrsh7th/cmp-path', commit = 'c642487086dbd9a93160e1679a1327be111cbc25' }, -- source for file system paths
+    {
+      'hrsh7th/cmp-cmdline',
+      commit = 'd126061b624e0af6c3a556428712dd4d4194ec6d',
+    }, -- source for cmdline : suggestions
+    { 'L3MON4D3/LuaSnip', commit = '458560534a73f7f8d7a11a146c801db00b081df0' }, -- snippet engine
+    {
+      'saadparwaiz1/cmp_luasnip',
+      commit = '98d9cb5c2c38532bd9bdb481067b20fea8f32e90',
+    }, -- snippet autocompletion
   },
   config = config,
 }

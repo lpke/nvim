@@ -757,6 +757,7 @@ end
 
 return {
   'nvim-lualine/lualine.nvim',
+  commit = 'a94fc68960665e54408fe37dcf573193c4ce82c9',
   lazy = false,
   priority = 800,
   config = config,

@@ -112,5 +112,6 @@ end
 
 return {
   'ThePrimeagen/harpoon',
+  commit = '1bc17e3e42ea3c46b33c0bbad6a880792692a1b3',
   config = config,
 }

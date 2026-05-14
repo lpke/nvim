@@ -15,5 +15,6 @@ end
 
 return {
   'chrisgrieser/nvim-spider',
+  commit = '6da0307421bc4be6fe02815faabde51007c4ea1a',
   config = config,
 }

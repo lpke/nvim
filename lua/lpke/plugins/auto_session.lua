@@ -59,6 +59,7 @@ end
 
 return {
   'rmagatti/auto-session',
+  commit = 'c93a9bfd8a5cbf931a6ead5c824998da874b9f79',
   lazy = false,
   priority = 900,
   config = config,

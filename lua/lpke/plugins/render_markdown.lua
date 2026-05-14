@@ -95,5 +95,6 @@ end
 
 return {
   'MeanderingProgrammer/render-markdown.nvim',
+  commit = '9e51b7711c6159511e966dc42fafd58a9db9ad1d',
   config = config,
 }

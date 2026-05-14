@@ -71,6 +71,7 @@ end
 
 return {
   'mfussenegger/nvim-lint',
+  commit = '9c6207559297b24f0b7c32829f8e45f7d65b991f',
   lazy = true,
   event = { 'BufReadPre', 'BufNewFile' },
   config = config,

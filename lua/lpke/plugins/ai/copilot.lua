@@ -198,6 +198,7 @@ end
 
 return {
   'zbirenbaum/copilot.lua',
+  commit = 'ad7e729e9a6348f7da482be0271d452dbc4c8e2c',
   event = 'InsertEnter',
   config = config,
 }

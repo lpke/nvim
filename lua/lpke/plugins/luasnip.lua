@@ -32,6 +32,7 @@ end
 
 return {
   'L3MON4D3/LuaSnip',
+  commit = '458560534a73f7f8d7a11a146c801db00b081df0',
   version = 'v2.*', -- follow latest release
   build = 'make install_jsregexp',
   config = config,

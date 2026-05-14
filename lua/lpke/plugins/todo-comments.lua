@@ -113,6 +113,12 @@ end
 
 return {
   'folke/todo-comments.nvim',
-  dependencies = { 'nvim-lua/plenary.nvim' },
+  commit = '304a8d204ee787d2544d8bc23cd38d2f929e7cc5',
+  dependencies = {
+    {
+      'nvim-lua/plenary.nvim',
+      commit = 'b9fd5226c2f76c951fc8ed5923d85e4de065e509',
+    },
+  },
   config = config,
 }

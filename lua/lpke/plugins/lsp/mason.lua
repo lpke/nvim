@@ -62,9 +62,16 @@ end
 
 return {
   'mason-org/mason.nvim',
+  commit = '3671ab0d40aa5bd24b1686562bd0a23391ecf76a',
   dependencies = {
-    'mason-org/mason-lspconfig.nvim',
-    'WhoIsSethDaniel/mason-tool-installer.nvim',
+    {
+      'mason-org/mason-lspconfig.nvim',
+      commit = 'f2fa60409630ec2d24acf84494fb55e1d28d593c',
+    },
+    {
+      'WhoIsSethDaniel/mason-tool-installer.nvim',
+      commit = '517ef5994ef9d6b738322664d5fdd948f0fdeb46',
+    },
   },
   config = config,
 }
