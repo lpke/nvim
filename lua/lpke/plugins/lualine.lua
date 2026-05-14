@@ -79,6 +79,11 @@ local function config()
   Lpke_show_active_ids = false
 
   -- custom component display
+  local function toggle_status_color(enabled)
+    return enabled and { bg = tc.overlayplus, fg = tc.text }
+      or { bg = tc.overlaybump, fg = tc.lovefaded }
+  end
+
   local zoom_status = function()
     local cur_tab = vim.api.nvim_get_current_tabpage()
     local tab_zoomed = (Lpke_zoomed[cur_tab] == true)
@@ -449,6 +454,24 @@ local function config()
     end,
   }
 
+  local render_markdown_status = {
+    function()
+      return 'R'
+    end,
+    cond = function()
+      return type(Lpke_render_markdown_active) == 'function'
+        and Lpke_render_markdown_active(0)
+    end,
+    on_click = function()
+      Lpke_toggle_render_markdown()
+    end,
+    color = function()
+      local enabled = type(Lpke_render_markdown_enabled) == 'function'
+        and Lpke_render_markdown_enabled(0)
+      return toggle_status_color(enabled)
+    end,
+  }
+
   lualine.setup({
     options = {
       icons_enabled = false,
@@ -598,6 +621,7 @@ local function config()
         llm_adapter,
         llm_model,
         llm_reasoning,
+        render_markdown_status,
         -- copilot status
         {
           function()
@@ -660,8 +684,7 @@ local function config()
           end,
           color = function()
             local enabled = vim.diagnostic.is_enabled()
-            return enabled and { bg = tc.overlayplus, fg = tc.text }
-              or { bg = tc.overlaybump, fg = tc.lovefaded }
+            return toggle_status_color(enabled)
           end,
         },
         -- auto cmp status

@@ -98,7 +98,7 @@ local function config()
     },
     {
       'ni',
-      '<A-m>',
+      '<A-M>',
       Lpke_toggle_auto_cmp,
       { desc = 'Toggle automatic cmp menu display when typing' },
     },
