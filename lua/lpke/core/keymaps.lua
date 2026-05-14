@@ -1,4 +1,5 @@
 local helpers = require('lpke.core.helpers')
+local no_name = require('lpke.core.globals.no_name')
 
 --[[  SYNTAX: {'<modes><R=rec,E=expr,C=:,!=sil,D=delete>', <lhs>, <rhs>, <desc>, {opts}}
 
@@ -23,7 +24,7 @@ helpers.keymap_set_multi({
 
   -- High-level maps
   {'i', '<S-Tab>', '<Esc><<I', { desc = 'Unindent' }},
-  {'nviM', '<C-s>', function() vim.cmd('w'); pcall(function() require('lualine').refresh() end) end, { desc = 'Save buffer' }},
+  {'nviM', '<C-s>', no_name.save_current, { desc = 'Save buffer' }},
   {'c', '<Esc>', '<C-c>', { desc = 'Exit cmd-line with ctrl+c' }},
   {'i', '<C-c>', '<Esc>', { desc = 'Exit insert mode with ctrl+c, but still trigger `InsertLeave` autocmds' }},
 
@@ -117,7 +118,7 @@ helpers.keymap_set_multi({
   {'nvC', '<A-,>', 'split', { desc = 'Split window vertically' }},
   {'nM', '<C-w>x', Lpke_close_win, { desc = 'Close window (yank info)' }},
   {'n', '<F2>/', Lpke_close_win, { desc = 'Close window (yank info)' }},
-  {'n', '<A-/>', Lpke_close_win, { desc = 'Close window (yank info)' }},
+  {'n', '<A-/>', no_name.close_current, { desc = 'Close window (yank info)' }},
   {'nC', 'QQ', 'qa', { desc = 'Quit all (:qa)' }},
   {'nC', 'QZ', 'wqa', { desc = 'Write and quit all (:wqa)' }},
   {'nCM', '<C-w>QQ', 'lua require("auto-session").DisableAutoSave() ; vim.cmd("qa")', { desc = 'Quit all without auto-saving session (:qa)' }},
