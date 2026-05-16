@@ -1,4 +1,76 @@
 local caveman = require('lpke.plugins.ai.helpers.caveman')
+local util = require('lpke.core.helpers.util')
+
+local fd_exclude_patterns = {
+  '.cache',
+  '.direnv',
+  '.git',
+  '.gradle',
+  '.hg',
+  '.mypy_cache',
+  '.next',
+  '.npm',
+  '.nuxt',
+  '.parcel-cache',
+  '.pnpm-store',
+  '.pytest_cache',
+  '.ruff_cache',
+  '.svn',
+  '.svelte-kit',
+  '.terraform',
+  '.tox',
+  '.Trash',
+  '.turbo',
+  '.vagrant.d',
+  '.venv',
+  '.yarn',
+  '**/.cargo/git',
+  '**/.cargo/registry',
+  '**/.local/share/Trash',
+  '**/.local/share/bottles',
+  '**/.local/share/gnome-boxes',
+  '**/.local/share/libvirt',
+  '**/.local/share/lutris',
+  '**/.local/share/Steam',
+  '**/.m2/repository',
+  '**/go/pkg/mod',
+  '**/VirtualBox VMs',
+  '**/vmware',
+  '**/VMware',
+  '**/.wine',
+  '**/wineprefixes',
+  '__pycache__',
+  'bower_components',
+  'cache',
+  'coverage',
+  'dev',
+  'dist',
+  'lost+found',
+  'nix/store',
+  'node_modules',
+  'var',
+  '/nix',
+  'proc',
+  'run',
+  'sys',
+  'target',
+  'tmp',
+  'VirtualBox VMs',
+  'vmware',
+  'VMware',
+  'vendor',
+  'venv',
+  'wineprefixes',
+}
+
+local function fd_exclude_args()
+  local args = {}
+  for _, pattern in ipairs(fd_exclude_patterns) do
+    table.insert(args, '--exclude')
+    table.insert(args, pattern)
+  end
+  return args
+end
 
 return {
   ['caveman'] = {
@@ -22,6 +94,109 @@ return {
         vim.fn.expand('~/Downloads'),
         vim.fn.expand('~/Videos'),
       },
+    },
+  },
+  ['path'] = {
+    description = 'Insert an absolute file or directory path',
+    callback = function(chat)
+      local function insert_path(path, cursor)
+        if
+          not path
+          or path == ''
+          or not vim.api.nvim_buf_is_valid(chat.bufnr)
+        then
+          return
+        end
+
+        local row = cursor[1] - 1
+        local line = vim.api.nvim_buf_get_lines(chat.bufnr, row, row + 1, false)[1]
+          or ''
+        local col = math.min(cursor[2], #line)
+        local insert_at_eol = col == #line
+        local text = '`' .. path:gsub('`', '\\`') .. '`'
+
+        vim.api.nvim_buf_set_text(chat.bufnr, row, col, row, col, { text })
+        for _, win in ipairs(vim.api.nvim_list_wins()) do
+          if vim.api.nvim_win_get_buf(win) == chat.bufnr then
+            vim.api.nvim_set_current_win(win)
+            vim.api.nvim_win_set_cursor(win, { cursor[1], col + #text })
+            vim.cmd('startinsert')
+            if insert_at_eol then
+              vim.schedule(function()
+                Lpke_feedkeys('<Right>', 'n')
+              end)
+            end
+            break
+          end
+        end
+      end
+
+      local function pick_path(kind, cursor)
+        local actions = require('telescope.actions')
+        local action_state = require('telescope.actions.state')
+        local pickers = require('telescope.pickers')
+        local finders = require('telescope.finders')
+        local config_values = require('telescope.config').values
+
+        local fd_type = kind == 'Directory' and 'd' or 'f'
+        local prompt_title = '/path - Select ' .. kind
+
+        pickers
+          .new({}, {
+            prompt_title = prompt_title,
+            cwd = '/',
+            initial_mode = 'insert',
+            finder = finders.new_oneshot_job(util.concat_arrs(
+              {
+                'fd',
+                '--absolute-path',
+                '--hidden',
+                '--no-ignore',
+                '--type',
+                fd_type,
+              },
+              fd_exclude_args(),
+              {
+                '.',
+                '/',
+              }
+            )),
+            sorter = config_values.generic_sorter({}),
+            previewer = kind == 'Directory' and false
+              or config_values.file_previewer({}),
+            attach_mappings = function(prompt_bufnr)
+              actions.select_default:replace(function()
+                local entry = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+
+                if entry then
+                  vim.schedule(function()
+                    insert_path(entry.value, cursor)
+                  end)
+                end
+              end)
+              return true
+            end,
+          })
+          :find()
+      end
+
+      local cursor = vim.api.nvim_win_get_cursor(0)
+      pcall(vim.cmd.stopinsert)
+      vim.ui.select({ 'Directory', 'File' }, {
+        prompt = 'Select path type',
+        kind = 'codecompanion.nvim',
+      }, function(choice)
+        if choice then
+          pick_path(choice, cursor)
+        end
+      end)
+      vim.schedule(function()
+        pcall(vim.cmd.stopinsert)
+      end)
+    end,
+    opts = {
+      contains_code = false,
     },
   },
   ['git_files_list'] = {
@@ -123,16 +298,15 @@ return {
           .new({}, {
             prompt_title = '/external_files - Select Directory',
             cwd = home,
-            finder = finders.new_oneshot_job({
-              'fd',
-              '--type',
-              'd',
-              '--hidden',
-              '--exclude',
-              '.git',
-              '--exclude',
-              'node_modules',
-            }, { cwd = home }),
+            finder = finders.new_oneshot_job(
+              util.concat_arrs({
+                'fd',
+                '--type',
+                'd',
+                '--hidden',
+              }, fd_exclude_args()),
+              { cwd = home }
+            ),
             sorter = config_values.generic_sorter({}),
             attach_mappings = function(prompt_bufnr)
               actions.select_default:replace(function()

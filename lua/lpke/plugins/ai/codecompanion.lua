@@ -476,6 +476,7 @@ local function config()
     },
   })
 
+  require('lpke.plugins.ai.helpers.slash_command_completion').patch_cmp()
   require('lpke.plugins.ai.helpers.acp_lifecycle').setup()
   require('lpke.plugins.ai.helpers.drafts').setup()
 
