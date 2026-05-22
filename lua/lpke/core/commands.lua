@@ -10,7 +10,7 @@ vim.cmd('cabbrev re echo "shorthand for :read disabled"')
 vim.cmd('cabbrev rea echo "shorthand for :read disabled"')
 
 local function codex_usage()
-  local script = vim.fn.expand('~/.local/bin/codex-usage')
+  local script = vim.fn.expand('~/.local/bin/cu')
 
   if vim.fn.executable(script) ~= 1 then
     vim.api.nvim_echo({ { script .. ' is not executable', 'ErrorMsg' } }, true, {})

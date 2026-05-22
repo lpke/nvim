@@ -11,6 +11,12 @@ local function notify(msg)
   vim.notify(msg, vim.log.levels.INFO, { title = 'CodeCompanion' })
 end
 
+local function system_prompt(ctx)
+  return caveman.system_prompt(ctx)
+    .. '\n\n'
+    .. 'Git rules: For git repositories, NEVER perform git actions that alter the organised state of the repository unless explicitly asked to. For example: you must not stage, unstage, commit, rebase, push, or pull changes.'
+end
+
 local function config()
   local codecompanion = require('codecompanion')
 
@@ -89,7 +95,7 @@ local function config()
         },
         opts = {
           system_prompt = function(ctx)
-            return caveman.system_prompt(ctx)
+            return system_prompt(ctx)
           end,
         },
         tools = {
