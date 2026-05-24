@@ -5,8 +5,10 @@ local action_state = require('telescope.actions.state')
 local builtin = require('telescope.builtin')
 local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
+local make_entry = require('telescope.make_entry')
 local config_values = require('telescope.config').values
 local previewers = require('telescope.previewers')
+local ts_helpers = require('lpke.plugins.telescope.helpers')
 
 local tc = Lpke_theme_colors
 
@@ -51,7 +53,12 @@ local function resolve_path_from_nvim_cwd(relative_path)
   return gap_path .. '/' .. relative_path
 end
 
-local function switch_to_picker(cur_prompt_buf, picker_func, keep_query)
+local function switch_to_picker(
+  cur_prompt_buf,
+  picker_func,
+  keep_query,
+  initial_mode
+)
   local current_picker = action_state.get_current_picker(cur_prompt_buf)
   local current_query = current_picker:_get_prompt()
   local current_cwd = current_picker.cwd
@@ -60,6 +67,9 @@ local function switch_to_picker(cur_prompt_buf, picker_func, keep_query)
   local opts = {}
   if current_cwd then
     opts.cwd = current_cwd
+  end
+  if initial_mode then
+    opts.initial_mode = initial_mode
   end
 
   if keep_query then
@@ -76,7 +86,7 @@ local function get_selection_parent_dir(_prompt_bufnr, is_directory_picker)
     return vim.fn.getcwd()
   end
 
-  local path = selection.value or selection.path or selection[1]
+  local path = selection.path or selection.value or selection[1]
   if not path then
     return vim.fn.getcwd()
   end
@@ -95,6 +105,178 @@ local function get_selection_parent_dir(_prompt_bufnr, is_directory_picker)
   end
 end
 
+local function find_files_picker_config(opts)
+  local pconf = require('telescope.config').pickers.find_files or {}
+  local defaults = pconf.theme
+      and require('telescope.themes')['get_' .. pconf.theme](pconf)
+    or vim.deepcopy(pconf)
+
+  return vim.tbl_extend('force', defaults, opts or {})
+end
+
+local function find_files_command(opts, path_arg)
+  local find_command = opts.find_command
+
+  if type(find_command) == 'function' then
+    find_command = find_command(opts)
+  end
+
+  if find_command then
+    find_command = vim.deepcopy(find_command)
+  elseif vim.fn.executable('rg') == 1 then
+    find_command = { 'rg', '--files', '--color', 'never' }
+  elseif vim.fn.executable('fd') == 1 then
+    find_command = { 'fd', '--type', 'f', '--color', 'never' }
+  elseif vim.fn.executable('fdfind') == 1 then
+    find_command = { 'fdfind', '--type', 'f', '--color', 'never' }
+  elseif vim.fn.executable('find') == 1 and vim.fn.has('win32') == 0 then
+    find_command = { 'find', '.', '-type', 'f' }
+  end
+
+  if not find_command then
+    return nil
+  end
+
+  local command = find_command[1]
+  if command == 'fd' or command == 'fdfind' or command == 'rg' then
+    if opts.hidden then
+      table.insert(find_command, '--hidden')
+    end
+    if opts.no_ignore then
+      table.insert(find_command, '--no-ignore')
+    end
+    if opts.no_ignore_parent then
+      table.insert(find_command, '--no-ignore-parent')
+    end
+    if opts.follow then
+      table.insert(find_command, '-L')
+    end
+  end
+
+  if path_arg then
+    if command == 'rg' then
+      vim.list_extend(find_command, { '--', path_arg })
+    elseif command == 'fd' or command == 'fdfind' then
+      vim.list_extend(find_command, { '.', path_arg })
+    elseif command == 'find' then
+      if find_command[2] == '.' then
+        find_command[2] = path_arg
+      else
+        table.insert(find_command, 2, path_arg)
+      end
+    else
+      table.insert(find_command, path_arg)
+    end
+  end
+
+  return find_command
+end
+
+local function prompt_root_key(parsed)
+  if not parsed.has_cwd_arg then
+    return ''
+  end
+  return parsed.cwd .. '\n' .. parsed.path_arg
+end
+
+local function find_files_finder(opts, parsed)
+  local entry_maker = opts.entry_maker or make_entry.gen_from_file(opts)
+
+  if parsed.has_cwd_arg and not parsed.valid_cwd then
+    return finders.new_table({
+      results = {},
+      entry_maker = entry_maker,
+    })
+  end
+
+  local command =
+    find_files_command(opts, parsed.has_cwd_arg and parsed.path_arg or nil)
+
+  if not command then
+    vim.notify(
+      'smart_find_ai.find_files: install rg, fd, fdfind, or find',
+      vim.log.levels.ERROR
+    )
+    return finders.new_table({
+      results = {},
+      entry_maker = entry_maker,
+    })
+  end
+
+  return finders.new_oneshot_job(
+    command,
+    vim.tbl_extend('force', opts, { entry_maker = entry_maker })
+  )
+end
+
+local function is_absolute_path(path)
+  return path:sub(1, 1) == '/'
+    or path:match('^%a:[/\\]') ~= nil
+    or path:sub(1, 2) == '\\\\'
+end
+
+local function absolute_path(cwd, path)
+  if is_absolute_path(path) then
+    return path
+  end
+  return vim.fs.joinpath(cwd, path)
+end
+
+local function find_directories_command(path_arg)
+  local command = {
+    'fd',
+    '--hidden', -- do not ignore `.` dirs
+    '--type',
+    'd',
+    '--exclude',
+    '.git',
+    '--exclude',
+    'node_modules',
+  }
+
+  if path_arg then
+    vim.list_extend(command, {
+      '.',
+      path_arg,
+    })
+  end
+
+  return command
+end
+
+local function find_directories_entry_maker(opts, should_ignore_dir)
+  local cwd = opts.cwd
+  return function(entry)
+    if should_ignore_dir(entry) then
+      return nil
+    end
+    return {
+      value = entry,
+      path = absolute_path(cwd, entry),
+      display = entry,
+      ordinal = entry,
+    }
+  end
+end
+
+local function find_directories_finder(opts, parsed, should_ignore_dir)
+  local entry_maker = find_directories_entry_maker(opts, should_ignore_dir)
+
+  if parsed.has_cwd_arg and not parsed.valid_cwd then
+    return finders.new_table({
+      results = {},
+      entry_maker = entry_maker,
+    })
+  end
+
+  return finders.new_oneshot_job(
+    find_directories_command(parsed.has_cwd_arg and parsed.path_arg or nil),
+    vim.tbl_deep_extend('force', {
+      entry_maker = entry_maker,
+    }, opts)
+  )
+end
+
 -- Helper function to setup common keymaps for both pickers
 local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
   -- Switch picker keymaps
@@ -102,10 +284,10 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
     local target_func = is_directory_picker and M.find_files
       or M.find_directories
     map('i', keymap, function()
-      switch_to_picker(prompt_bufnr, target_func, true)
+      switch_to_picker(prompt_bufnr, target_func, true, 'insert')
     end)
     map('n', keymap, function()
-      switch_to_picker(prompt_bufnr, target_func, true)
+      switch_to_picker(prompt_bufnr, target_func, true, 'normal')
     end)
   end
 
@@ -161,6 +343,11 @@ end
 
 function M.find_directories(opts)
   opts = opts or {}
+  opts.cwd = ts_helpers.normalize_cwd(opts.cwd or vim.fn.getcwd())
+  if vim.fn.isdirectory(opts.cwd) ~= 1 then
+    opts.cwd = ts_helpers.normalize_cwd(vim.fn.getcwd())
+  end
+
   local initial_query = opts.default_text or ''
 
   -- Update gap path when cwd is specified
@@ -194,36 +381,54 @@ function M.find_directories(opts)
     return false
   end
 
+  opts.default_text = initial_query
+  local parsed_prompt = ts_helpers.parse_prompt_cwd(initial_query, opts.cwd)
+  local current_root_key = prompt_root_key(parsed_prompt)
+  local original_on_input_filter_cb = opts.on_input_filter_cb
+
+  opts.on_input_filter_cb = function(prompt)
+    parsed_prompt = ts_helpers.parse_prompt_cwd(prompt, opts.cwd)
+    local result = original_on_input_filter_cb
+        and original_on_input_filter_cb(parsed_prompt.prompt)
+      or {}
+
+    result.prompt = result.prompt or parsed_prompt.prompt
+
+    local next_root_key = prompt_root_key(parsed_prompt)
+    if next_root_key ~= current_root_key then
+      current_root_key = next_root_key
+      result.updated_finder =
+        find_directories_finder(opts, parsed_prompt, should_ignore_dir)
+    end
+
+    return result
+  end
+
+  local original_attach_mappings = opts.attach_mappings
+  opts.attach_mappings = function(prompt_bufnr, map)
+    if original_attach_mappings then
+      original_attach_mappings(prompt_bufnr, map)
+    end
+
+    setup_common_keymaps(prompt_bufnr, map, true)
+
+    actions.select_default:replace(function()
+      actions.close(prompt_bufnr)
+      local selection = action_state.get_selected_entry()
+      if selection then
+        vim.cmd('Oil ' .. vim.fn.fnameescape(selection.path or selection.value))
+      end
+    end)
+    return true
+  end
+
   pickers
-    .new({}, {
+    .new(opts, {
       prompt_title = 'Find Directories',
       cwd = opts.cwd,
       initial_mode = opts.initial_mode or 'insert',
       default_text = initial_query,
-      finder = finders.new_oneshot_job(
-        {
-          'fd',
-          '--hidden', -- do not ignore `.` dirs
-          '--type',
-          'd',
-          '--exclude',
-          '.git',
-          '--exclude',
-          'node_modules',
-        },
-        vim.tbl_deep_extend('force', {
-          entry_maker = function(entry)
-            if should_ignore_dir(entry) then
-              return nil
-            end
-            return {
-              value = entry,
-              display = entry,
-              ordinal = entry,
-            }
-          end,
-        }, opts)
-      ),
+      finder = find_directories_finder(opts, parsed_prompt, should_ignore_dir),
       sorter = config_values.generic_sorter({}),
       previewer = previewers.new_buffer_previewer({
         title = 'Directory Contents',
@@ -255,7 +460,7 @@ function M.find_directories(opts)
             return result
           end
 
-          local entries = scan_directory(entry.value)
+          local entries = scan_directory(entry.path or entry.value)
           vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, entries)
           vim.bo[self.state.bufnr].filetype = 'oil'
 
@@ -270,26 +475,18 @@ function M.find_directories(opts)
           end)
         end,
       }),
-      attach_mappings = function(prompt_bufnr, map)
-        -- Setup common keymaps
-        setup_common_keymaps(prompt_bufnr, map, true)
-
-        actions.select_default:replace(function()
-          actions.close(prompt_bufnr)
-          local selection = action_state.get_selected_entry()
-          if selection then
-            vim.cmd('Oil ' .. selection.value)
-          end
-        end)
-        return true
-      end,
     })
     :find()
 end
 
 -- extends default find files picker
 function M.find_files(opts)
-  opts = opts or {}
+  opts = find_files_picker_config(opts)
+  opts.cwd = ts_helpers.normalize_cwd(opts.cwd or vim.fn.getcwd())
+  if vim.fn.isdirectory(opts.cwd) ~= 1 then
+    opts.cwd = ts_helpers.normalize_cwd(vim.fn.getcwd())
+  end
+
   local initial_query = opts.default_text or ''
 
   -- Update gap path when cwd is specified
@@ -301,6 +498,27 @@ function M.find_files(opts)
 
   -- Set default_text for the builtin picker
   opts.default_text = initial_query
+
+  local parsed_prompt = ts_helpers.parse_prompt_cwd(initial_query, opts.cwd)
+  local current_root_key = prompt_root_key(parsed_prompt)
+  local original_on_input_filter_cb = opts.on_input_filter_cb
+
+  opts.on_input_filter_cb = function(prompt)
+    parsed_prompt = ts_helpers.parse_prompt_cwd(prompt, opts.cwd)
+    local result = original_on_input_filter_cb
+        and original_on_input_filter_cb(parsed_prompt.prompt)
+      or {}
+
+    result.prompt = result.prompt or parsed_prompt.prompt
+
+    local next_root_key = prompt_root_key(parsed_prompt)
+    if next_root_key ~= current_root_key then
+      current_root_key = next_root_key
+      result.updated_finder = find_files_finder(opts, parsed_prompt)
+    end
+
+    return result
+  end
 
   -- Add custom attach_mappings to extend the builtin picker
   local original_attach_mappings = opts.attach_mappings
@@ -330,8 +548,15 @@ function M.find_files(opts)
     return true
   end
 
-  -- Use the builtin find_files with our enhanced options
-  builtin.find_files(opts)
+  pickers
+    .new(opts, {
+      prompt_title = 'Find Files',
+      __locations_input = true,
+      finder = find_files_finder(opts, parsed_prompt),
+      previewer = config_values.grep_previewer(opts),
+      sorter = config_values.file_sorter(opts),
+    })
+    :find()
 end
 
 -- use find_files or find_directories depending on if editing a file or in oil buffer

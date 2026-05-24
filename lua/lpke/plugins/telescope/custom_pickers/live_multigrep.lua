@@ -5,10 +5,17 @@ local finders = require('telescope.finders')
 local sorters = require('telescope.sorters')
 local make_entry = require('telescope.make_entry')
 local config_values = require('telescope.config').values
+local ts_helpers = require('lpke.plugins.telescope.helpers')
 
 local live_multigrep = function(opts)
   opts = opts or {}
-  opts.cwd = opts.cwd or vim.fn.getcwd()
+  opts.cwd = ts_helpers.normalize_cwd(opts.cwd or vim.fn.getcwd())
+
+  local parsed_prompt = ts_helpers.parse_multigrep_prompt('', opts.cwd)
+  opts.on_input_filter_cb = function(prompt)
+    parsed_prompt = ts_helpers.parse_multigrep_prompt(prompt, opts.cwd)
+    return { prompt = parsed_prompt.search }
+  end
 
   local finder = finders.new_async_job({
     cwd = opts.cwd,
@@ -17,27 +24,21 @@ local live_multigrep = function(opts)
     entry_maker = make_entry.gen_from_vimgrep(opts),
     -- Expects a table list of arg pieces for the command to be run
     -- eg: { 'rg', '-e', 'hello', '-g', '*.lua', '--color=never', ...}
-    command_generator = function(prompt)
-      if not prompt or prompt == '' then
+    command_generator = function(search_str)
+      if not search_str or search_str == '' or not parsed_prompt.valid_cwd then
         return nil
       end
 
       -- will hold all parts of the command to be run
-      local args = { 'rg' }
+      local args = {
+        'rg',
+        '-e',
+        search_str,
+      }
 
-      -- get inputs from the prompt
-      local prompt_pieces = vim.split(prompt, '  ')
-      local search_str = prompt_pieces[1]
-      local filter_str = prompt_pieces[2]
-
-      -- add inputs to the command
-      if search_str then
-        table.insert(args, '-e')
-        table.insert(args, search_str)
-      end
-      if filter_str then
+      for _, glob in ipairs(parsed_prompt.globs) do
         table.insert(args, '-g')
-        table.insert(args, filter_str)
+        table.insert(args, glob)
       end
 
       -- add ripgrep options to the command
@@ -49,6 +50,13 @@ local live_multigrep = function(opts)
         '--column',
         '--smart-case',
       })
+
+      if parsed_prompt.has_cwd_arg then
+        vim.list_extend(args, {
+          '--',
+          parsed_prompt.path_arg,
+        })
+      end
 
       return args
     end,

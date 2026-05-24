@@ -2,6 +2,112 @@ local builtin = require('telescope.builtin')
 
 local M = {}
 
+local function trim(str)
+  return (str:gsub('^%s+', ''):gsub('%s+$', ''))
+end
+
+local function normalize_path(path)
+  if vim.fs and vim.fs.normalize then
+    return vim.fs.normalize(path)
+  end
+  return path
+end
+
+local function is_absolute_path(path)
+  return path:sub(1, 1) == '/'
+    or path:match('^%a:[/\\]') ~= nil
+    or path:sub(1, 2) == '\\\\'
+end
+
+local function expand_home(path)
+  local home = vim.env.HOME
+  if not home then
+    return path
+  end
+  if path == '~' then
+    return home
+  end
+  return path:gsub('^~/', function()
+    return home .. '/'
+  end, 1)
+end
+
+function M.normalize_cwd(cwd)
+  cwd = cwd or vim.fn.getcwd()
+  if cwd == '' then
+    cwd = vim.fn.getcwd()
+  end
+  cwd = expand_home(cwd)
+  if not is_absolute_path(cwd) then
+    cwd = vim.fn.fnamemodify(cwd, ':p')
+  end
+  return normalize_path(cwd)
+end
+
+function M.resolve_prompt_cwd(cwd_arg, base_cwd)
+  local expanded_cwd_arg = expand_home(cwd_arg)
+  if is_absolute_path(expanded_cwd_arg) then
+    return normalize_path(expanded_cwd_arg)
+  end
+  return normalize_path(
+    vim.fs.joinpath(M.normalize_cwd(base_cwd), expanded_cwd_arg)
+  )
+end
+
+function M.prompt_cwd_path_arg(cwd_arg)
+  return expand_home(cwd_arg)
+end
+
+function M.parse_prompt_cwd(prompt, base_cwd)
+  prompt = prompt or ''
+  base_cwd = M.normalize_cwd(base_cwd)
+
+  local cwd_arg, rest = prompt:match('^@(%S+)  (.*)$')
+  if not cwd_arg then
+    return {
+      raw_prompt = prompt,
+      prompt = prompt,
+      base_cwd = base_cwd,
+      cwd = base_cwd,
+      cwd_arg = nil,
+      path_arg = nil,
+      has_cwd_arg = false,
+      valid_cwd = true,
+    }
+  end
+
+  local cwd = M.resolve_prompt_cwd(cwd_arg, base_cwd)
+  return {
+    raw_prompt = prompt,
+    prompt = rest or '',
+    base_cwd = base_cwd,
+    cwd = cwd,
+    cwd_arg = cwd_arg,
+    path_arg = M.prompt_cwd_path_arg(cwd_arg),
+    has_cwd_arg = true,
+    valid_cwd = vim.fn.isdirectory(cwd) == 1,
+  }
+end
+
+function M.parse_multigrep_prompt(prompt, base_cwd)
+  local parsed = M.parse_prompt_cwd(prompt, base_cwd)
+  local pieces = vim.split(parsed.prompt, '  ', {
+    plain = true,
+    trimempty = false,
+  })
+
+  parsed.search = pieces[1] or ''
+  parsed.globs = {}
+  for i = 2, #pieces do
+    local glob = trim(pieces[i])
+    if glob ~= '' then
+      table.insert(parsed.globs, glob)
+    end
+  end
+
+  return parsed
+end
+
 -- refresh a telescope picker and optionally remember selection location
 function M.refresh_picker(bufnr, remember, selection_defer_time)
   selection_defer_time = selection_defer_time or 5
