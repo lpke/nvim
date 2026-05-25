@@ -44,6 +44,14 @@ return { -- js
     name = 'Vitest async it',
   }, { t("it('"), i(1), t("', async () => {"), i(2), t('});') }),
   test_s({
+    trig = 'be',
+    name = 'Vitest beforeEach',
+  }, { t('beforeEach(() => {'), i(1), t('});') }),
+  test_s({
+    trig = 'ae',
+    name = 'Vitest afterEach',
+  }, { t('afterEach(() => {'), i(1), t('});') }),
+  test_s({
     trig = 'e',
     name = 'Vitest expect',
   }, fmt('expect(<>).<>', { i(1), i(2) })),
