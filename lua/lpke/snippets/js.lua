@@ -11,19 +11,62 @@ local test_file_condition = cond_obj.make_condition(function()
   return vim.api.nvim_buf_get_name(0):match('%.test%.[jt]s$') ~= nil
 end)
 
+local function test_s(params, nodes)
+  return _s(params, nodes, {
+    condition = exp_conds.line_begin * test_file_condition,
+  })
+end
+
+local function test_fmt(params, str, nodes)
+  return test_s(params, fmt(str, nodes))
+end
+
 return { -- js
-  _s(
+  test_s(
     {
       trig = 'ivi',
       name = 'Vitest import',
     },
     t(
       "import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';"
-    ),
-    {
-      condition = exp_conds.line_begin * test_file_condition,
-    }
+    )
   ),
+  test_s({
+    trig = 'd',
+    name = 'Vitest describe',
+  }, { t("describe('"), i(1), t("', () => {"), i(2), t('});') }),
+  test_s({
+    trig = 'i',
+    name = 'Vitest it',
+  }, { t("it('"), i(1), t("', () => {"), i(2), t('});') }),
+  test_s({
+    trig = 'ia',
+    name = 'Vitest async it',
+  }, { t("it('"), i(1), t("', async () => {"), i(2), t('});') }),
+  test_s({
+    trig = 'e',
+    name = 'Vitest expect',
+  }, fmt('expect(<>).<>', { i(1), i(2) })),
+  test_s({
+    trig = 'eb',
+    name = 'Vitest expect toBe',
+  }, fmt('expect(<>).toBe(<>);', { i(1), i(2) })),
+  test_s({
+    trig = 'ee',
+    name = 'Vitest expect toEqual',
+  }, fmt('expect(<>).toEqual(<>);', { i(1), i(2) })),
+  test_s({
+    trig = 'erb',
+    name = 'Vitest expect resolves toBe',
+  }, fmt('expect(<>).resolves.toBe(<>);', { i(1), i(2) })),
+  test_s({
+    trig = 'ecn',
+    name = 'Vitest expect called times',
+  }, fmt('expect(<>).toHaveBeenCalledTimes(<>);', { i(1), i(2) })),
+  test_s({
+    trig = 'ecw',
+    name = 'Vitest expect called with',
+  }, fmt('expect(<>).toHaveBeenCalledWith(<>);', { i(1), i(2) })),
   _s(
     {
       trig = 'ff',
