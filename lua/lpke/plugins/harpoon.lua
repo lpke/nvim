@@ -36,9 +36,7 @@ local function config()
     { 'n', '<F2>o', function() harpoon_ui.nav_file(3) end, { desc = 'Harpoon: Go to file 3' } },
     { 'n', '<A-o>', function() harpoon_ui.nav_file(3) end, { desc = 'Harpoon: Go to file 3' } },
     { 'n', '<F2>U', harpoon_ui.nav_prev, { desc = 'Harpoon: Go to previous file' } },
-    { 'n', '<A-U>', harpoon_ui.nav_prev, { desc = 'Harpoon: Go to previous file' } },
     { 'n', '<F2>I', harpoon_ui.nav_next, { desc = 'Harpoon: Go to next file' } },
-    { 'n', '<A-I>', harpoon_ui.nav_next, { desc = 'Harpoon: Go to next file' } },
 
     { 'n', '<F2>a', add_file, { desc = 'Harpoon: Mark current file' } },
     { 'n', '<A-a>', add_file, { desc = 'Harpoon: Mark current file' } },

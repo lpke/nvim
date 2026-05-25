@@ -12,4 +12,5 @@ return {
       importModuleSpecifierEnding = 'minimal', -- shorten path ending if possible (omit `.ts` etc)
     },
   },
+  settings = Lpke_ts_unused_diagnostics_settings(),
 }

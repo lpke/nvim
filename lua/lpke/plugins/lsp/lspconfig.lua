@@ -113,6 +113,7 @@ local function config()
     { 'nv', '<A-t>', Lpke_toggle_dim_virtual_text, { desc = 'Toggle diagnostics virtual text brightness' }},
     { 'nv', '<F2>V', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting' }},
     { 'nv', '<A-V>', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting' }},
+    { 'nv', '<A-U>', Lpke_toggle_ts_unused_diagnostics, { desc = 'Toggle TypeScript unused diagnostics' }},
     { 'n', '<leader>R', Lpke_lsp_restart, { desc = 'Restart LSPs for current buffer filetype' }},
 
     -- smart actions
