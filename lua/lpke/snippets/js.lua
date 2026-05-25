@@ -5,7 +5,25 @@ local ls, s, _s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_q, sel_b, ex
   h.ls, h.s, h._s, h.sn, h.t, h.t_, h.i, h.f, h.d, h.rep, h.fmtc, h.fmta, h.fmt, h.sel, h.sel_q, h.sel_b, h.exp_conds
 -- stylua: ignore end
 
+local cond_obj = require('luasnip.extras.conditions')
+
+local test_file_condition = cond_obj.make_condition(function()
+  return vim.api.nvim_buf_get_name(0):match('%.test%.[jt]s$') ~= nil
+end)
+
 return { -- js
+  _s(
+    {
+      trig = 'ivi',
+      name = 'Vitest import',
+    },
+    t(
+      "import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';"
+    ),
+    {
+      condition = exp_conds.line_begin * test_file_condition,
+    }
+  ),
   _s(
     {
       trig = 'ff',
