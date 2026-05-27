@@ -62,7 +62,7 @@ local function config()
           return require('codecompanion.adapters').extend('codex', {
             commands = {
               -- default reasoning set here to override last-used setting from `codex` CLI
-              default = { 'codex-acp', '-c', 'model_reasoning_effort="low"' },
+              default = { 'codex-acp-exec', '-c', 'model_reasoning_effort="low"' },
             },
             defaults = {
               auth_method = 'chatgpt',
