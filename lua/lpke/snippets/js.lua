@@ -21,6 +21,10 @@ local function test_fmt(params, str, nodes)
   return test_s(params, fmt(str, nodes))
 end
 
+local function err_arg(args)
+  return sn(nil, i(1, args[1][1]))
+end
+
 return { -- js
   test_s(
     {
@@ -136,6 +140,40 @@ return { -- js
   ),
   _s(
     {
+      trig = 'tc',
+      name = 'Try Catch',
+    },
+    fmt(
+      [[
+        try {
+          <>
+        } catch (<>) {
+          console.error(<>);
+        }
+      ]],
+      { d(1, sel), i(2, 'err'), d(3, err_arg, { 2 }) }
+    )
+  ),
+  _s(
+    {
+      trig = 'tcf',
+      name = 'Try Catch Finally',
+    },
+    fmt(
+      [[
+        try {
+          <>
+        } catch (<>) {
+          console.error(<>);
+        } finally {
+          <>
+        }
+      ]],
+      { d(1, sel), i(2, 'err'), d(3, err_arg, { 2 }), i(4) }
+    )
+  ),
+  _s(
+    {
       trig = 'fori',
       name = 'Numeric for loop',
     },
@@ -179,24 +217,24 @@ return { -- js
   s({
     trig = 'cl',
     name = 'Console Log',
-  }, fmt('console.log(<>)', { i(1) })),
+  }, fmt('console.log(<>);', { i(1) })),
   s({
     trig = 'cld',
     name = 'Console Log Debug',
-  }, fmt('console.log({ <> })', { i(1) })),
+  }, fmt('console.log({ <> });', { i(1) })),
   s({
-    trig = 'cle',
+    trig = 'ce',
     name = 'Console Error',
-  }, fmt('console.error(<>)', { i(1) })),
+  }, fmt('console.error(<>);', { i(1) })),
   s({
-    trig = 'cled',
+    trig = 'ced',
     name = 'Console Error Debug',
-  }, fmt('console.error({ <> })', { i(1) })),
+  }, fmt('console.error({ <> });', { i(1) })),
   _s({
     trig = '/cl',
     name = 'Console Log',
     snippetType = 'autosnippet',
-  }, fmt('console.log(<>)', { i(1) })),
+  }, fmt('console.log(<>);', { i(1) })),
   _s(
     {
       trig = '/**',

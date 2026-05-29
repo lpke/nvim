@@ -21,9 +21,17 @@ return { -- html
   s({
     trig = 'cl',
     name = 'Console Log',
-  }, fmt('console.log(<>)', { i(1) })),
+  }, fmt('console.log(<>);', { i(1) })),
   s({
     trig = 'cld',
     name = 'Console Log Debug',
-  }, fmt('console.log({ <> })', { i(1) })),
+  }, fmt('console.log({ <> });', { i(1) })),
+  s({
+    trig = 'ce',
+    name = 'Console Error',
+  }, fmt('console.error(<>);', { i(1) })),
+  s({
+    trig = 'ced',
+    name = 'Console Error Debug',
+  }, fmt('console.error({ <> });', { i(1) })),
 }
