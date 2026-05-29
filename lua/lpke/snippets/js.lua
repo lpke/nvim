@@ -184,6 +184,14 @@ return { -- js
     trig = 'cld',
     name = 'Console Log Debug',
   }, fmt('console.log({ <> })', { i(1) })),
+  s({
+    trig = 'cle',
+    name = 'Console Error',
+  }, fmt('console.error(<>)', { i(1) })),
+  s({
+    trig = 'cled',
+    name = 'Console Error Debug',
+  }, fmt('console.error({ <> })', { i(1) })),
   _s({
     trig = '/cl',
     name = 'Console Log',
