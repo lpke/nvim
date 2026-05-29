@@ -391,6 +391,9 @@ local function config()
       -- TODO: tidy this up. Original implementation above
       smart_find_ai.smart_find()
     end, { desc = 'Find files in cwd (or directories in oil)' }},
+    {'n', '<leader><BS><BS>', function()
+      smart_find_ai.smart_find({ default_text = '@~  ' })
+    end, { desc = 'Find files from home (or directories in oil)' }},
     {'n', '<BS>fd', function()
       custom_pickers.find_dirs()
     end, { desc = 'Find directories in cwd' }},
@@ -412,6 +415,9 @@ local function config()
     {'n', '<BS>/', function()
       custom_pickers.live_multigrep({ prompt_title = 'Find in Files' })
     end, { desc = 'Find string in cwd, with file filtering (str  filter)' } },
+    {'n', '<leader><BS>/', function()
+      custom_pickers.live_multigrep({ prompt_title = 'Find in Files', default_text = '@~  ' })
+    end, { desc = 'Find string from home, with file filtering (str  filter)' } },
     {'n', '<BS>fp', function()
       builtin_pickers.grep_string({ search = vim.fn.getreg('"') })
     end, { desc = 'Find pasted string in cwd' } },

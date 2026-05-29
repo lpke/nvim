@@ -560,13 +560,15 @@ function M.find_files(opts)
 end
 
 -- use find_files or find_directories depending on if editing a file or in oil buffer
-function M.smart_find()
+function M.smart_find(opts)
+  opts = opts or {}
+
   if vim.bo.filetype == 'oil' then
     -- M.find_directories()
     -- revert to 'find_files' default for now
-    M.find_files()
+    M.find_files(opts)
   else
-    M.find_files()
+    M.find_files(opts)
   end
 end
 
