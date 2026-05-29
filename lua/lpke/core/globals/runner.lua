@@ -141,6 +141,25 @@ end
 
 -- Global variable to track runner output buffer
 Lpke_run_buf_output_buf = nil
+Lpke_run_buf_active_jobs = Lpke_run_buf_active_jobs or {}
+
+local function append_runner_output(output_buf, output_win, lines)
+  if not vim.api.nvim_buf_is_valid(output_buf) then
+    return
+  end
+
+  local line_count = vim.api.nvim_buf_line_count(output_buf)
+  vim.api.nvim_buf_set_lines(output_buf, line_count, line_count, false, lines)
+
+  -- Auto-scroll to bottom if window is still valid
+  if output_win and vim.api.nvim_win_is_valid(output_win) then
+    vim.api.nvim_win_set_cursor(
+      output_win,
+      { vim.api.nvim_buf_line_count(output_buf), 0 }
+    )
+  end
+end
+
 -- Global function to run current buffer
 function Lpke_run_buf()
   local current_buf = vim.api.nvim_get_current_buf()
@@ -301,10 +320,13 @@ function Lpke_run_buf()
   })
 
   -- Build full command
-  local full_command = command .. ' ' .. vim.fn.shellescape(file_to_run)
+  local full_command = 'exec '
+    .. command
+    .. ' '
+    .. vim.fn.shellescape(file_to_run)
 
   -- Run command and capture output
-  vim.fn.jobstart(full_command, {
+  local job_id = vim.fn.jobstart(full_command, {
     env = env,
     stdout_buffered = false,
     stderr_buffered = false,
@@ -317,22 +339,7 @@ function Lpke_run_buf()
           end, data)
 
           if #filtered_data > 0 then
-            local line_count = vim.api.nvim_buf_line_count(output_buf)
-            vim.api.nvim_buf_set_lines(
-              output_buf,
-              line_count,
-              line_count,
-              false,
-              filtered_data
-            )
-
-            -- Auto-scroll to bottom if window is still valid
-            if vim.api.nvim_win_is_valid(output_win) then
-              vim.api.nvim_win_set_cursor(
-                output_win,
-                { vim.api.nvim_buf_line_count(output_buf), 0 }
-              )
-            end
+            append_runner_output(output_buf, output_win, filtered_data)
           end
         end)
       end
@@ -351,41 +358,23 @@ function Lpke_run_buf()
               return '[STDERR] ' .. line
             end, filtered_data)
 
-            local line_count = vim.api.nvim_buf_line_count(output_buf)
-            vim.api.nvim_buf_set_lines(
-              output_buf,
-              line_count,
-              line_count,
-              false,
-              prefixed_data
-            )
-
-            -- Auto-scroll to bottom if window is still valid
-            if vim.api.nvim_win_is_valid(output_win) then
-              vim.api.nvim_win_set_cursor(
-                output_win,
-                { vim.api.nvim_buf_line_count(output_buf), 0 }
-              )
-            end
+            append_runner_output(output_buf, output_win, prefixed_data)
           end
         end)
       end
     end,
-    on_exit = function(_, exit_code)
-      vim.schedule(function()
-        local line_count = vim.api.nvim_buf_line_count(output_buf)
-        vim.api.nvim_buf_set_lines(output_buf, line_count, line_count, false, {
-          '',
-          'Process exited with code: ' .. exit_code,
-        })
+    on_exit = function(exited_job_id, exit_code)
+      local job = Lpke_run_buf_active_jobs[exited_job_id]
+      Lpke_run_buf_active_jobs[exited_job_id] = nil
 
-        -- Auto-scroll to bottom if window is still valid
-        if vim.api.nvim_win_is_valid(output_win) then
-          vim.api.nvim_win_set_cursor(
-            output_win,
-            { vim.api.nvim_buf_line_count(output_buf), 0 }
-          )
-        end
+      vim.schedule(function()
+        local exit_message = job and job.stop_requested and 'Process stopped'
+          or 'Process exited with code: ' .. exit_code
+
+        append_runner_output(output_buf, output_win, {
+          '',
+          exit_message,
+        })
 
         -- Clean up temporary file only if one was created
         if use_temp_file and temp_file then
@@ -395,8 +384,57 @@ function Lpke_run_buf()
     end,
   })
 
+  if job_id <= 0 then
+    append_runner_output(output_buf, output_win, {
+      '',
+      'Failed to start process',
+    })
+    vim.notify('Runner: Failed to start process', vim.log.levels.ERROR)
+
+    if use_temp_file and temp_file then
+      vim.fn.delete(temp_file)
+    end
+
+    vim.cmd('wincmd p')
+    return
+  end
+
+  Lpke_run_buf_active_jobs[job_id] = {
+    command = command,
+    file = file_to_run,
+    stop_requested = false,
+  }
+
   -- Return focus to original window
   vim.cmd('wincmd p')
+end
+
+-- Global function to stop active runner processes
+function Lpke_kill_all_runner_processes()
+  local stopped_count = 0
+
+  for job_id, job in pairs(Lpke_run_buf_active_jobs) do
+    local status = vim.fn.jobwait({ job_id }, 0)[1]
+
+    if status == -1 then
+      job.stop_requested = true
+      vim.fn.jobstop(job_id)
+      stopped_count = stopped_count + 1
+    else
+      Lpke_run_buf_active_jobs[job_id] = nil
+    end
+  end
+
+  if stopped_count == 0 then
+    vim.notify('Runner: No active runner processes', vim.log.levels.INFO)
+    return
+  end
+
+  local suffix = stopped_count == 1 and '' or 'es'
+  vim.notify(
+    'Runner: Stopped ' .. stopped_count .. ' active runner process' .. suffix,
+    vim.log.levels.INFO
+  )
 end
 
 -- Global function to close runner output buffer
@@ -425,5 +463,6 @@ end
 helpers.keymap_set_multi({
   { 'n', '<BS>rr', Lpke_run_buf, { desc = 'Run the current buffer code and show output' } },
   { 'n', '<BS>rx', Lpke_close_run_output, { desc = 'Close the runner output buffer' } },
+  { 'n', '<BS>rX', Lpke_kill_all_runner_processes, { desc = 'Kill all active runner processes' } },
 })
 -- stylua: ignore end
