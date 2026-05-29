@@ -114,7 +114,65 @@ local function find_files_picker_config(opts)
   return vim.tbl_extend('force', defaults, opts or {})
 end
 
-local function find_files_command(opts, path_arg)
+local find_file_command_specs = {
+  {
+    executable = 'rg',
+    command = { 'rg', '--files', '--color', 'never' },
+    unrestricted_args = { '--hidden', '--no-ignore' },
+  },
+  {
+    executable = 'fd',
+    command = { 'fd', '--type', 'f', '--color', 'never' },
+    unrestricted_args = { '--hidden', '--no-ignore', '--no-ignore-parent' },
+  },
+  {
+    executable = 'fdfind',
+    command = { 'fdfind', '--type', 'f', '--color', 'never' },
+    unrestricted_args = { '--hidden', '--no-ignore', '--no-ignore-parent' },
+  },
+  {
+    executable = 'find',
+    command = { 'find', '.', '-type', 'f' },
+    unrestricted_args = {},
+    cond = function()
+      return vim.fn.has('win32') == 0
+    end,
+  },
+}
+
+local function list_contains(list, value)
+  for _, item in ipairs(list) do
+    if item == value then
+      return true
+    end
+  end
+  return false
+end
+
+local function append_unique(command, args)
+  for _, arg in ipairs(args) do
+    if not list_contains(command, arg) then
+      table.insert(command, arg)
+    end
+  end
+end
+
+local function available_find_files_command(unrestricted)
+  for _, spec in ipairs(find_file_command_specs) do
+    if
+      vim.fn.executable(spec.executable) == 1
+      and (not spec.cond or spec.cond())
+    then
+      local command = vim.deepcopy(spec.command)
+      if unrestricted then
+        append_unique(command, spec.unrestricted_args)
+      end
+      return command
+    end
+  end
+end
+
+local function configured_find_files_command(opts)
   local find_command = opts.find_command
 
   if type(find_command) == 'function' then
@@ -122,61 +180,88 @@ local function find_files_command(opts, path_arg)
   end
 
   if find_command then
-    find_command = vim.deepcopy(find_command)
-  elseif vim.fn.executable('rg') == 1 then
-    find_command = { 'rg', '--files', '--color', 'never' }
-  elseif vim.fn.executable('fd') == 1 then
-    find_command = { 'fd', '--type', 'f', '--color', 'never' }
-  elseif vim.fn.executable('fdfind') == 1 then
-    find_command = { 'fdfind', '--type', 'f', '--color', 'never' }
-  elseif vim.fn.executable('find') == 1 and vim.fn.has('win32') == 0 then
-    find_command = { 'find', '.', '-type', 'f' }
+    return vim.deepcopy(find_command)
+  end
+
+  return available_find_files_command(false)
+end
+
+local function append_find_files_options(find_command, opts)
+  local command = find_command[1]
+  if command ~= 'fd' and command ~= 'fdfind' and command ~= 'rg' then
+    return
+  end
+
+  local args = {}
+  if opts.hidden then
+    table.insert(args, '--hidden')
+  end
+  if opts.no_ignore then
+    table.insert(args, '--no-ignore')
+  end
+  if opts.no_ignore_parent then
+    table.insert(args, '--no-ignore-parent')
+  end
+  if opts.follow then
+    table.insert(args, '-L')
+  end
+
+  append_unique(find_command, args)
+end
+
+local function append_find_files_path(find_command, path_arg)
+  if not path_arg then
+    return
+  end
+
+  local command = find_command[1]
+  if command == 'rg' then
+    vim.list_extend(find_command, { '--', path_arg })
+  elseif command == 'fd' or command == 'fdfind' then
+    vim.list_extend(find_command, { '.', path_arg })
+  elseif command == 'find' then
+    if find_command[2] == '.' then
+      find_command[2] = path_arg
+    else
+      table.insert(find_command, 2, path_arg)
+    end
+  else
+    table.insert(find_command, path_arg)
+  end
+end
+
+local function find_files_command(opts, parsed)
+  local find_command
+  if parsed.unrestricted then
+    find_command = available_find_files_command(true)
+  else
+    find_command = configured_find_files_command(opts)
   end
 
   if not find_command then
     return nil
   end
 
-  local command = find_command[1]
-  if command == 'fd' or command == 'fdfind' or command == 'rg' then
-    if opts.hidden then
-      table.insert(find_command, '--hidden')
-    end
-    if opts.no_ignore then
-      table.insert(find_command, '--no-ignore')
-    end
-    if opts.no_ignore_parent then
-      table.insert(find_command, '--no-ignore-parent')
-    end
-    if opts.follow then
-      table.insert(find_command, '-L')
-    end
+  if not parsed.unrestricted then
+    append_find_files_options(find_command, opts)
   end
-
-  if path_arg then
-    if command == 'rg' then
-      vim.list_extend(find_command, { '--', path_arg })
-    elseif command == 'fd' or command == 'fdfind' then
-      vim.list_extend(find_command, { '.', path_arg })
-    elseif command == 'find' then
-      if find_command[2] == '.' then
-        find_command[2] = path_arg
-      else
-        table.insert(find_command, 2, path_arg)
-      end
-    else
-      table.insert(find_command, path_arg)
-    end
-  end
+  append_find_files_path(
+    find_command,
+    parsed.has_cwd_arg and parsed.path_arg or nil
+  )
 
   return find_command
 end
 
 local function prompt_root_key(parsed)
-  if not parsed.has_cwd_arg then
+  if not parsed.has_cwd_arg and not parsed.unrestricted then
     return ''
   end
-  return parsed.cwd .. '\n' .. parsed.path_arg
+  return table.concat({
+    parsed.unrestricted and 'unrestricted' or 'restricted',
+    parsed.cwd,
+    parsed.path_arg or '',
+  }, '\n')
 end
 
 local function find_files_finder(opts, parsed)
@@ -189,8 +274,7 @@ local function find_files_finder(opts, parsed)
     })
   end
 
-  local command =
-    find_files_command(opts, parsed.has_cwd_arg and parsed.path_arg or nil)
+  local command = find_files_command(opts, parsed)
 
   if not command then
     vim.notify(

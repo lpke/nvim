@@ -45,6 +45,10 @@ function M.normalize_cwd(cwd)
 end
 
 function M.resolve_prompt_cwd(cwd_arg, base_cwd)
+  if cwd_arg == nil or cwd_arg == '' then
+    return M.normalize_cwd(base_cwd)
+  end
+
   local expanded_cwd_arg = expand_home(cwd_arg)
   if is_absolute_path(expanded_cwd_arg) then
     return normalize_path(expanded_cwd_arg)
@@ -55,6 +59,10 @@ function M.resolve_prompt_cwd(cwd_arg, base_cwd)
 end
 
 function M.prompt_cwd_path_arg(cwd_arg)
+  if cwd_arg == nil or cwd_arg == '' then
+    return nil
+  end
+
   return expand_home(cwd_arg)
 end
 
@@ -62,7 +70,7 @@ function M.parse_prompt_cwd(prompt, base_cwd)
   prompt = prompt or ''
   base_cwd = M.normalize_cwd(base_cwd)
 
-  local cwd_arg, rest = prompt:match('^@(%S+)  (.*)$')
+  local unrestricted_prefix, cwd_arg, rest = prompt:match('^@(%*?)(.-)  (.*)$')
   if not cwd_arg then
     return {
       raw_prompt = prompt,
@@ -72,19 +80,23 @@ function M.parse_prompt_cwd(prompt, base_cwd)
       cwd_arg = nil,
       path_arg = nil,
       has_cwd_arg = false,
+      unrestricted = false,
       valid_cwd = true,
     }
   end
 
+  cwd_arg = trim(cwd_arg)
   local cwd = M.resolve_prompt_cwd(cwd_arg, base_cwd)
+  local path_arg = M.prompt_cwd_path_arg(cwd_arg)
   return {
     raw_prompt = prompt,
     prompt = rest or '',
     base_cwd = base_cwd,
     cwd = cwd,
-    cwd_arg = cwd_arg,
-    path_arg = M.prompt_cwd_path_arg(cwd_arg),
-    has_cwd_arg = true,
+    cwd_arg = path_arg and cwd_arg or nil,
+    path_arg = path_arg,
+    has_cwd_arg = path_arg ~= nil,
+    unrestricted = unrestricted_prefix == '*',
     valid_cwd = vim.fn.isdirectory(cwd) == 1,
   }
 end

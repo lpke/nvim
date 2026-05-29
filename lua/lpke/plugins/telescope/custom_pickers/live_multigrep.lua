@@ -7,6 +7,20 @@ local make_entry = require('telescope.make_entry')
 local config_values = require('telescope.config').values
 local ts_helpers = require('lpke.plugins.telescope.helpers')
 
+local multigrep_base_args = {
+  '--color=never',
+  '--no-heading',
+  '--with-filename',
+  '--line-number',
+  '--column',
+  '--smart-case',
+}
+
+local multigrep_unrestricted_args = {
+  '--hidden',
+  '--no-ignore',
+}
+
 local live_multigrep = function(opts)
   opts = opts or {}
   opts.cwd = ts_helpers.normalize_cwd(opts.cwd or vim.fn.getcwd())
@@ -29,27 +43,18 @@ local live_multigrep = function(opts)
         return nil
       end
 
-      -- will hold all parts of the command to be run
-      local args = {
-        'rg',
-        '-e',
-        search_str,
-      }
+      local args = { 'rg', '-e', search_str }
 
       for _, glob in ipairs(parsed_prompt.globs) do
         table.insert(args, '-g')
         table.insert(args, glob)
       end
 
-      -- add ripgrep options to the command
-      vim.list_extend(args, {
-        '--color=never',
-        '--no-heading',
-        '--with-filename',
-        '--line-number',
-        '--column',
-        '--smart-case',
-      })
+      vim.list_extend(args, multigrep_base_args)
+
+      if parsed_prompt.unrestricted then
+        vim.list_extend(args, multigrep_unrestricted_args)
+      end
 
       if parsed_prompt.has_cwd_arg then
         vim.list_extend(args, {
