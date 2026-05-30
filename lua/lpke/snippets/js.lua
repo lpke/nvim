@@ -95,6 +95,20 @@ return { -- js
   ),
   _s(
     {
+      trig = 'rf',
+      name = 'Return arrow function',
+    },
+    fmt(
+      [[
+        return (<>) =>> {
+          <>
+        };
+      ]],
+      { i(1), i(2) }
+    )
+  ),
+  _s(
+    {
       trig = 'if',
       name = 'If statement',
     },
