@@ -488,6 +488,9 @@ local function config()
     {'n', '<BS>fj', function()
       builtin_pickers.jumplist()
     end, { desc = 'Find jumplist' } },
+    {'n', '<BS>fc', function()
+      custom_pickers.changelist()
+    end, { desc = 'Find changelist' } },
     {'n', '<BS>fk', function()
       builtin_pickers.keymaps()
     end, { desc = 'Find keymaps' } },
