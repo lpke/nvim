@@ -62,7 +62,11 @@ local function config()
           return require('codecompanion.adapters').extend('codex', {
             commands = {
               -- default reasoning set here to override last-used setting from `codex` CLI
-              default = { 'codex-acp-exec', '-c', 'model_reasoning_effort="low"' },
+              default = {
+                'codex-acp-exec',
+                '-c',
+                'model_reasoning_effort="low"',
+              },
             },
             defaults = {
               auth_method = 'chatgpt',
@@ -402,17 +406,25 @@ local function config()
             end,
             description = 'Open a new chat',
           },
-          history_or_resume = {
+          history = {
             modes = { n = 'gh' },
             index = 24,
-            callback = function(chat)
-              require('lpke.plugins.ai.helpers.history_or_resume').open(chat)
+            callback = function()
+              vim.cmd('CodeCompanionHistory')
             end,
             description = 'Open chat history',
           },
+          history_or_resume = {
+            modes = { n = 'gH' },
+            index = 25,
+            callback = function(chat)
+              require('lpke.plugins.ai.helpers.history_or_resume').open(chat)
+            end,
+            description = 'Choose chat history action',
+          },
           delete_chat = {
             modes = { n = 'gX' },
-            index = 25,
+            index = 26,
             callback = function(chat)
               require('lpke.plugins.ai.helpers.chat_functions').delete_current_chat(
                 chat
@@ -446,8 +458,8 @@ local function config()
         opts = {
           -- Native codecompanion-history option for untitled autosaved chats.
           default_buf_title = '[CodeCompanion]  ',
-          -- Keep the extension mapping out of the way. The public `gh`
-          -- mapping above can choose between ACP `/resume` and saved history.
+          -- Keep the extension mapping out of the way. The public `gh` mapping
+          -- opens saved history, while `gH` chooses between history/actions.
           keymap = '<Plug>(CodeCompanionHistory)',
           -- Keymap to save the current chat manually (when auto_save is disabled)
           save_chat_keymap = 'gsc',
@@ -484,6 +496,9 @@ local function config()
 
   require('lpke.plugins.ai.helpers.slash_command_completion').patch_cmp()
   require('lpke.plugins.ai.helpers.acp_lifecycle').setup()
+  require('lpke.plugins.ai.helpers.history_scope').setup()
+  require('lpke.plugins.ai.helpers.history_acp').setup()
+  require('lpke.plugins.ai.helpers.history_search').setup()
   require('lpke.plugins.ai.helpers.drafts').setup()
 
   -- codecompanion-history hard-codes a leading "✨ " when it renames chat

@@ -1,6 +1,7 @@
 local M = {}
 
 local ai_config = require('lpke.plugins.ai.helpers.config')
+local history_acp = require('lpke.plugins.ai.helpers.history_acp')
 local lifecycle = require('lpke.plugins.ai.helpers.acp_lifecycle')
 
 local function has_sent_user_message(chat)
@@ -101,7 +102,9 @@ local function open_chats(current_chat)
     then
       local session_id = lifecycle.get_session_id(chat)
       table.insert(entries, {
-        display = '[open] ' .. chat_title(chat),
+        display = history_acp.format_session_kind(session_id, 'open')
+          .. ' '
+          .. chat_title(chat),
         kind = 'open',
         chat = chat,
         session_id = session_id,
@@ -150,48 +153,16 @@ local function open_existing_chat(current_chat, target_chat)
 end
 
 local function load_acp_session(chat, selected)
-  local updates = {}
-  local ok = chat.acp_connection:load_session(selected.sessionId, {
-    on_session_update = function(update)
-      table.insert(updates, update)
-    end,
-  })
-
+  local ok, err = history_acp.resume_session_into_chat(chat, selected)
   if not ok then
-    return vim.notify('Failed to load session', vim.log.levels.ERROR, {
-      title = 'CodeCompanion',
-    })
+    return vim.notify(
+      tostring(err or 'Failed to load session'),
+      vim.log.levels.ERROR,
+      {
+        title = 'CodeCompanion',
+      }
+    )
   end
-
-  require('codecompanion.interactions.chat.acp.commands').link_buffer_to_session(
-    chat.bufnr,
-    chat.acp_connection.session_id
-  )
-
-  require('codecompanion.interactions.chat.acp.render').restore_session(
-    chat,
-    updates
-  )
-
-  if selected.title then
-    chat:set_title(selected.title)
-  end
-
-  lifecycle.remember_session(chat)
-
-  vim.api.nvim_exec_autocmds('User', {
-    pattern = 'CodeCompanionACPChatRestored',
-    data = {
-      bufnr = chat.bufnr,
-      id = chat.id,
-      session_id = chat.acp_connection.session_id,
-      title = chat.title,
-    },
-  })
-
-  vim.notify('ACP session resumed', vim.log.levels.INFO, {
-    title = 'CodeCompanion',
-  })
 end
 
 local function acp_sessions(chat, open_entries)
@@ -218,7 +189,9 @@ local function acp_sessions(chat, open_entries)
   for _, session in ipairs(sessions or {}) do
     if session.sessionId and not seen[session.sessionId] then
       table.insert(entries, {
-        display = '[saved] ' .. format_session(session),
+        display = history_acp.format_session_kind(session.sessionId, 'saved')
+          .. ' '
+          .. format_session(session),
         kind = 'saved',
         session = session,
         session_id = session.sessionId,
@@ -242,7 +215,7 @@ local function pick_acp_session(chat)
 
   vim.ui.select(entries, {
     prompt = 'ACP Resume',
-    kind = 'codecompanion.nvim',
+    kind = 'lpke.codecompanion.acp_resume',
     format_item = function(item)
       return item.display
     end,
@@ -309,12 +282,12 @@ end
 
 local choices = {
   {
-    display = 'ACP resume',
-    value = 'resume',
-  },
-  {
     display = 'CodeCompanion history',
     value = 'history',
+  },
+  {
+    display = 'ACP resume',
+    value = 'resume',
   },
   {
     display = 'Draft prompts',

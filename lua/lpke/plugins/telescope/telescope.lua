@@ -207,8 +207,12 @@ local function config()
             actions.move_selection_previous(bufnr)
           end,
           ['v'] = function(bufnr)
+            local prompt_title =
+              actions_state.get_current_picker(bufnr).prompt_title
             actions.toggle_all(bufnr)
-            ts_helpers.refresh_picker(bufnr)
+            if not prompt_title:match('^Saved Chats') then
+              ts_helpers.refresh_picker(bufnr)
+            end
           end,
           ['V'] = actions.select_all,
 
@@ -241,7 +245,7 @@ local function config()
               ts_helpers.remove_selected_from_qflist(bufnr)
             elseif prompt_title == 'harpoon marks' then -- remove harpoon
               ts_helpers.remove_selected_from_harpoon(bufnr)
-            elseif prompt_title == 'Saved Chats' then -- remove harpoon
+            elseif prompt_title:match('^Saved Chats') then -- delete saved chat
               ts_helpers.remove_selected_from_codecompanion(bufnr)
             end
           end,

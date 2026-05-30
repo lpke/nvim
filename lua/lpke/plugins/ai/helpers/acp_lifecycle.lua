@@ -735,15 +735,44 @@ local function patch_codecompanion()
         and conn:is_ready()
         and conn:can_load_session()
       then
+        local updates = {}
+        local load_opts = nil
+        if chat._lpke_restore_acp_session_updates == session_id then
+          load_opts = {
+            on_session_update = function(update)
+              table.insert(updates, update)
+            end,
+          }
+        end
+
         local ok, loaded = pcall(function()
-          return conn:load_session(session_id)
+          return conn:load_session(session_id, load_opts)
         end)
         if ok and loaded then
           link_buffer_to_session(chat)
+          if load_opts then
+            require('codecompanion.interactions.chat.acp.render').restore_session(
+              chat,
+              updates
+            )
+            chat._lpke_acp_session_restored = session_id
+            chat._lpke_restore_acp_session_updates = nil
+          end
           pcall(function()
             chat:update_metadata()
           end)
           M.track_chat(chat)
+          if load_opts then
+            vim.api.nvim_exec_autocmds('User', {
+              pattern = 'CodeCompanionACPChatRestored',
+              data = {
+                bufnr = chat.bufnr,
+                id = chat.id,
+                session_id = conn.session_id,
+                title = chat.title,
+              },
+            })
+          end
           vim.notify('ACP session resumed', vim.log.levels.INFO, {
             title = 'CodeCompanion',
           })

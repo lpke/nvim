@@ -46,6 +46,28 @@ local function config()
         end,
       },
       get_config = function(opts)
+        if opts.kind == 'lpke.codecompanion.acp_resume' then
+          return {
+            backend = { 'builtin' },
+            builtin = {
+              max_width = { 240, 0.98 },
+              min_width = { 80, 0.5 },
+              override = function(conf)
+                local max_width = math.max(1, vim.o.columns - 4)
+                conf.width = math.min(conf.width + 1, max_width)
+                conf.col =
+                  math.max(0, math.floor((vim.o.columns - conf.width) / 2))
+                return conf
+              end,
+              win_options = {
+                wrap = false,
+                list = true,
+                listchars = 'extends:>',
+              },
+            },
+          }
+        end
+
         if opts.kind == 'codecompanion.nvim' then
           return {
             backend = { 'builtin' },
