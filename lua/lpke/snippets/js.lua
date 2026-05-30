@@ -6,6 +6,7 @@ local ls, s, _s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_q, sel_b, ex
 -- stylua: ignore end
 
 local cond_obj = require('luasnip.extras.conditions')
+local class_helpers = require('lpke.snippets.js_class_helpers')
 
 local test_file_condition = cond_obj.make_condition(function()
   return vim.api.nvim_buf_get_name(0):match('%.test%.[jt]s$') ~= nil
@@ -93,6 +94,14 @@ return { -- js
       { i(1), i(2), i(3) }
     )
   ),
+  _s({
+    trig = 'con',
+    name = 'Constructor',
+  }, d(1, class_helpers.constructor)),
+  _s({
+    trig = 'conf',
+    name = 'Constructor with fields',
+  }, d(1, class_helpers.constructor_with_fields)),
   _s(
     {
       trig = 'rf',
