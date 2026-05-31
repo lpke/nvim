@@ -1,4 +1,5 @@
 local M = {}
+local path_helpers = require('lpke.core.helpers')
 
 local patched = false
 
@@ -11,15 +12,7 @@ local function history()
 end
 
 function M.normalize_path(path)
-  if type(path) ~= 'string' or path == '' then
-    return nil
-  end
-
-  if vim.fs and vim.fs.normalize then
-    return vim.fs.normalize(path)
-  end
-
-  return path:gsub('/+$', '')
+  return path_helpers.normalize_path(path)
 end
 
 function M.project_root(path)

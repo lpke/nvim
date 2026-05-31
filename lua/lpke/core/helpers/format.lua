@@ -16,6 +16,84 @@ function M.get_path_protocol(path)
   return nil
 end
 
+function M.is_absolute_path(path)
+  if type(path) ~= 'string' then
+    return false
+  end
+
+  return path:sub(1, 1) == '/'
+    or path:match('^%a:[/\\]') ~= nil
+    or path:sub(1, 2) == '\\\\'
+end
+
+function M.expand_home(path)
+  if type(path) ~= 'string' then
+    return path
+  end
+
+  local home = vim.env.HOME
+  if not home then
+    return path
+  end
+  if path == '~' then
+    return home
+  end
+  return path:gsub('^~/', function()
+    return home .. '/'
+  end, 1)
+end
+
+function M.normalize_path(path)
+  if type(path) ~= 'string' or path == '' then
+    return nil
+  end
+
+  path = M.expand_home(path)
+  if vim.fs and vim.fs.normalize then
+    return vim.fs.normalize(path)
+  end
+
+  local normalized = path:gsub('/+$', '')
+  return normalized == '' and '/' or normalized
+end
+
+function M.normalize_dir(path)
+  if type(path) ~= 'string' or path == '' then
+    return nil
+  end
+
+  local normalized = M.normalize_path(vim.fn.fnamemodify(path, ':p'))
+  if normalized and normalized ~= '/' then
+    normalized = normalized:gsub('/$', '')
+  end
+  return normalized
+end
+
+function M.normalize_file(path)
+  if type(path) ~= 'string' or path == '' then
+    return nil
+  end
+
+  return M.normalize_path(vim.fn.fnamemodify(path, ':p'))
+end
+
+function M.absolute_path(base_path, path)
+  if type(path) ~= 'string' or path == '' then
+    return nil
+  end
+
+  path = M.expand_home(path)
+  if M.is_absolute_path(path) then
+    return M.normalize_path(path)
+  end
+
+  local base = M.normalize_dir(base_path or vim.fn.getcwd())
+  if not base then
+    return M.normalize_path(path)
+  end
+  return M.normalize_path(vim.fs.joinpath(base, path))
+end
+
 -- get last segment of a path
 function M.get_path_tail(str, include_trailing_slash)
   if include_trailing_slash then
@@ -358,29 +436,82 @@ function M.transform_path(full_path, opts)
   return path
 end
 
--- return path of first file/dir matching item in `items` if it exists under git root or cwd
----@param items string[] -- list of items (file or dirs) to search for
+local function should_skip_path(path, skip)
+  if not skip then
+    return false
+  end
+
+  local normalized = M.normalize_file(path)
+  if type(skip) == 'function' then
+    return skip(normalized)
+  end
+  if type(skip) == 'string' then
+    return normalized == M.normalize_file(skip)
+  end
+  if type(skip) == 'table' then
+    for _, skipped_path in ipairs(skip) do
+      if normalized == M.normalize_file(skipped_path) then
+        return true
+      end
+    end
+  end
+  return false
+end
+
+local function find_upward_start_dir(start_path)
+  start_path = start_path or vim.fn.expand('%:p')
+  if start_path == '' then
+    start_path = vim.fn.getcwd()
+  end
+
+  local full_path = vim.fn.fnamemodify(start_path, ':p')
+  if vim.fn.isdirectory(full_path) == 1 then
+    return M.normalize_dir(full_path)
+  end
+  return M.normalize_dir(vim.fn.fnamemodify(full_path, ':h'))
+end
+
+local function find_upward_candidates(cur_dir, item)
+  if item:find('[*?%[]') then
+    local matches = vim.fn.globpath(cur_dir, item, false, true)
+    table.sort(matches)
+    return matches
+  end
+
+  local is_dir = item:sub(-1) == '/'
+  local name = is_dir and item:sub(1, -2) or item
+  return { cur_dir .. '/' .. name }
+end
+
+-- return path of first file/dir matching item in `items` if it exists upward
+---@param items string[] -- list of items (file, dir with trailing `/`, or glob) to search for
+---@param opts? { start_path?: string, root?: string, skip?: string|string[]|fun(path: string|nil): boolean }
 ---@return string | nil
-function M.find_file_upward(items)
-  local cur_dir = vim.fn.fnamemodify(vim.fn.expand('%:p'), ':h')
-  local root = Lpke_find_git_root() or vim.fn.getcwd()
+function M.find_file_upward(items, opts)
+  opts = opts or {}
+  if type(items) == 'string' then
+    items = { items }
+  end
+
+  local cur_dir = find_upward_start_dir(opts.start_path)
+  local root = M.normalize_dir(
+    opts.root or Lpke_find_git_root(opts.start_path) or vim.fn.getcwd()
+  )
+
   while cur_dir and cur_dir ~= '/' do
     for _, item in ipairs(items) do
-      local path
-      if item:sub(-1) == '/' then
-        -- item is a directory
-        path = cur_dir .. '/' .. item:sub(1, -2)
-        if vim.fn.isdirectory(path) == 1 then
-          return path .. '/'
-        end
-      else
-        -- item is a file
-        path = cur_dir .. '/' .. item
-        if vim.fn.filereadable(path) == 1 then
-          return path
+      local is_dir = item:sub(-1) == '/'
+      for _, path in ipairs(find_upward_candidates(cur_dir, item)) do
+        if not should_skip_path(path, opts.skip) then
+          if is_dir and vim.fn.isdirectory(path) == 1 then
+            return M.normalize_dir(path) .. '/'
+          elseif not is_dir and vim.fn.filereadable(path) == 1 then
+            return M.normalize_file(path)
+          end
         end
       end
     end
+
     if cur_dir == root then
       break
     end

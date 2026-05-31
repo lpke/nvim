@@ -1,4 +1,5 @@
 local builtin = require('telescope.builtin')
+local path_helpers = require('lpke.core.helpers')
 
 local M = {}
 
@@ -6,42 +7,16 @@ local function trim(str)
   return (str:gsub('^%s+', ''):gsub('%s+$', ''))
 end
 
-local function normalize_path(path)
-  if vim.fs and vim.fs.normalize then
-    return vim.fs.normalize(path)
-  end
-  return path
-end
-
-local function is_absolute_path(path)
-  return path:sub(1, 1) == '/'
-    or path:match('^%a:[/\\]') ~= nil
-    or path:sub(1, 2) == '\\\\'
-end
-
-local function expand_home(path)
-  local home = vim.env.HOME
-  if not home then
-    return path
-  end
-  if path == '~' then
-    return home
-  end
-  return path:gsub('^~/', function()
-    return home .. '/'
-  end, 1)
-end
-
 function M.normalize_cwd(cwd)
   cwd = cwd or vim.fn.getcwd()
   if cwd == '' then
     cwd = vim.fn.getcwd()
   end
-  cwd = expand_home(cwd)
-  if not is_absolute_path(cwd) then
+  cwd = path_helpers.expand_home(cwd)
+  if not path_helpers.is_absolute_path(cwd) then
     cwd = vim.fn.fnamemodify(cwd, ':p')
   end
-  return normalize_path(cwd)
+  return path_helpers.normalize_path(cwd) or vim.fn.getcwd()
 end
 
 function M.resolve_prompt_cwd(cwd_arg, base_cwd)
@@ -49,11 +24,11 @@ function M.resolve_prompt_cwd(cwd_arg, base_cwd)
     return M.normalize_cwd(base_cwd)
   end
 
-  local expanded_cwd_arg = expand_home(cwd_arg)
-  if is_absolute_path(expanded_cwd_arg) then
-    return normalize_path(expanded_cwd_arg)
+  local expanded_cwd_arg = path_helpers.expand_home(cwd_arg)
+  if path_helpers.is_absolute_path(expanded_cwd_arg) then
+    return path_helpers.normalize_path(expanded_cwd_arg) or expanded_cwd_arg
   end
-  return normalize_path(
+  return path_helpers.normalize_path(
     vim.fs.joinpath(M.normalize_cwd(base_cwd), expanded_cwd_arg)
   )
 end
@@ -63,7 +38,7 @@ function M.prompt_cwd_path_arg(cwd_arg)
     return nil
   end
 
-  return expand_home(cwd_arg)
+  return path_helpers.expand_home(cwd_arg)
 end
 
 function M.parse_prompt_cwd(prompt, base_cwd)

@@ -9,6 +9,7 @@ local make_entry = require('telescope.make_entry')
 local config_values = require('telescope.config').values
 local previewers = require('telescope.previewers')
 local ts_helpers = require('lpke.plugins.telescope.helpers')
+local path_helpers = require('lpke.core.helpers')
 
 local tc = Lpke_theme_colors
 
@@ -44,13 +45,7 @@ local function resolve_path_from_nvim_cwd(relative_path)
     return relative_path
   end
 
-  -- If gap_path is absolute, join directly
-  if vim.fn.fnamemodify(gap_path, ':p') == gap_path then
-    return gap_path .. '/' .. relative_path
-  end
-
-  -- Otherwise, gap_path is relative to nvim_cwd
-  return gap_path .. '/' .. relative_path
+  return vim.fs.joinpath(gap_path, relative_path)
 end
 
 local function switch_to_picker(
@@ -293,19 +288,6 @@ local function find_files_finder(opts, parsed)
   )
 end
 
-local function is_absolute_path(path)
-  return path:sub(1, 1) == '/'
-    or path:match('^%a:[/\\]') ~= nil
-    or path:sub(1, 2) == '\\\\'
-end
-
-local function absolute_path(cwd, path)
-  if is_absolute_path(path) then
-    return path
-  end
-  return vim.fs.joinpath(cwd, path)
-end
-
 local function find_directories_command(path_arg)
   local command = {
     'fd',
@@ -336,7 +318,7 @@ local function find_directories_entry_maker(opts, should_ignore_dir)
     end
     return {
       value = entry,
-      path = absolute_path(cwd, entry),
+      path = path_helpers.absolute_path(cwd, entry) or entry,
       display = entry,
       ordinal = entry,
     }

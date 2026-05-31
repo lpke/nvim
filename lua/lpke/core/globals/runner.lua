@@ -15,11 +15,13 @@ local runner_config = {
     run_command = 'tsx',
     dependencies = { 'tsx' },
     temp_file_extension = 'ts',
+    tsconfig_lookup = true,
   },
   ts = {
     run_command = 'tsx',
     dependencies = { 'tsx' },
     temp_file_extension = 'ts',
+    tsconfig_lookup = true,
   },
   python = {
     run_command = 'python3',
@@ -139,6 +141,40 @@ local function check_command_availability(cmd)
   return vim.v.shell_error == 0 and result:match('%S') ~= nil
 end
 
+local function find_tsconfig_upward(file_path)
+  if not file_path or file_path == '' then
+    return nil
+  end
+
+  local root =
+    helpers.normalize_dir(Lpke_find_git_root(file_path) or vim.fn.getcwd())
+  if not root then
+    return nil
+  end
+
+  return helpers.find_file_upward({ 'tsconfig.json', 'tsconfig*.json' }, {
+    start_path = file_path,
+    root = root,
+    skip = root .. '/tsconfig.json',
+  })
+end
+
+local function shellescape_args(args)
+  local escaped_args = {}
+  for _, arg in ipairs(args) do
+    table.insert(escaped_args, vim.fn.shellescape(arg))
+  end
+  return table.concat(escaped_args, ' ')
+end
+
+local function display_command(command, args)
+  local parts = { command }
+  for _, arg in ipairs(args) do
+    table.insert(parts, arg)
+  end
+  return table.concat(parts, ' ')
+end
+
 -- Global variable to track runner output buffer
 Lpke_run_buf_output_buf = nil
 Lpke_run_buf_active_jobs = Lpke_run_buf_active_jobs or {}
@@ -255,6 +291,22 @@ function Lpke_run_buf()
     end
   end
 
+  local command_args = {}
+  if config.tsconfig_lookup and not use_temp_file then
+    local tsconfig = find_tsconfig_upward(file_to_run)
+    if tsconfig then
+      table.insert(command_args, '--tsconfig')
+      table.insert(command_args, tsconfig)
+    end
+  end
+
+  local escaped_command_args = shellescape_args(command_args)
+  local command_with_args = command
+  if escaped_command_args ~= '' then
+    command_with_args = command_with_args .. ' ' .. escaped_command_args
+  end
+  local displayed_command = display_command(command, command_args)
+
   local output_buf
   local output_win
   -- Check if output buffer already exists and is valid
@@ -312,8 +364,8 @@ function Lpke_run_buf()
   end
   -- Add initial content
   local run_info = use_temp_file
-      and 'Running: `' .. command .. ' ' .. temp_file .. '` (temp file)'
-    or 'Running: `' .. command .. ' ' .. file_to_run .. '`'
+      and 'Running: `' .. displayed_command .. ' ' .. temp_file .. '` (temp file)'
+    or 'Running: `' .. displayed_command .. ' ' .. file_to_run .. '`'
   vim.api.nvim_buf_set_lines(output_buf, 0, -1, false, {
     run_info,
     '',
@@ -321,7 +373,7 @@ function Lpke_run_buf()
 
   -- Build full command
   local full_command = 'exec '
-    .. command
+    .. command_with_args
     .. ' '
     .. vim.fn.shellescape(file_to_run)
 
