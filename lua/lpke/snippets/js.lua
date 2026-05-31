@@ -171,10 +171,10 @@ return { -- js
         try {
           <>
         } catch (<>) {
-          console.error(<>);
+          <>
         }
       ]],
-      { d(1, sel), i(2, 'err'), d(3, err_arg, { 2 }) }
+      { d(1, sel), i(2, 'err'), i(3) }
     )
   ),
   _s(
@@ -187,12 +187,12 @@ return { -- js
         try {
           <>
         } catch (<>) {
-          console.error(<>);
+          <>
         } finally {
           <>
         }
       ]],
-      { d(1, sel), i(2, 'err'), d(3, err_arg, { 2 }), i(4) }
+      { d(1, sel), i(2, 'err'), i(3), i(4) }
     )
   ),
   _s(
