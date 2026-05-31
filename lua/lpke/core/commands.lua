@@ -59,6 +59,9 @@ helpers.command_set_multi({
   { '*', 'R', Lpke_ranger }, -- arg: full
   { '*', 'Ranger', Lpke_ranger }, -- arg: full
 
+  -- git
+  { '*', 'Gpp', Lpke_gpp, { desc = 'Run zsh gpp helper without a terminal', bar = false } },
+
   -- message window
   { '', 'M', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' } },
   { '', 'Mes', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' } },
