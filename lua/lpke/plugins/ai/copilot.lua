@@ -19,14 +19,111 @@ local function is_ft_disabled(ft, filetypes)
   return false
 end
 
+-- Interview rule: keep inline Copilot suggestions on the current line only.
+local copilot_inline_single_line_only = false
+
+local function first_line(text)
+  if type(text) ~= 'string' then
+    return ''
+  end
+  return text:match('^[^\r\n]*') or ''
+end
+
+local function trim_completion_to_single_line(completion)
+  if type(completion) ~= 'table' then
+    return nil
+  end
+
+  local text = first_line(completion.text)
+  if text == '' then
+    return nil
+  end
+
+  completion.text = text
+  completion.displayText = first_line(completion.displayText)
+  if completion.displayText == '' then
+    completion.displayText = text
+  end
+
+  if type(completion.partial_text) == 'string' then
+    completion.partial_text = first_line(completion.partial_text)
+  end
+
+  local range = completion.range
+  if
+    type(range) == 'table'
+    and type(range.start) == 'table'
+    and type(range['end']) == 'table'
+  then
+    if range['end'].line ~= range.start.line then
+      range['end'].character = range.start.character
+    end
+    range['end'].line = range.start.line
+  end
+
+  return completion
+end
+
+local function trim_completions_to_single_line(data)
+  if type(data) ~= 'table' or type(data.completions) ~= 'table' then
+    return data
+  end
+
+  local completions = {}
+  for _, completion in ipairs(data.completions) do
+    completion = trim_completion_to_single_line(completion)
+    if completion then
+      table.insert(completions, completion)
+    end
+  end
+  data.completions = completions
+
+  return data
+end
+
+local function patch_copilot_inline_single_line(api)
+  if
+    not copilot_inline_single_line_only or api._lpke_inline_single_line_only
+  then
+    return
+  end
+
+  api._lpke_inline_single_line_only = true
+
+  local get_completions = api.get_completions
+  api.get_completions = function(client, params, callback)
+    if type(callback) ~= 'function' then
+      return get_completions(client, params, callback)
+    end
+
+    return get_completions(client, params, function(err, data, ...)
+      return callback(err, trim_completions_to_single_line(data), ...)
+    end)
+  end
+
+  local get_completions_cycling = api.get_completions_cycling
+  api.get_completions_cycling = function(client, params, callback)
+    if type(callback) ~= 'function' then
+      return get_completions_cycling(client, params, callback)
+    end
+
+    return get_completions_cycling(client, params, function(err, data, ...)
+      return callback(err, trim_completions_to_single_line(data), ...)
+    end)
+  end
+end
+
 local function config()
   local copilot = require('copilot')
+  local api = require('copilot.api')
   local client = require('copilot.client')
   local cfg = require('copilot.config')
   local cmd = require('copilot.command')
   local sug = require('copilot.suggestion')
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
+
+  patch_copilot_inline_single_line(api)
 
   -- detach copilot from buffer
   function Lpke_copilot_buf_detach(bufnr, client_id)
@@ -134,7 +231,7 @@ local function config()
 
   copilot.setup({
     panel = {
-      enabled = true,
+      enabled = not copilot_inline_single_line_only,
       auto_refresh = false,
       keymap = {
         jump_prev = '[[',
