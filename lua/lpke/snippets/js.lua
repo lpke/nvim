@@ -102,6 +102,40 @@ return { -- js
     trig = 'conf',
     name = 'Constructor with fields',
   }, d(1, class_helpers.constructor_with_fields)),
+  _s({
+    trig = 'pall',
+    name = 'Promise.all',
+  }, fmt('Promise.all([<>]);', { i(1) })),
+  _s({
+    trig = 'palls',
+    name = 'Promise.allSettled',
+  }, fmt('Promise.allSettled([<>]);', { i(1) })),
+  _s(
+    {
+      trig = 'pwr',
+      name = 'Promise.withResolvers',
+    },
+    fmt(
+      'const { promise, resolve, reject } = Promise.withResolvers<>();',
+      { i(1) }
+    )
+  ),
+  _s({
+    trig = 'pres',
+    name = 'Promise.resolve',
+  }, fmt('Promise.resolve(<>);', { i(1) })),
+  _s({
+    trig = 'prej',
+    name = 'Promise.reject',
+  }, fmt('Promise.reject(<>);', { i(1) })),
+  _s({
+    trig = 'prace',
+    name = 'Promise.race',
+  }, fmt('Promise.race([<>]);', { i(1) })),
+  _s({
+    trig = 'pany',
+    name = 'Promise.any',
+  }, fmt('Promise.any([<>]);', { i(1) })),
   _s(
     {
       trig = 'rf',
@@ -207,6 +241,20 @@ return { -- js
         }
       ]],
       { i(1, '0'), i(2, '.length'), i(3, '++'), i(4) }
+    )
+  ),
+  _s(
+    {
+      trig = 'fo',
+      name = 'Indexed iterable for loop',
+    },
+    fmt(
+      [[
+        for (const [index, <>] of <>.entries()) {
+          <>
+        }
+      ]],
+      { i(1), i(2), i(3) }
     )
   ),
   _s(

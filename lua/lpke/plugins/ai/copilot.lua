@@ -19,7 +19,7 @@ local function is_ft_disabled(ft, filetypes)
   return false
 end
 
--- Interview rule: keep inline Copilot suggestions on the current line only.
+-- for interviews that disallow multi-line AI completions
 local copilot_inline_single_line_only = false
 
 local function first_line(text)
