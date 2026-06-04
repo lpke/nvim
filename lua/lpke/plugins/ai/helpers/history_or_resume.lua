@@ -220,6 +220,10 @@ local function pick_acp_session(chat)
       return item.display
     end,
   }, function(choice)
+    if chat then
+      chat._lpke_acp_connection_only = nil
+    end
+
     if not choice then
       return
     end
@@ -242,10 +246,10 @@ local function run_resume(chat)
     return
   end
 
-  require('codecompanion.interactions.chat.helpers').create_acp_connection(
-    chat,
-    execute_resume
-  )
+  chat._lpke_acp_connection_only = true
+  if not lifecycle.ensure_chat_ready(chat, execute_resume) then
+    chat._lpke_acp_connection_only = nil
+  end
 end
 
 local function open_acp_resume_chat(source_chat, cb)

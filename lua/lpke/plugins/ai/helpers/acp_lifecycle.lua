@@ -326,10 +326,133 @@ end
 local function saved_session_id(chat)
   return chat
     and (
-      chat.acp_session_id
+      (chat.acp_connection and chat.acp_connection.session_id)
+      or chat.acp_session_id
       or (chat.opts and chat.opts.acp_session_id)
-      or (chat.acp_connection and chat.acp_connection.session_id)
     )
+end
+
+local function saved_cwd(chat)
+  if not chat then
+    return nil
+  end
+
+  for _, cwd in ipairs({
+    chat.opts and chat.opts.cwd,
+    chat.cwd,
+    chat.project_root,
+    chat.opts and chat.opts.project_root,
+  }) do
+    local stat = type(cwd) == 'string' and cwd ~= '' and uv.fs_stat(cwd)
+    if stat and stat.type == 'directory' then
+      return cwd
+    end
+  end
+end
+
+local function set_connection_cwd(chat)
+  if not is_acp_chat(chat) or not chat.acp_connection then
+    return
+  end
+
+  chat.acp_connection._lpke_cwd = saved_cwd(chat)
+end
+
+local function acp_session_args(conn)
+  local defaults = conn.adapter_modified and conn.adapter_modified.defaults
+    or {}
+  local mcp_servers = defaults.mcpServers
+
+  if mcp_servers == 'inherit_from_config' then
+    local ok_config, config = pcall(require, 'codecompanion.config')
+    if
+      ok_config
+      and config.mcp
+      and config.mcp.opts
+      and config.mcp.opts.acp_enabled
+    then
+      local ok_mcp, mcp = pcall(require, 'codecompanion.mcp')
+      if ok_mcp then
+        mcp_servers = mcp.transform_to_acp()
+      end
+    end
+  end
+
+  return {
+    cwd = vim.fn.getcwd(),
+    mcpServers = mcp_servers,
+  }
+end
+
+local function exact_load_session(conn, session_id, opts)
+  opts = opts or {}
+  if
+    not conn
+    or type(conn.is_ready) ~= 'function'
+    or not conn:is_ready()
+    or type(conn.send_rpc_request) ~= 'function'
+  then
+    return false
+  end
+
+  local previous_session_id = conn.session_id
+  local previous_loading_session = conn._loading_session
+  local previous_on_session_update = conn._on_session_update
+
+  conn.session_id = session_id
+  conn._loading_session = true
+  conn._on_session_update = opts.on_session_update
+
+  local ok, loaded_session = pcall(
+    conn.send_rpc_request,
+    conn,
+    conn.METHODS.SESSION_LOAD,
+    vim.tbl_extend('force', acp_session_args(conn), {
+      sessionId = session_id,
+    })
+  )
+
+  conn._loading_session = previous_loading_session
+  conn._on_session_update = previous_on_session_update
+
+  if not ok or not loaded_session then
+    conn.session_id = previous_session_id
+    return false
+  end
+
+  if
+    loaded_session.configOptions
+    and type(conn._apply_config_options) == 'function'
+  then
+    conn:_apply_config_options(loaded_session.configOptions)
+  end
+
+  if type(conn.apply_default_config_options) == 'function' then
+    conn:apply_default_config_options()
+  end
+
+  return true
+end
+
+local function set_saved_session_id(chat, session_id)
+  if not is_acp_chat(chat) then
+    return
+  end
+
+  chat.acp_session_id = session_id
+  chat.opts = chat.opts or {}
+  chat.opts.acp_session_id = session_id
+end
+
+local function clear_saved_session_id(chat)
+  if not chat then
+    return
+  end
+
+  chat.acp_session_id = nil
+  if chat.opts then
+    chat.opts.acp_session_id = nil
+  end
 end
 
 function M.remember_session(chat)
@@ -342,9 +465,7 @@ function M.remember_session(chat)
     return nil
   end
 
-  chat.acp_session_id = session_id
-  chat.opts = chat.opts or {}
-  chat.opts.acp_session_id = session_id
+  set_saved_session_id(chat, session_id)
   return session_id
 end
 
@@ -352,11 +473,38 @@ function M.get_session_id(chat)
   return saved_session_id(chat)
 end
 
+function M.load_session(chat, session_id, opts)
+  if
+    not is_acp_chat(chat)
+    or type(session_id) ~= 'string'
+    or session_id == ''
+  then
+    return false
+  end
+
+  local conn = chat.acp_connection
+  if not conn then
+    return false
+  end
+
+  set_connection_cwd(chat)
+  if
+    exact_load_session(conn, session_id, opts)
+    and conn.session_id == session_id
+  then
+    return true
+  end
+
+  clear_saved_session_id(chat)
+  return false
+end
+
 function M.track_chat(chat)
   if not is_acp_chat(chat) or not chat.acp_connection then
     return
   end
 
+  set_connection_cwd(chat)
   M.remember_session(chat)
   local conn = chat.acp_connection
   remember_connection(conn)
@@ -602,6 +750,7 @@ function M.ensure_chat_connection(chat, cb, opts)
   end
 
   if connection_has_session(chat.acp_connection) then
+    set_connection_cwd(chat)
     M.track_chat(chat)
     run_cb()
     return true
@@ -614,6 +763,46 @@ function M.ensure_chat_connection(chat, cb, opts)
       run_cb()
     end
   )
+  return true
+end
+
+function M.ensure_chat_ready(chat, cb)
+  cb = cb or function() end
+  if not is_acp_chat(chat) then
+    return false
+  end
+
+  local function run_cb()
+    cb()
+  end
+
+  if
+    chat.acp_connection
+    and type(chat.acp_connection.is_ready) == 'function'
+    and chat.acp_connection:is_ready()
+  then
+    set_connection_cwd(chat)
+    M.track_chat(chat)
+    run_cb()
+    return true
+  end
+
+  if not chat.acp_connection then
+    chat.acp_connection = require('codecompanion.acp').new({
+      adapter = chat.adapter,
+    })
+  end
+  set_connection_cwd(chat)
+
+  require('codecompanion.utils.async').sync(function()
+    local handler =
+      require('codecompanion.interactions.chat.acp.handler').new(chat)
+    if handler:ensure_connection() then
+      M.track_chat(chat)
+    end
+    vim.schedule(run_cb)
+  end)()
+
   return true
 end
 
@@ -672,6 +861,19 @@ local function guard_chat_visible(chat, ms)
   end, ms or 2000)
 end
 
+local function notify_acp_session_unavailable(chat)
+  if chat._lpke_acp_session_unavailable_notified then
+    return
+  end
+  chat._lpke_acp_session_unavailable_notified = true
+
+  vim.notify(
+    'ACP session unavailable; opened saved history chat',
+    vim.log.levels.WARN,
+    { title = 'CodeCompanion' }
+  )
+end
+
 local function patch_codecompanion()
   if patched then
     return
@@ -715,6 +917,47 @@ local function patch_codecompanion()
 
       return result
     end
+
+    local original_start = Connection.start_agent_process
+    Connection.start_agent_process = function(self, ...)
+      local cwd = self._lpke_cwd
+      if type(cwd) ~= 'string' or cwd == '' then
+        return original_start(self, ...)
+      end
+
+      local job = self.methods.job
+      self.methods.job = function(cmd, opts, cb)
+        opts = opts or {}
+        opts.cwd = cwd
+        return job(cmd, opts, cb)
+      end
+
+      local ok, result = pcall(original_start, self, ...)
+      self.methods.job = job
+      if not ok then
+        error(result)
+      end
+      return result
+    end
+
+    local original_send_rpc_request = Connection.send_rpc_request
+    Connection.send_rpc_request = function(self, method, params, ...)
+      local cwd = self._lpke_cwd
+      if
+        type(cwd) == 'string'
+        and cwd ~= ''
+        and type(params) == 'table'
+        and (
+          method == self.METHODS.SESSION_LIST
+          or method == self.METHODS.SESSION_LOAD
+          or method == self.METHODS.SESSION_NEW
+        )
+      then
+        params = vim.tbl_extend('force', params, { cwd = cwd })
+      end
+
+      return original_send_rpc_request(self, method, params, ...)
+    end
   end
 
   local ok_handler, ACPHandler =
@@ -728,6 +971,18 @@ local function patch_codecompanion()
       local conn = chat and chat.acp_connection
       local session_id = saved_session_id(chat)
 
+      set_connection_cwd(chat)
+
+      if
+        chat
+        and chat._lpke_acp_connection_only
+        and conn
+        and not conn.session_id
+        and not session_id
+      then
+        return true
+      end
+
       if
         conn
         and not conn.session_id
@@ -736,33 +991,34 @@ local function patch_codecompanion()
         and conn:can_load_session()
       then
         local updates = {}
-        local load_opts = nil
-        if chat._lpke_restore_acp_session_updates == session_id then
-          load_opts = {
-            on_session_update = function(update)
-              table.insert(updates, update)
-            end,
-          }
-        end
+        local should_restore = chat._lpke_restore_acp_session_updates
+            == session_id
+          or (chat.opts and chat.opts.save_id)
+        local load_opts = should_restore
+            and {
+              on_session_update = function(update)
+                table.insert(updates, update)
+              end,
+            }
+          or nil
 
-        local ok, loaded = pcall(function()
-          return conn:load_session(session_id, load_opts)
-        end)
-        if ok and loaded then
+        local ok, loaded =
+          pcall(exact_load_session, conn, session_id, load_opts)
+        if ok and loaded and conn.session_id == session_id then
           link_buffer_to_session(chat)
-          if load_opts then
+          if should_restore and #updates > 0 then
             require('codecompanion.interactions.chat.acp.render').restore_session(
               chat,
               updates
             )
             chat._lpke_acp_session_restored = session_id
-            chat._lpke_restore_acp_session_updates = nil
           end
+          chat._lpke_restore_acp_session_updates = nil
           pcall(function()
             chat:update_metadata()
           end)
           M.track_chat(chat)
-          if load_opts then
+          if should_restore then
             vim.api.nvim_exec_autocmds('User', {
               pattern = 'CodeCompanionACPChatRestored',
               data = {
@@ -778,6 +1034,15 @@ local function patch_codecompanion()
           })
           return true
         end
+
+        if should_restore then
+          chat._lpke_restore_acp_session_updates = nil
+          notify_acp_session_unavailable(chat)
+          clear_saved_session_id(chat)
+          return true
+        end
+
+        clear_saved_session_id(chat)
       end
 
       local ok = original_ensure_session(self, ...)
@@ -786,6 +1051,18 @@ local function patch_codecompanion()
         M.track_chat(chat)
       end
       return ok
+    end
+
+    local original_ensure_connection = ACPHandler.ensure_connection
+    ACPHandler.ensure_connection = function(self, ...)
+      local chat = self.chat
+      if is_acp_chat(chat) and not chat.acp_connection then
+        chat.acp_connection = require('codecompanion.acp').new({
+          adapter = chat.adapter,
+        })
+      end
+      set_connection_cwd(chat)
+      return original_ensure_connection(self, ...)
     end
   end
 
