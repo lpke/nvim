@@ -6,20 +6,7 @@ local sorters = require('telescope.sorters')
 local make_entry = require('telescope.make_entry')
 local config_values = require('telescope.config').values
 local ts_helpers = require('lpke.plugins.telescope.helpers')
-
-local multigrep_base_args = {
-  '--color=never',
-  '--no-heading',
-  '--with-filename',
-  '--line-number',
-  '--column',
-  '--smart-case',
-}
-
-local multigrep_unrestricted_args = {
-  '--hidden',
-  '--no-ignore',
-}
+local ignore = require('lpke.plugins.telescope.ignore')
 
 local live_multigrep = function(opts)
   opts = opts or {}
@@ -43,17 +30,21 @@ local live_multigrep = function(opts)
         return nil
       end
 
-      local args = { 'rg', '-e', search_str }
+      local args = { 'rg' }
+      if opts.fixed_strings then
+        table.insert(args, '--fixed-strings')
+      end
+      vim.list_extend(args, { '-e', search_str })
 
       for _, glob in ipairs(parsed_prompt.globs) do
         table.insert(args, '-g')
         table.insert(args, glob)
       end
 
-      vim.list_extend(args, multigrep_base_args)
-
       if parsed_prompt.unrestricted then
-        vim.list_extend(args, multigrep_unrestricted_args)
+        vim.list_extend(args, ignore.rg_grep_args(true))
+      else
+        vim.list_extend(args, ignore.rg_grep_args(false))
       end
 
       if parsed_prompt.has_cwd_arg then

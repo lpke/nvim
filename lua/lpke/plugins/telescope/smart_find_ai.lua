@@ -2,7 +2,6 @@
 
 local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
-local builtin = require('telescope.builtin')
 local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
 local make_entry = require('telescope.make_entry')
@@ -10,6 +9,7 @@ local config_values = require('telescope.config').values
 local previewers = require('telescope.previewers')
 local ts_helpers = require('lpke.plugins.telescope.helpers')
 local path_helpers = require('lpke.core.helpers')
+local ignore = require('lpke.plugins.telescope.ignore')
 
 local tc = Lpke_theme_colors
 
@@ -113,22 +113,27 @@ local find_file_command_specs = {
   {
     executable = 'rg',
     command = { 'rg', '--files', '--color', 'never' },
-    unrestricted_args = { '--hidden', '--no-ignore' },
+    restricted_args = ignore.rg_restricted_args,
+    unrestricted_args = ignore.rg_unrestricted_args,
   },
   {
     executable = 'fd',
     command = { 'fd', '--type', 'f', '--color', 'never' },
-    unrestricted_args = { '--hidden', '--no-ignore', '--no-ignore-parent' },
+    restricted_args = ignore.fd_restricted_args,
+    unrestricted_args = ignore.fd_unrestricted_args,
   },
   {
     executable = 'fdfind',
     command = { 'fdfind', '--type', 'f', '--color', 'never' },
-    unrestricted_args = { '--hidden', '--no-ignore', '--no-ignore-parent' },
+    restricted_args = ignore.fd_restricted_args,
+    unrestricted_args = ignore.fd_unrestricted_args,
   },
   {
     executable = 'find',
     command = { 'find', '.', '-type', 'f' },
-    unrestricted_args = {},
+    unrestricted_args = function()
+      return {}
+    end,
     cond = function()
       return vim.fn.has('win32') == 0
     end,
@@ -160,7 +165,9 @@ local function available_find_files_command(unrestricted)
     then
       local command = vim.deepcopy(spec.command)
       if unrestricted then
-        append_unique(command, spec.unrestricted_args)
+        vim.list_extend(command, spec.unrestricted_args())
+      elseif spec.restricted_args then
+        vim.list_extend(command, spec.restricted_args())
       end
       return command
     end
@@ -288,34 +295,26 @@ local function find_files_finder(opts, parsed)
   )
 end
 
-local function find_directories_command(path_arg)
+local function find_directories_command(unrestricted)
   local command = {
     'fd',
-    '--hidden', -- do not ignore `.` dirs
     '--type',
     'd',
-    '--exclude',
-    '.git',
-    '--exclude',
-    'node_modules',
   }
 
-  if path_arg then
-    vim.list_extend(command, {
-      '.',
-      path_arg,
-    })
+  if unrestricted then
+    vim.list_extend(command, ignore.fd_unrestricted_args())
+    return command
   end
+
+  vim.list_extend(command, ignore.fd_restricted_args())
 
   return command
 end
 
-local function find_directories_entry_maker(opts, should_ignore_dir)
-  local cwd = opts.cwd
+local function find_directories_entry_maker(parsed)
+  local cwd = parsed.cwd
   return function(entry)
-    if should_ignore_dir(entry) then
-      return nil
-    end
     return {
       value = entry,
       path = path_helpers.absolute_path(cwd, entry) or entry,
@@ -325,8 +324,8 @@ local function find_directories_entry_maker(opts, should_ignore_dir)
   end
 end
 
-local function find_directories_finder(opts, parsed, should_ignore_dir)
-  local entry_maker = find_directories_entry_maker(opts, should_ignore_dir)
+local function find_directories_finder(opts, parsed)
+  local entry_maker = find_directories_entry_maker(parsed)
 
   if parsed.has_cwd_arg and not parsed.valid_cwd then
     return finders.new_table({
@@ -336,10 +335,11 @@ local function find_directories_finder(opts, parsed, should_ignore_dir)
   end
 
   return finders.new_oneshot_job(
-    find_directories_command(parsed.has_cwd_arg and parsed.path_arg or nil),
-    vim.tbl_deep_extend('force', {
+    find_directories_command(parsed.unrestricted),
+    vim.tbl_deep_extend('force', opts, {
+      cwd = parsed.cwd,
       entry_maker = entry_maker,
-    }, opts)
+    })
   )
 end
 
@@ -384,7 +384,8 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
 
       actions.close(prompt_bufnr)
 
-      builtin.live_grep({
+      require('lpke.plugins.telescope.custom_pickers.live_multigrep')({
+        prompt_title = 'Find in Files',
         cwd = resolved_parent_dir,
       })
     end)
@@ -423,30 +424,6 @@ function M.find_directories(opts)
     gap_path = ''
   end
 
-  -- Read and prepare .gitignore patterns
-  local gitignore_patterns = {}
-  local gitignore_file = vim.fn.findfile('.gitignore', '.;')
-  if gitignore_file ~= '' then
-    local gitignore_content = vim.fn.readfile(gitignore_file)
-    for _, pattern in ipairs(gitignore_content) do
-      -- Skip empty lines and comments
-      if pattern ~= '' and not pattern:match('^#') then
-        -- Remove trailing slash for directory patterns
-        local clean_pattern = pattern:gsub('/$', '')
-        table.insert(gitignore_patterns, clean_pattern)
-      end
-    end
-  end
-
-  local function should_ignore_dir(dir_path)
-    for _, pattern in ipairs(gitignore_patterns) do
-      if dir_path:match(pattern) or dir_path:match(pattern .. '$') then
-        return true
-      end
-    end
-    return false
-  end
-
   opts.default_text = initial_query
   local parsed_prompt = ts_helpers.parse_prompt_cwd(initial_query, opts.cwd)
   local current_root_key = prompt_root_key(parsed_prompt)
@@ -463,8 +440,7 @@ function M.find_directories(opts)
     local next_root_key = prompt_root_key(parsed_prompt)
     if next_root_key ~= current_root_key then
       current_root_key = next_root_key
-      result.updated_finder =
-        find_directories_finder(opts, parsed_prompt, should_ignore_dir)
+      result.updated_finder = find_directories_finder(opts, parsed_prompt)
     end
 
     return result
@@ -490,11 +466,11 @@ function M.find_directories(opts)
 
   pickers
     .new(opts, {
-      prompt_title = 'Find Directories',
+      prompt_title = opts.prompt_title or 'Find Directories',
       cwd = opts.cwd,
       initial_mode = opts.initial_mode or 'insert',
       default_text = initial_query,
-      finder = find_directories_finder(opts, parsed_prompt, should_ignore_dir),
+      finder = find_directories_finder(opts, parsed_prompt),
       sorter = config_values.generic_sorter({}),
       previewer = previewers.new_buffer_previewer({
         title = 'Directory Contents',
@@ -616,7 +592,7 @@ function M.find_files(opts)
 
   pickers
     .new(opts, {
-      prompt_title = 'Find Files',
+      prompt_title = opts.prompt_title or 'Find Files',
       __locations_input = true,
       finder = find_files_finder(opts, parsed_prompt),
       previewer = config_values.grep_previewer(opts),

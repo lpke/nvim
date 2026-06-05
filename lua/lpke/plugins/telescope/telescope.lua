@@ -9,9 +9,22 @@ local function config()
 
   local smart_find_ai = require('lpke.plugins.telescope.smart_find_ai')
   local ts_helpers = require('lpke.plugins.telescope.helpers')
+  local ignore = require('lpke.plugins.telescope.ignore')
 
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
+
+  local function plugin_files_cwd()
+    return vim.fs.joinpath(vim.fn.stdpath('data'), 'lazy')
+  end
+
+  local function live_literal_grep(default_text, prompt_title)
+    custom_pickers.live_multigrep({
+      prompt_title = prompt_title,
+      default_text = default_text,
+      fixed_strings = true,
+    })
+  end
 
   -- stylua: ignore start
   -- theme
@@ -64,30 +77,7 @@ local function config()
           preview_width = 0.5,
         },
       },
-      vimgrep_arguments = {
-        'rg',
-        '--follow', -- follow symbolic links
-        '--hidden', -- search for hidden files
-        '--no-heading', -- don't group matches by each file
-        '--with-filename', -- filepath with matched lines
-        '--line-number', -- show line numbers
-        '--column', -- show column numbers
-        '--smart-case',
-        '--color=never',
-        -- exclude:
-        '--glob=!**/node_modules/*',
-        '--glob=!**/.git/*',
-        '--glob=!**/.idea/*',
-        '--glob=!**/.vscode/*',
-        '--glob=!**/.vercel/*',
-        '--glob=!**/.next/*',
-        '--glob=!**/build/*',
-        '--glob=!**/dist/*',
-        '--glob=!**/pnpm-lock.yaml',
-        '--glob=!**/yarn.lock',
-        '--glob=!**/package-lock.json',
-        '--glob=!**/lazy-lock.json',
-      },
+      vimgrep_arguments = ignore.vimgrep_arguments(),
 
       mappings = {
         i = {
@@ -261,25 +251,7 @@ local function config()
         initial_mode = 'insert',
         sorting_strategy = 'ascending',
         hidden = true,
-        -- needed to exclude some files & dirs from general search
-        -- when not included or specified in .gitignore
-        find_command = {
-          'rg',
-          '--files',
-          '--hidden',
-          -- exclude:
-          '--glob=!**/node_modules/*',
-          '--glob=!**/.git/*',
-          '--glob=!**/.idea/*',
-          '--glob=!**/.vscode/*',
-          '--glob=!**/.vercel/*',
-          '--glob=!**/.next/*',
-          '--glob=!**/build/*',
-          '--glob=!**/dist/*',
-          '--glob=!**/pnpm-lock.yaml',
-          '--glob=!**/yarn.lock',
-          '--glob=!**/package-lock.json',
-        },
+        find_command = ignore.rg_files_command(),
       },
       live_grep = {
         initial_mode = 'insert',
@@ -399,15 +371,11 @@ local function config()
       smart_find_ai.smart_find({ default_text = '@~  ' })
     end, { desc = 'Find files from home (or directories in oil)' }},
     {'n', '<BS>fd', function()
-      custom_pickers.find_dirs()
+      smart_find_ai.find_directories()
     end, { desc = 'Find directories in cwd' }},
     {'n', '<BS>ff', function()
-      if Lpke_find_git_root(vim.fn.getcwd()) then
-        builtin_pickers.git_files()
-      else
-        builtin_pickers.find_files()
-      end
-    end, { desc = 'Find git files in cwd (or cwd if not git)' }},
+      smart_find_ai.find_files()
+    end, { desc = 'Find files in cwd' }},
     {'n', '<BS>fr', function()
       builtin_pickers.oldfiles({ prompt_title = 'Recent Files' })
     end, { desc = 'Find recent files' }},
@@ -423,24 +391,24 @@ local function config()
       custom_pickers.live_multigrep({ prompt_title = 'Find in Files', default_text = '@~  ' })
     end, { desc = 'Find string from home, with file filtering (str  filter)' } },
     {'n', '<BS>fp', function()
-      builtin_pickers.grep_string({ search = vim.fn.getreg('"') })
+      live_literal_grep(vim.fn.getreg('"'), 'Find Pasted String')
     end, { desc = 'Find pasted string in cwd' } },
     {'n', '<BS>fi', function()
-      builtin_pickers.grep_string({ search = vim.fn.input('Grep: ') })
+      live_literal_grep(vim.fn.input('Grep: '), 'Find Input String')
     end, { desc = 'Find input string in cwd' } },
     {'n', '<BS>fw', function()
-      builtin_pickers.grep_string()
+      live_literal_grep(vim.fn.expand('<cword>'), 'Find Word Under Cursor')
     end, { desc = 'Find string under cursor in cwd' }},
     {'n', '<BS>p<BS>', function()
-      builtin_pickers.find_files({
+      smart_find_ai.find_files({
         prompt_title = 'Find Plugin Files',
-        cwd = vim.fs.joinpath(vim.fn.stdpath('data'), 'lazy')
+        cwd = plugin_files_cwd(),
       })
     end, { desc = 'Find plugin files' }},
     {'n', '<BS>p/', function()
       custom_pickers.live_multigrep({
         prompt_title = 'Find in Plugin Files',
-        cwd = vim.fs.joinpath(vim.fn.stdpath('data'), 'lazy')
+        cwd = plugin_files_cwd(),
       })
     end, { desc = 'Find string in plugin files, with file filtering (str  filter)' }},
 

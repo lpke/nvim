@@ -7,6 +7,26 @@ local function trim(str)
   return (str:gsub('^%s+', ''):gsub('%s+$', ''))
 end
 
+local function parse_prompt_cwd_parts(prompt, base_cwd)
+  local unrestricted_prefix, cwd_arg, rest =
+    prompt:match('^@(%*?)(.-)%s%s+(.*)$')
+  if cwd_arg then
+    return unrestricted_prefix, cwd_arg, rest
+  end
+
+  unrestricted_prefix, cwd_arg, rest = prompt:match('^@(%*?)(%S+)%s+(.*)$')
+  if not cwd_arg then
+    return nil
+  end
+
+  local cwd = M.resolve_prompt_cwd(trim(cwd_arg), base_cwd)
+  if vim.fn.isdirectory(cwd) ~= 1 then
+    return nil
+  end
+
+  return unrestricted_prefix, cwd_arg, rest
+end
+
 function M.normalize_cwd(cwd)
   cwd = cwd or vim.fn.getcwd()
   if cwd == '' then
@@ -45,7 +65,8 @@ function M.parse_prompt_cwd(prompt, base_cwd)
   prompt = prompt or ''
   base_cwd = M.normalize_cwd(base_cwd)
 
-  local unrestricted_prefix, cwd_arg, rest = prompt:match('^@(%*?)(.-)  (.*)$')
+  local unrestricted_prefix, cwd_arg, rest =
+    parse_prompt_cwd_parts(prompt, base_cwd)
   if not cwd_arg then
     return {
       raw_prompt = prompt,
