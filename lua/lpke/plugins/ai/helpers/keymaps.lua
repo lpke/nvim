@@ -39,6 +39,8 @@ function M.setup()
       { desc = 'CodeCompanion: ACP approval preset' }},
     { 'n', '<leader>X', cleanup.open,
       { desc = 'CodeCompanion: Cleanup chats' }},
+    { 'nC', '<leader>I', 'PasteImage',
+      { desc = 'CodeCompanion: Paste image' }},
     { 'in', '<A-a>', function() chat_fns.insert_http_tool_text('@{agent} ') end,
       { desc = 'CodeCompanion: Insert agent tool' }},
     { 'in', '<F2>a', function() chat_fns.insert_http_tool_text('@{agent} ') end,
