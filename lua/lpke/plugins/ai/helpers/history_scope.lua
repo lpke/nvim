@@ -2,6 +2,8 @@ local M = {}
 local path_helpers = require('lpke.core.helpers')
 
 local patched = false
+local last_rename = nil
+local suppress_history_reopen = false
 
 local function trim(str)
   return (str or ''):gsub('^%s+', ''):gsub('%s+$', '')
@@ -329,6 +331,28 @@ local function patch_telescope_history_picker()
     local content_cache = {}
     local prompt_bufnr_ref = nil
 
+    local function make_finder()
+      return finders.new_dynamic({
+        fn = function()
+          return M.filter_history_items(self.config.items, parsed_prompt, {
+            content_cache = content_cache,
+            project_root = project_root,
+          })
+        end,
+        entry_maker = function(entry)
+          local display_title = self:format_entry(entry)
+
+          return vim.tbl_extend('keep', {
+            value = entry,
+            display = display_title,
+            ordinal = self:get_item_title(entry),
+            name = self:get_item_title(entry),
+            item_id = self:get_item_id(entry),
+          }, entry)
+        end,
+      })
+    end
+
     local function update_title()
       if not prompt_bufnr_ref then
         return
@@ -365,25 +389,7 @@ local function patch_telescope_history_picker()
           update_title()
           return { prompt = parsed_prompt.search }
         end,
-        finder = finders.new_dynamic({
-          fn = function()
-            return M.filter_history_items(self.config.items, parsed_prompt, {
-              content_cache = content_cache,
-              project_root = project_root,
-            })
-          end,
-          entry_maker = function(entry)
-            local display_title = self:format_entry(entry)
-
-            return vim.tbl_extend('keep', {
-              value = entry,
-              display = display_title,
-              ordinal = self:get_item_title(entry),
-              name = self:get_item_title(entry),
-              item_id = self:get_item_id(entry),
-            }, entry)
-          end,
-        }),
+        finder = make_finder(),
         sorter = sorters.generic_sorter({}),
         previewer = previewers.new_buffer_previewer({
           title = self:get_item_name_singular():gsub('^%l', string.upper)
@@ -432,8 +438,80 @@ local function patch_telescope_history_picker()
             if not selection then
               return
             end
-            actions.close(prompt_bufnr)
-            self.config.handlers.on_rename(selection.value)
+
+            local restore_mode = vim.api.nvim_get_mode().mode
+
+            local function refocus_picker()
+              vim.defer_fn(function()
+                local ok_picker, picker =
+                  pcall(action_state.get_current_picker, prompt_bufnr)
+                if not ok_picker or not picker then
+                  return
+                end
+
+                local prompt_win = picker.prompt_win
+                  or (
+                    picker.layout
+                    and picker.layout.prompt
+                    and picker.layout.prompt.winid
+                  )
+                if
+                  type(prompt_win) ~= 'number'
+                  or not vim.api.nvim_win_is_valid(prompt_win)
+                then
+                  return
+                end
+
+                pcall(vim.api.nvim_set_current_win, prompt_win)
+                if restore_mode:sub(1, 1) == 'i' then
+                  vim.cmd('startinsert')
+                else
+                  vim.cmd('stopinsert')
+                end
+              end, 20)
+            end
+
+            local original_input = vim.ui.input
+            vim.ui.input = function(opts, on_confirm)
+              return original_input(opts, function(new_title)
+                if not new_title or vim.trim(new_title) == '' then
+                  on_confirm(new_title)
+                  refocus_picker()
+                  return
+                end
+
+                suppress_history_reopen = true
+                local ok, err = pcall(on_confirm, new_title)
+                suppress_history_reopen = false
+
+                if not ok then
+                  error(err)
+                end
+
+                for _, item in ipairs(self.config.items) do
+                  if item.save_id == selection.value.save_id then
+                    item.title = new_title
+                    item.name = new_title
+                    item.updated_at = os.time()
+                  end
+                end
+
+                local ok_picker, picker =
+                  pcall(action_state.get_current_picker, prompt_bufnr)
+                if ok_picker and picker then
+                  picker:refresh(make_finder(), { reset_prompt = false })
+                end
+                refocus_picker()
+              end)
+            end
+
+            local ok, err =
+              pcall(self.config.handlers.on_rename, selection.value)
+            vim.ui.input = original_input
+
+            if not ok then
+              error(err)
+            end
           end
 
           local duplicate_selection = function()
@@ -500,6 +578,128 @@ local function patch_telescope_history_picker()
   end
 end
 
+local function patch_history_ui_reopen()
+  local ok_ui, UI = pcall(require, 'codecompanion._extensions.history.ui')
+  if not ok_ui or UI._lpke_inline_rename_reopen then
+    return
+  end
+  UI._lpke_inline_rename_reopen = true
+
+  local original_open_saved_chats = UI.open_saved_chats
+  UI.open_saved_chats = function(self, ...)
+    if suppress_history_reopen then
+      return
+    end
+
+    return original_open_saved_chats(self, ...)
+  end
+end
+
+local function patch_history_rename()
+  local ok_storage, Storage =
+    pcall(require, 'codecompanion._extensions.history.storage')
+  if not ok_storage or Storage._lpke_rename_propagation then
+    return
+  end
+  Storage._lpke_rename_propagation = true
+
+  local original_rename_chat = Storage.rename_chat
+  Storage.rename_chat = function(self, save_id, new_title)
+    local ok = original_rename_chat(self, save_id, new_title)
+    if not ok then
+      return ok
+    end
+
+    last_rename = {
+      save_id = save_id,
+      title = new_title,
+    }
+
+    local ok_utils, utils =
+      pcall(require, 'codecompanion._extensions.history.utils')
+    if not ok_utils then
+      return ok
+    end
+
+    local summaries_path = self.base_path .. '/summaries_index.json'
+    local result = utils.read_json(summaries_path)
+    if not result.ok then
+      return ok
+    end
+
+    local changed = false
+    local summaries = result.data or {}
+    for _, summary in pairs(summaries) do
+      if summary.chat_id == save_id and summary.chat_title ~= new_title then
+        summary.chat_title = new_title
+        changed = true
+      end
+    end
+
+    if changed then
+      local write_result = utils.write_json(summaries_path, summaries)
+      if
+        write_result.ok
+        and type(self._invalidate_summaries_cache) == 'function'
+      then
+        self:_invalidate_summaries_cache()
+      end
+    end
+
+    return ok
+  end
+
+  vim.api.nvim_create_autocmd('User', {
+    pattern = 'CodeCompanionHistoryTitleRenamed',
+    group = vim.api.nvim_create_augroup('LpkeCodeCompanionHistoryRename', {
+      clear = true,
+    }),
+    callback = function(args)
+      local data = args.data or {}
+      local title = data.title or (last_rename and last_rename.title)
+      local save_id = last_rename and last_rename.save_id
+
+      if type(save_id) ~= 'string' or type(title) ~= 'string' then
+        return
+      end
+
+      local ok_codecompanion, codecompanion = pcall(require, 'codecompanion')
+      if
+        not ok_codecompanion
+        or type(codecompanion.buf_get_chat) ~= 'function'
+      then
+        return
+      end
+
+      for _, item in ipairs(codecompanion.buf_get_chat() or {}) do
+        local chat = item.chat
+        if chat and chat.opts and chat.opts.save_id == save_id then
+          chat.opts.title = title
+          vim.schedule(function()
+            if not vim.api.nvim_buf_is_valid(chat.bufnr) then
+              return
+            end
+
+            local function try_title(candidate)
+              return pcall(vim.api.nvim_buf_set_name, chat.bufnr, candidate)
+            end
+
+            if try_title(title) then
+              return
+            end
+
+            for attempt = 1, 10 do
+              if try_title(title .. ' (' .. attempt .. ')') then
+                return
+              end
+            end
+          end)
+        end
+      end
+    end,
+  })
+end
+
 function M.setup()
   if patched then
     return
@@ -507,6 +707,8 @@ function M.setup()
   patched = true
 
   patch_telescope_history_picker()
+  patch_history_ui_reopen()
+  patch_history_rename()
 end
 
 return M

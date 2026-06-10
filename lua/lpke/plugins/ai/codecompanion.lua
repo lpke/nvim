@@ -498,6 +498,12 @@ local function config()
           expiration_days = 14,
           -- Picker interface ("telescope" or "snacks" or "fzf-lua" or "default")
           picker = 'telescope',
+          picker_keymaps = {
+            rename = {
+              n = 'gr',
+              i = '<M-r>',
+            },
+          },
           ---Automatically generate titles for new chats
           auto_generate_title = true,
           title_generation_opts = {
