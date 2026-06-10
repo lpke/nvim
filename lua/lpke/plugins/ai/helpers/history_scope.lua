@@ -631,16 +631,59 @@ local function patch_history_title_generator()
     return vim.tbl_filter(is_title_message, messages or {})
   end
 
+  local function restore_saved_title(chat)
+    if type(chat) ~= 'table' then
+      return
+    end
+
+    chat.opts = chat.opts or {}
+    if type(chat.opts.title) == 'string' and chat.opts.title ~= '' then
+      return
+    end
+
+    local save_id = chat.opts.save_id
+    if type(save_id) ~= 'string' or save_id == '' then
+      return
+    end
+
+    local ok_history, history_mod = pcall(function()
+      return require('codecompanion').extensions.history
+    end)
+    if
+      not ok_history
+      or not history_mod
+      or type(history_mod.load_chat) ~= 'function'
+    then
+      return
+    end
+
+    local saved = history_mod.load_chat(save_id)
+    if saved and type(saved.title) == 'string' and saved.title ~= '' then
+      chat.opts.title = saved.title
+      if type(chat.title) ~= 'string' or chat.title == '' then
+        chat.title = saved.title
+      end
+    end
+  end
+
   local original_count_user_messages = TitleGenerator._count_user_messages
   TitleGenerator._count_user_messages = function(self, chat)
     local title_chat = vim.tbl_extend('force', {}, chat or {})
+    restore_saved_title(title_chat)
     title_chat.messages = title_messages(title_chat.messages)
     return original_count_user_messages(self, title_chat)
+  end
+
+  local original_should_generate = TitleGenerator.should_generate
+  TitleGenerator.should_generate = function(self, chat)
+    restore_saved_title(chat)
+    return original_should_generate(self, chat)
   end
 
   local original_generate = TitleGenerator.generate
   TitleGenerator.generate = function(self, chat, callback, is_refresh)
     local title_chat = vim.tbl_extend('force', {}, chat or {})
+    restore_saved_title(title_chat)
     title_chat.messages = title_messages(title_chat.messages)
     return original_generate(self, title_chat, callback, is_refresh)
   end

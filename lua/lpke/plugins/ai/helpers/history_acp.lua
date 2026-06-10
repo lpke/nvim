@@ -155,6 +155,125 @@ local function chat_has_visible_user_content(chat)
   return false
 end
 
+local function message_content(msg)
+  return type(msg) == 'table'
+      and type(msg.content) == 'string'
+      and vim.trim(msg.content)
+    or ''
+end
+
+local function is_system_prompt_msg(msg)
+  return msg
+    and (
+      msg.role == 'system'
+      or (msg._meta and msg._meta.tag == 'system_prompt_from_config')
+    )
+end
+
+local function message_signature(msg)
+  if type(msg) ~= 'table' then
+    return nil
+  end
+
+  local content = message_content(msg)
+  if content == '' then
+    return nil
+  end
+
+  local tag = msg._meta and msg._meta.tag or ''
+  local context_id = msg.context and msg.context.id or ''
+  return table.concat({ msg.role or '', tag, context_id, content }, '\x1f')
+end
+
+local function merge_messages(saved_messages, current_messages)
+  local merged = vim.deepcopy(saved_messages or {})
+  local seen = {}
+
+  for _, msg in ipairs(merged) do
+    local signature = message_signature(msg)
+    if signature then
+      seen[signature] = true
+    end
+  end
+
+  for _, msg in ipairs(current_messages or {}) do
+    local signature = message_signature(msg)
+    if signature and not seen[signature] and not is_system_prompt_msg(msg) then
+      table.insert(merged, vim.deepcopy(msg))
+      seen[signature] = true
+    end
+  end
+
+  return merged
+end
+
+local function merge_context_items(saved_items, current_items)
+  local merged = vim.deepcopy(saved_items or {})
+  local seen = {}
+
+  for _, item in ipairs(merged) do
+    if type(item) == 'table' and item.id then
+      seen[item.id] = true
+    end
+  end
+
+  for _, item in ipairs(current_items or {}) do
+    if type(item) == 'table' and item.id and not seen[item.id] then
+      table.insert(merged, vim.deepcopy(item))
+      seen[item.id] = true
+    end
+  end
+
+  return merged
+end
+
+local function visible_message_count(chat_data)
+  local count = 0
+  for _, msg in ipairs((chat_data and chat_data.messages) or {}) do
+    if
+      (msg.role == 'user' or msg.role == 'llm' or msg.role == 'assistant')
+      and message_content(msg) ~= ''
+      and not (msg.opts and msg.opts.visible == false)
+    then
+      count = count + 1
+    end
+  end
+  return count
+end
+
+local function chat_score(storage, save_id)
+  local chat_data = storage and storage:load_chat(save_id)
+  return {
+    message_count = visible_message_count(chat_data),
+    has_title = chat_data
+      and type(chat_data.title) == 'string'
+      and chat_data.title ~= '',
+  }
+end
+
+local function entry_precedes(storage, left, right)
+  if not right then
+    return true
+  end
+
+  left.score = left.score or chat_score(storage, left.save_id)
+  right.score = right.score or chat_score(storage, right.save_id)
+
+  if left.score.message_count ~= right.score.message_count then
+    return left.score.message_count > right.score.message_count
+  end
+
+  if left.score.has_title ~= right.score.has_title then
+    return left.score.has_title
+  end
+
+  if left.updated_at ~= right.updated_at then
+    return left.updated_at > right.updated_at
+  end
+
+  return left.save_id < right.save_id
+end
+
 local function save_acp_chat(chat)
   if not is_acp_chat(chat) or not remember_chat_session(chat) then
     return
@@ -208,14 +327,19 @@ local function canonical_save_id_for_session(
       and meta.acp_session_id == session_id
       and type(save_id) == 'string'
     then
-      local updated_at = tonumber(meta.updated_at) or 0
-      if
-        not canonical_id
-        or updated_at > canonical_updated_at
-        or (updated_at == canonical_updated_at and save_id < canonical_id)
-      then
-        canonical_id = save_id
-        canonical_updated_at = updated_at
+      local entry = {
+        save_id = save_id,
+        updated_at = tonumber(meta.updated_at) or 0,
+      }
+      local canonical_entry = canonical_id
+          and {
+            save_id = canonical_id,
+            updated_at = canonical_updated_at,
+          }
+        or nil
+      if entry_precedes(storage, entry, canonical_entry) then
+        canonical_id = entry.save_id
+        canonical_updated_at = entry.updated_at
       end
     end
   end
@@ -262,10 +386,7 @@ local function compact_acp_session_index(storage, target_session_id)
   for _, entries in pairs(by_session) do
     if #entries > 1 then
       table.sort(entries, function(a, b)
-        if a.updated_at == b.updated_at then
-          return a.save_id < b.save_id
-        end
-        return a.updated_at > b.updated_at
+        return entry_precedes(storage, a, b)
       end)
 
       for i = 2, #entries do
@@ -373,10 +494,11 @@ function M.resume_session_into_chat(chat, session, opts)
   chat._lpke_acp_session_restored = session_id
   chat._lpke_restore_acp_session_updates = nil
 
-  if type(session) == 'table' and session.title then
-    chat:set_title(session.title)
-  elseif opts.title then
-    chat:set_title(opts.title)
+  local title = type(session) == 'table' and session.title or opts.title
+  if type(title) == 'string' and title ~= '' then
+    chat:set_title(title)
+    chat.opts = chat.opts or {}
+    chat.opts.title = title
   end
 
   if ok_lifecycle and lifecycle.remember_session then
@@ -418,16 +540,63 @@ local function patch_storage()
 
   local original_save_chat = Storage.save_chat
   Storage.save_chat = function(self, chat, ...)
+    local restore_messages = nil
+    local restore_context_items = nil
+
     if is_acp_chat(chat) then
       local session_id = remember_chat_session(chat)
       if session_id then
         chat.opts = chat.opts or {}
         chat.opts.save_id =
           canonical_save_id_for_session(self, session_id, chat.opts.save_id)
+
+        local saved = self:load_chat(chat.opts.save_id)
+        if saved then
+          if type(saved.title) == 'string' and saved.title ~= '' then
+            chat.opts.title = saved.title
+            chat.title = saved.title
+          elseif
+            (type(chat.opts.title) ~= 'string' or chat.opts.title == '')
+            and type(chat.title) == 'string'
+            and chat.title ~= ''
+          then
+            chat.opts.title = chat.title
+          end
+
+          if saved.title_refresh_count then
+            chat.opts.title_refresh_count = saved.title_refresh_count
+          end
+
+          restore_messages = chat.messages
+          restore_context_items = chat.context_items
+          chat.messages = merge_messages(saved.messages, chat.messages)
+          chat.context_items =
+            merge_context_items(saved.context_items, chat.context_items)
+        end
+
+        if
+          (type(chat.opts.title) ~= 'string' or chat.opts.title == '')
+          and type(chat.title) == 'string'
+          and chat.title ~= ''
+        then
+          chat.opts.title = chat.title
+        end
       end
     end
 
-    return original_save_chat(self, chat, ...)
+    local ok, result = pcall(original_save_chat, self, chat, ...)
+
+    if restore_messages then
+      chat.messages = restore_messages
+    end
+    if restore_context_items then
+      chat.context_items = restore_context_items
+    end
+
+    if not ok then
+      error(result)
+    end
+    return result
   end
 
   local original_save_chat_to_file = Storage._save_chat_to_file
