@@ -172,6 +172,116 @@ local function save_acp_chat(chat)
   end
 end
 
+local function read_index(storage)
+  local ok, utils = pcall(require, 'codecompanion._extensions.history.utils')
+  if not ok then
+    return nil, nil
+  end
+
+  local result = utils.read_json(storage.index_path)
+  if not result.ok then
+    return nil, utils
+  end
+
+  return result.data or {}, utils
+end
+
+local function canonical_save_id_for_session(
+  storage,
+  session_id,
+  current_save_id
+)
+  if type(session_id) ~= 'string' or session_id == '' then
+    return current_save_id
+  end
+
+  local index = read_index(storage)
+  if not index then
+    return current_save_id
+  end
+
+  local canonical_id = nil
+  local canonical_updated_at = nil
+  for save_id, meta in pairs(index) do
+    if
+      type(meta) == 'table'
+      and meta.acp_session_id == session_id
+      and type(save_id) == 'string'
+    then
+      local updated_at = tonumber(meta.updated_at) or 0
+      if
+        not canonical_id
+        or updated_at > canonical_updated_at
+        or (updated_at == canonical_updated_at and save_id < canonical_id)
+      then
+        canonical_id = save_id
+        canonical_updated_at = updated_at
+      end
+    end
+  end
+
+  return canonical_id or current_save_id
+end
+
+local function delete_chat_file(storage, save_id)
+  if type(save_id) ~= 'string' or save_id == '' then
+    return
+  end
+
+  local ok, utils = pcall(require, 'codecompanion._extensions.history.utils')
+  if ok then
+    utils.delete_file(storage.chats_dir .. '/' .. save_id .. '.json')
+  end
+end
+
+local function compact_acp_session_index(storage, target_session_id)
+  local index, utils = read_index(storage)
+  if not index or not utils then
+    return
+  end
+
+  local by_session = {}
+  for save_id, meta in pairs(index) do
+    if
+      type(save_id) == 'string'
+      and type(meta) == 'table'
+      and type(meta.acp_session_id) == 'string'
+      and meta.acp_session_id ~= ''
+      and (not target_session_id or meta.acp_session_id == target_session_id)
+    then
+      local session_id = meta.acp_session_id
+      by_session[session_id] = by_session[session_id] or {}
+      table.insert(by_session[session_id], {
+        save_id = save_id,
+        updated_at = tonumber(meta.updated_at) or 0,
+      })
+    end
+  end
+
+  local changed = false
+  for _, entries in pairs(by_session) do
+    if #entries > 1 then
+      table.sort(entries, function(a, b)
+        if a.updated_at == b.updated_at then
+          return a.save_id < b.save_id
+        end
+        return a.updated_at > b.updated_at
+      end)
+
+      for i = 2, #entries do
+        local save_id = entries[i].save_id
+        index[save_id] = nil
+        delete_chat_file(storage, save_id)
+        changed = true
+      end
+    end
+  end
+
+  if changed then
+    utils.write_json(storage.index_path, utils.remove_functions(index))
+  end
+end
+
 local function save_open_acp_chats()
   for _, chat in ipairs(open_chats()) do
     save_acp_chat(chat)
@@ -306,6 +416,20 @@ local function patch_storage()
   end
   Storage._lpke_acp_session_ids = true
 
+  local original_save_chat = Storage.save_chat
+  Storage.save_chat = function(self, chat, ...)
+    if is_acp_chat(chat) then
+      local session_id = remember_chat_session(chat)
+      if session_id then
+        chat.opts = chat.opts or {}
+        chat.opts.save_id =
+          canonical_save_id_for_session(self, session_id, chat.opts.save_id)
+      end
+    end
+
+    return original_save_chat(self, chat, ...)
+  end
+
   local original_save_chat_to_file = Storage._save_chat_to_file
   Storage._save_chat_to_file = function(self, chat_data, ...)
     return original_save_chat_to_file(self, enrich_chat_data(chat_data), ...)
@@ -328,7 +452,12 @@ local function patch_storage()
         local index = index_result.data or {}
         index[chat_data.save_id] = index[chat_data.save_id] or {}
         index[chat_data.save_id].acp_session_id = chat_data.acp_session_id
-        return utils.write_json(self.index_path, utils.remove_functions(index))
+        local write_result =
+          utils.write_json(self.index_path, utils.remove_functions(index))
+        if write_result.ok then
+          compact_acp_session_index(self, chat_data.acp_session_id)
+        end
+        return write_result
       end
     end
 
@@ -337,7 +466,42 @@ local function patch_storage()
 
   local original_get_chats = Storage.get_chats
   Storage.get_chats = function(self, filter_fn, ...)
+    compact_acp_session_index(self)
     local chats = original_get_chats(self, filter_fn, ...)
+    local enriched = false
+    for save_id, meta in pairs(chats or {}) do
+      if type(meta) == 'table' and not meta.acp_session_id then
+        local chat_data = self:load_chat(save_id)
+        if chat_data and chat_data.acp_session_id then
+          meta.acp_session_id = chat_data.acp_session_id
+          enriched = true
+        end
+      end
+    end
+
+    if enriched then
+      local index, utils = read_index(self)
+      if index and utils then
+        for save_id, meta in pairs(chats or {}) do
+          if
+            type(meta) == 'table'
+            and type(meta.acp_session_id) == 'string'
+            and meta.acp_session_id ~= ''
+          then
+            index[save_id] = index[save_id] or {}
+            index[save_id].acp_session_id = meta.acp_session_id
+          end
+        end
+
+        if
+          utils.write_json(self.index_path, utils.remove_functions(index)).ok
+        then
+          compact_acp_session_index(self)
+          chats = original_get_chats(self, filter_fn, ...)
+        end
+      end
+    end
+
     for save_id, meta in pairs(chats or {}) do
       if type(meta) == 'table' and not meta.acp_session_id then
         local chat_data = self:load_chat(save_id)
@@ -346,6 +510,7 @@ local function patch_storage()
         end
       end
     end
+
     return chats
   end
 end
