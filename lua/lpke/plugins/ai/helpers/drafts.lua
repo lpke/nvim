@@ -332,12 +332,7 @@ local function visible_context_lines(bufnr)
   return #lines > 0 and lines or nil
 end
 
-local function strip_leading_context_block(bufnr, lines)
-  local context_lines = visible_context_lines(bufnr)
-  if not context_lines then
-    return lines
-  end
-
+local function strip_generic_leading_context_block(lines)
   local start = 1
   while lines[start] and vim.trim(lines[start]) == '' do
     start = start + 1
@@ -348,19 +343,17 @@ local function strip_leading_context_block(bufnr, lines)
   end
 
   local cursor = start + 1
-  for _, context_line in ipairs(context_lines) do
-    if lines[cursor] ~= context_line then
-      return lines
-    end
-
+  local saw_context_item = false
+  while lines[cursor] and lines[cursor]:match('^>%s*%-%s+') do
+    saw_context_item = true
     cursor = cursor + 1
   end
 
-  if
-    lines[cursor]
-    and lines[cursor] ~= ''
-    and lines[cursor]:match('^>%s*%-%s+')
-  then
+  if not saw_context_item then
+    return lines
+  end
+
+  if lines[cursor] and lines[cursor] ~= '' then
     return lines
   end
 
@@ -377,6 +370,65 @@ local function strip_leading_context_block(bufnr, lines)
   end
 
   return stripped
+end
+
+local function strip_leading_context_block(bufnr, lines)
+  local context_lines = visible_context_lines(bufnr)
+  if not context_lines then
+    return strip_generic_leading_context_block(lines)
+  end
+
+  local start = 1
+  while lines[start] and vim.trim(lines[start]) == '' do
+    start = start + 1
+  end
+
+  if lines[start] ~= '> Context:' then
+    return strip_generic_leading_context_block(lines)
+  end
+
+  local cursor = start + 1
+  for _, context_line in ipairs(context_lines) do
+    if lines[cursor] ~= context_line then
+      return strip_generic_leading_context_block(lines)
+    end
+
+    cursor = cursor + 1
+  end
+
+  if
+    lines[cursor]
+    and lines[cursor] ~= ''
+    and lines[cursor]:match('^>%s*%-%s+')
+  then
+    return strip_generic_leading_context_block(lines)
+  end
+
+  local remove_to = cursor - 1
+  if lines[cursor] == '' then
+    remove_to = cursor
+  end
+
+  local stripped = {}
+  for i, line in ipairs(lines) do
+    if i < start or i > remove_to then
+      table.insert(stripped, line)
+    end
+  end
+
+  return stripped
+end
+
+local function draft_has_user_content(prompt)
+  if type(prompt) ~= 'string' or vim.trim(prompt) == '' then
+    return false
+  end
+
+  local lines = strip_generic_leading_context_block(
+    vim.split(prompt, '\n', { plain = true })
+  )
+
+  return vim.trim(table.concat(lines, '\n')) ~= ''
 end
 
 local function llm_role(bufnr)
@@ -570,7 +622,7 @@ function M.save(bufnr)
 
   local prompt_content = table.concat(prompt.lines, '\n')
   local path = primary_path(bufnr)
-  if vim.trim(prompt_content) == '' then
+  if not draft_has_user_content(prompt_content) then
     if path and not path_in(restored_paths(bufnr), path) then
       delete_file(path)
     end
@@ -690,7 +742,7 @@ function M.list_current_cwd()
       data
       and data.cwd == current_cwd
       and type(data.prompt) == 'string'
-      and vim.trim(data.prompt) ~= ''
+      and draft_has_user_content(data.prompt)
       and type(data.timestamp) == 'number'
     then
       table.insert(drafts, {

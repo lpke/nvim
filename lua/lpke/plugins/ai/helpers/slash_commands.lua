@@ -131,7 +131,10 @@ return {
         end
       end
 
-      local function pick_path(kind, cursor)
+      local path_picker_switch_keymaps = { '<F2>s', '<A-s>' }
+
+      local function pick_path(kind, cursor, opts)
+        opts = opts or {}
         local actions = require('telescope.actions')
         local action_state = require('telescope.actions.state')
         local pickers = require('telescope.pickers')
@@ -140,12 +143,27 @@ return {
 
         local fd_type = kind == 'Directory' and 'd' or 'f'
         local prompt_title = '/path - Select ' .. kind
+        local cwd = opts.cwd or '/'
+
+        local function switch_picker(prompt_bufnr, initial_mode)
+          local current_picker = action_state.get_current_picker(prompt_bufnr)
+          local next_kind = kind == 'Directory' and 'File' or 'Directory'
+          local next_opts = {
+            cwd = current_picker.cwd or cwd,
+            default_text = current_picker:_get_prompt(),
+            initial_mode = initial_mode,
+          }
+
+          actions.close(prompt_bufnr)
+          pick_path(next_kind, cursor, next_opts)
+        end
 
         pickers
           .new({}, {
             prompt_title = prompt_title,
-            cwd = '/',
-            initial_mode = 'insert',
+            cwd = cwd,
+            initial_mode = opts.initial_mode or 'insert',
+            default_text = opts.default_text,
             finder = finders.new_oneshot_job(util.concat_arrs(
               {
                 'fd',
@@ -158,13 +176,22 @@ return {
               fd_exclude_args(),
               {
                 '.',
-                '/',
+                cwd,
               }
             )),
             sorter = config_values.generic_sorter({}),
             previewer = kind == 'Directory' and false
               or config_values.file_previewer({}),
-            attach_mappings = function(prompt_bufnr)
+            attach_mappings = function(prompt_bufnr, map)
+              for _, keymap in ipairs(path_picker_switch_keymaps) do
+                map('i', keymap, function()
+                  switch_picker(prompt_bufnr, 'insert')
+                end)
+                map('n', keymap, function()
+                  switch_picker(prompt_bufnr, 'normal')
+                end)
+              end
+
               actions.select_default:replace(function()
                 local entry = action_state.get_selected_entry()
                 actions.close(prompt_bufnr)
@@ -183,17 +210,7 @@ return {
 
       local cursor = vim.api.nvim_win_get_cursor(0)
       pcall(vim.cmd.stopinsert)
-      vim.ui.select({ 'Directory', 'File' }, {
-        prompt = 'Select path type',
-        kind = 'codecompanion.nvim',
-      }, function(choice)
-        if choice then
-          pick_path(choice, cursor)
-        end
-      end)
-      vim.schedule(function()
-        pcall(vim.cmd.stopinsert)
-      end)
+      pick_path('Directory', cursor)
     end,
     opts = {
       contains_code = false,
