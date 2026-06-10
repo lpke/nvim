@@ -13,12 +13,12 @@ function M.setup()
   helpers.keymap_set_multi({
     { 'in', '<A-f>', chat_fns.toggle_cc_with_default_tools, { desc = 'CodeCompanion: Toggle chat buffer with HTTP tools' }},
     { 'in', '<F2>f', chat_fns.toggle_cc_with_default_tools, { desc = 'CodeCompanion: Toggle chat buffer with HTTP tools' }},
-    { 'in', '<A-F>', chat_fns.open_new_chat_with_tools, { desc = 'CodeCompanion: Open new chat with HTTP tools' }},
-    { 'in', '<F2>F', chat_fns.open_new_chat_with_tools, { desc = 'CodeCompanion: Open new chat with HTTP tools' }},
+    { 'in', '<A-F>', chat_fns.open_fullscreen_chat, { desc = 'CodeCompanion: Open fullscreen chat tab' }},
+    { 'in', '<F2>F', chat_fns.open_fullscreen_chat, { desc = 'CodeCompanion: Open fullscreen chat tab' }},
     { 'v', '<A-f>', chat_fns.toggle_chat_with_context_selection, { desc = 'CodeCompanion: Toggle chat buffer, add context and selection' }},
     { 'v', '<F2>f', chat_fns.toggle_chat_with_context_selection, { desc = 'CodeCompanion: Toggle chat buffer, add context and selection' }},
-    { 'v', '<A-F>', chat_fns.open_new_chat_with_context_selection, { desc = 'CodeCompanion: Open a new chat buffer with context and selection' }},
-    { 'v', '<F2>F', chat_fns.open_new_chat_with_context_selection, { desc = 'CodeCompanion: Open a new chat buffer with context and selection' }},
+    { 'v', '<A-F>', chat_fns.open_fullscreen_chat_with_context_selection, { desc = 'CodeCompanion: Open fullscreen chat tab with selection' }},
+    { 'v', '<F2>F', chat_fns.open_fullscreen_chat_with_context_selection, { desc = 'CodeCompanion: Open fullscreen chat tab with selection' }},
     { 'ni', '<C-l>', chat_fns.open_inline_prompt_with_context, { desc = 'CodeCompanion: Open inline prompt with context' }},
     { 'v', '<C-l>', ":<C-u>'<,'>CodeCompanion<cr>#{buffer} ", { desc = 'CodeCompanion: Open inline prompt with context and selection' }},
   })

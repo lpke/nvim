@@ -160,7 +160,7 @@ local function preview_lines(item)
   return lines
 end
 
-function M.open_selected(item)
+function M.open_selected(item, source_chat)
   if not item or not item.bufnr then
     return
   end
@@ -169,17 +169,26 @@ function M.open_selected(item)
     notify(string.format('Chat %d/%d', item.index, #M.build_entries()))
   end
 
+  local chat = chat_for_buf(item.bufnr)
+  if not chat or not chat.ui then
+    notify('Chat is no longer available', vim.log.levels.WARN)
+    return
+  end
+
+  if chat_fns.is_detached_chat_buf(item.bufnr) then
+    if source_chat and source_chat ~= chat and source_chat.ui then
+      source_chat.ui:hide()
+    end
+    chat_fns.focus_detached_chat(chat)
+    notify_opened()
+    return
+  end
+
   local entry =
     require('codecompanion.interactions.shared.registry').get(item.bufnr)
   if entry and type(entry.open) == 'function' then
     entry.open()
     notify_opened()
-    return
-  end
-
-  local chat = chat_for_buf(item.bufnr)
-  if not chat or not chat.ui then
-    notify('Chat is no longer available', vim.log.levels.WARN)
     return
   end
 
@@ -312,7 +321,7 @@ function M.open(opts)
           local selection = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
           if selection then
-            M.open_selected(selection.value)
+            M.open_selected(selection.value, source_chat)
           end
         end)
 

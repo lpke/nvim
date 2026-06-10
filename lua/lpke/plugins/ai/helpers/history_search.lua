@@ -5,6 +5,7 @@ local preview_ns =
   vim.api.nvim_create_namespace('LpkeCodeCompanionHistorySearchPreview')
 
 local history_acp = require('lpke.plugins.ai.helpers.history_acp')
+local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
 local history_scope = require('lpke.plugins.ai.helpers.history_scope')
 local active_match_hl = 'LpkeCodeCompanionHistorySearchActiveMatch'
 local inactive_match_hl = 'TelescopePreviewMatch'
@@ -203,7 +204,7 @@ local function search_chats(chats, parsed, opts)
   return results
 end
 
-local function open_chat(chat_data)
+local function open_chat(chat_data, restore_context)
   local chat_module = require('codecompanion.interactions.chat')
   local codecompanion = require('codecompanion')
   local active_chat = codecompanion.last_chat()
@@ -215,6 +216,7 @@ local function open_chat(chat_data)
         active_chat.ui:hide()
       end
       chat.ui:open()
+      chat_fns.after_restore(chat, restore_context)
       return chat
     end
   end
@@ -266,6 +268,7 @@ local function open_chat(chat_data)
   chat.tool_registry.in_use = chat_data.in_use or {}
   chat.cycle = chat_data.cycle or 1
   chat.opts.title_refresh_count = chat_data.title_refresh_count or 0
+  chat_fns.after_restore(chat, restore_context)
   return chat
 end
 
@@ -397,6 +400,7 @@ end
 
 function M.open(opts)
   opts = opts or {}
+  local restore_context = chat_fns.capture_restore_context()
   local chats = load_chats()
   local actions = require('telescope.actions')
   local action_state = require('telescope.actions.state')
@@ -490,7 +494,7 @@ function M.open(opts)
           local selection = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
           if selection and selection.value and selection.value.chat then
-            local chat = open_chat(selection.value.chat)
+            local chat = open_chat(selection.value.chat, restore_context)
             jump_to_result(chat, selection.value)
           end
         end)
@@ -514,7 +518,7 @@ local function back_to_history(prompt_bufnr)
   prompt_bufnr = prompt_bufnr or vim.api.nvim_get_current_buf()
   local actions = require('telescope.actions')
   actions.close(prompt_bufnr)
-  vim.cmd('CodeCompanionHistory')
+  chat_fns.open_history()
 end
 
 function M.setup()

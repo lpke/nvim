@@ -203,6 +203,7 @@ end
 
 function M.resume_session_into_chat(chat, session, opts)
   opts = opts or {}
+  local restore_context = opts.restore_context
   local session_id = type(session) == 'table' and session.sessionId or session
 
   if type(session_id) ~= 'string' or session_id == '' then
@@ -288,6 +289,12 @@ function M.resume_session_into_chat(chat, session, opts)
     title = 'CodeCompanion',
   })
 
+  local ok_chat_fns, chat_fns =
+    pcall(require, 'lpke.plugins.ai.helpers.chat_functions')
+  if ok_chat_fns then
+    chat_fns.after_restore(chat, restore_context)
+  end
+
   return true
 end
 
@@ -355,17 +362,56 @@ local function patch_history_ui()
 
     local original_handle_on_select = UI._handle_on_select
     UI._handle_on_select = function(self, save_id, ...)
+      local ok_chat_fns, chat_fns =
+        pcall(require, 'lpke.plugins.ai.helpers.chat_functions')
+      local restore_context = ok_chat_fns and chat_fns.take_restore_context()
+        or nil
       local chat_data = self.storage and self.storage:load_chat(save_id)
       local session_id = chat_data and chat_data.acp_session_id
       local open_chat_for_session = find_open_chat_by_session_id(session_id)
       if open_chat_for_session and open_chat(open_chat_for_session) then
+        if ok_chat_fns then
+          chat_fns.after_restore(open_chat_for_session, restore_context)
+        end
         vim.notify('ACP session already open', vim.log.levels.INFO, {
           title = 'CodeCompanion',
         })
         return
       end
 
-      return original_handle_on_select(self, save_id, ...)
+      self._lpke_restore_context = restore_context
+      local existing_chat = find_open_chat_by_save_id(save_id)
+      local result = original_handle_on_select(self, save_id, ...)
+      local restore_applied = false
+      if ok_chat_fns and existing_chat then
+        chat_fns.after_restore(existing_chat, restore_context)
+        restore_applied = true
+      end
+      if not existing_chat then
+        local restored_chat = find_open_chat_by_save_id(save_id)
+        if restored_chat then
+          chat_fns.after_restore(restored_chat, restore_context)
+          restore_applied = true
+        end
+      end
+      if restore_applied then
+        self._lpke_restore_context = nil
+      end
+      return result
+    end
+  end
+
+  if not UI._lpke_restore_open_saved_chats then
+    UI._lpke_restore_open_saved_chats = true
+
+    local original_open_saved_chats = UI.open_saved_chats
+    UI.open_saved_chats = function(self, ...)
+      local ok_chat_fns, chat_fns =
+        pcall(require, 'lpke.plugins.ai.helpers.chat_functions')
+      if ok_chat_fns then
+        chat_fns.capture_restore_context()
+      end
+      return original_open_saved_chats(self, ...)
     end
   end
 
@@ -390,6 +436,12 @@ local function patch_history_ui()
           chat.opts.acp_session_id = chat_data.acp_session_id
         end
       end
+      local ok_chat_fns, chat_fns =
+        pcall(require, 'lpke.plugins.ai.helpers.chat_functions')
+      if ok_chat_fns then
+        chat_fns.after_restore(chat, self._lpke_restore_context)
+      end
+      self._lpke_restore_context = nil
       return chat
     end
   end

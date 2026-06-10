@@ -410,7 +410,7 @@ local function config()
             modes = { n = 'gh' },
             index = 24,
             callback = function()
-              vim.cmd('CodeCompanionHistory')
+              require('lpke.plugins.ai.helpers.chat_functions').open_history()
             end,
             description = 'Open chat history',
           },

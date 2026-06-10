@@ -1,6 +1,7 @@
 local M = {}
 
 local ai_config = require('lpke.plugins.ai.helpers.config')
+local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
 local history_acp = require('lpke.plugins.ai.helpers.history_acp')
 local lifecycle = require('lpke.plugins.ai.helpers.acp_lifecycle')
 
@@ -19,7 +20,7 @@ local function is_fresh_acp_chat(chat)
 end
 
 local function open_codecompanion_history()
-  vim.cmd('CodeCompanionHistory')
+  chat_fns.open_history()
 end
 
 local function chat_title(chat)
@@ -125,7 +126,7 @@ local function close_disposable_resume_chat(chat)
   end
 end
 
-local function open_existing_chat(current_chat, target_chat)
+local function open_existing_chat(current_chat, target_chat, restore_context)
   if not target_chat then
     return
   end
@@ -143,6 +144,7 @@ local function open_existing_chat(current_chat, target_chat)
   lifecycle.ensure_chat_connection(target_chat, nil, {
     keep_visible = true,
   })
+  chat_fns.after_restore(target_chat, restore_context)
   vim.notify('Open chat resumed', vim.log.levels.INFO, {
     title = 'CodeCompanion',
   })
@@ -152,8 +154,10 @@ local function open_existing_chat(current_chat, target_chat)
   end
 end
 
-local function load_acp_session(chat, selected)
-  local ok, err = history_acp.resume_session_into_chat(chat, selected)
+local function load_acp_session(chat, selected, restore_context)
+  local ok, err = history_acp.resume_session_into_chat(chat, selected, {
+    restore_context = restore_context,
+  })
   if not ok then
     return vim.notify(
       tostring(err or 'Failed to load session'),
@@ -202,7 +206,7 @@ local function acp_sessions(chat, open_entries)
   return entries
 end
 
-local function pick_acp_session(chat)
+local function pick_acp_session(chat, restore_context)
   local open_entries = open_chats(chat)
   local entries =
     vim.list_extend(open_entries, acp_sessions(chat, open_entries))
@@ -229,16 +233,16 @@ local function pick_acp_session(chat)
     end
 
     if choice.kind == 'open' then
-      return open_existing_chat(chat, choice.chat)
+      return open_existing_chat(chat, choice.chat, restore_context)
     end
 
-    load_acp_session(chat, choice.session)
+    load_acp_session(chat, choice.session, restore_context)
   end)
 end
 
-local function run_resume(chat)
+local function run_resume(chat, restore_context)
   local function execute_resume()
-    pick_acp_session(chat)
+    pick_acp_session(chat, restore_context)
   end
 
   if chat.acp_connection and chat.acp_connection:is_ready() then
@@ -252,7 +256,7 @@ local function run_resume(chat)
   end
 end
 
-local function open_acp_resume_chat(source_chat, cb)
+local function open_acp_resume_chat(source_chat, cb, restore_context)
   if source_chat and source_chat.ui then
     pcall(function()
       source_chat.ui:hide()
@@ -272,7 +276,7 @@ local function open_acp_resume_chat(source_chat, cb)
 
   local adapter = ai_config.defaults.chat_adapter
   if chat.adapter and chat.adapter.type == 'acp' then
-    cb(chat)
+    cb(chat, restore_context)
     return
   end
 
@@ -280,7 +284,7 @@ local function open_acp_resume_chat(source_chat, cb)
     require('lpke.plugins.ai.helpers.chat_functions').remove_http_tool_context(
       chat.bufnr
     )
-    cb(chat)
+    cb(chat, restore_context)
   end)
 end
 
@@ -306,10 +310,11 @@ local function handle_choice(chat, choice)
 
   local value = type(choice) == 'table' and choice.value or choice
   if value == 'resume' then
+    local restore_context = chat_fns.capture_restore_context()
     if not (chat and chat.adapter and chat.adapter.type == 'acp') then
-      return open_acp_resume_chat(chat, run_resume)
+      return open_acp_resume_chat(chat, run_resume, restore_context)
     end
-    run_resume(chat)
+    run_resume(chat, restore_context)
   elseif value == 'history' then
     open_codecompanion_history()
   elseif value == 'drafts' then
