@@ -513,8 +513,7 @@ local function config()
             model = ai_config.model_id(
               ai_config.defaults.title_generation_model
             ),
-            refresh_every_n_prompts = 1,
-            max_refreshes = 3,
+            refresh_every_n_prompts = 0,
           },
           ---On exiting and entering neovim, loads the last chat on opening chat
           continue_last_chat = false,
