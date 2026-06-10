@@ -595,6 +595,57 @@ local function patch_history_ui_reopen()
   end
 end
 
+local function patch_history_title_generator()
+  local ok_generator, TitleGenerator =
+    pcall(require, 'codecompanion._extensions.history.title_generator')
+  if not ok_generator or TitleGenerator._lpke_visible_title_messages then
+    return
+  end
+  TitleGenerator._lpke_visible_title_messages = true
+
+  local function is_title_message(msg)
+    if type(msg) ~= 'table' then
+      return false
+    end
+
+    if msg.opts and msg.opts.visible == false then
+      return false
+    end
+
+    local opts = msg.opts or {}
+    local meta = msg._meta or {}
+    if opts.tag or opts.reference or opts.context_id then
+      return false
+    end
+    if meta.tag or meta.reference or meta.context_id then
+      return false
+    end
+    if msg.context then
+      return false
+    end
+
+    return type(msg.content) == 'string' and vim.trim(msg.content) ~= ''
+  end
+
+  local function title_messages(messages)
+    return vim.tbl_filter(is_title_message, messages or {})
+  end
+
+  local original_count_user_messages = TitleGenerator._count_user_messages
+  TitleGenerator._count_user_messages = function(self, chat)
+    local title_chat = vim.tbl_extend('force', {}, chat or {})
+    title_chat.messages = title_messages(title_chat.messages)
+    return original_count_user_messages(self, title_chat)
+  end
+
+  local original_generate = TitleGenerator.generate
+  TitleGenerator.generate = function(self, chat, callback, is_refresh)
+    local title_chat = vim.tbl_extend('force', {}, chat or {})
+    title_chat.messages = title_messages(title_chat.messages)
+    return original_generate(self, title_chat, callback, is_refresh)
+  end
+end
+
 local function patch_history_rename()
   local ok_storage, Storage =
     pcall(require, 'codecompanion._extensions.history.storage')
@@ -708,6 +759,7 @@ function M.setup()
 
   patch_telescope_history_picker()
   patch_history_ui_reopen()
+  patch_history_title_generator()
   patch_history_rename()
 end
 
