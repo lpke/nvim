@@ -75,6 +75,22 @@ function M.keymap_set_multi(keymaps)
   end
 end
 
+function M.toggle_relative_numbers()
+  local ok_chat_fns, chat_fns =
+    pcall(require, 'lpke.plugins.ai.helpers.chat_functions')
+  if ok_chat_fns and chat_fns.is_detached_chat_buf(0) then
+    local enabled = vim.wo.number or vim.wo.relativenumber
+    vim.wo.number = not enabled
+    vim.wo.relativenumber = not enabled
+    return
+  end
+
+  vim.wo.relativenumber = not vim.wo.relativenumber
+  if vim.wo.relativenumber then
+    vim.wo.number = true
+  end
+end
+
 -- same as above but requires a filetype, and optionally accepts a condition function
 function M.ft_keymap_set_multi(filetype_pattern, keymaps, cond_func)
   vim.api.nvim_create_autocmd({ 'FileType', 'BufEnter' }, {
