@@ -183,10 +183,12 @@ local function open_detached_chat(chat, opts)
 
   mark_detached_chat(chat)
   if opts.win and vim.api.nvim_win_is_valid(opts.win) then
-    pcall(vim.api.nvim_win_set_buf, opts.win, chat.bufnr)
-    chat.ui.winnr = opts.win
-    chat.ui.window_opts = DETACHED_WINDOW_OPTS
     vim.api.nvim_set_current_win(opts.win)
+    chat.ui:open({
+      window_opts = vim.tbl_deep_extend('force', {}, DETACHED_WINDOW_OPTS, {
+        layout = 'buffer',
+      }),
+    })
   else
     chat.ui:open({ window_opts = DETACHED_WINDOW_OPTS })
   end
@@ -728,13 +730,21 @@ function M.open_fullscreen_chat(opts)
     return
   end
 
-  open_detached_chat(chat)
+  open_detached_chat(
+    chat,
+    opts.replace_current_window and { win = vim.api.nvim_get_current_win() }
+      or nil
+  )
   if not opts.skip_initial_tools and M.insert_http_tools() then
     vim.cmd('normal! G2o')
     follow_chat(chat)
-    notify_later(new_chat_msg('Fullscreen chat with tools'))
+    if not opts.silent then
+      notify_later(new_chat_msg('Fullscreen chat with tools'))
+    end
   else
-    notify_later(new_chat_msg('Fullscreen chat'))
+    if not opts.silent then
+      notify_later(new_chat_msg('Fullscreen chat'))
+    end
   end
   follow_chat(chat)
 end

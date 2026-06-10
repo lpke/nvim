@@ -11,6 +11,35 @@ local function notify(msg)
   vim.notify(msg, vim.log.levels.INFO, { title = 'CodeCompanion' })
 end
 
+local function setup_startup_codex()
+  if vim.env.LPKE_NVIM_CODEX ~= '1' then
+    return
+  end
+
+  local function open()
+    require('lpke.plugins.ai.helpers.chat_functions').open_fullscreen_chat({
+      replace_current_window = true,
+      silent = true,
+    })
+    pcall(vim.cmd, 'silent! tabonly')
+  end
+
+  if vim.v.vim_did_enter == 1 then
+    vim.schedule(open)
+    return
+  end
+
+  vim.api.nvim_create_autocmd('VimEnter', {
+    once = true,
+    group = vim.api.nvim_create_augroup('LpkeCodeCompanionStartupCodex', {
+      clear = true,
+    }),
+    callback = function()
+      vim.schedule(open)
+    end,
+  })
+end
+
 local function system_prompt(ctx)
   return caveman.system_prompt(ctx)
     .. '\n\n'
@@ -555,6 +584,8 @@ local function config()
       end
     end
   end
+
+  setup_startup_codex()
 end
 
 return {
