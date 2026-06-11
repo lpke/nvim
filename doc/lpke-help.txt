@@ -1,0 +1,516 @@
+*lpke-help.txt*	Luke's custom Neovim workflow help
+Nvim Custom Help                                           *lpke-help*
+==============================================================================
+
+Use this as a memory jogger for this config. It covers custom workflow pieces,
+not every plugin option. Jump from the contents with <CR> or <C-]> on a |tag|.
+Use / to search and q to close.
+
+More ways to rediscover things:
+  <BS>fk                Search keymaps.
+  <BS>fh                Search help tags, including lpke-* sections.
+  <BS>fl                Search highlights.
+  <BS>p<BS>             Search installed plugin source files.
+  <BS>p/                Grep installed plugin source files.
+  :P                    Show print/debug helper commands.
+  :Y                    Show yank helper commands.
+  g?                    Show local help in Oil, Aerial, Diffview, and similar UIs.
+
+Editing this file:
+  Section tags use star-wrapped lpke-topic labels; links use |lpke-topic|.
+  After editing,
+  run :helptags doc so :help and <BS>fh see the updated tags.
+
+CONTENTS                                                  *lpke-contents*
+  |lpke-orientation|       Prefixes, statusline, and conventions
+  |lpke-commands|          User commands
+  |lpke-files|             Files, directories, Oil, and Telescope
+  |lpke-editing|           Editing, movement, text objects, snippets
+  |lpke-windows|           Buffers, windows, tabs, quickfix
+  |lpke-lsp|               LSP, diagnostics, formatting, linting
+  |lpke-git|               Git, Gitsigns, Fugitive, Diffview
+  |lpke-ai|                CodeCompanion and Copilot
+  |lpke-runner|            Runner, terminals, messages
+  |lpke-ui|                UI, sessions, markdown, symbols
+  |lpke-filetypes|         Filetypes, parsers, snippets
+
+ORIENTATION                                          *lpke-orientation*
+==============================================================================
+
+Core ideas:
+  <leader> is Space.
+  <BS> is the main "tools and pickers" prefix.
+  <F2>x and <A-x> are usually aliases. Your terminal maps Alt to F2-prefixed
+  sequences to avoid Esc ambiguity.
+  [] motions are repeatable with [[ and ]] after using a supported [x or ]x map.
+  Many statusline items are clickable when using a GUI or terminal mouse.
+
+Statusline hints:
+  C toggles Copilot. D toggles diagnostics. M toggles auto completion.
+  T toggles linting when the current filetype has a configured linter.
+  R toggles render-markdown for supported buffers.
+  Git diff counts open a Fugitive diff against staging when clicked.
+  Branch opens a Fugitive diff against HEAD when clicked.
+  CodeCompanion buffers show chat position, adapter, model, mode/approval, and
+  ACP reasoning effort.
+
+Tabline:
+  Tabs show special buffer names for Oil, Telescope, Lazy, Mason, Aerial,
+  CodeCompanion, Fugitive, Gitsigns blame, and Diffview.
+  A square marker means the tab is window-zoomed.
+  A solid dot marks the active modified buffer; + marks another modified buffer
+  in the tab.
+
+COMMANDS                                                 *lpke-commands*
+==============================================================================
+
+General:
+  :Help                 Open this custom help.
+  :Bclean               Delete buffers not visible in any tab, keeping modified
+                        buffers and CodeCompanion chats.
+  :M, :Mes, :Messages   Open :messages in a bottom split named Message History.
+  :CU, :CodexUsage      Run ~/.local/bin/cu and echo Codex usage.
+
+Terminals and external tools:
+  :T [full]
+  :Term [full]
+  :Terminal [full]      Open a floating terminal in the current cwd.
+  :R [full]
+  :Ranger [full]        Open floating ranger at the current file directory.
+  :TrashRestore         Open floating trash-restore.
+
+Debug/print:
+  :P                    Show print helper summary.
+  :P <lua>              Evaluate Lua and Print() the result.
+  :PP                   Print current buffer name.
+  :PC                   Print cwd.
+  :PG                   Print git root for current file/cwd.
+  :PW                   Print active tab/buffer/window IDs.
+
+Yank helpers:
+  :Y                    Show yank helper summary.
+  :YP / :Yp [regs]      Yank buffer path, global/default register variant.
+  :YC / :Yc [regs]      Yank cwd.
+  :YG / :Yg [regs]      Yank git root.
+  :YL / :Yl [regs]      Yank relative file:line. Add "blame" for author/time.
+  :YT / :Yt [regs]      Yank tab ID.
+  :YB / :Yb [regs]      Yank buffer ID.
+  :YW / :Yw [regs]      Yank window ID.
+
+Working directory:
+  :Cd                   :cd to current file or Oil directory.
+  :Cdc                  :cd to startup/global nvim cwd.
+  :Cdr                  :cd to git root, falling back to cwd.
+  :Tcd, :Tcdc, :Tcdr    Same for tab-local cwd.
+  :Lcd, :Lcdc, :Lcdr    Same for window-local cwd.
+
+Other:
+  :NNRestore [n], :NN   Restore latest [No Name] scratch backups.
+  :Gpp ...              Run the zsh gpp helper from the current cwd.
+  :Model ...            In CodeCompanion, set/cycle model aliases.
+  :Adapter ...          In CodeCompanion, set/cycle adapters.
+
+FILES AND SEARCH                                           *lpke-files*
+==============================================================================
+
+Oil:
+  - or <BS>s            Open Oil in the current window.
+  <F2>> / <A->>         Open Oil in a vertical split.
+  <F2>< / <A-<>         Open Oil in a horizontal split.
+  In Oil: <CR> opens entry; <leader><CR> opens entry in Cursor.
+  In Oil: - parent, gd cwd, gD git root, gh home.
+  In Oil: <F2>p preview, gs sort, g. hidden, g\ trash view.
+  In Oil: <F2>. vsplit, <F2>, split, <F2>n tab.
+  In Oil: yd yanks current directory, yp yanks selected path.
+  Oil deletes to trash and skips simple edit confirmation.
+
+Telescope basics:
+  <BS><leader>          Resume previous picker.
+  <BS><BS>              Smart find files in cwd.
+  <leader><BS><BS>      Find files from home.
+  <BS>fd                Find directories.
+  <BS>ff                Find files.
+  <BS>fr                Recent files.
+  <leader>/             Fuzzy find in current buffer.
+  <BS>/                 Live grep files.
+  <leader><BS>/         Live grep from home.
+  <BS>fp                Grep pasted text literally.
+  <BS>fi                Grep prompted text literally.
+  <BS>fw                Grep word under cursor literally.
+  <BS>p<BS>             Find plugin files under lazy.nvim.
+  <BS>p/                Grep plugin files.
+
+Telescope prompt syntax:
+  @dir  query           Search from dir instead of picker cwd.
+  @~  query             Search from home.
+  @*dir  query          Search from dir and include normally ignored files.
+  query  *.lua          In live grep, extra double-space parts become rg globs.
+
+Telescope picker controls:
+  /                     Insert mode from normal mode.
+  <CR>                  Open selected item.
+  <F2>. / <A-.>         Open in vertical split.
+  <F2>, / <A-,>         Open in horizontal split.
+  <F2>n / <A-n>         Open in tab.
+  <C-j>/<C-k>           Scroll preview.
+  <F2>p / <A-p>         Toggle preview.
+  <Tab>/<S-Tab>         Toggle selection and move.
+  q or <C-q>            Send to quickfix, depending on mode.
+  dD                    Delete selected item where supported.
+  h                     Parent/history action where supported.
+  In file/dir pickers: <F2>s toggles file/dir mode, - goes parent,
+                       <BS><BS> reopens from selected parent,
+                       <BS>/ greps selected parent.
+
+Other navigation pickers:
+  <BS>fb                Buffers. dD deletes, dxD force deletes, dX cleans.
+  <BS>l                 Quickfix picker.
+  <BS>fm                Marks.
+  <BS>f'                Registers.
+  <BS>fj                Jumplist.
+  <BS>fc                Changelist.
+  <BS>fk                Keymaps.
+  <BS>fl                Highlights.
+  <BS>fh                Help tags.
+  <leader>fs            Treesitter symbols.
+
+EDITING AND MOVEMENT                                    *lpke-editing*
+==============================================================================
+
+General movement/editing:
+  <C-s>                 Save current buffer. [No Name] buffers warn instead.
+  gg / G                Go to absolute start/end, not first nonblank only.
+  Y                     Yank to end of line.
+  <leader>y/Y           Yank to system clipboard.
+  ygG / <leader>ygG     Yank whole buffer without moving cursor.
+  J / gJ / <leader>J    Join lines while preserving cursor.
+  go / gO               Add blank line below/above without entering insert.
+  =*                    Indent whole file.
+  =_                    Indent current line or visual selection only.
+  ze                    Put cursor near top with context.
+  <C-z>                 Undo.
+  <Down>/<Up>           Scroll 4 lines.
+  <S-Right>/<S-Left>    Horizontal scroll.
+  <C-j>/<C-k>           Move 8 lines.
+
+Search/replace:
+  SS                    Substitute current line.
+  SF                    Substitute whole file.
+  SV                    Substitute previous/current visual selection.
+  S**                   Substitute word under cursor in whole file.
+  S*v / S*V             Substitute word under cursor in selection.
+
+Visual behavior:
+  J / K                 Move selected lines down/up and reindent.
+  p                     Paste over selection without clobbering unnamed reg.
+  P                     Use default visual paste behavior.
+  < / >                 Repeatable visual indent.
+  <leader>ev            Replace selection with eval(selection).
+
+Text objects and motions:
+  <Right>/<Left>        Spider subword w/b motion.
+  i<leader>w/a<leader>w Subword text object.
+  gG                    Entire buffer text object.
+  ii/ai/aI/iI           Indentation text objects.
+  ih                    Git hunk text object.
+  a', a", a`            Outer quote text objects without surrounding whitespace.
+  db/cb/yb and variants Backward delete/change/yank include cursor char.
+
+Comments/surround:
+  gc/gcc/gco/gcO/gcA    Comment.nvim line operations with TSX-aware context.
+  gb/gbb                Block comments.
+  nvim-surround         Uses plugin defaults, with move_cursor=false.
+
+Completion/snippets/autopairs:
+  <F2>m / <A-M>         Toggle automatic nvim-cmp menu.
+  <F2>, / <A-,>         Open completion menu manually.
+  <F2><CR> / <A-CR>     Confirm completion.
+  <Tab>                 Expand LuaSnip snippet in insert mode, otherwise tab.
+  <F2>' / <A-'>         Jump forward in snippet.
+  <F2>" / <A-">         Jump backward in snippet.
+  Visual <Tab>          Store selection for snippets that wrap selected text.
+  <M-BS>                Raw backspace, bypass autopairs.
+
+WINDOWS, TABS, QUICKFIX                                *lpke-windows*
+==============================================================================
+
+Windows:
+  <C-w>. or <F2>.       Vertical split.
+  <C-w>, or <F2>,       Horizontal split.
+  <F2>h/j/k/l           Focus windows.
+  <F2>H/J/K/L           Resize windows.
+  <F2>/                 Close window and remember buffer.
+  <A-/>                 Close window; [No Name] buffers get backed up.
+  <F2>y / <F2>p         Copy/paste current buffer into another window.
+  <F2>Y / <F2>P         Copy/paste current tab layout sizing.
+  <F2>O                Rotate windows.
+  <F2>s / <A-s>         Toggle window zoom for current tab.
+  <F2>; / <A-;>         Equalize splits.
+
+Tabs and buffers:
+  <F2>n / <A-n>         New blank tab.
+  <F2>N / <A-N>         New tab with current buffer.
+  <F2><Right>/<Left>    Next/previous tab.
+  <M-S-Right>/<Left>    Move tab right/left.
+  [b / ]b               Previous/next buffer.
+  QQ                    Quit all.
+  QZ                    Write and quit all.
+  <C-w>QQ / <C-w>QZ     Quit/write-quit without auto-saving session.
+
+[No Name] buffers:
+  Closing the last visible modified [No Name] buffer writes a backup under
+  stdpath('data')/no-name-backups before deleting it.
+  :NNRestore [n] restores the newest scratch backup(s) in new tabs.
+
+Quickfix:
+  gq                    Open quickfix list.
+  <leader>q             Add current file/line/col to quickfix.
+  <F2><Down>/<Up>       Next/previous item.
+  ]q / [q               Next/previous item, repeatable with ]] and [[.
+  In qf: o opens item but keeps qf focus.
+  In qf: J/K next/previous while keeping qf focus.
+  In qf: dd deletes item, visual d deletes selection, dgG clears all.
+
+LSP, DIAGNOSTICS, FORMAT, LINT                            *lpke-lsp*
+==============================================================================
+
+Configured LSP servers:
+  html, cssls, tailwindcss, ts_ls, eslint, jsonls, graphql, lua_ls, vimls,
+  emmet_ls, bashls, pyright, taplo, powershell_es.
+
+Mason:
+  <BS>im                Mason UI.
+  <BS>ip                LspInfo.
+  Mason installs LSPs plus pylint, prettier, stylua, shfmt, isort, black.
+
+Navigation and actions:
+  gr                    Rename.
+  ga                    Code action.
+  gh                    Hover.
+  gl                    Line diagnostics float.
+  <leader>l             Telescope diagnostics for current buffer.
+  [l / ]l               Previous/next diagnostic with float.
+  <leader>*             References.
+  gd / gt / gi          Definition, type definition, implementation.
+  <leader>R             Restart LSPs for current filetype.
+
+Diagnostics:
+  Diagnostics are hidden during insert mode and restored on InsertLeave.
+  <F2>d / <A-d>         Toggle diagnostics globally.
+  <F2>v / <A-v>         Toggle diagnostic signs.
+  <F2>e / <A-e>         Toggle virtual text for current line only.
+  <F2>t / <A-t>         Toggle dim/bright virtual text.
+  <F2>V / <A-V>         Toggle diagnostic highlighting and virtual lines.
+  <A-U>                 Toggle TypeScript unused diagnostics.
+  Lua diagnostics filter ignores unused locals named with _.
+
+Format/lint:
+  ==                    Format file with conform, fallback to gg=G.
+  <BS>ic                ConformInfo.
+  <F2>T / <A-T>         Toggle nvim-lint globally.
+  <leader>L             Run linter for current file.
+  Formatters: prettier, stylua, isort+black, shfmt, taplo.
+  Pylint is the only active nvim-lint linter.
+
+GIT                                                        *lpke-git*
+==============================================================================
+
+Gitsigns:
+  ]C / [C               Next/previous unstaged hunk, preview outside diff.
+  ]c / [c               Next/previous staged or unstaged hunk.
+  ]h / [h               Next/previous hunk without preview.
+  gss                   Stage/unstage current hunk or visual range.
+  gsX                   Reset current hunk or visual range.
+  <leader>gss           Stage all hunks in current buffer.
+  <leader>gsS           Unstage all hunks in current buffer.
+  <leader>gsX           Reset all hunks in current buffer.
+  gsh / gsl             Preview hunk float / inline.
+  gsb                   Open buffer blame.
+  gsq                   Quickfix hunks in current file.
+  <leader>gsq           Quickfix hunks in open buffers.
+  gsQ                   Quickfix hunks in all files/repos.
+  <F2>z / <A-z>         Toggle git signs.
+
+Fugitive:
+  <leader>I             Toggle :Git in a new tab.
+  <leader>gb            Git blame.
+  <leader>gdd / gsL     Current file diff against HEAD in a new tab.
+  <leader>gds           Current file diff against staging.
+  In fugitive: <leader>i closes the fugitive tab/window.
+
+Diffview:
+  <leader>i             Open/focus changed/staged diffview.
+  <BS>gd                DiffviewOpen.
+  <BS>gD                Start :DiffviewOpen with cursor for rev args.
+  <leader>gc            File history for current file.
+  <BS>gc                Current branch history.
+  <BS>gH                Start :DiffviewFileHistory with cursor for paths.
+  <BS>gs                Stash history.
+  In Diffview: J/K or <Tab>/<S-Tab> move files.
+  In Diffview: - or s stage/unstage selected file, S stage all, U unstage all.
+  In Diffview: X restore entry, I intent-to-add, cc commit via Fugitive.
+  In Diffview: <leader>b files panel, <leader>e commit/after buffer,
+               <F2>s right-side zoom, gw whitespace diff, g<C-x> layout.
+  Merge conflicts: [x/]x jump; <leader>co/ct/cb/ca choose ours/theirs/base/all;
+                   dx deletes conflict; uppercase cO/cT/cB/cA apply whole file.
+  <leader>i, <F2>/, or <A-/> closes the Diffview tab.
+
+Other git helpers:
+  <BS>gb                Telescope git branches.
+  <BS>gg                Telescope git status.
+  <BS>GG                Open an arbitrary two-pane scratch diff.
+  :Gpp ...              Run zsh gpp helper from current cwd.
+
+AI                                                          *lpke-ai*
+==============================================================================
+
+Opening chats:
+  <F2>f / <A-f>         Toggle CodeCompanion sidebar chat with HTTP tools.
+  <F2>F / <A-F>         Open fullscreen chat tab.
+  Visual <F2>f/<A-f>    Toggle chat and include selection/context.
+  Visual <F2>F/<A-F>    Fullscreen chat with selection/context.
+  <C-l>                 Inline CodeCompanion prompt with context.
+
+Chat buffer keys:
+  <CR> or <C-s>         Send.
+  <C-c>                 Close chat; another open chat is shown if present.
+  <leader>Q             Stop request.
+  gx                    Clear chat.
+  gr                    Regenerate.
+  gc / gy               Insert code block / yank code.
+  gp / gw               Toggle buffer sync all / diff.
+  g. / g,               Next/previous open chat.
+  gl                    Chat picker.
+  ga                    Change adapter.
+  gs                    Toggle system prompt.
+  gta / gtx             Toggle/clear chat approvals.
+  gd                    Open file under cursor in a new tab.
+  gn                    New chat.
+  gh                    Saved chat history.
+  gH                    History/resume/drafts action picker.
+  gX                    Delete current chat.
+
+Models/adapters:
+  Default chat adapter is Codex ACP. Inline/cmd/title generation use Copilot.
+  <leader>m             Cycle configured models for current adapter.
+  <leader>M             Cycle Codex/Copilot adapters.
+  <leader>r             Codex ACP reasoning effort picker.
+  <leader>a             Codex ACP approval preset picker.
+  :Model son|opus|gpt|gem|... sets or cycles model aliases.
+  :Adapter codex|copilot sets or cycles adapter.
+
+Context/tools inside chats:
+  <leader>I             Paste image.
+  <F2>a / <A-a>         Insert @{agent} for HTTP chats.
+  <F2>A / <A-A>         Insert agent + web tools.
+  <F2>S / <A-S>         Insert web tools only.
+  <F2>b / <A-b>         Insert #{buffer}.
+  <F2>d / <A-d>         Insert #{diagnostics}.
+  <F2>B / <A-B>         Insert #{buffers}.
+
+Custom slash commands:
+  /caveman              Toggle terse response mode for HTTP adapters.
+  /path                 Insert absolute file or directory path.
+  /git_files            Add git file list context, not file contents.
+  /external_files       Share external directory for tools that need abs paths.
+  /git_commits          Add recent git commit messages/metadata.
+  /git_commit_history   Add diffs for recent commits.
+  /git_file_history     Add diffs for one file going back N versions.
+
+History and drafts:
+  Saved chats auto-save to stdpath('data')/codecompanion-history and expire
+  after 14 days.
+  History picker supports project scoping; @* searches all projects.
+  Draft prompts auto-save to stdpath('data')/codecompanion-drafts and can be
+  restored from gH -> Draft prompts.
+  <leader>X in a chat opens cleanup: close empty chats or suspend ACP chats.
+
+Copilot:
+  <F2>C / <A-C>         Toggle Copilot globally for buffers.
+  <F2><Tab>/<A-Tab>     Trigger/next suggestion from insert mode.
+  Copilot is lazy-loaded on InsertEnter and shown as C in lualine.
+
+RUNNER, TERMINALS, MESSAGES                              *lpke-runner*
+==============================================================================
+
+Runner:
+  <BS>rr                Run current buffer and show [Runner Output].
+  <BS>rx                Close runner output buffer.
+  <BS>rX                Kill active runner jobs.
+  Supported filetypes include JS/TS via node/tsx, Python, Lua, sh/bash/zsh,
+  Ruby, Go, Rust, PHP, Perl, and HTML via jsdom.
+  Unsaved/modified buffers run from a temp file. Saved clean buffers run their
+  real file. TypeScript tries to find an upward tsconfig, skipping repo root
+  tsconfig.json.
+
+Floating tools:
+  :Term [full]          Floating terminal at current cwd.
+  :Ranger [full]        Floating ranger at current file directory.
+  <BS>tt / <BS>TT       Terminal normal/fullscreen.
+  <BS>tr / <BS>TR       Ranger normal/fullscreen.
+  In terminal: <F2>; normal mode, <F2>: command-line, <F2>/ kill terminal.
+
+Messages:
+  :M / :Mes / :Messages Opens Message History bottom split, cleaned up and
+  scrolled to newest message.
+
+UI, SESSIONS, SYMBOLS                                      *lpke-ui*
+==============================================================================
+
+Sessions:
+  Auto-session saves/restores by cwd, except /, ~/, and ~/Downloads.
+  <BS>n                 Telescope session picker.
+  :SS / :SR / :SD       Abbrev to SessionSave/Restore/Delete.
+  :Ss / :Sd             Abbrev to Autosession search/delete.
+  LPKE_NVIM_NO_SESSION=1 disables auto-save/restore.
+
+Statusline toggles:
+  <F2>D cwd display.
+  <F2>A Harpoon index.
+  <F2>B raw/formatted buffer name.
+  <F2>Z full/short path.
+  <F2>E encoding/fileformat.
+  <F2>S session name.
+  <F2>G all git info.
+  <F2>g git branch.
+  <F2>b active tab/buffer/window IDs.
+
+Symbols and docs:
+  <leader>s             Aerial symbol sidebar.
+  <leader>a             Aerial nav window.
+  In Aerial: <CR> jump, <F2>. split, <F2>, hsplit, J/K scroll+jump,
+             z* controls symbol tree folds, q closes.
+  <leader>u             Undotree.
+  <BS>ft                Todo comments Telescope.
+  ]t / [t               Next/previous TODO-style comment.
+  In Todo picker: <F2>s toggles TODO/FIX-only filter, <F2>i includes ignored.
+  <F2>c / <A-c>         Toggle Treesitter context sticky header.
+  <A-m>                 Toggle render-markdown in markdown/help/CodeCompanion.
+
+Theme:
+  Rose Pine main variant with custom gray, diagnostic, git, and UI highlights.
+  <leader>t             :Inspect highlight under cursor.
+  <leader>T             :InspectTree parsed tree.
+
+FILETYPES AND SNIPPETS                                *lpke-filetypes*
+==============================================================================
+
+Filetypes:
+  .mdx uses mdx filetype but markdown parser.
+  Chezmoi templates map dot_zshrc.tmpl/dot_zshenv.tmpl to zsh,
+  dot_gitconfig.tmpl to gitconfig, and *.<ft>.tmpl to <ft>.
+  Markdown removes formatoptions t/c so textwidth remains useful for manual
+  formatting without hard-wrapping while typing.
+  Markdown inline import/export lines are injected as TSX.
+
+Snippets:
+  all: inline object/array.
+  lua: function, if/else, for loops, print/Print, multiline string wrappers.
+  js/ts: functions, constructors from fields, promises, try/catch, debug logs,
+         Vitest snippets in *.test.js/ts.
+  jsx/tsx: React components, hooks, className, JSX expression wrappers,
+           MUI sx/Box, Tailwind-style CSS object/property shorthands.
+  html: DOM selectors and console snippets.
+  Snippets inherit so TSX gets TS + JSX + JS + HTML helpers.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

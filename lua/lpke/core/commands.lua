@@ -1,4 +1,5 @@
 local helpers = require('lpke.core.helpers')
+local custom_help = require('lpke.core.help')
 
 Lpke_messages_win_open = false
 Lpke_messages_win_id = nil
@@ -49,6 +50,7 @@ end
 
 -- stylua: ignore start
 helpers.command_set_multi({
+  { '', 'Help', custom_help.open, { desc = 'Open custom Neovim help' } },
   { '', 'Bclean', Lpke_clean_buffers, { desc = 'Removes buffers that arent actively shown' } },
 
   -- terminal
