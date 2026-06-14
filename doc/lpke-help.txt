@@ -154,6 +154,8 @@ Telescope picker controls:
   <F2>n / <A-n>         Open in tab.
   <C-j>/<C-k>           Scroll preview.
   <F2>p / <A-p>         Toggle preview.
+  <A-/>                 Toggle file/dir picker with live grep, keeping prompt
+                        text and current insert/normal mode.
   <Tab>/<S-Tab>         Toggle selection and move.
   q or <C-q>            Send to quickfix, depending on mode.
   dD                    Delete selected item where supported.

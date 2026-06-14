@@ -15,6 +15,7 @@ local tc = Lpke_theme_colors
 
 local keymaps = {
   file_dir_switch = { '<F2>s', '<A-s>' },
+  grep_switch = { '<A-/>' },
   cwd_change = { '<BS><BS>' },
   cwd_change_grep = { '<BS>/' },
 }
@@ -52,15 +53,16 @@ local function switch_to_picker(
   cur_prompt_buf,
   picker_func,
   keep_query,
-  initial_mode
+  initial_mode,
+  next_opts
 )
   local current_picker = action_state.get_current_picker(cur_prompt_buf)
   local current_query = current_picker:_get_prompt()
   local current_cwd = current_picker.cwd
   actions.close(cur_prompt_buf)
 
-  local opts = {}
-  if current_cwd then
+  local opts = vim.deepcopy(next_opts or {})
+  if current_cwd and not opts.cwd then
     opts.cwd = current_cwd
   end
   if initial_mode then
@@ -345,6 +347,8 @@ end
 
 -- Helper function to setup common keymaps for both pickers
 local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
+  local current_file_kind = is_directory_picker and 'directories' or 'files'
+
   -- Switch picker keymaps
   for _, keymap in ipairs(keymaps.file_dir_switch) do
     local target_func = is_directory_picker and M.find_files
@@ -354,6 +358,30 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
     end)
     map('n', keymap, function()
       switch_to_picker(prompt_bufnr, target_func, true, 'normal')
+    end)
+  end
+
+  -- Toggle between file/directory search and live grep
+  for _, keymap in ipairs(keymaps.grep_switch) do
+    local function switch_to_grep(initial_mode)
+      local opts = ts_helpers.telescope_file_grep_toggle_opts({
+        prompt_title = 'Find in Files',
+      }, current_file_kind)
+
+      switch_to_picker(
+        prompt_bufnr,
+        require('lpke.plugins.telescope.custom_pickers.live_multigrep'),
+        true,
+        initial_mode,
+        opts
+      )
+    end
+
+    map('i', keymap, function()
+      switch_to_grep('insert')
+    end)
+    map('n', keymap, function()
+      switch_to_grep('normal')
     end)
   end
 
@@ -384,10 +412,12 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
 
       actions.close(prompt_bufnr)
 
-      require('lpke.plugins.telescope.custom_pickers.live_multigrep')({
-        prompt_title = 'Find in Files',
-        cwd = resolved_parent_dir,
-      })
+      require('lpke.plugins.telescope.custom_pickers.live_multigrep')(
+        ts_helpers.telescope_file_grep_toggle_opts({
+          prompt_title = 'Find in Files',
+          cwd = resolved_parent_dir,
+        }, current_file_kind)
+      )
     end)
   end
 
@@ -410,6 +440,7 @@ end
 
 function M.find_directories(opts)
   opts = opts or {}
+  ts_helpers.telescope_file_grep_toggle_opts(opts, 'directories')
   opts.cwd = ts_helpers.normalize_cwd(opts.cwd or vim.fn.getcwd())
   if vim.fn.isdirectory(opts.cwd) ~= 1 then
     opts.cwd = ts_helpers.normalize_cwd(vim.fn.getcwd())
@@ -524,6 +555,7 @@ end
 -- extends default find files picker
 function M.find_files(opts)
   opts = find_files_picker_config(opts)
+  ts_helpers.telescope_file_grep_toggle_opts(opts, 'files')
   opts.cwd = ts_helpers.normalize_cwd(opts.cwd or vim.fn.getcwd())
   if vim.fn.isdirectory(opts.cwd) ~= 1 then
     opts.cwd = ts_helpers.normalize_cwd(vim.fn.getcwd())

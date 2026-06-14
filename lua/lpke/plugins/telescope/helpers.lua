@@ -3,6 +3,15 @@ local path_helpers = require('lpke.core.helpers')
 
 local M = {}
 
+local file_grep_toggle_state_key = '_lpke_file_grep_toggle'
+
+local function normalize_file_grep_toggle_kind(kind)
+  if kind == 'directories' then
+    return 'directories'
+  end
+  return 'files'
+end
+
 local function trim(str)
   return (str:gsub('^%s+', ''):gsub('%s+$', ''))
 end
@@ -114,6 +123,21 @@ function M.parse_multigrep_prompt(prompt, base_cwd)
   end
 
   return parsed
+end
+
+function M.telescope_file_grep_toggle_opts(opts, current_kind)
+  opts = opts or {}
+  local state = vim.deepcopy(opts[file_grep_toggle_state_key] or {})
+  state.file_kind =
+    normalize_file_grep_toggle_kind(current_kind or state.file_kind)
+  opts[file_grep_toggle_state_key] = state
+  return opts
+end
+
+function M.telescope_file_grep_toggle_target(opts)
+  opts = opts or {}
+  local state = opts[file_grep_toggle_state_key] or {}
+  return normalize_file_grep_toggle_kind(state.file_kind)
 end
 
 -- refresh a telescope picker and optionally remember selection location
