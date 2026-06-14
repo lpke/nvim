@@ -4,6 +4,33 @@ local function config()
   local helpers = require('lpke.core.helpers')
   local tc = Lpke_theme_colors
 
+  local function patch_diffview_lsp_attach()
+    if vim.lsp._lpke_skip_diffview_buffers then
+      return
+    end
+
+    vim.lsp._lpke_skip_diffview_buffers = true
+    vim.lsp._lpke_buf_attach_client = vim.lsp.buf_attach_client
+
+    vim.lsp.buf_attach_client = function(bufnr, client_id)
+      if type(bufnr) ~= 'number' then
+        return vim.lsp._lpke_buf_attach_client(bufnr, client_id)
+      end
+
+      bufnr = bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr
+
+      if vim.api.nvim_buf_is_valid(bufnr) then
+        local bufname = vim.api.nvim_buf_get_name(bufnr)
+        -- Synthetic revision/index buffers can disappear during diffview's async window swaps.
+        if Match(bufname, '^diffview://') then
+          return false
+        end
+      end
+
+      return vim.lsp._lpke_buf_attach_client(bufnr, client_id)
+    end
+  end
+
   local function patch_diffview_open_flicker()
     local view_mod = require('diffview.scene.view')
     local View = view_mod.View
@@ -83,6 +110,7 @@ local function config()
     end
   end
 
+  patch_diffview_lsp_attach()
   patch_diffview_open_flicker()
   patch_diffview_buffer_redraw_flicker()
   patch_diffview_panel_headings()
