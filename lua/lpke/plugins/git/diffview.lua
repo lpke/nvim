@@ -9,12 +9,13 @@ local function config()
       return
     end
 
+    local original_buf_attach_client = vim.lsp.buf_attach_client
     vim.lsp._lpke_skip_diffview_buffers = true
-    vim.lsp._lpke_buf_attach_client = vim.lsp.buf_attach_client
+    vim.lsp._lpke_buf_attach_client = original_buf_attach_client
 
     vim.lsp.buf_attach_client = function(bufnr, client_id)
       if type(bufnr) ~= 'number' then
-        return vim.lsp._lpke_buf_attach_client(bufnr, client_id)
+        return original_buf_attach_client(bufnr, client_id)
       end
 
       bufnr = bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr
@@ -25,9 +26,11 @@ local function config()
         if Match(bufname, '^diffview://') then
           return false
         end
+      else
+        return false
       end
 
-      return vim.lsp._lpke_buf_attach_client(bufnr, client_id)
+      return original_buf_attach_client(bufnr, client_id)
     end
   end
 
@@ -63,26 +66,30 @@ local function config()
     end
 
     DiffView._lpke_set_file_without_pre_swap_redraw = true
+    DiffView._lpke_set_file_with_pre_swap_redraw = DiffView._set_file
+
     DiffView._set_file = async.void(function(self, file)
-      self.panel:render()
-      self.panel:redraw()
+      local original_cmd = vim.cmd
+      local future
 
-      self.cur_layout:detach_files()
-      local cur_entry = self.cur_entry
-      self.emitter:emit('file_open_pre', file, cur_entry)
-      self.nulled = false
-
-      await(self:use_entry(file))
-
-      self.emitter:emit('file_open_post', file, cur_entry)
-
-      if not self.cur_entry.opened then
-        self.cur_entry.opened = true
-        local diffview_global = rawget(_G, 'DiffviewGlobal')
-        if diffview_global then
-          diffview_global.emitter:emit('file_open_new', file)
+      vim.cmd = function(command)
+        if command == 'redraw' then
+          return
         end
+
+        return original_cmd(command)
       end
+
+      local ok, err = pcall(function()
+        future = DiffView._lpke_set_file_with_pre_swap_redraw(self, file)
+      end)
+      vim.cmd = original_cmd
+
+      if not ok then
+        error(err)
+      end
+
+      await(future)
     end)
   end
 
@@ -159,19 +166,27 @@ local function config()
     end
 
     local function map_quit(bufnr)
-      vim.keymap.set('n', 'Q', quit_diffview_git_ui, {
-        buffer = bufnr,
-        desc = 'Quit Diffview git UI',
-        nowait = true,
-        noremap = true,
-        silent = true,
+      helpers.keymap_set({
+        'n',
+        'Q',
+        quit_diffview_git_ui,
+        {
+          buffer = bufnr,
+          desc = 'Quit Diffview git UI',
+          nowait = true,
+          silent = true,
+        },
       })
-      vim.keymap.set('n', '<leader>i', quit_diffview_git_ui, {
-        buffer = bufnr,
-        desc = 'Quit Diffview git UI',
-        nowait = true,
-        noremap = true,
-        silent = true,
+      helpers.keymap_set({
+        'n',
+        '<leader>i',
+        quit_diffview_git_ui,
+        {
+          buffer = bufnr,
+          desc = 'Quit Diffview git UI',
+          nowait = true,
+          silent = true,
+        },
       })
     end
 
@@ -591,74 +606,114 @@ local function config()
 
   function install_diffview_commit_keymaps(bufnr)
     local opts = function(desc)
-      return { buffer = bufnr, desc = desc, noremap = true }
+      return { buffer = bufnr, desc = desc }
     end
 
-    vim.keymap.set('n', 'J', function()
-      call_in_diffview_file_panel(actions.select_next_entry)
-    end, opts('Diffview: Open the diff for the next file'))
+    helpers.keymap_set({
+      'n',
+      'J',
+      function()
+        call_in_diffview_file_panel(actions.select_next_entry)
+      end,
+      opts('Diffview: Open the diff for the next file'),
+    })
 
-    vim.keymap.set('n', 'K', function()
-      call_in_diffview_file_panel(actions.select_prev_entry)
-    end, opts('Diffview: Open the diff for the previous file'))
+    helpers.keymap_set({
+      'n',
+      'K',
+      function()
+        call_in_diffview_file_panel(actions.select_prev_entry)
+      end,
+      opts('Diffview: Open the diff for the previous file'),
+    })
 
-    vim.keymap.set('n', 'zi', function()
-      diff_buffer_normal('zi')()
-    end, opts('Diffview: Toggle diff buffer folds'))
+    helpers.keymap_set({
+      'n',
+      'zi',
+      function()
+        diff_buffer_normal('zi')()
+      end,
+      opts('Diffview: Toggle diff buffer folds'),
+    })
 
-    vim.keymap.set('n', '<C-j>', function()
-      local scroll = actions.scroll_view(0.5)
-      if type(scroll) == 'function' then
-        scroll()
-      end
-    end, opts('Diffview: Scroll the view down'))
+    helpers.keymap_set({
+      'n',
+      '<C-j>',
+      function()
+        local scroll = actions.scroll_view(0.5)
+        if type(scroll) == 'function' then
+          scroll()
+        end
+      end,
+      opts('Diffview: Scroll the view down'),
+    })
 
-    vim.keymap.set('n', '<C-k>', function()
-      local scroll = actions.scroll_view(-0.5)
-      if type(scroll) == 'function' then
-        scroll()
-      end
-    end, opts('Diffview: Scroll the view up'))
+    helpers.keymap_set({
+      'n',
+      '<C-k>',
+      function()
+        local scroll = actions.scroll_view(-0.5)
+        if type(scroll) == 'function' then
+          scroll()
+        end
+      end,
+      opts('Diffview: Scroll the view up'),
+    })
 
-    vim.keymap.set(
+    helpers.keymap_set({
       'n',
       'gw',
       toggle_whitespace_diff,
-      opts('Diffview: Toggle whitespace diffing')
-    )
+      opts('Diffview: Toggle whitespace diffing'),
+    })
 
-    vim.keymap.set(
+    helpers.keymap_set({
       'n',
       '<A-w>',
       toggle_diffview_wrap,
-      opts('Diffview: Toggle line wrap')
-    )
+      opts('Diffview: Toggle line wrap'),
+    })
 
-    vim.keymap.set(
+    helpers.keymap_set({
       'n',
       '<F2>w',
       toggle_diffview_wrap,
-      opts('Diffview: Toggle line wrap')
-    )
+      opts('Diffview: Toggle line wrap'),
+    })
 
-    vim.keymap.set('n', '-', function()
-      call_in_diffview_file_panel(actions.toggle_stage_entry)
-    end, opts('Diffview: Stage / unstage the selected entry'))
+    helpers.keymap_set({
+      'n',
+      '-',
+      function()
+        call_in_diffview_file_panel(actions.toggle_stage_entry)
+      end,
+      opts('Diffview: Stage / unstage the selected entry'),
+    })
 
-    vim.keymap.set('n', 's', function()
-      call_in_diffview_file_panel(actions.toggle_stage_entry)
-    end, opts('Diffview: Stage / unstage the selected entry'))
+    helpers.keymap_set({
+      'n',
+      's',
+      function()
+        call_in_diffview_file_panel(actions.toggle_stage_entry)
+      end,
+      opts('Diffview: Stage / unstage the selected entry'),
+    })
 
-    vim.keymap.set('n', 'S', function()
-      call_in_diffview_file_panel(actions.stage_all)
-    end, opts('Diffview: Stage all entries'))
+    helpers.keymap_set({
+      'n',
+      'S',
+      function()
+        call_in_diffview_file_panel(actions.stage_all)
+      end,
+      opts('Diffview: Stage all entries'),
+    })
 
-    vim.keymap.set(
+    helpers.keymap_set({
       'n',
       '<leader>e',
       focus_diffview_file_panel,
-      opts('Diffview: Bring focus to the file panel')
-    )
+      opts('Diffview: Bring focus to the file panel'),
+    })
   end
 
   function focus_after_buffer()

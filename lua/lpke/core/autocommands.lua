@@ -21,13 +21,30 @@ vim.api.nvim_create_autocmd('InsertLeave', {
 })
 
 -- remember folds
+local function can_persist_view(bufnr)
+  local bufname = vim.api.nvim_buf_get_name(bufnr)
+  if bufname == '' or Match(bufname, '^%w+://') then
+    return false
+  end
+
+  return vim.bo[bufnr].buftype == ''
+end
+
 vim.api.nvim_create_autocmd({ 'BufWinLeave' }, {
   pattern = { '*.*' },
   desc = 'Save view (folds) when closing file',
-  command = 'mkview',
+  callback = function(event)
+    if can_persist_view(event.buf) then
+      vim.cmd('silent! mkview')
+    end
+  end,
 })
 vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
   pattern = { '*.*' },
   desc = 'load view (folds) when opening file',
-  command = 'silent! loadview',
+  callback = function(event)
+    if can_persist_view(event.buf) then
+      vim.cmd('silent! loadview')
+    end
+  end,
 })
