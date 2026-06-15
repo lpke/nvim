@@ -374,6 +374,8 @@ Opening chats:
   <C-l>                 Inline CodeCompanion prompt with context.
 
 Chat buffer keys:
+  g?                    Show CodeCompanion help. LPKE custom keymaps are at
+                        the bottom under LPKE Custom CodeCompanion Help.
   <CR> or <C-s>         Send.
   <C-c>                 Close chat; another open chat is shown if present.
   <leader>Q             Stop request.

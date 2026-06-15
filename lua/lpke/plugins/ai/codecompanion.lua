@@ -463,13 +463,17 @@ local function config()
           },
         },
         slash_commands = slash_commands,
-        shared = {
-          editor_context = {
-            ['buffer'] = {
-              opts = {
-                default_params = 'diff',
-              },
+      },
+      shared = {
+        editor_context = {
+          ['buffer'] = {
+            path = 'lpke.plugins.ai.helpers.editor_context.buffer',
+            opts = {
+              default_params = 'diff',
             },
+          },
+          ['diagnostics'] = {
+            path = 'lpke.plugins.ai.helpers.editor_context.diagnostics',
           },
         },
       },
@@ -528,6 +532,7 @@ local function config()
     },
   })
 
+  require('lpke.plugins.ai.helpers.keymap_help').setup()
   require('lpke.plugins.ai.helpers.slash_command_completion').patch_cmp()
   require('lpke.plugins.ai.helpers.acp_lifecycle').setup()
   require('lpke.plugins.ai.helpers.history_scope').setup()
