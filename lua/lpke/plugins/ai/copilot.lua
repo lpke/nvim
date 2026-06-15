@@ -1,24 +1,3 @@
--- from copilot plugin
-local function resolve_filetype_enabled(filetype_enabled)
-  if type(filetype_enabled) == 'function' then
-    return filetype_enabled()
-  end
-  return filetype_enabled
-end
-local function is_ft_disabled(ft, filetypes)
-  if filetypes[ft] ~= nil then
-    return not resolve_filetype_enabled(filetypes[ft])
-  end
-  local short_ft = string.gsub(ft, '%..*', '')
-  if filetypes[short_ft] ~= nil then
-    return not resolve_filetype_enabled(filetypes[short_ft])
-  end
-  if filetypes['*'] ~= nil then
-    return not resolve_filetype_enabled(filetypes['*'])
-  end
-  return false
-end
-
 -- for interviews that disallow multi-line AI completions
 local copilot_inline_single_line_only = false
 
@@ -117,10 +96,10 @@ local function config()
   local copilot = require('copilot')
   local api = require('copilot.api')
   local client = require('copilot.client')
-  local cfg = require('copilot.config')
   local cmd = require('copilot.command')
   local sug = require('copilot.suggestion')
   local helpers = require('lpke.core.helpers')
+  local default_should_attach = require('copilot.config.should_attach').default
   local tc = Lpke_theme_colors
 
   patch_copilot_inline_single_line(api)
@@ -129,14 +108,23 @@ local function config()
   function Lpke_copilot_buf_detach(bufnr, client_id)
     local ok, result = pcall(function()
       bufnr = bufnr or 0
-      local c_id = nil
-      if client_id then
-        c_id = client_id
-      else
-        c_id = vim.lsp.start(client.config)
+      bufnr = bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr
+
+      if not vim.api.nvim_buf_is_valid(bufnr) then
+        return
       end
+
+      if client_id == nil then
+        client.buf_detach_if_attached(bufnr)
+        return
+      end
+
+      if type(client_id) ~= 'number' then
+        return
+      end
+
       Lpke_silent(function()
-        vim.lsp.buf_detach_client(bufnr, c_id)
+        vim.lsp.buf_detach_client(bufnr, client_id)
       end)
       require('copilot.suggestion').unset_keymap(bufnr)
       require('copilot.nes').unset_keymap(bufnr)
@@ -153,21 +141,27 @@ local function config()
   function Lpke_copilot_buf_attach(bufnr, client_id, force)
     local ok, result = pcall(function()
       bufnr = bufnr or 0
-      local c_id = nil
-      if client_id then
-        c_id = client_id
-      else
-        c_id = vim.lsp.start(client.config)
+      bufnr = bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr
+
+      if
+        not vim.api.nvim_buf_is_valid(bufnr)
+        or helpers.get_git_buf_type(bufnr) == 'diffview'
+      then
+        return
       end
-      local should_attach = force
-      local filetype =
-        vim.api.nvim_get_option_value('filetype', { buf = bufnr })
-      should_attach = not is_ft_disabled(filetype, cfg.filetypes)
-      if should_attach or force then
-        vim.lsp.buf_attach_client(bufnr, c_id)
-        require('copilot.suggestion').set_keymap(bufnr)
-        require('copilot.nes').set_keymap(bufnr)
+
+      if client_id == nil then
+        client.buf_attach(force == true, bufnr)
+        return
       end
+
+      if type(client_id) ~= 'number' then
+        return
+      end
+
+      vim.lsp.buf_attach_client(bufnr, client_id)
+      require('copilot.suggestion').set_keymap(bufnr)
+      require('copilot.nes').set_keymap(bufnr)
     end)
     if not ok then
       vim.notify(
@@ -278,6 +272,12 @@ local function config()
       ['.'] = false,
     },
     copilot_node_command = 'node',
+    should_attach = function(bufnr, bufname)
+      if helpers.get_git_buf_type(bufnr) == 'diffview' then
+        return false
+      end
+      return default_should_attach(bufnr, bufname)
+    end,
     server_opts_overrides = {},
   })
 
