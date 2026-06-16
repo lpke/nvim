@@ -94,7 +94,7 @@ local function config()
               default = {
                 'codex-acp-exec',
                 '-c',
-                'model_reasoning_effort="low"',
+                'model_reasoning_effort="medium"',
               },
             },
             defaults = {
