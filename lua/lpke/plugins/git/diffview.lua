@@ -845,6 +845,19 @@ local function config()
     vim.wo[winid].relativenumber = false
   end
 
+  local function restore_cmdheight()
+    local target = require('lpke.core.options').vim_opts.cmdheight or 1
+
+    local function restore()
+      if vim.o.cmdheight ~= target then
+        vim.o.cmdheight = target
+      end
+    end
+
+    vim.schedule(restore)
+    vim.defer_fn(restore, 50)
+  end
+
   diffview.setup({
     diff_binaries = false, -- Show diffs for binaries
     enhanced_diff_hl = true, -- See |diffview-config-enhanced_diff_hl|
@@ -943,6 +956,9 @@ local function config()
 
     hooks = { -- See |diffview-config-hooks|
       diff_buf_win_enter = use_absolute_numbers,
+      view_opened = restore_cmdheight,
+      view_post_layout = restore_cmdheight,
+      view_closed = restore_cmdheight,
     },
 
     -- stylua: ignore start
