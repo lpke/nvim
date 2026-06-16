@@ -376,7 +376,8 @@ Opening chats:
 Chat buffer keys:
   g?                    Show CodeCompanion help. LPKE custom keymaps are at
                         the bottom under LPKE Custom CodeCompanion Help.
-  <CR> or <C-s>         Send.
+  <CR> or <C-s>         Send. After submit, the submitted prompt is scrolled to
+                        the top of visible chat windows.
   <C-c>                 Close chat; another open chat is shown if present.
   <leader>Q             Stop request.
   gx                    Clear chat.

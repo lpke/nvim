@@ -40,6 +40,35 @@ local function setup_startup_codex()
   })
 end
 
+local function setup_submit_scroll_top()
+  vim.api.nvim_create_autocmd('User', {
+    pattern = 'CodeCompanionChatSubmitted',
+    group = vim.api.nvim_create_augroup('LpkeCodeCompanionSubmitScrollTop', {
+      clear = true,
+    }),
+    callback = function(args)
+      local bufnr = args.data and args.data.bufnr
+      if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
+        return
+      end
+
+      vim.schedule(function()
+        if not vim.api.nvim_buf_is_valid(bufnr) then
+          return
+        end
+
+        for _, win in ipairs(vim.fn.win_findbuf(bufnr)) do
+          if vim.api.nvim_win_is_valid(win) then
+            pcall(vim.api.nvim_win_call, win, function()
+              vim.cmd('normal! zt')
+            end)
+          end
+        end
+      end)
+    end,
+  })
+end
+
 local function system_prompt(ctx)
   return caveman.system_prompt(ctx)
     .. '\n\n'
@@ -68,6 +97,7 @@ local function config()
 
   -- Set up keymaps and commands
   require('lpke.plugins.ai.helpers.keymaps').setup()
+  setup_submit_scroll_top()
 
   codecompanion.setup({
     adapters = {

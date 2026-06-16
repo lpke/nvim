@@ -77,6 +77,10 @@ local sections = {
         modes = { n = { '<A-d>', '<F2>d' }, i = { '<A-d>', '<F2>d' } },
       },
       {
+        description = 'Send and scroll submitted prompt to top',
+        modes = { n = { '<CR>', '<C-s>' }, i = '<C-s>' },
+      },
+      {
         description = 'Insert all buffers context',
         modes = { n = { '<A-B>', '<F2>B' }, i = { '<A-B>', '<F2>B' } },
       },
