@@ -22,6 +22,33 @@ function M.session_in_cwd()
   return session and not (cwd == session)
 end
 
+-- check auto-session's live auto-save predicate
+function M.auto_session_will_save()
+  local session = M.get_session_name()
+  if type(session) ~= 'string' or session == '' then
+    return false
+  end
+
+  local ok, auto_session = pcall(require, 'auto-session')
+  if not ok or type(auto_session.AutoSaveSession) ~= 'function' then
+    return false
+  end
+
+  for i = 1, 20 do
+    local name, value = debug.getupvalue(auto_session.AutoSaveSession, i)
+    if not name then
+      break
+    end
+
+    if name == 'auto_save_conditions_met' and type(value) == 'function' then
+      local ok_conditions, will_save = pcall(value)
+      return ok_conditions and will_save == true
+    end
+  end
+
+  return false
+end
+
 -- get buf name (current if omitted), which is usually the path
 function M.get_buf_name(bufnr, remove_protocol)
   bufnr = bufnr or 0

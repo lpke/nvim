@@ -464,6 +464,7 @@ UI, SESSIONS, SYMBOLS                                      *lpke-ui*
 
 Sessions:
   Auto-session saves/restores by cwd, except /, ~/, and ~/Downloads.
+  Bold cwd in lualine means the current auto-session will save on exit.
   <BS>n                 Telescope session picker.
   :SS / :SR / :SD       Abbrev to SessionSave/Restore/Delete.
   :Ss / :Sd             Abbrev to Autosession search/delete.

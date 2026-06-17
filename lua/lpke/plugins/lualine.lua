@@ -530,8 +530,7 @@ local function config()
             refresh()
           end,
           color = function()
-            local session = helpers.get_session_name()
-            if session then
+            if helpers.auto_session_will_save() then
               return { fg = tc.textminus, gui = 'bold' }
             else
               return { fg = tc.textminus, gui = '' }
