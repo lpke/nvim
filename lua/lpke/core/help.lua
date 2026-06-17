@@ -58,10 +58,6 @@ local function configure_win()
   vim.wo.list = false
   vim.wo.wrap = false
   vim.wo.cursorline = true
-
-  local target_height =
-    math.min(32, math.max(18, math.floor(vim.o.lines * 0.5)))
-  pcall(vim.api.nvim_win_set_height, 0, target_height)
 end
 
 local function tag_under_cursor()
