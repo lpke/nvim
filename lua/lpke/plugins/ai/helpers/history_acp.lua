@@ -507,6 +507,12 @@ function M.resume_session_into_chat(chat, session, opts)
     set_chat_session(chat, session_id)
   end
 
+  local ok_scope, history_scope =
+    pcall(require, 'lpke.plugins.ai.helpers.history_scope')
+  if ok_scope and type(history_scope.restore_saved_title) == 'function' then
+    history_scope.restore_saved_title(chat)
+  end
+
   vim.api.nvim_exec_autocmds('User', {
     pattern = 'CodeCompanionACPChatRestored',
     data = {
