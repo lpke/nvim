@@ -121,6 +121,21 @@ local function config()
         desc = 'Oil: Open oil in the home (~/) folder',
         mode = 'n',
       },
+      ['gE'] = {
+        callback = function()
+          local dir = oil.get_current_dir()
+          if not dir then
+            vim.notify(
+              'Oil: No current directory to open externally.',
+              vim.log.levels.WARN
+            )
+            return
+          end
+          vim.ui.open(dir)
+        end,
+        desc = 'Oil: Open current directory in OS file browser',
+        mode = 'n',
+      },
       -- view/toggles
       ['<F2>p'] = 'actions.preview',
       ['<A-p>'] = 'actions.preview',

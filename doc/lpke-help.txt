@@ -118,7 +118,7 @@ Oil:
   <F2>> / <A->>         Open Oil in a vertical split.
   <F2>< / <A-<>         Open Oil in a horizontal split.
   In Oil: <CR> opens entry; <leader><CR> opens entry in Cursor.
-  In Oil: - parent, gd cwd, gD git root, gh home.
+  In Oil: - parent, gd cwd, gD git root, gh home, gE OS browser.
   In Oil: <F2>p preview, gs sort, g. hidden, g\ trash view.
   In Oil: <F2>. vsplit, <F2>, split, <F2>n tab.
   In Oil: yd yanks current directory, yp yanks selected path.
