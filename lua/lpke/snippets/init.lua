@@ -6,12 +6,14 @@ local js = require('lpke.snippets.js')
 local ts = require('lpke.snippets.ts')
 local jsx = require('lpke.snippets.jsx')
 local tsx = require('lpke.snippets.tsx')
+local vue = require('lpke.snippets.vue')
 
 -- js/ts snippet inheritance
 local jsSnippets = js
 local jsxSnippets = ct(jsx, js, html)
 local tsSnippets = ct(ts, js)
 local tsxSnippets = ct(tsx, jsx, ts, js, html)
+local vueSnippets = ct(vue, ts, js)
 
 return {
   all = require('lpke.snippets.all'),
@@ -25,4 +27,5 @@ return {
   javascriptreact = jsxSnippets,
   tsx = tsxSnippets,
   typescriptreact = tsxSnippets,
+  vue = vueSnippets,
 }
