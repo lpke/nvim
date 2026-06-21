@@ -6,6 +6,10 @@ local ls, s, _s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_q, sel_b, ex
 -- stylua: ignore end
 
 return { -- vue
+  s({
+    trig = 'cn',
+    name = 'Vue class attribute',
+  }, fmt('class="<>"', { i(1) })),
   _s({
     trig = 't',
     name = 'Template block',
