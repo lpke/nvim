@@ -434,6 +434,9 @@ Copilot:
   <F2>C / <A-C>         Toggle Copilot globally for buffers.
   <F2><Tab>/<A-Tab>     Trigger/next suggestion from insert mode.
   Copilot is lazy-loaded on InsertEnter and shown as C in lualine.
+  Copilot uses fnm exec --using=v$LPKE_NVIM_NODE_VERSION node; default 24.
+  Project LSPs, formatters, and runner commands still use the shell/direnv
+  environment Neovim was launched in.
 
 RUNNER, TERMINALS, MESSAGES                              *lpke-runner*
 ==============================================================================
@@ -516,6 +519,8 @@ Snippets:
          Vitest snippets in *.test.js/ts.
   jsx/tsx: React components, hooks, className, JSX expression wrappers,
            MUI sx/Box, Tailwind-style CSS object/property shorthands.
+  vue: t/s/st create template, script setup, and scoped style blocks;
+       Vue also gets JS + TS snippets.
   html: DOM selectors and console snippets.
   Snippets inherit so TSX gets TS + JSX + JS + HTML helpers.
 

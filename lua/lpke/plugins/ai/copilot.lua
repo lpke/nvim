@@ -271,7 +271,19 @@ local function config()
       fugitive = false,
       ['.'] = false,
     },
-    copilot_node_command = 'node',
+    -- pin node version for copilot so it doesnt error in projects with older node versions
+    copilot_node_command = {
+      'fnm',
+      'exec',
+      '--using='
+        .. (
+          vim.env.LPKE_NVIM_NODE_VERSION
+          and vim.env.LPKE_NVIM_NODE_VERSION:match('^v')
+          and vim.env.LPKE_NVIM_NODE_VERSION
+          or 'v' .. (vim.env.LPKE_NVIM_NODE_VERSION or '24')
+        ),
+      'node',
+    },
     should_attach = function(bufnr, bufname)
       if helpers.get_git_buf_type(bufnr) == 'diffview' then
         return false
