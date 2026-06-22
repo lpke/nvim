@@ -14,10 +14,19 @@ return { -- vue
     trig = 't',
     name = 'Template block',
   }, { t({ '<template>', '  ' }), i(1), t({ '', '</template>' }) }),
-  _s({
-    trig = 's',
-    name = 'Script setup block',
-  }, { t({ '<script setup>', '  ' }), i(1), t({ '', '</script>' }) }),
+  _s(
+    {
+      trig = 's',
+      name = 'Script setup block',
+    },
+    {
+      t('<script setup'),
+      i(2, ' lang="ts"'),
+      t({ '>', '  ' }),
+      i(1),
+      t({ '', '</script>' }),
+    }
+  ),
   _s({
     trig = 'st',
     name = 'Scoped style block',
