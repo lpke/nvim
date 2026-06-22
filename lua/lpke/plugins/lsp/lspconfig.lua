@@ -61,7 +61,8 @@ local function config()
   local global_capabilities = cmp_nvim_lsp.default_capabilities()
 
   -- enable each server with my config overrides (if provided) and globals (above)
-  for language_server, config_override in pairs(lsp_settings.config_overrides) do
+  for _, language_server in ipairs(lsp_settings.enabled_language_servers) do
+    local config_override = lsp_settings.config_overrides[language_server] or {}
     local merged_config = vim.tbl_deep_extend(
       'force',
       { handlers = global_handlers, capabilities = global_capabilities },
@@ -140,7 +141,7 @@ end
 
 return {
   'neovim/nvim-lspconfig',
-  commit = '3db16ceeea947517f0dc1404c24dcb5ab0c91d26',
+  commit = 'bfcc0171a43f22afa61d927ffe9fcb6cb85dc99e',
   event = { 'BufReadPre', 'BufNewFile' },
   dependencies = {
     {

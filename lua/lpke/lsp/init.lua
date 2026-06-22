@@ -5,9 +5,8 @@ local enabled_language_servers = {
   'html',
   'cssls',
   'tailwindcss',
-  'vue_ls',
-  'vtsls',
   'ts_ls', -- formerly: `tsserver`
+  'vue_ls',
   'eslint',
   'jsonls',
   'graphql',
