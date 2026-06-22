@@ -19,3 +19,25 @@ vim.filetype.add({
     end,
   },
 })
+
+local scaffold_backup_suffix = '.scaffold-backup'
+
+vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
+  pattern = '*' .. scaffold_backup_suffix,
+  callback = function(event)
+    local path = event.file
+    if not vim.endswith(path, scaffold_backup_suffix) then
+      return
+    end
+
+    local original_path = path:sub(1, #path - #scaffold_backup_suffix)
+    local filetype = vim.filetype.match({
+      buf = event.buf,
+      filename = original_path,
+    })
+
+    if filetype and filetype ~= '' then
+      vim.bo[event.buf].filetype = filetype
+    end
+  end,
+})

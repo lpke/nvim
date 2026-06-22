@@ -506,6 +506,7 @@ FILETYPES AND SNIPPETS                                *lpke-filetypes*
 
 Filetypes:
   .mdx uses mdx filetype but markdown parser.
+  *.scaffold-backup detects as the original filename before the backup suffix.
   Chezmoi templates map dot_zshrc.tmpl/dot_zshenv.tmpl to zsh,
   dot_gitconfig.tmpl to gitconfig, and *.<ft>.tmpl to <ft>.
   Markdown removes formatoptions t/c so textwidth remains useful for manual
