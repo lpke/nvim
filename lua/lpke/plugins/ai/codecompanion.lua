@@ -648,6 +648,11 @@ return {
       'HakonHarnes/img-clip.nvim',
       commit = 'd8b6b030672f9f551a0e3526347699985a779d93',
       opts = {
+        default = {
+          drag_and_drop = {
+            enabled = false,
+          },
+        },
         filetypes = {
           codecompanion = {
             prompt_for_file_name = false,
