@@ -3,6 +3,7 @@ local M = {}
 local helpers = require('lpke.core.helpers')
 
 local HELP_TAG = 'lpke-help'
+local VUE_HELP_TAG = 'lpke-vue-snippets'
 local DOC_DIR = vim.fn.stdpath('config') .. '/doc'
 local DOC_FILE = DOC_DIR .. '/lpke-help.txt'
 local TAG_FILE = DOC_DIR .. '/tags'
@@ -60,6 +61,21 @@ local function configure_win()
   vim.wo.cursorline = true
 end
 
+local function configure_syntax(bufnr)
+  vim.api.nvim_buf_call(bufnr, function()
+    vim.cmd([[
+      silent! syntax clear LpkeHelpExample
+      silent! syntax clear LpkeHelpCode
+      silent! syntax clear LpkeHelpVueSection
+      syntax region LpkeHelpVueSection start=/^VUE SNIPPETS/ end=/^Vue also gets/ contains=LpkeHelpCode,LpkeHelpExample transparent keepend
+      syntax match LpkeHelpCode /`[^`]\+`/ contained
+      syntax match LpkeHelpExample /^\s\{7}\S.*$/ contained
+      highlight default link LpkeHelpCode String
+      highlight default link LpkeHelpExample String
+    ]])
+  end)
+end
+
 local function tag_under_cursor()
   local line = vim.api.nvim_get_current_line()
   local col = vim.api.nvim_win_get_cursor(0)[2] + 1
@@ -84,6 +100,7 @@ local function configure_buf(bufnr)
   end
 
   vim.bo[bufnr].buflisted = false
+  configure_syntax(bufnr)
 
   helpers.keymap_set_multi({
     {
@@ -126,14 +143,22 @@ vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWinEnter' }, {
   end,
 })
 
-function M.open()
+local function open_tag(tag)
   if not ensure_helptags() then
     return
   end
 
-  vim.cmd('botright help ' .. HELP_TAG)
+  vim.cmd('botright help ' .. tag)
   configure_buf(vim.api.nvim_get_current_buf())
   configure_win()
+end
+
+function M.open()
+  open_tag(HELP_TAG)
+end
+
+function M.open_vue()
+  open_tag(VUE_HELP_TAG)
 end
 
 return M

@@ -51,6 +51,7 @@ end
 -- stylua: ignore start
 helpers.command_set_multi({
   { '', 'Help', custom_help.open, { desc = 'Open custom Neovim help' } },
+  { '', 'HelpVue', custom_help.open_vue, { desc = 'Open Vue snippets help' } },
   { '', 'Bclean', Lpke_clean_buffers, { desc = 'Removes buffers that arent actively shown' } },
 
   -- terminal

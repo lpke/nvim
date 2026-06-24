@@ -33,6 +33,7 @@ CONTENTS                                                  *lpke-contents*
   |lpke-runner|            Runner, terminals, messages
   |lpke-ui|                UI, sessions, markdown, symbols
   |lpke-filetypes|         Filetypes, parsers, snippets
+  |lpke-vue-snippets|      Vue snippet quick reference
 
 ORIENTATION                                          *lpke-orientation*
 ==============================================================================
@@ -66,6 +67,7 @@ COMMANDS                                                 *lpke-commands*
 
 General:
   :Help                 Open this custom help.
+  :HelpVue              Open Vue snippet quick reference.
   :Bclean               Delete buffers not visible in any tab, keeping modified
                         buffers and CodeCompanion chats.
   :M, :Mes, :Messages   Open :messages in a bottom split named Message History.
@@ -525,5 +527,23 @@ Snippets:
        JS + TS snippets.
   html: DOM selectors and console snippets.
   Snippets inherit so TSX gets TS + JSX + JS + HTML helpers.
+
+VUE SNIPPETS                                      *lpke-vue-snippets*
+==============================================================================
+
+Vue snippets. Use :HelpVue to open this section directly.
+
+  cn   class attr; static classes.              `class="card is-active"`
+  t    template block; SFC markup root.         `<template><UserCard /></template>`
+  s    script setup; Composition API with TS.   `<script setup lang="ts">`
+  st   scoped style; local component CSS.       `<style scoped>.card {}</style>`
+  dp   defineProps; props + type + defaults.    `withDefaults(defineProps<{ dense?: boolean }>(), { dense: false })`
+  e    defineEmits; typed parent events.        `const emit = defineEmits<{ save: [id: string] }>()`
+  om   onMounted; DOM/client startup.           `onMounted(() => input.value?.focus())`
+  ou   onUnmounted; cleanup timers/listeners.   `onUnmounted(() => window.removeEventListener('resize', resize))`
+  w    watch; explicit dependency source.       `watch(() => props.id, (id) => loadUser(id))`
+  we   watchEffect; automatic dependencies.     `watchEffect(() => title.value = props.id)`
+
+Vue also gets JS + TS snippets.
 
  vim:tw=78:ts=8:noet:ft=help:norl:
