@@ -14,21 +14,102 @@ return { -- vue
     trig = 't',
     name = 'Template block',
   }, { t({ '<template>', '  ' }), i(1), t({ '', '</template>' }) }),
-  _s(
-    {
-      trig = 's',
-      name = 'Script setup block',
-    },
-    {
-      t('<script setup'),
-      i(2, ' lang="ts"'),
-      t({ '>', '  ' }),
-      i(1),
-      t({ '', '</script>' }),
-    }
-  ),
+  _s({
+    trig = 's',
+    name = 'Script setup block',
+  }, {
+    t('<script setup'),
+    i(2, ' lang="ts"'),
+    t({ '>', '  ' }),
+    i(1),
+    t({ '', '</script>' }),
+  }),
   _s({
     trig = 'st',
     name = 'Scoped style block',
   }, { t({ '<style scoped>', '  ' }), i(1), t({ '', '</style>' }) }),
+  _s(
+    {
+      trig = 'dp',
+      name = 'defineProps',
+    },
+    fmt(
+      [[
+        const props = defineProps<<{
+          <>
+        }>>();
+      ]],
+      { i(1) }
+    )
+  ),
+  _s(
+    {
+      trig = 'e',
+      name = 'defineEmits',
+    },
+    fmt(
+      [[
+        const emit = defineEmits<<{
+          <>
+        }>>();
+      ]],
+      { i(1) }
+    )
+  ),
+  _s(
+    {
+      trig = 'om',
+      name = 'onMounted',
+    },
+    fmt(
+      [[
+        onMounted(() =>> {
+          <>
+        });
+      ]],
+      { i(1) }
+    )
+  ),
+  _s(
+    {
+      trig = 'ou',
+      name = 'onUnmounted',
+    },
+    fmt(
+      [[
+        onUnmounted(() =>> {
+          <>
+        });
+      ]],
+      { i(1) }
+    )
+  ),
+  _s(
+    {
+      trig = 'w',
+      name = 'watch',
+    },
+    fmt(
+      [[
+        watch(<>, (<>) =>> {
+          <>
+        });
+      ]],
+      { i(1, 'source'), i(2, 'value'), i(3) }
+    )
+  ),
+  _s(
+    {
+      trig = 'we',
+      name = 'watchEffect',
+    },
+    fmt(
+      [[
+        watchEffect(() =>> {
+          <>
+        });
+      ]],
+      { i(1) }
+    )
+  ),
 }

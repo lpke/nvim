@@ -520,8 +520,9 @@ Snippets:
          Vitest snippets in *.test.js/ts.
   jsx/tsx: React components, hooks, className, JSX expression wrappers,
            MUI sx/Box, Tailwind-style CSS object/property shorthands.
-  vue: t/s/st create template, script setup lang="ts", and scoped style blocks;
-       Vue also gets JS + TS snippets.
+  vue: t/s/st create template, script setup lang="ts", scoped style blocks,
+       defineProps/defineEmits, lifecycle hooks, and watchers; Vue also gets
+       JS + TS snippets.
   html: DOM selectors and console snippets.
   Snippets inherit so TSX gets TS + JSX + JS + HTML helpers.
 
