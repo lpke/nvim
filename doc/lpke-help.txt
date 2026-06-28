@@ -100,11 +100,28 @@ Yank helpers:
   :YW / :Yw [regs]      Yank window ID.
 
 Working directory:
-  :Cd                   :cd to current file or Oil directory.
-  :Cdc                  :cd to startup/global nvim cwd.
-  :Cdr                  :cd to git root, falling back to cwd.
-  :Tcd, :Tcdc, :Tcdr    Same for tab-local cwd.
-  :Lcd, :Lcdc, :Lcdr    Same for window-local cwd.
+  Neovim has global (:cd), tab-local (:tcd), and window-local (:lcd) cwd.
+  vim.fn.getcwd() returns the effective cwd: window, else tab, else global.
+
+  :Cd                   Lpke_cd_here('global')  -> :cd current file/Oil dir.
+  :Tcd                  Lpke_cd_here('tab')     -> :tcd current file/Oil dir.
+  :Lcd                  Lpke_cd_here('window')  -> :lcd current file/Oil dir.
+
+  :Cdc                  Lpke_cd('', 'global')   -> :cd startup/global cwd.
+  :Tcdc                 Lpke_cd('', 'tab')      -> :tcd startup/global cwd.
+  :Lcdc                 Lpke_cd('', 'window')   -> :lcd startup/global cwd.
+
+  :Cdr                  Lpke_cd('git', 'global')  -> :cd git root or cwd.
+  :Tcdr                 Lpke_cd('git', 'tab')     -> :tcd git root or cwd.
+  :Lcdr                 Lpke_cd('git', 'window')  -> :lcd git root or cwd.
+
+  Lpke_cd(target, scope, log) target:
+    nil/''              startup/global cwd from vim.fn.getcwd(-1, -1).
+    'git'               Git root from current file/Oil dir; fallback effective cwd.
+    existing path       That path.
+  scope defaults to 'global'; valid: 'global', 'tab', 'window'.
+  log=true shows a notification. Lpke_cd_here(scope, log) only accepts normal
+  file buffers and Oil buffers, then forwards the resolved dir to Lpke_cd().
 
 Other:
   :NNRestore [n], :NN   Restore latest [No Name] scratch backups.

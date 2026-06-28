@@ -6,6 +6,25 @@ function Lpke_path_exists(path)
   return stat ~= nil
 end
 
+local function current_cd_start_path(fallback)
+  if vim.bo.filetype == 'oil' then
+    local ok, oil = pcall(require, 'oil')
+    if ok then
+      local dir = oil.get_current_dir()
+      if dir and dir ~= '' then
+        return dir
+      end
+    end
+  end
+
+  local path = vim.api.nvim_buf_get_name(0)
+  if path ~= '' then
+    return path
+  end
+
+  return fallback
+end
+
 ---Changes working directory to a target path for a target scope
 ---@param target_path string? The target directory path
 ---@param target_scope "global"|"tab"|"window"? The scope for the directory change
@@ -14,12 +33,13 @@ end
 function Lpke_cd(target_path, target_scope, log)
   local scope = 'global'
   local nvim_cwd = vim.fn.getcwd(-1, -1)
+  local cwd = vim.fn.getcwd()
   local path = nvim_cwd
 
   -- determine `path`
   if type(target_path) == 'string' then
     if target_path == 'git' then
-      path = Lpke_find_git_root(nvim_cwd) or nvim_cwd
+      path = Lpke_find_git_root(current_cd_start_path(cwd)) or cwd
     elseif Lpke_path_exists(target_path) then
       path = target_path
     elseif target_path ~= '' then
