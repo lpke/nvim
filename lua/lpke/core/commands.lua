@@ -48,6 +48,32 @@ local function codex_usage()
   })
 end
 
+local function open_explorer_here()
+  local dir = nil
+
+  if vim.bo.filetype == 'oil' then
+    local ok, oil = pcall(require, 'oil')
+    if ok then
+      dir = oil.get_current_dir()
+    end
+  elseif vim.bo.buftype == '' then
+    local path = vim.api.nvim_buf_get_name(0)
+    if path ~= '' then
+      dir = vim.fn.fnamemodify(path, ':p:h')
+    end
+  end
+
+  if not dir or dir == '' or vim.fn.isdirectory(dir) == 0 then
+    vim.notify(
+      'OE: Cannot open file explorer - no current file or Oil directory.',
+      vim.log.levels.WARN
+    )
+    return
+  end
+
+  vim.ui.open(dir)
+end
+
 -- stylua: ignore start
 helpers.command_set_multi({
   { '', 'Help', custom_help.open, { desc = 'Open custom Neovim help' } },
@@ -61,6 +87,7 @@ helpers.command_set_multi({
   { '*', 'Terminal', Lpke_term }, -- arg: full
   { '*', 'R', Lpke_ranger }, -- arg: full
   { '*', 'Ranger', Lpke_ranger }, -- arg: full
+  { '', 'OE', open_explorer_here, { desc = 'Open current file or Oil directory in OS file explorer' } },
 
   -- git
   { '*', 'Gpp', Lpke_gpp, { desc = 'Run zsh gpp helper without a terminal', bar = false } },

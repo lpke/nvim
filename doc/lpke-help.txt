@@ -79,6 +79,7 @@ Terminals and external tools:
   :Terminal [full]      Open a floating terminal in the current cwd.
   :R [full]
   :Ranger [full]        Open floating ranger at the current file directory.
+  :OE                   Open current file dir or Oil dir in OS file explorer.
   :TrashRestore         Open floating trash-restore.
 
 Debug/print:
