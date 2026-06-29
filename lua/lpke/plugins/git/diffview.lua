@@ -1085,7 +1085,7 @@ local function config()
 
       file_history_panel = {
         { 'n', 'g!',            actions.options,                     { desc = 'Diffview: Open the option panel' } },
-        { 'n', '<C-A-d>',       actions.open_in_diffview,            { desc = 'Diffview: Open the entry under the cursor in a diffview' } },
+        { 'n', '<leader>I',     actions.open_in_diffview,            { desc = 'Diffview: Open the entry under the cursor in a diffview' } },
         { 'n', 'y',             actions.copy_hash,                   { desc = 'Diffview: Copy the commit hash of the entry under the cursor' } },
         { 'n', 'L',             actions.open_commit_log,             { desc = 'Diffview: Show commit details' } },
         { 'n', 'X',             actions.restore_entry,               { desc = 'Diffview: Restore file to the state from the selected entry' } },
