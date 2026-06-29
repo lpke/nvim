@@ -19,7 +19,9 @@ return { -- jsreact
       [[
         export <> function <>(<>) {
           return (
-            <<div>><><</div>>
+            <<div>>
+              <<p>><><</p>>
+            <</div>>
           );
         }
       ]],

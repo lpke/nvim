@@ -17,7 +17,9 @@ return { -- tsreact
         
         export <> function <>(<>) {
           return (
-            <<div>><><</div>>
+            <<div>>
+              <<p>><><</p>>
+            <</div>>
           );
         }
       ]],
@@ -35,7 +37,9 @@ return { -- tsreact
         
         const <> = (<>) =>> {
           return (
-            <<div>><><</div>>
+            <<div>>
+              <<p>><><</p>>
+            <</div>>
           );
         };
 

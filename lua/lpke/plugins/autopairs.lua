@@ -42,10 +42,8 @@ local function config()
   })
 
   autopairs.remove_rule('`')
-  -- allow triple backtick typing without a fourth
-  -- autopairs.add_rule(
-  --   Rule('`', '`'):with_pair(cond.not_before_regex('`')):with_move(cond.done())
-  -- )
+  autopairs.remove_rule('```')
+  autopairs.remove_rule('```.*$')
 
   autopairs.remove_rule('(')
   autopairs.add_rule(
@@ -67,7 +65,12 @@ local function config()
       :with_move(cond.is_bracket_line_move())
   )
 
-  helpers.keymap_set({ 'i', '<M-BS>', '<BS>', { desc = 'Autopairs: Raw backspace (no autopairs)' } })
+  helpers.keymap_set({
+    'i',
+    '<M-BS>',
+    '<BS>',
+    { desc = 'Autopairs: Raw backspace (no autopairs)' },
+  })
 end
 
 return {
