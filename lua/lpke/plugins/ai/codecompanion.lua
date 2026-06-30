@@ -5,6 +5,7 @@ require('lpke.plugins.ai.helpers.model_swap')
 local cmd_approval = require('lpke.plugins.ai.helpers.cmd_approval')
 local ai_config = require('lpke.plugins.ai.helpers.config')
 local caveman = require('lpke.plugins.ai.helpers.caveman')
+local img_clip = require('lpke.plugins.ai.helpers.img_clip')
 local slash_commands = require('lpke.plugins.ai.helpers.slash_commands')
 
 local function notify(msg)
@@ -647,8 +648,16 @@ return {
     {
       'HakonHarnes/img-clip.nvim',
       commit = 'd8b6b030672f9f551a0e3526347699985a779d93',
+      config = function(_, opts)
+        require('img-clip').setup(opts)
+        vim.api.nvim_create_user_command('PasteImage', img_clip.paste_image, {
+          desc = 'Paste image from system clipboard',
+          force = true,
+        })
+      end,
       opts = {
         default = {
+          dir_path = img_clip.dir_path(),
           drag_and_drop = {
             enabled = false,
           },

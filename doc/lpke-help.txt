@@ -427,6 +427,8 @@ Models/adapters:
 
 Context/tools inside chats:
   <leader>I             Paste image.
+                        Images save to stdpath('data')/img-clip-pasted-images.
+                        First paste warns if that directory is over 2 GB.
   <F2>a / <A-a>         Insert @{agent} for HTTP chats.
   <F2>A / <A-A>         Insert agent + web tools.
   <F2>S / <A-S>         Insert web tools only.

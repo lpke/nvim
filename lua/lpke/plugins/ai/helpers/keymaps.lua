@@ -4,6 +4,7 @@ local ai_config = require('lpke.plugins.ai.helpers.config')
 local acp_session_options =
   require('lpke.plugins.ai.helpers.acp_session_options')
 local cleanup = require('lpke.plugins.ai.helpers.cleanup')
+local img_clip = require('lpke.plugins.ai.helpers.img_clip')
 local model_swap = require('lpke.plugins.ai.helpers.model_swap')
 
 local M = {}
@@ -39,7 +40,7 @@ function M.setup()
       { desc = 'CodeCompanion: ACP approval preset' }},
     { 'n', '<leader>X', cleanup.open,
       { desc = 'CodeCompanion: Cleanup chats' }},
-    { 'nC', '<leader>I', 'PasteImage',
+    { 'n!', '<leader>I', img_clip.paste_image,
       { desc = 'CodeCompanion: Paste image' }},
     { 'in', '<A-a>', function() chat_fns.insert_http_tool_text('@{agent} ') end,
       { desc = 'CodeCompanion: Insert agent tool' }},
