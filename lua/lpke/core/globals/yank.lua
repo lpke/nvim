@@ -61,6 +61,43 @@ function Lpke_yank_buf_name(cmd, global)
   vim.notify(message, vim.log.levels.INFO)
 end
 
+-- yank selected Oil entry path to specified register (used for user command: `YF`)
+function Lpke_yank_oil_entry_path(cmd, global)
+  if vim.bo.filetype ~= 'oil' then
+    vim.notify('YF: Must be used from an Oil buffer', vim.log.levels.WARN)
+    return
+  end
+
+  local ok, oil = pcall(require, 'oil')
+  if not ok then
+    vim.notify('YF: oil.nvim is unavailable', vim.log.levels.ERROR)
+    return
+  end
+
+  local dir = oil.get_current_dir()
+  local entry = oil.get_cursor_entry()
+  if not dir or not entry then
+    vim.notify('YF: No Oil entry under cursor', vim.log.levels.WARN)
+    return
+  end
+
+  local path = dir .. entry.name
+  local registers_used
+  if cmd.args and (cmd.args ~= '') then
+    registers_used = cmd.args
+    Lpke_yank(path, cmd.args)
+  else
+    registers_used = global
+    Lpke_yank(path, global)
+  end
+
+  local message = 'Yanked Oil entry path ('
+    .. format_registers(registers_used)
+    .. '): '
+    .. path
+  vim.notify(message, vim.log.levels.INFO)
+end
+
 -- yank current location (file:line) to specified register (optionally with blame info)
 function Lpke_yank_location(cmd, global)
   local current_file = vim.fn.expand('%:p')

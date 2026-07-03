@@ -74,6 +74,79 @@ local function open_explorer_here()
   vim.ui.open(dir)
 end
 
+local function open_html_from_oil()
+  if vim.bo.filetype ~= 'oil' then
+    vim.notify('OH: Must be used from an Oil buffer.', vim.log.levels.WARN)
+    return
+  end
+
+  local ok, oil = pcall(require, 'oil')
+  if not ok then
+    vim.notify('OH: oil.nvim is unavailable.', vim.log.levels.ERROR)
+    return
+  end
+
+  local dir = oil.get_current_dir()
+  local entry = oil.get_cursor_entry()
+  if not dir or not entry then
+    vim.notify('OH: No Oil entry under cursor.', vim.log.levels.WARN)
+    return
+  end
+
+  if entry.type ~= 'file' or not entry.name:lower():match('%.html$') then
+    vim.notify('OH: Selected entry is not an .html file.', vim.log.levels.WARN)
+    return
+  end
+
+  local path = dir .. entry.name
+  local browser = vim.env.BROWSER
+  local cmd = nil
+
+  if browser and browser ~= '' then
+    browser = vim.split(browser, ':')[1]
+    cmd = vim.fn.split(browser)
+    local path_inserted = false
+    for i, arg in ipairs(cmd) do
+      if arg:find('%%s') then
+        cmd[i] = arg:gsub('%%s', path)
+        path_inserted = true
+      end
+    end
+    if not path_inserted then
+      table.insert(cmd, path)
+    end
+  else
+    for _, candidate in ipairs({
+      'sensible-browser',
+      'x-www-browser',
+      'firefox',
+      'chromium',
+      'google-chrome',
+      'brave-browser',
+      'xdg-open',
+    }) do
+      if vim.fn.executable(candidate) == 1 then
+        cmd = { candidate, path }
+        break
+      end
+    end
+  end
+
+  if cmd then
+    local jid = vim.fn.jobstart(cmd, { detach = true })
+    if jid > 0 then
+      return
+    end
+  end
+
+  if vim.ui.open then
+    vim.ui.open(path)
+    return
+  end
+
+  vim.notify('OH: No browser command found.', vim.log.levels.ERROR)
+end
+
 -- stylua: ignore start
 helpers.command_set_multi({
   { '', 'Help', custom_help.open, { desc = 'Open custom Neovim help' } },
@@ -88,6 +161,7 @@ helpers.command_set_multi({
   { '*', 'R', Lpke_ranger }, -- arg: full
   { '*', 'Ranger', Lpke_ranger }, -- arg: full
   { '', 'OE', open_explorer_here, { desc = 'Open current file or Oil directory in OS file explorer' } },
+  { '', 'OH', open_html_from_oil, { desc = 'Open selected Oil .html file in a browser' } },
 
   -- git
   { '*', 'Gpp', Lpke_gpp, { desc = 'Run zsh gpp helper without a terminal', bar = false } },
@@ -113,10 +187,11 @@ helpers.command_set_multi({
   { '', 'CodexUsage', codex_usage, { desc = 'Print Codex usage' } },
 
   -- yanking
-  { '', 'Y', function() print('YP/p: buf name | YD/d: cwd | YG/g: git root | YL/l: location | YT/t: tab ID | YB/b: buf ID | YW/w: win ID') end,
+  { '', 'Y', function() print('YP/p: buf name | YF: oil entry path | YD/d: cwd | YG/g: git root | YL/l: location | YT/t: tab ID | YB/b: buf ID | YW/w: win ID') end,
     { desc = 'Print help for `Y` commands' } },
   { '*', 'YP', function(cmd) Lpke_yank_buf_name(cmd, true) end }, -- arg: <register>
   { '*', 'Yp', function(cmd) Lpke_yank_buf_name(cmd, false) end }, -- arg: <register>
+  { '*', 'YF', function(cmd) Lpke_yank_oil_entry_path(cmd, true) end }, -- arg: <register>
   { '*', 'YC', function(cmd) Lpke_yank_cwd(cmd, true) end }, -- arg: <register>
   { '*', 'Yc', function(cmd) Lpke_yank_cwd(cmd, false) end }, -- arg: <register>
   { '*', 'YG', function(cmd) Lpke_yank_git_root(cmd, true) end }, -- arg: <register>
