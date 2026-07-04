@@ -87,6 +87,11 @@ local function config()
       language_name = false,
       border = 'thick',
     },
+    html = {
+      comment = {
+        conceal = false,
+      },
+    },
     sign = {
       enabled = false,
     },
