@@ -81,6 +81,12 @@ Terminals and external tools:
   :Ranger [full]        Open floating ranger at the current file directory.
   :OE                   Open current file dir or Oil dir in OS file explorer.
   :OH                   Open current or selected Oil .html file in a browser.
+  :OHS[!]               Open current or selected Oil .html file with live reload.
+                        Requires node. Use ! to restart its server.
+  :OHSStop [all|port|file]
+                        Stop current, all, port, or file HTML live reload server.
+  :OHSList              List HTML live reload servers.
+  :OHSHelp              Print quick HTML live reload command help.
   :TrashRestore         Open floating trash-restore.
 
 Debug/print:
@@ -142,6 +148,7 @@ Oil:
   In Oil: <CR> opens entry; <leader><CR> opens entry in Cursor.
   In Oil: - parent, gd cwd, gD git root, gh home, gE OS browser.
   :OH opens current .html file, or selected .html file in Oil, in a browser.
+  :OHS does the same with browser live reload on saves.
   In Oil: <F2>p preview, gs sort, g. hidden, g\ trash view.
   In Oil: <F2>. vsplit, <F2>, split, <F2>n tab.
   In Oil: yd yanks current directory, yp yanks selected path.
