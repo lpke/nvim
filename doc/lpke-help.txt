@@ -80,7 +80,7 @@ Terminals and external tools:
   :R [full]
   :Ranger [full]        Open floating ranger at the current file directory.
   :OE                   Open current file dir or Oil dir in OS file explorer.
-  :OH                   Open selected Oil .html file in a browser.
+  :OH                   Open current or selected Oil .html file in a browser.
   :TrashRestore         Open floating trash-restore.
 
 Debug/print:
@@ -141,7 +141,7 @@ Oil:
   <F2>< / <A-<>         Open Oil in a horizontal split.
   In Oil: <CR> opens entry; <leader><CR> opens entry in Cursor.
   In Oil: - parent, gd cwd, gD git root, gh home, gE OS browser.
-  In Oil: :OH opens selected .html file in a browser.
+  :OH opens current .html file, or selected .html file in Oil, in a browser.
   In Oil: <F2>p preview, gs sort, g. hidden, g\ trash view.
   In Oil: <F2>. vsplit, <F2>, split, <F2>n tab.
   In Oil: yd yanks current directory, yp yanks selected path.

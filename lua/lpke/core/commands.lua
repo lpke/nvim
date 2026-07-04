@@ -74,31 +74,7 @@ local function open_explorer_here()
   vim.ui.open(dir)
 end
 
-local function open_html_from_oil()
-  if vim.bo.filetype ~= 'oil' then
-    vim.notify('OH: Must be used from an Oil buffer.', vim.log.levels.WARN)
-    return
-  end
-
-  local ok, oil = pcall(require, 'oil')
-  if not ok then
-    vim.notify('OH: oil.nvim is unavailable.', vim.log.levels.ERROR)
-    return
-  end
-
-  local dir = oil.get_current_dir()
-  local entry = oil.get_cursor_entry()
-  if not dir or not entry then
-    vim.notify('OH: No Oil entry under cursor.', vim.log.levels.WARN)
-    return
-  end
-
-  if entry.type ~= 'file' or not entry.name:lower():match('%.html$') then
-    vim.notify('OH: Selected entry is not an .html file.', vim.log.levels.WARN)
-    return
-  end
-
-  local path = dir .. entry.name
+local function open_html_path(path)
   local browser = vim.env.BROWSER
   local cmd = nil
 
@@ -147,6 +123,39 @@ local function open_html_from_oil()
   vim.notify('OH: No browser command found.', vim.log.levels.ERROR)
 end
 
+local function open_html()
+  local path = vim.api.nvim_buf_get_name(0)
+  if vim.bo.buftype == '' and path ~= '' and path:lower():match('%.html$') then
+    open_html_path(path)
+    return
+  end
+
+  if vim.bo.filetype ~= 'oil' then
+    vim.notify('OH: Must be used from an .html file or Oil buffer.', vim.log.levels.WARN)
+    return
+  end
+
+  local ok, oil = pcall(require, 'oil')
+  if not ok then
+    vim.notify('OH: oil.nvim is unavailable.', vim.log.levels.ERROR)
+    return
+  end
+
+  local dir = oil.get_current_dir()
+  local entry = oil.get_cursor_entry()
+  if not dir or not entry then
+    vim.notify('OH: No Oil entry under cursor.', vim.log.levels.WARN)
+    return
+  end
+
+  if entry.type ~= 'file' or not entry.name:lower():match('%.html$') then
+    vim.notify('OH: Selected entry is not an .html file.', vim.log.levels.WARN)
+    return
+  end
+
+  open_html_path(dir .. entry.name)
+end
+
 -- stylua: ignore start
 helpers.command_set_multi({
   { '', 'Help', custom_help.open, { desc = 'Open custom Neovim help' } },
@@ -161,7 +170,7 @@ helpers.command_set_multi({
   { '*', 'R', Lpke_ranger }, -- arg: full
   { '*', 'Ranger', Lpke_ranger }, -- arg: full
   { '', 'OE', open_explorer_here, { desc = 'Open current file or Oil directory in OS file explorer' } },
-  { '', 'OH', open_html_from_oil, { desc = 'Open selected Oil .html file in a browser' } },
+  { '', 'OH', open_html, { desc = 'Open current or selected Oil .html file in a browser' } },
 
   -- git
   { '*', 'Gpp', Lpke_gpp, { desc = 'Run zsh gpp helper without a terminal', bar = false } },
