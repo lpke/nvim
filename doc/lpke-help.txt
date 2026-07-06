@@ -522,6 +522,9 @@ Symbols and docs:
   <leader>a             Aerial nav window.
   In Aerial: <CR> jump, <F2>. split, <F2>, hsplit, J/K scroll+jump,
              z* controls symbol tree folds, q closes.
+  <BS>fa                Open installed API docs picker.
+  <BS>fA                Search installed API docs.
+  :ApidocsInstall       Install DevDocs-backed API docs, e.g. JavaScript.
   <leader>u             Undotree.
   <BS>ft                Todo comments Telescope.
   ]t / [t               Next/previous TODO-style comment.

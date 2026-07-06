@@ -15,7 +15,8 @@ local function config()
       'vimdoc', 'vim', 'luadoc', 'lua', 'javascript', 'jsdoc', 'typescript',
       'html', 'css', 'json', 'jsonc', 'yaml', 'graphql', 'bash', 'gitignore',
       'gitcommit', 'gitattributes', 'git_rebase', 'git_config', 'yaml', 'toml',
-      'markdown', 'python', 'rust', 'c', 'c_sharp', 'cpp', 'regex'
+      'markdown', 'markdown_inline', 'python', 'rust', 'c', 'c_sharp', 'cpp',
+      'regex'
     },
     -- stylua: ignore end
     sync_install = false, -- install parsers synchronously
