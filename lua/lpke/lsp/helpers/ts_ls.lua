@@ -2,6 +2,17 @@ local helpers = require('lpke.core.helpers')
 
 local M = {}
 
+local function codes_lookup(codes)
+  local lookup = {}
+
+  for _, code in ipairs(codes) do
+    lookup[code] = true
+    lookup[tostring(code)] = true
+  end
+
+  return lookup
+end
+
 M.unused_diagnostics_ignored = false
 
 M.unused_diagnostic_codes = {
@@ -15,6 +26,30 @@ M.unused_diagnostic_codes = {
   7028, -- "Unused label"
   2578, -- "Unused '@ts-expect-error' directive"
 }
+
+M.js_ignored_diagnostic_codes = {
+  -- type annotation / TypeScript conversion suggestions
+  7043, -- "Variable '<name>' implicitly has an '<type>' type, but a better type may be inferred from usage"
+  7044, -- "Parameter '<name>' implicitly has an '<type>' type, but a better type may be inferred from usage"
+  7045, -- "Member '<name>' implicitly has an '<type>' type, but a better type may be inferred from usage"
+  7046, -- "Variable '<name>' implicitly has type '<type>' in some locations, but a better type may be inferred from usage"
+  7047, -- "Rest parameter '<name>' implicitly has an 'any[]' type, but a better type may be inferred from usage"
+  7048, -- "Property '<name>' implicitly has type 'any', but a better type for its get accessor may be inferred from usage"
+  7049, -- "Property '<name>' implicitly has type 'any', but a better type for its set accessor may be inferred from usage"
+  7050, -- "'<name>' implicitly has an '<type>' return type, but a better type may be inferred from usage"
+  80001, -- "File is a CommonJS module; it may be converted to an ES module"
+  80002, -- "This constructor function may be converted to a class declaration"
+  80003, -- "Import may be converted to a default import"
+  80004, -- "JSDoc types may be moved to TypeScript types"
+  80005, -- "'require' call may be converted to an import"
+  80006, -- "This may be converted to an async function"
+  80009, -- "JSDoc typedef may be converted to TypeScript type"
+  80010, -- "JSDoc typedefs may be converted to TypeScript types"
+}
+
+M.unused_diagnostic_codes_lookup = codes_lookup(M.unused_diagnostic_codes)
+M.js_ignored_diagnostic_codes_lookup =
+  codes_lookup(M.js_ignored_diagnostic_codes)
 
 M.static_settings = {
   implicitProjectConfiguration = {
@@ -45,25 +80,13 @@ function M.settings()
   )
 end
 
-local function ignored_codes_lookup()
-  local ignored_codes = {}
-
-  for _, code in ipairs(M.unused_diagnostic_codes) do
-    ignored_codes[code] = true
-    ignored_codes[tostring(code)] = true
-  end
-
-  return ignored_codes
-end
-
 local function clear_visible_unused_diagnostics(client)
-  local ignored_codes = ignored_codes_lookup()
   local namespace = vim.lsp.diagnostic.get_namespace(client.id)
 
   for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(client.id)) do
     local diagnostics = vim.diagnostic.get(bufnr, { namespace = namespace })
     helpers.arr_filter_inplace(diagnostics, function(diag)
-      return not ignored_codes[diag.code]
+      return not M.unused_diagnostic_codes_lookup[diag.code]
     end)
     vim.diagnostic.set(namespace, bufnr, diagnostics)
   end

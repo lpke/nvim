@@ -23,6 +23,7 @@ Lpke_diagnostic_config = {
 local function config()
   local lsp_settings = require('lpke.lsp')
   local helpers = require('lpke.core.helpers')
+  local ts_ls = require('lpke.lsp.helpers.ts_ls')
   local tc = Lpke_theme_colors
 
   local cmp_nvim_lsp = require('cmp_nvim_lsp')
@@ -41,17 +42,53 @@ local function config()
   vim.diagnostic.config(Lpke_diagnostic_config)
 
   -- diagnostics filter
-  local function filter_diagnostics(diag) -- diag.source, diag.message, diag.code
+  local function is_javascript_filetype(filetype)
+    return filetype == 'javascript'
+      or filetype == 'javascriptreact'
+      or filetype == 'js'
+      or filetype == 'jsx'
+  end
+
+  local function diagnostic_bufnr(result, ctx)
+    if ctx and ctx.bufnr then
+      return ctx.bufnr
+    end
+    if result and result.uri then
+      return vim.uri_to_bufnr(result.uri)
+    end
+  end
+
+  local function diagnostic_filter_context(result, ctx)
+    local bufnr = diagnostic_bufnr(result, ctx)
+    local filetype = bufnr and vim.bo[bufnr].filetype or nil
+
+    return {
+      bufnr = bufnr,
+      is_javascript = is_javascript_filetype(filetype),
+    }
+  end
+
+  local function filter_diagnostics(diag, filter_ctx) -- diag.source, diag.message, diag.code
+    local code = diag.code
+
     -- lua
     if Match(diag.source, '^[Ll]ua.*') then
       if Match(diag.message, 'Unused local `_.+`.') then
         return false
       end
     end
-    if Match(diag.source, '^[Tt]ype[Ss]cript.*') then
+
+    if not filter_ctx.is_javascript then
+      return true
+    end
+
+    if ts_ls.js_ignored_diagnostic_codes_lookup[code] then
+      return false
+    end
+
+    if tonumber(code) == 2345 then
       if
-        tonumber(diag.code) == 2345
-        and Match(
+        Match(
           diag.message,
           "Argument of type 'HTMLElement' is not assignable to parameter of type 'HTML[A-Za-z]+Element'"
         )
@@ -64,7 +101,10 @@ local function config()
 
   local global_handlers = {
     ['textDocument/publishDiagnostics'] = function(_, result, ctx)
-      helpers.arr_filter_inplace(result.diagnostics, filter_diagnostics) -- custom part
+      local filter_ctx = diagnostic_filter_context(result, ctx)
+      helpers.arr_filter_inplace(result.diagnostics, function(diag)
+        return filter_diagnostics(diag, filter_ctx)
+      end) -- custom part
       vim.lsp.diagnostic.on_publish_diagnostics(_, result, ctx) -- default part (fixed signature)
     end,
   }
