@@ -48,6 +48,17 @@ local function config()
         return false
       end
     end
+    if Match(diag.source, '^[Tt]ype[Ss]cript.*') then
+      if
+        tonumber(diag.code) == 2345
+        and Match(
+          diag.message,
+          "Argument of type 'HTMLElement' is not assignable to parameter of type 'HTML[A-Za-z]+Element'"
+        )
+      then
+        return false
+      end
+    end
     return true
   end
 

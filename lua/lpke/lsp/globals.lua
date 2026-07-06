@@ -1,5 +1,6 @@
 ---@diagnostic disable: undefined-field
 local helpers = require('lpke.core.helpers')
+local ts_ls = require('lpke.lsp.helpers.ts_ls')
 local tc = Lpke_theme_colors
 
 -- restart all LSPs for the current buffer's filetype
@@ -92,69 +93,12 @@ function Lpke_toggle_diagnostics(choice)
   end)
 end
 
-Lpke_ts_unused_diagnostics_ignored = false
-Lpke_ts_unused_diagnostic_codes = {
-  6133, -- "'<name>' is declared but its value is never read"
-  6138, -- "Property '<name>' is declared but its value is never read"
-  6192, -- "All imports in import declaration are unused"
-  6196, -- "'<name>' is declared but never used"
-  6198, -- "All destructured elements are unused"
-  6199, -- "All variables are unused"
-  6205, -- "All type parameters are unused"
-  7028, -- "Unused label"
-  2578, -- "Unused '@ts-expect-error' directive"
-}
-
-function Lpke_ts_unused_diagnostics_settings()
-  return {
-    diagnostics = {
-      ignoredCodes = Lpke_ts_unused_diagnostics_ignored
-          and Lpke_ts_unused_diagnostic_codes
-        or {},
-    },
-  }
+function Lpke_ts_ls_settings()
+  return ts_ls.settings()
 end
 
 function Lpke_toggle_ts_unused_diagnostics(choice)
-  if choice ~= nil then
-    Lpke_ts_unused_diagnostics_ignored = choice == false
-  else
-    Lpke_ts_unused_diagnostics_ignored = not Lpke_ts_unused_diagnostics_ignored
-  end
-
-  local settings = Lpke_ts_unused_diagnostics_settings()
-  pcall(vim.lsp.config, 'ts_ls', { settings = settings })
-
-  local clients = vim.lsp.get_clients({ name = 'ts_ls' })
-  for _, client in ipairs(clients) do
-    client.config.settings = vim.tbl_deep_extend(
-      'force',
-      client.config.settings or {},
-      settings
-    )
-    client.notify('workspace/didChangeConfiguration', {
-      settings = client.config.settings,
-    })
-
-    if Lpke_ts_unused_diagnostics_ignored then
-      local ignored_codes = {}
-      for _, code in ipairs(Lpke_ts_unused_diagnostic_codes) do
-        ignored_codes[code] = true
-        ignored_codes[tostring(code)] = true
-      end
-      local namespace = vim.lsp.diagnostic.get_namespace(client.id)
-      for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(client.id)) do
-        local diagnostics = vim.diagnostic.get(bufnr, { namespace = namespace })
-        helpers.arr_filter_inplace(diagnostics, function(diag)
-          return not ignored_codes[diag.code]
-        end)
-        vim.diagnostic.set(namespace, bufnr, diagnostics)
-      end
-    end
-  end
-
-  local status = Lpke_ts_unused_diagnostics_ignored and 'hidden' or 'visible'
-  vim.notify('TypeScript unused diagnostics: ' .. status)
+  ts_ls.toggle_unused_diagnostics(choice)
 end
 
 -- stylua: ignore start
