@@ -442,7 +442,7 @@ Context/tools inside chats:
   <F2>a / <A-a>         Insert @{agent} for HTTP chats.
   <F2>A / <A-A>         Insert agent + web tools.
   <F2>S / <A-S>         Insert web tools only.
-  <F2>b / <A-b>         Insert #{buffer}.
+  <F2>b / <A-b>         Insert absolute path for last source buffer/Oil dir.
   <F2>d / <A-d>         Insert #{diagnostics}.
   <F2>B / <A-B>         Insert #{buffers}.
 

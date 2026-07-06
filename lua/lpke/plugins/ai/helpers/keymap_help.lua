@@ -69,7 +69,7 @@ local sections = {
         modes = { n = { '<A-S>', '<F2>S' }, i = { '<A-S>', '<F2>S' } },
       },
       {
-        description = 'Insert buffer context',
+        description = 'Insert last source path or Oil directory',
         modes = { n = { '<A-b>', '<F2>b' }, i = { '<A-b>', '<F2>b' } },
       },
       {

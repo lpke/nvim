@@ -10,6 +10,8 @@ local model_swap = require('lpke.plugins.ai.helpers.model_swap')
 local M = {}
 
 function M.setup()
+  chat_fns.setup_source_buffer_tracking()
+
   -- stylua: ignore start
   helpers.keymap_set_multi({
     { 'in', '<A-f>', chat_fns.toggle_cc_with_default_tools, { desc = 'CodeCompanion: Toggle chat buffer with HTTP tools' }},
@@ -54,10 +56,10 @@ function M.setup()
       { desc = 'CodeCompanion: Insert web tools' }},
     { 'in', '<F2>S', function() chat_fns.insert_http_tool_text('@{fetch_webpage} @{web_search} ') end,
       { desc = 'CodeCompanion: Insert web tools' }},
-    { 'in', '<A-b>', function() chat_fns.insert_context_text('#{buffer} ') end,
-      { desc = 'CodeCompanion: Insert buffer context' }},
-    { 'in', '<F2>b', function() chat_fns.insert_context_text('#{buffer} ') end,
-      { desc = 'CodeCompanion: Insert buffer context' }},
+    { 'in', '<A-b>', chat_fns.insert_last_source_path,
+      { desc = 'CodeCompanion: Insert last source buffer path' }},
+    { 'in', '<F2>b', chat_fns.insert_last_source_path,
+      { desc = 'CodeCompanion: Insert last source buffer path' }},
     { 'in', '<A-d>', function() chat_fns.insert_context_text('#{diagnostics} ') end,
       { desc = 'CodeCompanion: Insert diagnostics context' }},
     { 'in', '<F2>d', function() chat_fns.insert_context_text('#{diagnostics} ') end,
