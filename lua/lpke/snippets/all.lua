@@ -6,6 +6,44 @@ local ls, s, _s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_q, sel_b, ex
 -- stylua: ignore end
 
 return { -- all
+  _s(
+    {
+      trig = '```([%w%._+-]+)',
+      name = 'Fenced code block',
+      regTrig = true,
+      wordTrig = false,
+    },
+    fmt(
+      [[
+```<>
+<>
+```
+]],
+      {
+        f(function(_, snip)
+          return snip.captures[1] or ''
+        end, {}),
+        d(1, sel),
+      }
+    )
+  ),
+  _s(
+    {
+      trig = '```',
+      name = 'Fenced code block',
+      wordTrig = false,
+    },
+    fmt(
+      [[
+```
+<>
+```
+]],
+      {
+        d(1, sel),
+      }
+    )
+  ),
   s({
     trig = '{}',
     name = 'Inline object',
