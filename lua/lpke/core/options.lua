@@ -21,6 +21,7 @@ M.custom_opts = {
 
 M.vim_opts = {
   backup = false, -- no backups (using persistent undo instead)
+  backupcopy = 'yes', -- write in-place so file watchers keep tracking saves
   swapfile = false, -- don't create a swapfile (using persistent undo instead)
   -- TODO: handle windows check in seperate function as well as path handling
   undodir = (function()
