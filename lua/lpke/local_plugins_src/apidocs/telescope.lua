@@ -3,16 +3,24 @@ local install = require('lpke.local_plugins_src.apidocs.install')
 
 local function telescope_attach_mappings(prompt_bufnr, map)
   local actions = require('telescope.actions')
-  map('i', '<cr>', function(nr)
-    actions.close(prompt_bufnr)
+  local function open_selection()
     local entry =
       require('telescope.actions.state').get_selected_entry(prompt_bufnr)
-    common.open_doc_in_new_window(entry.filename or entry.value)
-    if entry.lnum then
-      vim.cmd(':' .. entry.lnum)
-      vim.cmd('norm! zz')
-    end
-  end, { buffer = true })
+    local path = entry.filename or entry.value
+    local lnum = entry.lnum
+
+    actions.close(prompt_bufnr)
+    vim.schedule(function()
+      local buf = common.open_doc_in_new_window(path)
+      if buf and lnum then
+        vim.cmd(':' .. lnum)
+        vim.cmd('norm! zz')
+      end
+    end)
+  end
+
+  map('i', '<cr>', open_selection, { buffer = true })
+  map('n', '<cr>', open_selection, { buffer = true })
   return true
 end
 

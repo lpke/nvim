@@ -63,7 +63,7 @@ end
 local function open_doc_in_cur_window(docs_path, section)
   local buf = open_file_buffer(docs_path)
   if not buf then
-    return
+    return nil
   end
 
   local follow_link_keymap = Config and Config.follow_link_keymap or '<C-]>'
@@ -111,11 +111,42 @@ local function open_doc_in_cur_window(docs_path, section)
   end, { buffer = buf })
 
   jump_to_section(section)
+  return buf
 end
 
 local function open_doc_in_new_window(docs_path)
-  vim.cmd([[100vsplit]])
-  open_doc_in_cur_window(docs_path)
+  if vim.fn.filereadable(docs_path) ~= 1 then
+    vim.notify(
+      'Apidocs: file not readable: ' .. docs_path,
+      vim.log.levels.ERROR
+    )
+    return nil
+  end
+
+  local previous_win = vim.api.nvim_get_current_win()
+  local ok, err = pcall(vim.cmd, '100vsplit')
+  if not ok then
+    vim.notify(
+      'Apidocs: failed to open docs split: ' .. err,
+      vim.log.levels.ERROR
+    )
+    return nil
+  end
+
+  local docs_win = vim.api.nvim_get_current_win()
+  local buf = open_doc_in_cur_window(docs_path)
+  if not buf then
+    if vim.api.nvim_win_is_valid(docs_win) then
+      vim.api.nvim_win_close(docs_win, true)
+    end
+    if vim.api.nvim_win_is_valid(previous_win) then
+      vim.api.nvim_set_current_win(previous_win)
+    end
+    return nil
+  end
+
+  vim.wo[docs_win].winfixbuf = true
+  return buf
 end
 
 -- convert filename to picker display string
