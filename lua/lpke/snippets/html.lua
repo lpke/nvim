@@ -16,6 +16,10 @@ local function sel_or(default)
 end
 
 return { -- html
+  s({
+    trig = 'cn',
+    name = 'HTML class attribute',
+  }, fmt('class="<>"', { i(1) })),
   s(
     {
       trig = 'form',
