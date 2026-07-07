@@ -40,6 +40,16 @@ local sel = function(_args, parent)
   end
 end
 
+-- `sel`, but uses LuaSnip's common-indent-stripped selection.
+local sel_dedent = function(_args, parent)
+  local selection = parent.snippet.env.LS_SELECT_DEDENT
+  if #selection > 0 then
+    return sn(nil, i(1, selection))
+  else
+    return sn(nil, i(1))
+  end
+end
+
 -- `sel`, but removes surrounding quotes from the selection
 local sel_q = function(_args, parent)
   local q_regex = '["\'`]'
@@ -93,6 +103,7 @@ return {
   -- require('luasnip.extras.fmt').fmta (optional second arg)
   fmt = fmt,
   sel = sel,
+  sel_dedent = sel_dedent,
   sel_q = sel_q,
   sel_b = sel_b,
   -- presets passable to `condition = ...` in last arg of `s()`
