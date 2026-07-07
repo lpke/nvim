@@ -1,7 +1,7 @@
 local function config()
-  local apidocs = require('apidocs')
-  local apidocs_common = require('apidocs.common')
-  local apidocs_telescope = require('apidocs.telescope')
+  local apidocs = require('lpke.local_plugins_src.apidocs.api')
+  local apidocs_common = require('lpke.local_plugins_src.apidocs.common')
+  local apidocs_telescope = require('lpke.local_plugins_src.apidocs.telescope')
   local next_open_default_text = nil
   local next_search_default_text = nil
 
@@ -54,10 +54,10 @@ local function config()
             vim.schedule(function()
               if kind == 'open' then
                 next_search_default_text = prompt
-                require('apidocs').apidocs_search({ picker = 'telescope' })
+                require('lpke.local_plugins_src.apidocs.api').apidocs_search({ picker = 'telescope' })
               else
                 next_open_default_text = prompt
-                require('apidocs').apidocs_open({ picker = 'telescope' })
+                require('lpke.local_plugins_src.apidocs.api').apidocs_open({ picker = 'telescope' })
               end
             end)
           end
@@ -139,8 +139,8 @@ local function init()
 end
 
 return {
-  'emmanueltouzery/apidocs.nvim',
-  commit = '52ae3968ff64c3a7f9464a65f537dbae4e99033e',
+  name = 'apidocs-local',
+  dir = vim.fn.stdpath('config'),
   init = init,
   cmd = {
     'ApidocsInstall',
