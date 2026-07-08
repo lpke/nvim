@@ -6,6 +6,41 @@ local ls, s, _s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_or, sel_dede
 -- stylua: ignore end
 
 return { -- html
+  s(
+    {
+      trig = 'htmls',
+      name = 'HTML scaffold',
+    },
+    fmt(
+      [[<<!DOCTYPE html>>
+<<html lang="<>">>
+  <<head>>
+    <<meta charset="UTF-8" />>
+    <<meta name="viewport" content="width=device-width, initial-scale=1.0" />>
+    <<title>><><</title>>
+    <<style>><</style>>
+    <<link rel="stylesheet" href="<>" />>
+    <<script type="module" src="<>" defer>><</script>>
+  <</head>>
+
+  <<body>>
+    <<main>>
+      <>
+    <</main>>
+
+    <<script>><</script>>
+  <</body>>
+<</html>>
+]],
+      {
+        i(1, 'en'),
+        i(2, 'Document'),
+        i(3, 'style.css'),
+        i(4, 'script.js'),
+        i(0),
+      }
+    )
+  ),
   s({
     trig = 'cn',
     name = 'HTML class attribute',
