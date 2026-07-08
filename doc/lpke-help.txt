@@ -82,10 +82,13 @@ Terminals and external tools:
   :OE                   Open current file dir or Oil dir in OS file explorer.
   :OH                   Open current or selected Oil .html file in a browser.
   :OHS[!]               Open current or selected Oil .html file with live reload.
-                        Requires node. Use ! to restart its server.
+                        Requires node. Use ! to restart its server. Servers
+                        stay alive while kept by Nvim or a browser tab, then
+                        expire after five minutes.
   :OHSStop [all|port|file]
                         Stop current, all, port, or file HTML live reload server.
-  :OHSList              List HTML live reload servers.
+  :OHSDc                Stop this Nvim session from keeping OHS servers alive.
+  :OHSList              List servers, keepalives, browser clients, and expiry.
   :OHSHelp              Print quick HTML live reload command help.
   :TrashRestore         Open floating trash-restore.
 
@@ -148,7 +151,9 @@ Oil:
   In Oil: <CR> opens entry; <leader><CR> opens entry in Cursor.
   In Oil: - parent, gd cwd, gD git root, gh home, gE OS browser.
   :OH opens current .html file, or selected .html file in Oil, in a browser.
-  :OHS does the same with browser live reload on saves.
+  :OHS does the same with browser live reload on saves. Managed OHS servers can
+  survive Nvim restarts; :OHSDc disconnects this Nvim keepalive, and :OHSList
+  shows keepalives and lease expiry.
   In Oil: <F2>p preview, gs sort, g. hidden, g\ trash view.
   In Oil: <F2>. vsplit, <F2>, split, <F2>n tab.
   In Oil: yd yanks current directory, yp yanks selected path.
@@ -329,7 +334,7 @@ Navigation and actions:
 Diagnostics:
   Diagnostics are hidden during insert mode and restored on InsertLeave.
   <F2>d / <A-d>         Toggle diagnostics globally.
-  <F2>v / <A-v>         Toggle diagnostic signs.
+  <F2>v / <A-v>         Toggle diagnostic signs in gutter.
   <F2>e / <A-e>         Toggle virtual text for current line only.
   <F2>t / <A-t>         Toggle dim/bright virtual text.
   <F2>V / <A-V>         Toggle diagnostic highlighting and virtual lines.

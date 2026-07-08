@@ -209,7 +209,7 @@ function Lpke_toggle_virtual_text()
   end
 end
 
--- toggle diagnostic signs
+-- toggle diagnostic signs in gutter
 function Lpke_toggle_diagnostic_signs()
   local cur_config = vim.diagnostic.config() or {}
   if cur_config.signs == false then

@@ -1,6 +1,6 @@
 local helpers = require('lpke.core.helpers')
 local custom_help = require('lpke.core.help')
-local html_live_server = require('lpke.core.html_live_server')
+local html_server = require('lpke.core.html_server')
 
 Lpke_messages_win_open = false
 Lpke_messages_win_id = nil
@@ -172,10 +172,11 @@ helpers.command_set_multi({
   { '*', 'Ranger', Lpke_ranger }, -- arg: full
   { '', 'OE', open_explorer_here, { desc = 'Open current file or Oil directory in OS file explorer' } },
   { '', 'OH', open_html, { desc = 'Open current or selected Oil .html file in a browser' } },
-  { 'B', 'OHS', html_live_server.open_command, { desc = 'Open current or selected .html file with browser live reload' } },
-  { '*', 'OHSStop', html_live_server.stop_command, { desc = 'Stop HTML live reload server by current file, port, path, or all', complete = html_live_server.complete_stop } },
-  { '', 'OHSList', html_live_server.list, { desc = 'List HTML live reload servers' } },
-  { '', 'OHSHelp', html_live_server.help, { desc = 'Print HTML live reload command help' } },
+  { 'B', 'OHS', html_server.open_command, { desc = 'Open current or selected .html file with browser live reload' } },
+  { '*', 'OHSStop', html_server.stop_command, { desc = 'Stop HTML live reload server by current file, port, path, or all', complete = html_server.complete_stop } },
+  { '', 'OHSDc', html_server.disconnect_current_session, { desc = 'Disconnect this Nvim session from OHS keepalives' } },
+  { '', 'OHSList', html_server.list, { desc = 'List HTML live reload servers' } },
+  { '', 'OHSHelp', html_server.help, { desc = 'Print HTML live reload command help' } },
 
   -- git
   { '*', 'Gpp', Lpke_gpp, { desc = 'Run zsh gpp helper without a terminal', bar = false } },
