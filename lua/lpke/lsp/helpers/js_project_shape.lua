@@ -69,8 +69,12 @@ local function has_root_file(root_dir, names)
   return false
 end
 
-local function has_ts_project_config(root_dir)
+function M.has_ts_project_config(root_dir)
   return has_root_file(root_dir, { 'tsconfig.json', 'jsconfig.json' })
+end
+
+function M.is_inferred_project(root_dir)
+  return not M.has_ts_project_config(root_dir)
 end
 
 local function read_package_json(root_dir)
@@ -164,7 +168,7 @@ function M.uses_bundler_resolution(root_dir)
   local package_json = read_package_json(root_dir)
 
   if
-    has_ts_project_config(root_dir)
+    M.has_ts_project_config(root_dir)
     or has_bundler_signal(root_dir, package_json)
   then
     return true

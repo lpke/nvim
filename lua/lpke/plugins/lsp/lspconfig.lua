@@ -61,10 +61,18 @@ local function config()
   local function diagnostic_filter_context(result, ctx)
     local bufnr = diagnostic_bufnr(result, ctx)
     local filetype = bufnr and vim.bo[bufnr].filetype or nil
+    local client = ctx
+        and ctx.client_id
+        and vim.lsp.get_client_by_id(ctx.client_id)
+      or nil
 
     return {
       bufnr = bufnr,
       is_javascript = is_javascript_filetype(filetype),
+      is_inferred_check_js_project = client
+          and client.config
+          and client.config.lpke_is_inferred_check_js_project
+        or false,
     }
   end
 
@@ -86,9 +94,13 @@ local function config()
       return false
     end
 
-    if tonumber(code) == 2345 then
+    if tonumber(code) == 2345 and filter_ctx.is_inferred_check_js_project then
       if
         Match(
+          diag.message,
+          "Argument of type 'Element' is not assignable to parameter of type 'HTML[A-Za-z]+Element'"
+        )
+        or Match(
           diag.message,
           "Argument of type 'HTMLElement' is not assignable to parameter of type 'HTML[A-Za-z]+Element'"
         )

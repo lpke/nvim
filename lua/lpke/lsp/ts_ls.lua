@@ -62,12 +62,20 @@ local function apply_import_specifier_preferences(config, root_dir)
     })
 end
 
+local function apply_project_shape_flags(config, root_dir)
+  config.lpke_is_inferred_check_js_project = js_project_shape.is_inferred_project(
+    root_dir
+  ) and ts_ls.implicit_check_js_enabled(config)
+end
+
 return {
   before_init = function(_, config)
     apply_import_specifier_preferences(config, config.root_dir)
+    apply_project_shape_flags(config, config.root_dir)
   end,
   on_new_config = function(config, root_dir)
     apply_import_specifier_preferences(config, root_dir)
+    apply_project_shape_flags(config, root_dir)
   end,
   on_init = function(client, _result)
     -- when server first initiated

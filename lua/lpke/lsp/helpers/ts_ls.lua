@@ -66,6 +66,18 @@ M.static_settings = {
   },
 }
 
+function M.implicit_check_js_enabled(config)
+  local implicit_config = (
+    ((config or {}).settings or {}).implicitProjectConfiguration or {}
+  )
+  local check_js = implicit_config.checkJs
+  if check_js == nil then
+    check_js = M.static_settings.implicitProjectConfiguration.checkJs
+  end
+
+  return check_js == true
+end
+
 function M.dynamic_settings()
   return {
     diagnostics = {
