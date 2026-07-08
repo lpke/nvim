@@ -15,6 +15,10 @@ end
 
 M.unused_diagnostics_ignored = false
 
+-- Hacky workaround for TypeScript's default script-scope behavior for inferred JS projects.
+-- Without this, JS files with no imports/exports can leak top-level names across files and hide missing imports.
+M.force_module_detection_for_inferred_projects = true
+
 M.unused_diagnostic_codes = {
   6133, -- "'<name>' is declared but its value is never read"
   6138, -- "Property '<name>' is declared but its value is never read"
