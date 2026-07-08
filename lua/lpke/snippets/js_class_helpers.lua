@@ -370,19 +370,8 @@ function M.render(input)
   }
 end
 
-local function selected_text(parent)
-  local env = parent and parent.snippet and parent.snippet.env
-  local selection = env and env.LS_SELECT_RAW
-
-  if type(selection) == 'table' and #selection > 0 then
-    return table.concat(selection, '\n')
-  end
-
-  return nil
-end
-
 local function prompt_fields(parent)
-  return selected_text(parent) or vim.fn.input('Constructor fields: ')
+  return h.selected_text(parent) or vim.fn.input('Constructor fields: ')
 end
 
 local function error_snippet(errors)

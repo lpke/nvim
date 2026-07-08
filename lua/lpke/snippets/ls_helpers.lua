@@ -6,6 +6,7 @@ local i = ls.insert_node
 local f = ls.function_node
 local d = ls.dynamic_node
 local rep = require('luasnip.extras').rep -- repeat insert node (multi-cursor)
+local cond_obj = require('luasnip.extras.conditions')
 local fmtc = require('luasnip.extras.fmt').fmt -- default delimeter: {} (curly)
 local fmta = require('luasnip.extras.fmt').fmta -- default delimeter: <> (angled)
 local exp_conds = require('luasnip.extras.expand_conditions')
@@ -30,50 +31,81 @@ local function fmt(str, nodes, opts)
   return fmta(str, nodes, opts)
 end
 
+local function before_trigger_matches(pattern)
+  pattern = pattern or '%S'
+  return cond_obj.make_condition(function(line_to_cursor, matched_trigger)
+    local before_trigger = line_to_cursor:sub(1, -(#matched_trigger + 1))
+    return before_trigger:match(pattern) ~= nil
+  end)
+end
+
+local function selected_lines(parent, kind)
+  kind = kind or 'raw'
+
+  local env = parent and parent.snippet and parent.snippet.env
+  local selection = env
+    and env[kind == 'dedent' and 'LS_SELECT_DEDENT' or 'LS_SELECT_RAW']
+
+  if type(selection) == 'table' and #selection > 0 then
+    return selection
+  end
+
+  return nil
+end
+
+local function selected_text(parent, kind, join)
+  local selection = selected_lines(parent, kind)
+
+  if selection then
+    return table.concat(selection, join or '\n')
+  end
+
+  return nil
+end
+
 -- use with a `d(1, sel)` node to a `fmt` to fill insert with selection
 -- (selection is set with <Tab> in visual mode)
 local sel = function(_args, parent)
-  if #parent.snippet.env.LS_SELECT_RAW > 0 then
-    return sn(nil, i(1, parent.snippet.env.LS_SELECT_RAW))
-  else -- If LS_SELECT_RAW is empty, return a blank insert node
-    return sn(nil, i(1))
-  end
+  return sn(nil, i(1, selected_lines(parent) or ''))
 end
 
 -- `sel`, but uses LuaSnip's common-indent-stripped selection.
 local sel_dedent = function(_args, parent)
-  local selection = parent.snippet.env.LS_SELECT_DEDENT
-  if #selection > 0 then
-    return sn(nil, i(1, selection))
-  else
-    return sn(nil, i(1))
-  end
+  return sn(nil, i(1, selected_lines(parent, 'dedent') or ''))
 end
 
 -- `sel`, but removes surrounding quotes from the selection
 local sel_q = function(_args, parent)
   local q_regex = '["\'`]'
-  local selection = parent.snippet.env.LS_SELECT_RAW
-  if #selection > 0 then
+  local selection = selected_lines(parent)
+
+  if selection then
+    selection = vim.list_extend({}, selection)
     selection[1] =
       selection[1]:gsub('^' .. q_regex, ''):gsub(q_regex .. '$', '')
-    return sn(nil, i(1, selection))
-  else -- If LS_SELECT_RAW is empty, return a blank insert node
-    return sn(nil, i(1))
   end
+
+  return sn(nil, i(1, selection or ''))
 end
 
 -- `sel`, but removes surrounding brackets from the selection
 local sel_b = function(_args, parent)
   local b_regex_open = '[%(%[%{%<]'
   local b_regex_close = '[%)%]%}%>]'
-  local selection = parent.snippet.env.LS_SELECT_RAW
-  if #selection > 0 then
+  local selection = selected_lines(parent)
+
+  if selection then
+    selection = vim.list_extend({}, selection)
     selection[1] =
       selection[1]:gsub('^' .. b_regex_open, ''):gsub(b_regex_close .. '$', '')
-    return sn(nil, i(1, selection))
-  else -- If LS_SELECT_RAW is empty, return a blank insert node
-    return sn(nil, i(1))
+  end
+
+  return sn(nil, i(1, selection or ''))
+end
+
+local function sel_or(default, kind)
+  return function(_args, parent)
+    return sn(nil, i(1, selected_lines(parent, kind) or default))
   end
 end
 
@@ -102,10 +134,13 @@ return {
   fmta = fmta,
   -- require('luasnip.extras.fmt').fmta (optional second arg)
   fmt = fmt,
+  selected_text = selected_text,
   sel = sel,
+  sel_or = sel_or,
   sel_dedent = sel_dedent,
   sel_q = sel_q,
   sel_b = sel_b,
   -- presets passable to `condition = ...` in last arg of `s()`
   exp_conds = exp_conds,
+  before_trigger_matches = before_trigger_matches,
 }

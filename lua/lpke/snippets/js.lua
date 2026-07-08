@@ -22,6 +22,13 @@ local function test_fmt(params, str, nodes)
   return test_s(params, fmt(str, nodes))
 end
 
+local function test_suffix_s(params, nodes)
+  params.wordTrig = false
+  return _s(params, nodes, {
+    condition = h.before_trigger_matches('%S') * test_file_condition,
+  })
+end
+
 local function err_arg(args)
   return sn(nil, i(1, args[1][1]))
 end
@@ -29,13 +36,25 @@ end
 return { -- js
   test_s(
     {
-      trig = 'ivi',
+      trig = 'vii',
       name = 'Vitest import',
     },
     t(
       "import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';"
     )
   ),
+  test_s({
+    trig = 'vis',
+    name = 'Vitest scaffold',
+  }, {
+    t({ "import { describe, it, expect } from 'vitest';", '', "describe('" }),
+    i(1),
+    t({ "', () => {", "  it('" }),
+    i(2),
+    t({ "', () => {", '    ' }),
+    i(3),
+    t({ '', '  });', '});' }),
+  }),
   test_s({
     trig = 'd',
     name = 'Vitest describe',
@@ -60,16 +79,24 @@ return { -- js
     trig = 'e',
     name = 'Vitest expect',
   }, fmt('expect(<>).<>', { i(1), i(2) })),
+  test_suffix_s({
+    trig = '.tb',
+    name = 'Vitest toBe suffix',
+  }, fmt('.toBe(<>);', { i(1) })),
+  test_suffix_s({
+    trig = '.te',
+    name = 'Vitest toEqual suffix',
+  }, fmt('.toEqual(<>);', { i(1) })),
   test_s({
-    trig = 'eb',
+    trig = 'etb',
     name = 'Vitest expect toBe',
-  }, fmt('expect(<>).toBe(<>);', { i(1), i(2) })),
+  }, fmt('expect(<>).toBe(<>);', { d(1, sel), i(2) })),
   test_s({
-    trig = 'ee',
+    trig = 'ete',
     name = 'Vitest expect toEqual',
-  }, fmt('expect(<>).toEqual(<>);', { i(1), i(2) })),
+  }, fmt('expect(<>).toEqual(<>);', { d(1, sel), i(2) })),
   test_s({
-    trig = 'erb',
+    trig = 'ertb',
     name = 'Vitest expect resolves toBe',
   }, fmt('expect(<>).resolves.toBe(<>);', { i(1), i(2) })),
   test_s({
