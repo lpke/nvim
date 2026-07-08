@@ -561,7 +561,7 @@ Snippets:
          Vitest snippets in *.test.js/ts.
   jsx/tsx: React components, hooks, className, JSX expression wrappers,
            MUI sx/Box, Tailwind-style CSS object/property shorthands.
-  css: Tailwind-style flex, justify, items, and wrap property shorthands.
+  css: Tailwind-style layout, spacing, text, color, border, and shadow shorthands.
   vue: t/s/st create template, script setup lang="ts", scoped style blocks,
        defineProps/defineEmits, lifecycle hooks, and watchers; Vue also gets
        JS + TS snippets.
