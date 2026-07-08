@@ -67,6 +67,30 @@ return { -- js
     trig = 'ia',
     name = 'Vitest async it',
   }, { t("it('"), i(1), t("', async () => {"), i(2), t('});') }),
+  test_s(
+    {
+      trig = 'ie',
+      name = 'Vitest it.each named cases',
+    },
+    fmt(
+      [[
+        it.each([
+          { input: <>, expected: <> },
+          { input: <>, expected: <> },
+        ])('<>', ({ input, expected }) =>> {
+          <>
+        });
+      ]],
+      {
+        i(1),
+        i(2),
+        i(3),
+        i(4),
+        i(5, '$input -> $expected'),
+        i(6, 'expect(isEven(input)).toBe(expected);'),
+      }
+    )
+  ),
   test_s({
     trig = 'be',
     name = 'Vitest beforeEach',
@@ -96,9 +120,37 @@ return { -- js
     name = 'Vitest expect toEqual',
   }, fmt('expect(<>).toEqual(<>);', { d(1, sel), i(2) })),
   test_s({
+    trig = 'etm',
+    name = 'Vitest expect toMatchObject',
+  }, fmt('expect(<>).toMatchObject(<>);', { d(1, sel), i(2) })),
+  test_s({
+    trig = 'ehp',
+    name = 'Vitest expect toHaveProperty',
+  }, fmt("expect(<>).toHaveProperty('<>', <>);", { d(1, sel), i(2), i(3) })),
+  test_s({
+    trig = 'ehl',
+    name = 'Vitest expect toHaveLength',
+  }, fmt('expect(<>).toHaveLength(<>);', { d(1, sel), i(2) })),
+  test_s({
+    trig = 'etc',
+    name = 'Vitest expect toContain',
+  }, fmt('expect(<>).toContain(<>);', { d(1, sel), i(2) })),
+  test_s({
+    trig = 'eth',
+    name = 'Vitest expect toThrow',
+  }, fmt('expect(() =>> <>).toThrow(<>);', { d(1, sel), i(2) })),
+  test_s({
     trig = 'ertb',
     name = 'Vitest expect resolves toBe',
   }, fmt('expect(<>).resolves.toBe(<>);', { i(1), i(2) })),
+  test_s({
+    trig = 'erte',
+    name = 'Vitest expect resolves toEqual',
+  }, fmt('expect(<>).resolves.toEqual(<>);', { i(1), i(2) })),
+  test_s({
+    trig = 'erth',
+    name = 'Vitest expect rejects toThrow',
+  }, fmt('expect(<>).rejects.toThrow(<>);', { i(1), i(2) })),
   test_s({
     trig = 'ecn',
     name = 'Vitest expect called times',
@@ -107,6 +159,71 @@ return { -- js
     trig = 'ecw',
     name = 'Vitest expect called with',
   }, fmt('expect(<>).toHaveBeenCalledWith(<>);', { i(1), i(2) })),
+  test_s({
+    trig = 'eco',
+    name = 'Vitest expect called once',
+  }, fmt('expect(<>).toHaveBeenCalledOnce();', { i(1) })),
+  test_s({
+    trig = 'vfn',
+    name = 'Vitest vi.fn',
+  }, fmt('const <> = vi.fn();', { i(1, 'fn') })),
+  test_s({
+    trig = 'vfr',
+    name = 'Vitest vi.fn mockReturnValue',
+  }, fmt('const <> = vi.fn().mockReturnValue(<>);', { i(1, 'fn'), i(2) })),
+  test_s({
+    trig = 'vfa',
+    name = 'Vitest vi.fn mockResolvedValue',
+  }, fmt('const <> = vi.fn().mockResolvedValue(<>);', { i(1, 'fn'), i(2) })),
+  test_s(
+    {
+      trig = 'vmo',
+      name = 'Vitest vi.mock module',
+    },
+    fmt(
+      [[
+        vi.mock('<>', () =>> ({
+          <>: vi.fn().mockResolvedValue(<>),
+        }));
+      ]],
+      { i(1, './api'), i(2, 'fetchUser'), i(3, '{}') }
+    )
+  ),
+  test_s(
+    {
+      trig = 'vsp',
+      name = 'Vitest spyOn',
+    },
+    fmt(
+      [[
+        const <> = vi.spyOn(<>, '<>').mockImplementation(() =>> {});
+        <>
+      ]],
+      { i(1, 'spy'), i(2, 'console'), i(3, 'log'), i(4) }
+    )
+  ),
+  test_s({
+    trig = 'vcm',
+    name = 'Vitest clearAllMocks',
+  }, t('vi.clearAllMocks();')),
+  test_s({
+    trig = 'vrm',
+    name = 'Vitest restoreAllMocks',
+  }, t('vi.restoreAllMocks();')),
+  test_s(
+    {
+      trig = 'vti',
+      name = 'Vitest fake timers',
+    },
+    fmt(
+      [[
+        vi.useFakeTimers();
+        <>
+        vi.useRealTimers();
+      ]],
+      { i(1) }
+    )
+  ),
   _s(
     {
       trig = 'ff',

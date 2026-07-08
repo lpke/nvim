@@ -560,8 +560,8 @@ Snippets:
   all: inline object/array.
   lua: function, if/else, for loops, print/Print, multiline string wrappers.
   js/ts: functions, constructors from fields, promises, try/catch, debug logs,
-         Vitest import/scaffold snippets in *.test.js/ts, plus .tb/.te matcher
-         suffixes on non-empty lines.
+         Vitest import/scaffold, table, matcher, mock, spy, and timer snippets
+         in *.test.js/ts, plus .tb/.te matcher suffixes on non-empty lines.
   jsx/tsx: React components, hooks, className, JSX expression wrappers,
            MUI sx/Box, Tailwind-style CSS object/property shorthands.
   css: Tailwind-style layout, spacing, text, color, border, and shadow shorthands.
