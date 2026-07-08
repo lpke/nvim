@@ -8,6 +8,8 @@ Use / to search and q to close.
 
 More ways to rediscover things:
   <BS>fk                Search keymaps.
+  <BS>fs                Search LuaSnip snippets. Filter filetypes with
+                        "query  js ts".
   <BS>fh                Search help tags, including lpke-* sections.
   <BS>fl                Search highlights.
   <BS>p<BS>             Search installed plugin source files.

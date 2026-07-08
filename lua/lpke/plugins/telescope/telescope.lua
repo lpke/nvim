@@ -379,6 +379,9 @@ local function config()
     {'n', '<BS>fr', function()
       builtin_pickers.oldfiles({ prompt_title = 'Recent Files' })
     end, { desc = 'Find recent files' }},
+    {'n', '<BS>fs', function()
+      custom_pickers.snippets()
+    end, { desc = 'Find LuaSnip snippets' }},
 
     -- grep
     {'n', '<leader>/', function()
