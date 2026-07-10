@@ -130,16 +130,6 @@ local find_file_command_specs = {
     restricted_args = ignore.fd_restricted_args,
     unrestricted_args = ignore.fd_unrestricted_args,
   },
-  {
-    executable = 'find',
-    command = { 'find', '.', '-type', 'f' },
-    unrestricted_args = function()
-      return {}
-    end,
-    cond = function()
-      return vim.fn.has('win32') == 0
-    end,
-  },
 }
 
 local function list_contains(list, value)
@@ -223,12 +213,6 @@ local function append_find_files_path(find_command, path_arg)
     vim.list_extend(find_command, { '--', path_arg })
   elseif command == 'fd' or command == 'fdfind' then
     vim.list_extend(find_command, { '.', path_arg })
-  elseif command == 'find' then
-    if find_command[2] == '.' then
-      find_command[2] = path_arg
-    else
-      table.insert(find_command, 2, path_arg)
-    end
   else
     table.insert(find_command, path_arg)
   end
@@ -282,7 +266,7 @@ local function find_files_finder(opts, parsed)
 
   if not command then
     vim.notify(
-      'smart_find_ai.find_files: install rg, fd, fdfind, or find',
+      'smart_find_ai.find_files: install rg, fd, or fdfind',
       vim.log.levels.ERROR
     )
     return finders.new_table({

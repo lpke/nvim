@@ -1,75 +1,34 @@
 local caveman = require('lpke.plugins.ai.helpers.caveman')
 local util = require('lpke.core.helpers.util')
 
-local fd_exclude_patterns = {
-  '.cache',
-  '.direnv',
-  '.git',
-  '.gradle',
-  '.hg',
-  '.mypy_cache',
-  '.next',
-  '.npm',
-  '.nuxt',
-  '.parcel-cache',
-  '.pnpm-store',
-  '.pytest_cache',
-  '.ruff_cache',
-  '.svn',
-  '.svelte-kit',
-  '.terraform',
-  '.tox',
-  '.Trash',
-  '.turbo',
-  '.vagrant.d',
-  '.venv',
-  '.yarn',
-  '**/.cargo/git',
-  '**/.cargo/registry',
-  '**/.local/share/Trash',
-  '**/.local/share/bottles',
-  '**/.local/share/gnome-boxes',
-  '**/.local/share/libvirt',
-  '**/.local/share/lutris',
-  '**/.local/share/Steam',
-  '**/.m2/repository',
-  '**/go/pkg/mod',
-  '**/VirtualBox VMs',
-  '**/vmware',
-  '**/VMware',
-  '**/.wine',
-  '**/wineprefixes',
-  '__pycache__',
-  'bower_components',
+local root_fd_exclude_patterns = {
   'cache',
-  'coverage',
   'dev',
-  'dist',
   'lost+found',
   'nix/store',
-  'node_modules',
   'var',
   '/nix',
   'proc',
   'run',
   'sys',
-  'target',
   'tmp',
-  'VirtualBox VMs',
-  'vmware',
-  'VMware',
-  'vendor',
-  'venv',
-  'wineprefixes',
 }
 
-local function fd_exclude_args()
+local function root_fd_exclude_args()
   local args = {}
-  for _, pattern in ipairs(fd_exclude_patterns) do
+  for _, pattern in ipairs(root_fd_exclude_patterns) do
     table.insert(args, '--exclude')
     table.insert(args, pattern)
   end
   return args
+end
+
+local function home_ignore_file_args()
+  local ignore_file = vim.fs.joinpath(vim.fn.expand('~'), '.ignore')
+  if vim.fn.filereadable(ignore_file) == 1 then
+    return { '--ignore-file', ignore_file }
+  end
+  return {}
 end
 
 return {
@@ -169,11 +128,11 @@ return {
                 'fd',
                 '--absolute-path',
                 '--hidden',
-                '--no-ignore',
                 '--type',
                 fd_type,
               },
-              fd_exclude_args(),
+              home_ignore_file_args(),
+              root_fd_exclude_args(),
               {
                 '.',
                 cwd,
@@ -258,7 +217,7 @@ return {
             { title = 'CodeCompanion' }
           )
         end
-        -- list files in the directory (respecting .gitignore if in a git repo)
+        -- List files in the directory, preferring the repository's tracked set.
         local files_output
         local git_check = vim.fn.system(
           'git -C '
@@ -270,11 +229,21 @@ return {
             'git -C ' .. vim.fn.shellescape(dir) .. ' ls-files'
           )
         else
-          files_output = vim.fn.system(
-            'find '
-              .. vim.fn.shellescape(dir)
-              .. ' -type f -not -path "*/.*" | head -500'
-          )
+          local result = vim.system(
+            util.concat_arrs({
+              'fd',
+              '--hidden',
+              '--type',
+              'f',
+              '--max-results',
+              '500',
+            }, home_ignore_file_args(), {
+              '.',
+              dir,
+            }),
+            { text = true }
+          ):wait()
+          files_output = result.code == 0 and result.stdout or result.stderr
         end
         local context_content = string.format(
           'The user has given you access to an additional directory outside the current working directory.\n'
@@ -321,7 +290,7 @@ return {
                 '--type',
                 'd',
                 '--hidden',
-              }, fd_exclude_args()),
+              }, home_ignore_file_args()),
               { cwd = home }
             ),
             sorter = config_values.generic_sorter({}),
