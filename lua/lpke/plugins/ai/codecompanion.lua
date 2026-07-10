@@ -119,10 +119,10 @@ local function config()
       },
       acp = {
         codex = function()
-          return require('codecompanion.adapters').extend('codex', {
+          local adapter = require('codecompanion.adapters').extend('codex', {
             commands = {
               default = {
-                'codex-acp',
+                'codex-acp-exec',
               },
             },
             -- New Codex ACP sessions inherit CLI state unless explicitly overridden.
@@ -135,7 +135,7 @@ local function config()
               end,
             },
             defaults = {
-              auth_method = 'chatgpt',
+              auth_method = 'chat-gpt',
               session_config_options = {
                 model = ai_config.adapter_default_model('codex'),
                 mode = 'Full Access',
@@ -143,6 +143,12 @@ local function config()
               },
             },
           })
+
+          -- The stock adapter treats an unset variable name as its literal value.
+          -- Never pass that placeholder to codex-acp, which can persist it globally.
+          adapter.env.OPENAI_API_KEY = nil
+          adapter.env.CODEX_API_KEY = nil
+          return adapter
         end,
         opts = {
           show_presets = false,
@@ -151,6 +157,7 @@ local function config()
     },
     display = {
       chat = {
+        fold_reasoning = false,
         intro_message = '',
         show_header_separator = false,
       },
@@ -615,6 +622,10 @@ local function config()
       end
     end,
   })
+
+  -- CodeCompanion hard-codes Reasoning and Response headings around reasoning.
+  require('lpke.plugins.ai.helpers.reasoning_headings').patch()
+  require('lpke.plugins.ai.helpers.reasoning_separators').patch()
 
   -- Patch the ask_questions tool to use a Telescope picker with
   -- wrapped text and a preview pane instead of the default vim.ui.select

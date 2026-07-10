@@ -92,6 +92,17 @@ local function config()
         conceal = false,
       },
     },
+    overrides = {
+      filetype = {
+        codecompanion = {
+          html = {
+            comment = {
+              conceal = true,
+            },
+          },
+        },
+      },
+    },
     sign = {
       enabled = false,
     },
