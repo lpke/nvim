@@ -121,18 +121,25 @@ local function config()
         codex = function()
           return require('codecompanion.adapters').extend('codex', {
             commands = {
-              -- default reasoning set here to override last-used setting from `codex` CLI
               default = {
-                'codex-acp-exec',
-                '-c',
-                'model_reasoning_effort="medium"',
+                'codex-acp',
               },
+            },
+            -- New Codex ACP sessions inherit CLI state unless explicitly overridden.
+            env = {
+              CODEX_CONFIG = function()
+                return vim.json.encode({
+                  model = ai_config.adapter_default_model('codex'),
+                  model_reasoning_effort = 'medium',
+                })
+              end,
             },
             defaults = {
               auth_method = 'chatgpt',
               session_config_options = {
                 model = ai_config.adapter_default_model('codex'),
                 mode = 'Full Access',
+                thought_level = 'medium',
               },
             },
           })

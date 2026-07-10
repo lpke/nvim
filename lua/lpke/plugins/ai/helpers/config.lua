@@ -8,8 +8,8 @@ M.adapters = {
   },
   codex = {
     display = 'Codex',
-    default_model = 'gpt_5_5',
-    model_cycle = { 'gpt_5_5', 'gpt_5_3_codex_spark' },
+    default_model = 'gpt_5_6_sol',
+    model_cycle = { 'gpt_5_6_sol', 'gpt_5_5' },
   },
 }
 M.adapter_cycle = { 'codex', 'copilot' }
@@ -115,6 +115,11 @@ M.models = {
     aliases = { 'haiku4.5' },
     display = 'haiku-4.5',
     adapter_display = { copilot = 'haiku-4.5 (x0.33)' },
+  },
+  gpt_5_6_sol = {
+    id = 'gpt-5.6-sol',
+    aliases = { 'gpt5.6s', 'gpt5.6' },
+    display = 'GPT-5.6s',
   },
   gpt_5_5 = {
     id = 'gpt-5.5',

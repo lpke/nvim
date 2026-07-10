@@ -241,20 +241,29 @@ function Lpke_cc_model(models)
     -- Only one model provided - apply it directly
     target_model = resolved_models[1]
   else
-    -- Multiple models - find current and cycle to next
-    local cur_index = nil
+    -- Multiple models - find current and cycle to the next available model
+    local cur_index = 0
     for i, m in ipairs(resolved_models) do
       if m == cur_model then
         cur_index = i
         break
       end
     end
-    -- Cycle to next model (or first if not found/at end)
-    if cur_index and cur_index < #resolved_models then
-      target_model = resolved_models[cur_index + 1]
-    else
-      target_model = resolved_models[1]
+
+    for offset = 1, #resolved_models do
+      local index = ((cur_index + offset - 1) % #resolved_models) + 1
+      local candidate = resolved_models[index]
+      if M.is_model_available(cur_chat, candidate) then
+        target_model = candidate
+        break
+      end
     end
+  end
+
+  if not target_model then
+    local _, ids = M.is_model_available(cur_chat, resolved_models[1])
+    M.notify_unavailable_model(cur_chat, resolved_models[1], ids)
+    return nil
   end
 
   local ok, ids = M.is_model_available(cur_chat, target_model)
