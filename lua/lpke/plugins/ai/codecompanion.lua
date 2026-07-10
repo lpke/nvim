@@ -626,6 +626,7 @@ local function config()
   -- CodeCompanion hard-codes Reasoning and Response headings around reasoning.
   require('lpke.plugins.ai.helpers.reasoning_headings').patch()
   require('lpke.plugins.ai.helpers.reasoning_separators').patch()
+  require('lpke.plugins.ai.helpers.reasoning_highlights').patch()
 
   -- Patch the ask_questions tool to use a Telescope picker with
   -- wrapped text and a preview pane instead of the default vim.ui.select
