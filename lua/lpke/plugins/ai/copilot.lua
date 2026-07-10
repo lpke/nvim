@@ -92,6 +92,82 @@ local function patch_copilot_inline_single_line(api)
   end
 end
 
+local function patch_copilot_codecompanion_title_changes()
+  local client = require('copilot.client')
+
+  local function sync_document_uri(bufnr)
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      return
+    end
+
+    local filetype = vim.bo[bufnr].filetype
+    local lsp_client = client.get()
+    if
+      not lsp_client
+      or not lsp_client.initialized
+      or not client.buf_is_attached(bufnr)
+    then
+      return
+    end
+
+    local new_name = vim.api.nvim_buf_get_name(bufnr)
+    local ok, old_name = pcall(
+      require('vim.lsp._changetracking')._get_and_set_name,
+      lsp_client,
+      bufnr,
+      new_name
+    )
+    if not ok then
+      lsp_client:_text_document_did_open_handler(bufnr)
+      return
+    end
+    if old_name == new_name then
+      return
+    end
+
+    lsp_client:notify('textDocument/didClose', {
+      textDocument = { uri = vim.uri_from_fname(old_name) },
+    })
+    lsp_client:notify('textDocument/didOpen', {
+      textDocument = {
+        version = vim.api.nvim_buf_get_changedtick(bufnr),
+        uri = vim.uri_from_bufnr(bufnr),
+        languageId = lsp_client.get_language_id(bufnr, filetype),
+        text = vim.lsp._buf_get_full_text(bufnr),
+      },
+    })
+  end
+
+  for _, autocmd in ipairs(vim.api.nvim_get_autocmds({ event = 'BufFilePost' })) do
+    if
+      autocmd.group_name == 'copilot.client'
+      and autocmd.desc == '[copilot] (client) buffer filename changed'
+      and type(autocmd.callback) == 'function'
+    then
+      local original_callback = autocmd.callback
+      vim.api.nvim_del_autocmd(autocmd.id)
+      vim.api.nvim_create_autocmd('BufFilePost', {
+        group = autocmd.group,
+        pattern = autocmd.pattern,
+        desc = autocmd.desc,
+        callback = function(args)
+          local filetype = vim.bo[args.buf].filetype
+          if
+            filetype == 'codecompanion'
+            or filetype == 'codecompanion_input'
+          then
+            vim.schedule(function()
+              sync_document_uri(args.buf)
+            end)
+            return
+          end
+          original_callback(args)
+        end,
+      })
+    end
+  end
+end
+
 local function config()
   local copilot = require('copilot')
   local api = require('copilot.api')
@@ -288,10 +364,17 @@ local function config()
       if helpers.get_git_buf_type(bufnr) == 'diffview' then
         return false
       end
+      if
+        vim.bo[bufnr].filetype == 'codecompanion'
+        or vim.bo[bufnr].filetype == 'codecompanion_input'
+      then
+        return true
+      end
       return default_should_attach(bufnr, bufname)
     end,
     server_opts_overrides = {},
   })
+  patch_copilot_codecompanion_title_changes()
 
   -- ensure copilot is attached to all active buffers after startup
   vim.defer_fn(function()
