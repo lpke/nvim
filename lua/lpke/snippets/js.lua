@@ -9,6 +9,13 @@ local ct = require('lpke.core.helpers').concat_arrs
 local class_helpers = require('lpke.snippets.js_class_helpers')
 local test_snippets = require('lpke.snippets.js_test')
 
+local function postfix_s(params, nodes)
+  params.wordTrig = false
+  return s(params, nodes, {
+    condition = h.before_trigger_matches('%S'),
+  })
+end
+
 return ct(test_snippets, { -- js
   _s(
     {
@@ -231,6 +238,34 @@ return ct(test_snippets, { -- js
     trig = 'ced',
     name = 'Console Error Debug',
   }, fmt('console.error({ <> });', { i(1) })),
+  postfix_s({
+    trig = '.id',
+    name = 'getElementById suffix',
+  }, { t(".getElementById('"), i(1), t("')") }),
+  postfix_s({
+    trig = '.qs',
+    name = 'querySelector suffix',
+  }, { t(".querySelector('"), i(1), t("')") }),
+  postfix_s({
+    trig = '.qsa',
+    name = 'querySelectorAll suffix',
+  }, { t(".querySelectorAll('"), i(1), t("')") }),
+  postfix_s({
+    trig = '.ce',
+    name = 'Create element suffix',
+  }, { t("document.createElement('"), i(1), t("')") }),
+  postfix_s({
+    trig = '.ac',
+    name = 'appendChild suffix',
+  }, { t('.appendChild('), i(1), t(')') }),
+  postfix_s({
+    trig = '.rc',
+    name = 'removeChild suffix',
+  }, { t('.removeChild('), i(1), t(')') }),
+  postfix_s({
+    trig = '.cl',
+    name = 'classList suffix',
+  }, t('.classList')),
   _s({
     trig = '/cl',
     name = 'Console Log',
