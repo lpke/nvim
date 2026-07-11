@@ -74,18 +74,18 @@ local spacing_sides = {
 
 local snippets = {}
 
-local function add_snippet(trig, nodes)
+local function add_snippet(trig, nodes, condition)
   table.insert(
     snippets,
     s({
       trig = trig,
       name = trig .. ' tailwind to CSS',
-    }, nodes)
+    }, nodes, { condition = condition })
   )
 end
 
-local function add_static_snippet(trig, declaration)
-  add_snippet(trig, { t(declaration), i(1) })
+local function add_static_snippet(trig, declaration, condition)
+  add_snippet(trig, { t(declaration), i(1) }, condition)
 end
 
 local function add_value_snippet(trig, properties)
@@ -149,7 +149,7 @@ local function add_spacing_snippets(prefix, property)
 end
 
 for _, snippet in ipairs(static_tailwind_css) do
-  add_static_snippet(snippet[1], snippet[2])
+  add_static_snippet(snippet[1], snippet[2], snippet[3])
 end
 
 add_snippet('grid-cols', {

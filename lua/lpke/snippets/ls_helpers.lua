@@ -1,5 +1,5 @@
 local ls = require('luasnip')
-local s = ls.snippet
+local luasnip_s = ls.snippet
 local sn = ls.snippet_node
 local t = ls.text_node
 local i = ls.insert_node
@@ -11,6 +11,28 @@ local fmtc = require('luasnip.extras.fmt').fmt -- default delimeter: {} (curly)
 local fmta = require('luasnip.extras.fmt').fmta -- default delimeter: <> (angled)
 local exp_conds = require('luasnip.extras.expand_conditions')
 local helpers = require('lpke.core.helpers')
+
+local no_hyphen_boundary = exp_conds.trigger_not_preceded_by('[%w_-]')
+
+-- `s()` with `-` treated as part of a word. Use `s_allow_hyphen()` to opt out.
+local function s(params, nodes, opts)
+  if type(params) == 'string' then
+    params = { trig = params }
+  end
+
+  params = helpers.merge_tables(params, { wordTrig = false })
+  opts = opts or {}
+  opts = helpers.merge_tables(opts, {
+    condition = opts.condition and no_hyphen_boundary * opts.condition
+      or no_hyphen_boundary,
+  })
+
+  return luasnip_s(params, nodes, opts)
+end
+
+local function s_allow_hyphen(params, nodes, opts)
+  return luasnip_s(params, nodes, opts)
+end
 
 -- `s()` that adds `{ condition = exp_conds.line_begin }` by default
 local function _s(params, nodes, opts)
@@ -114,6 +136,8 @@ return {
   ls = ls,
   -- require('luasnip').snippet
   s = s,
+  -- require('luasnip').snippet with LuaSnip's default hyphen boundary
+  s_allow_hyphen = s_allow_hyphen,
   _s = _s,
   -- require('luasnip').snippet_node
   sn = sn,

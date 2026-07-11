@@ -51,12 +51,13 @@ return { -- html
       name = 'HTML form',
     },
     fmt(
-      [[<<form>>
+      [[<<form id="<>">>
   <>
 <</form>>
 ]],
       {
-        d(1, sel_dedent),
+        i(1),
+        d(2, sel_dedent),
       }
     )
   ),

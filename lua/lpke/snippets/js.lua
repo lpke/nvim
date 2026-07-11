@@ -11,7 +11,7 @@ local test_snippets = require('lpke.snippets.js_test')
 
 local function postfix_s(params, nodes)
   params.wordTrig = false
-  return s(params, nodes, {
+  return h.s_allow_hyphen(params, nodes, {
     condition = h.before_trigger_matches('%S'),
   })
 end

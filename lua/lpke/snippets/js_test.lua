@@ -19,7 +19,7 @@ end
 
 local function test_suffix_s(params, nodes)
   params.wordTrig = false
-  return _s(params, nodes, {
+  return h.s_allow_hyphen(params, nodes, {
     condition = h.before_trigger_matches('%S') * test_file_condition,
   })
 end
