@@ -31,19 +31,19 @@ return { -- tsreact
       trig = 'rfcc',
       name = 'React function component (arrow)',
     },
-    fmt(
+    fmtc(
       [[
-        type <>Props = {<>};
+        type {}Props = {{{}}};
         
-        const <> = (<>) =>> {
+        const {} = ({}) => {{
           return (
-            <<div>>
-              <<p>><><</p>>
-            <</div>>
+            <div>
+              <p>{}</p>
+            </div>
           );
-        };
+        }};
 
-        export default <>;
+        export default {};
       ]],
       { rep(1), i(3), i(1), i(2, '{}'), rep(1), rep(1) }
     )

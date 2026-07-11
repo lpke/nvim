@@ -61,11 +61,11 @@ return { -- vue
       trig = 'om',
       name = 'onMounted',
     },
-    fmt(
+    fmtc(
       [[
-        onMounted(() =>> {
-          <>
-        });
+        onMounted(() => {{
+          {}
+        }});
       ]],
       { i(1) }
     )
@@ -75,11 +75,11 @@ return { -- vue
       trig = 'ou',
       name = 'onUnmounted',
     },
-    fmt(
+    fmtc(
       [[
-        onUnmounted(() =>> {
-          <>
-        });
+        onUnmounted(() => {{
+          {}
+        }});
       ]],
       { i(1) }
     )
@@ -89,11 +89,11 @@ return { -- vue
       trig = 'w',
       name = 'watch',
     },
-    fmt(
+    fmtc(
       [[
-        watch(<>, (<>) =>> {
-          <>
-        });
+        watch({}, ({}) => {{
+          {}
+        }});
       ]],
       { i(1, 'source'), i(2, 'value'), i(3) }
     )
@@ -103,11 +103,11 @@ return { -- vue
       trig = 'we',
       name = 'watchEffect',
     },
-    fmt(
+    fmtc(
       [[
-        watchEffect(() =>> {
-          <>
-        });
+        watchEffect(() => {{
+          {}
+        }});
       ]],
       { i(1) }
     )

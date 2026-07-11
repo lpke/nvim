@@ -33,11 +33,11 @@ local snippets = { -- jsreact
       trig = 'ue',
       name = 'useEffect',
     },
-    fmt(
+    fmtc(
       [[
-        useEffect(() =>> {
-          <>
-        }, [<>]);
+        useEffect(() => {{
+          {}
+        }}, [{}]);
       ]],
       { i(1), i(2) }
     )
@@ -47,11 +47,11 @@ local snippets = { -- jsreact
       trig = 'ued',
       name = 'useEffect debug',
     },
-    fmt(
+    fmtc(
       [[
-        useEffect(() =>> {
-          console.log({ <> });
-        }, [<>]);
+        useEffect(() => {{
+          console.log({{ {} }});
+        }}, [{}]);
       ]],
       { i(1), rep(1) }
     )

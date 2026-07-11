@@ -25,11 +25,11 @@ local function event_listener_suffix(trig, event, editable)
       trig = trig,
       name = event .. ' event listener suffix',
     },
-    fmt(
+    fmtc(
       [[
-      .addEventListener('<>', function() {
-        <>
-      });
+      .addEventListener('{}', (e) => {{
+        {}
+      }});
     ]],
       { event_node, body_node }
     )
@@ -98,11 +98,11 @@ return ct(test_snippets, { -- js
       trig = 'rf',
       name = 'Return arrow function',
     },
-    fmt(
+    fmtc(
       [[
-        return (<>) =>> {
-          <>
-        };
+        return ({}) => {{
+          {}
+        }};
       ]],
       { i(1), i(2) }
     )

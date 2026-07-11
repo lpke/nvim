@@ -63,14 +63,14 @@ return {
       trig = 'ie',
       name = 'Vitest it.each named cases',
     },
-    fmt(
+    fmtc(
       [[
         it.each([
-          { input: <>, expected: <> },
-          { input: <>, expected: <> },
-        ])('<>', ({ input, expected }) =>> {
-          <>
-        });
+          {{ input: {}, expected: {} }},
+          {{ input: {}, expected: {} }},
+        ])('{}', ({{ input, expected }}) => {{
+          {}
+        }});
       ]],
       {
         i(1),
@@ -129,7 +129,7 @@ return {
   test_s({
     trig = 'eth',
     name = 'Vitest expect toThrow',
-  }, fmt('expect(() =>> <>).toThrow(<>);', { d(1, sel), i(2) })),
+  }, fmtc('expect(() => {}).toThrow({});', { d(1, sel), i(2) })),
   test_s({
     trig = 'ertb',
     name = 'Vitest expect resolves toBe',
@@ -171,11 +171,11 @@ return {
       trig = 'vmo',
       name = 'Vitest vi.mock module',
     },
-    fmt(
+    fmtc(
       [[
-        vi.mock('<>', () =>> ({
-          <>: vi.fn().mockResolvedValue(<>),
-        }));
+        vi.mock('{}', () => ({{
+          {}: vi.fn().mockResolvedValue({}),
+        }}));
       ]],
       { i(1, './api'), i(2, 'fetchUser'), i(3, '{}') }
     )
@@ -185,10 +185,10 @@ return {
       trig = 'vsp',
       name = 'Vitest spyOn',
     },
-    fmt(
+    fmtc(
       [[
-        const <> = vi.spyOn(<>, '<>').mockImplementation(() =>> {});
-        <>
+        const {} = vi.spyOn({}, '{}').mockImplementation(() => {{}});
+        {}
       ]],
       { i(1, 'spy'), i(2, 'console'), i(3, 'log'), i(4) }
     )
