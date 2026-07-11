@@ -286,6 +286,18 @@ return ct(test_snippets, { -- js
     trig = '.cl',
     name = 'classList suffix',
   }, t('.classList')),
+  postfix_s({
+    trig = '.pd',
+    name = 'preventDefault suffix',
+  }, t('.preventDefault();')),
+  postfix_s({
+    trig = '.sp',
+    name = 'stopPropagation suffix',
+  }, t('.stopPropagation();')),
+  postfix_s({
+    trig = '.sip',
+    name = 'stopImmediatePropagation suffix',
+  }, t('.stopImmediatePropagation();')),
   event_listener_suffix('.ael', 'click', true),
   event_listener_suffix('.aelc', 'click'),
   event_listener_suffix('.aelm', 'mousemove'),

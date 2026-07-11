@@ -564,8 +564,8 @@ Snippets:
   js/ts: functions, constructors from fields, promises, try/catch, debug logs,
          Vitest import/scaffold, table, matcher, mock, spy, and timer snippets
          in *.test.js/ts, plus DOM .id/.qs/.qsa/.ce/.ac/.rc/.cl suffixes and
-         .ael* event-listener suffixes. .tb/.te matcher suffixes work on
-         non-empty lines.
+         .ael* event-listener and .pd/.sp/.sip event-control suffixes. .tb/.te
+         matcher suffixes work on non-empty lines.
   jsx/tsx: React components, hooks, className, JSX expression wrappers,
            MUI sx/Box, and the same Tailwind-style shorthands as CSS. Plain
            triggers emit JS object properties; triggers ending in ; emit CSS.
