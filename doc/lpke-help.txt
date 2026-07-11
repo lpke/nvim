@@ -564,8 +564,10 @@ Snippets:
          in *.test.js/ts, plus DOM .id/.qs/.qsa/.ce/.ac/.rc/.cl suffixes and
          .tb/.te matcher suffixes on non-empty lines.
   jsx/tsx: React components, hooks, className, JSX expression wrappers,
-           MUI sx/Box, Tailwind-style CSS object/property shorthands.
-  css: Tailwind-style layout, spacing, text, color, border, and shadow shorthands.
+           MUI sx/Box, and the same Tailwind-style shorthands as CSS. Plain
+           triggers emit JS object properties; triggers ending in ; emit CSS.
+  css: Tailwind-style layout, spacing, grid, text, color, border, and shadow
+       shorthands.
   vue: t/s/st create template, script setup lang="ts", scoped style blocks,
        defineProps/defineEmits, lifecycle hooks, and watchers; Vue also gets
        JS + TS snippets.
