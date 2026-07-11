@@ -1,8 +1,8 @@
 -- stylua: ignore start
 local h = require('lpke.snippets.ls_helpers')
 ---@diagnostic disable-next-line: unused-local
-local ls, s, _s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_q, sel_b, exp_conds =
-  h.ls, h.s, h._s, h.sn, h.t, h.t_, h.i, h.f, h.d, h.rep, h.fmtc, h.fmta, h.fmt, h.sel, h.sel_q, h.sel_b, h.exp_conds
+local ls, s, _s, sn, t, t_, i, f, d, rep, fmtc, fmta, fmt, sel, sel_dedent, sel_q, sel_b, exp_conds =
+  h.ls, h.s, h._s, h.sn, h.t, h.t_, h.i, h.f, h.d, h.rep, h.fmtc, h.fmta, h.fmt, h.sel, h.sel_dedent, h.sel_q, h.sel_b, h.exp_conds
 -- stylua: ignore end
 
 local ct = require('lpke.core.helpers').concat_arrs
@@ -225,7 +225,7 @@ return ct(test_snippets, { -- js
   s({
     trig = 'cl',
     name = 'Console Log',
-  }, fmt('console.log(<>);', { i(1) })),
+  }, fmt('console.log(<>);', { d(1, sel_dedent) })),
   s({
     trig = 'cld',
     name = 'Console Log Debug',
@@ -233,7 +233,7 @@ return ct(test_snippets, { -- js
   s({
     trig = 'ce',
     name = 'Console Error',
-  }, fmt('console.error(<>);', { i(1) })),
+  }, fmt('console.error(<>);', { d(1, sel_dedent) })),
   s({
     trig = 'ced',
     name = 'Console Error Debug',

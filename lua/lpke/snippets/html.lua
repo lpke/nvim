@@ -108,7 +108,7 @@ return { -- html
   s({
     trig = 'cl',
     name = 'Console Log',
-  }, fmt('console.log(<>);', { i(1) })),
+  }, fmt('console.log(<>);', { d(1, sel_dedent) })),
   s({
     trig = 'cld',
     name = 'Console Log Debug',
@@ -116,7 +116,7 @@ return { -- html
   s({
     trig = 'ce',
     name = 'Console Error',
-  }, fmt('console.error(<>);', { i(1) })),
+  }, fmt('console.error(<>);', { d(1, sel_dedent) })),
   s({
     trig = 'ced',
     name = 'Console Error Debug',
