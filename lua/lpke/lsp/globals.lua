@@ -1,6 +1,7 @@
 ---@diagnostic disable: undefined-field
 local helpers = require('lpke.core.helpers')
 local ts_ls = require('lpke.lsp.helpers.ts_ls')
+local ts_diagnostics = require('lpke.lsp.helpers.ts_diagnostics')
 local tc = Lpke_theme_colors
 
 -- restart all LSPs for the current buffer's filetype
@@ -98,7 +99,11 @@ function Lpke_ts_ls_settings()
 end
 
 function Lpke_toggle_ts_unused_diagnostics(choice)
-  ts_ls.toggle_unused_diagnostics(choice)
+  ts_diagnostics.toggle_unused(choice)
+end
+
+function Lpke_toggle_ts_inferred_diagnostics(choice)
+  ts_diagnostics.toggle_inferred_mode(choice)
 end
 
 -- stylua: ignore start

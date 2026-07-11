@@ -23,7 +23,7 @@ Lpke_diagnostic_config = {
 local function config()
   local lsp_settings = require('lpke.lsp')
   local helpers = require('lpke.core.helpers')
-  local ts_ls = require('lpke.lsp.helpers.ts_ls')
+  local ts_diagnostics = require('lpke.lsp.helpers.ts_diagnostics')
   local tc = Lpke_theme_colors
 
   local cmp_nvim_lsp = require('cmp_nvim_lsp')
@@ -42,43 +42,7 @@ local function config()
   vim.diagnostic.config(Lpke_diagnostic_config)
 
   -- diagnostics filter
-  local function is_javascript_filetype(filetype)
-    return filetype == 'javascript'
-      or filetype == 'javascriptreact'
-      or filetype == 'js'
-      or filetype == 'jsx'
-  end
-
-  local function diagnostic_bufnr(result, ctx)
-    if ctx and ctx.bufnr then
-      return ctx.bufnr
-    end
-    if result and result.uri then
-      return vim.uri_to_bufnr(result.uri)
-    end
-  end
-
-  local function diagnostic_filter_context(result, ctx)
-    local bufnr = diagnostic_bufnr(result, ctx)
-    local filetype = bufnr and vim.bo[bufnr].filetype or nil
-    local client = ctx
-        and ctx.client_id
-        and vim.lsp.get_client_by_id(ctx.client_id)
-      or nil
-
-    return {
-      bufnr = bufnr,
-      is_javascript = is_javascript_filetype(filetype),
-      is_inferred_check_js_project = client
-          and client.config
-          and client.config.lpke_is_inferred_check_js_project
-        or false,
-    }
-  end
-
-  local function filter_diagnostics(diag, filter_ctx) -- diag.source, diag.message, diag.code
-    local code = diag.code
-
+  local function filter_diagnostic(diag) -- diag.source, diag.message, diag.code
     -- lua
     if Match(diag.source, '^[Ll]ua.*') then
       if Match(diag.message, 'Unused local `_.+`.') then
@@ -86,36 +50,14 @@ local function config()
       end
     end
 
-    if not filter_ctx.is_javascript then
-      return true
-    end
-
-    if ts_ls.js_ignored_diagnostic_codes_lookup[code] then
-      return false
-    end
-
-    if tonumber(code) == 2345 and filter_ctx.is_inferred_check_js_project then
-      if
-        Match(
-          diag.message,
-          "Argument of type 'Element' is not assignable to parameter of type 'HTML[A-Za-z]+Element'"
-        )
-        or Match(
-          diag.message,
-          "Argument of type 'HTMLElement' is not assignable to parameter of type 'HTML[A-Za-z]+Element'"
-        )
-      then
-        return false
-      end
-    end
     return true
   end
 
   local global_handlers = {
     ['textDocument/publishDiagnostics'] = function(_, result, ctx)
-      local filter_ctx = diagnostic_filter_context(result, ctx)
+      ts_diagnostics.filter(result, ctx)
       helpers.arr_filter_inplace(result.diagnostics, function(diag)
-        return filter_diagnostics(diag, filter_ctx)
+        return filter_diagnostic(diag)
       end) -- custom part
       vim.lsp.diagnostic.on_publish_diagnostics(_, result, ctx) -- default part (fixed signature)
     end,
@@ -178,6 +120,7 @@ local function config()
     { 'nv', '<F2>V', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting' }},
     { 'nv', '<A-V>', Lpke_toggle_diagnostics_hl, { desc = 'Toggle diagnostics highlighting' }},
     { 'nv', '<A-U>', Lpke_toggle_ts_unused_diagnostics, { desc = 'Toggle TypeScript unused diagnostics' }},
+    { 'nv', '<A-I>', Lpke_toggle_ts_inferred_diagnostics, { desc = 'Toggle inferred JavaScript diagnostics mode' }},
     { 'n', '<leader>R', Lpke_lsp_restart, { desc = 'Restart LSPs for current buffer filetype' }},
 
     -- smart actions

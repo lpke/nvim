@@ -342,6 +342,9 @@ Diagnostics:
   <F2>t / <A-t>         Toggle dim/bright virtual text.
   <F2>V / <A-V>         Toggle diagnostic highlighting and virtual lines.
   <A-U>                 Toggle TypeScript unused diagnostics.
+  <A-I>                 Toggle inferred JavaScript relaxed/full diagnostics.
+  Inferred JavaScript defaults to relaxed diagnostics while retaining
+  TypeScript checking and missing-import code actions.
   Lua diagnostics filter ignores unused locals named with _.
 
 Format/lint:
