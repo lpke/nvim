@@ -178,7 +178,8 @@ function Lpke_new_float(opts)
 end
 
 -- create a floating terminal window (used for user command: `Term`)
-function Lpke_term(cmd)
+function Lpke_term(cmd, term_opts)
+  term_opts = term_opts or {}
   local full = false
   if cmd and string.find(cmd.args, 'full') then
     full = true
@@ -189,15 +190,36 @@ function Lpke_term(cmd)
     height = full and 'h-2' or '0.6w',
     min_width = full and nil or 100,
     min_height = full and nil or 20,
-    title = ' Terminal ',
+    title = term_opts.title or ' Terminal ',
     title_pos = 'center',
     border = 'rounded',
   })
 
-  vim.cmd('terminal')
+  if term_opts.command then
+    vim.fn.jobstart(term_opts.command, {
+      cwd = vim.fn.getcwd(),
+      term = true,
+      on_exit = term_opts.close_on_exit and function()
+        vim.schedule(function()
+          if vim.api.nvim_win_is_valid(float.win) then
+            vim.api.nvim_win_close(float.win, true)
+          end
+          if vim.api.nvim_buf_is_valid(float.buf) then
+            vim.api.nvim_buf_delete(float.buf, { force = true })
+          end
+        end)
+      end or nil,
+    })
+  else
+    vim.cmd('terminal')
+  end
   vim.cmd('startinsert')
 
   local chan_id = vim.b.terminal_job_id
+  if term_opts.command then
+    return { buf = float.buf, win = float.win, chan_id = chan_id }
+  end
+
   vim.cmd('sleep 500m')
   vim.api.nvim_chan_send(chan_id, 'cd ' .. vim.fn.getcwd() .. '\n')
   vim.cmd('sleep 100m')

@@ -140,6 +140,7 @@ Working directory:
 Other:
   :NNRestore [n], :NN   Restore latest [No Name] scratch backups.
   :Gpp ...              Run the zsh gpp helper from the current cwd.
+  :Gsquash              Run the interactive zsh gitsquash helper from current cwd.
   :Model ...            In CodeCompanion, set/cycle model aliases.
   :Adapter ...          In CodeCompanion, set/cycle adapters.
 
@@ -400,6 +401,7 @@ Other git helpers:
   <BS>gg                Telescope git status.
   <BS>GG                Open an arbitrary two-pane scratch diff.
   :Gpp ...              Run zsh gpp helper from current cwd.
+  :Gsquash              Run interactive zsh gitsquash helper from current cwd.
 
 AI                                                          *lpke-ai*
 ==============================================================================

@@ -114,6 +114,15 @@ function Lpke_gpp(cmd)
   end
 end
 
+-- run the interactive zsh `gitsquash` helper in a floating terminal
+function Lpke_gsquash()
+  Lpke_term(nil, {
+    command = { 'zsh', '-ic', 'gitsquash' },
+    close_on_exit = true,
+    title = ' Git Squash ',
+  })
+end
+
 -- open a new tab with 2 left/right windows, each with a seperate new buffer that has bufhidden=wipe and nomodified and buftype=nofile
 function Lpke_diff()
   vim.cmd('tabnew')

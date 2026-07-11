@@ -180,6 +180,7 @@ helpers.command_set_multi({
 
   -- git
   { '*', 'Gpp', Lpke_gpp, { desc = 'Run zsh gpp helper without a terminal', bar = false } },
+  { '0', 'Gsquash', Lpke_gsquash, { desc = 'Run interactive zsh gitsquash helper' } },
 
   -- message window
   { '', 'M', Lpke_toggle_messages, { desc = 'Open :messages in a bottom split' } },
