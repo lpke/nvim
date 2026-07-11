@@ -61,6 +61,12 @@ local function before_trigger_matches(pattern)
   end)
 end
 
+local has_visual_selection = cond_obj.make_condition(function()
+  local ok, selection = pcall(vim.api.nvim_buf_get_var, 0, 'LUASNIP_SELECT_RAW')
+
+  return ok and type(selection) == 'table' and #selection > 0
+end)
+
 local function selected_lines(parent, kind)
   kind = kind or 'raw'
 
@@ -167,4 +173,5 @@ return {
   -- presets passable to `condition = ...` in last arg of `s()`
   exp_conds = exp_conds,
   before_trigger_matches = before_trigger_matches,
+  has_visual_selection = has_visual_selection,
 }

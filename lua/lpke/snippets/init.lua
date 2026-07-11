@@ -8,11 +8,12 @@ local ts = require('lpke.snippets.ts')
 local jsx = require('lpke.snippets.jsx')
 local tsx = require('lpke.snippets.tsx')
 local vue = require('lpke.snippets.vue')
+local jsTypeCast = require('lpke.snippets.js_type_cast')
 
 -- js/ts snippet inheritance
-local jsSnippets = js
+local jsSnippets = ct(js, jsTypeCast)
 local htmlSnippets = ct(html, js)
-local jsxSnippets = ct(jsx, js, html)
+local jsxSnippets = ct(jsx, js, html, jsTypeCast)
 local tsSnippets = ct(ts, js)
 local tsxSnippets = ct(tsx, jsx, ts, js, html)
 local vueSnippets = ct(vue, ts, js)

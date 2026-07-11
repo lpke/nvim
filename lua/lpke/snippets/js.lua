@@ -308,12 +308,12 @@ return ct(test_snippets, { -- js
     fmtc(
       [[
       .addEventListener('input', (e) => {{
-        if (e instanceof InputEvent) {{
+        if (e instanceof InputEvent && e.target instanceof HTMLInputElement) {{
           {}
         }}
       }});
     ]],
-      { i(1, '// text input event only') }
+      { i(1, '// text input handling') }
     )
   ),
   event_listener_suffix('.aelm', 'mousemove'),
