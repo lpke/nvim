@@ -300,6 +300,22 @@ return ct(test_snippets, { -- js
   }, t('.stopImmediatePropagation();')),
   event_listener_suffix('.ael', 'click', true),
   event_listener_suffix('.aelc', 'click'),
+  postfix_s(
+    {
+      trig = '.aeli',
+      name = 'input event listener suffix',
+    },
+    fmtc(
+      [[
+      .addEventListener('input', (e) => {{
+        if (e instanceof InputEvent) {{
+          {}
+        }}
+      }});
+    ]],
+      { i(1, '// text input event only') }
+    )
+  ),
   event_listener_suffix('.aelm', 'mousemove'),
   event_listener_suffix('.aelr', 'resize'),
   event_listener_suffix('.aels', 'submit'),
