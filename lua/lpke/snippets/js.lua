@@ -16,6 +16,26 @@ local function postfix_s(params, nodes)
   })
 end
 
+local function event_listener_suffix(trig, event, editable)
+  local event_node = editable and i(1, event) or t(event)
+  local body_node = i(editable and 2 or 1)
+
+  return postfix_s(
+    {
+      trig = trig,
+      name = event .. ' event listener suffix',
+    },
+    fmt(
+      [[
+      .addEventListener('<>', function() {
+        <>
+      });
+    ]],
+      { event_node, body_node }
+    )
+  )
+end
+
 return ct(test_snippets, { -- js
   _s(
     {
@@ -266,6 +286,18 @@ return ct(test_snippets, { -- js
     trig = '.cl',
     name = 'classList suffix',
   }, t('.classList')),
+  event_listener_suffix('.ael', 'click', true),
+  event_listener_suffix('.aelc', 'click'),
+  event_listener_suffix('.aelm', 'mousemove'),
+  event_listener_suffix('.aelr', 'resize'),
+  event_listener_suffix('.aels', 'submit'),
+  event_listener_suffix('.aelkd', 'keydown'),
+  event_listener_suffix('.aelku', 'keyup'),
+  event_listener_suffix('.aelf', 'focus'),
+  event_listener_suffix('.aelb', 'blur'),
+  event_listener_suffix('.aeld', 'drag'),
+  event_listener_suffix('.aelds', 'dragstart'),
+  event_listener_suffix('.aelde', 'dragend'),
   _s({
     trig = '/cl',
     name = 'Console Log',

@@ -105,20 +105,4 @@ return { -- html
     trig = 'dsa',
     name = 'Document Query Selector All',
   }, fmt('document.querySelectorAll(<>)', { i(1) })),
-  s({
-    trig = 'cl',
-    name = 'Console Log',
-  }, fmt('console.log(<>);', { d(1, sel_dedent) })),
-  s({
-    trig = 'cld',
-    name = 'Console Log Debug',
-  }, fmt('console.log({ <> });', { i(1) })),
-  s({
-    trig = 'ce',
-    name = 'Console Error',
-  }, fmt('console.error(<>);', { d(1, sel_dedent) })),
-  s({
-    trig = 'ced',
-    name = 'Console Error Debug',
-  }, fmt('console.error({ <> });', { i(1) })),
 }

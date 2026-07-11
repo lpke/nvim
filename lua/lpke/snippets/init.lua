@@ -11,6 +11,7 @@ local vue = require('lpke.snippets.vue')
 
 -- js/ts snippet inheritance
 local jsSnippets = js
+local htmlSnippets = ct(html, js)
 local jsxSnippets = ct(jsx, js, html)
 local tsSnippets = ct(ts, js)
 local tsxSnippets = ct(tsx, jsx, ts, js, html)
@@ -19,7 +20,7 @@ local vueSnippets = ct(vue, ts, js)
 return {
   all = require('lpke.snippets.all'),
   lua = require('lpke.snippets.lua'),
-  html = html,
+  html = htmlSnippets,
   css = css,
   js = jsSnippets,
   javascript = jsSnippets,
