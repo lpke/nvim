@@ -11,6 +11,14 @@ local function current_or_buf(bufnr)
   return bufnr
 end
 
+local function emit_text_changed(bufnr)
+  vim.schedule(function()
+    if vim.api.nvim_buf_is_valid(bufnr) then
+      vim.api.nvim_exec_autocmds('TextChanged', { buffer = bufnr })
+    end
+  end)
+end
+
 function Lpke_render_markdown_active(bufnr)
   bufnr = current_or_buf(bufnr)
   local ok, manager = pcall(require, 'render-markdown.core.manager')
@@ -64,6 +72,14 @@ local function config()
             desc = 'Render Markdown: Toggle buffer rendering',
           },
         })
+        if vim.bo[ctx.buf].buftype == 'nofile' then
+          vim.api.nvim_buf_attach(ctx.buf, false, {
+            on_lines = function()
+              emit_text_changed(ctx.buf)
+            end,
+          })
+          emit_text_changed(ctx.buf)
+        end
         refresh_lualine()
       end,
     },
@@ -93,6 +109,11 @@ local function config()
       },
     },
     overrides = {
+      buftype = {
+        nofile = {
+          debounce = 0,
+        },
+      },
       filetype = {
         codecompanion = {
           html = {
