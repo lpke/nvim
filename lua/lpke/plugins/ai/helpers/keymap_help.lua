@@ -41,6 +41,10 @@ local sections = {
   {
     title = 'Chat Buffer Keymaps',
     keymaps = {
+      {
+        description = 'Open file reference at its line and column',
+        modes = { n = 'gd' },
+      },
       { description = 'Cycle between AI models', modes = { n = '<leader>m' } },
       {
         description = 'Cycle between AI adapters',

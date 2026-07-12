@@ -432,7 +432,8 @@ Chat buffer keys:
   ga                    Change adapter.
   gs                    Toggle system prompt.
   gta / gtx             Toggle/clear chat approvals.
-  gd                    Open file under cursor in a new tab.
+  gd                    Open file reference under cursor in a new tab. Supports
+                        path, path:line, and path:line:column.
   gn                    New chat.
   gh                    Saved chat history.
   gH                    History/resume/drafts action picker.
@@ -536,6 +537,7 @@ Symbols and docs:
              z* controls symbol tree folds, q closes.
   <BS>fa                Open installed API docs picker.
   <BS>fA                Search installed API docs.
+  In API docs: gd       Follow local:// references or open external URLs.
   :ApidocsInstall       Install DevDocs-backed API docs, e.g. JavaScript.
   <leader>u             Undotree.
   <BS>ft                Todo comments Telescope.

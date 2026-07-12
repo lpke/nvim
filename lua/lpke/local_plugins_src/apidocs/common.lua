@@ -35,11 +35,12 @@ local function open_file_buffer(filepath)
   end
 
   local buf = vim.fn.bufadd(filepath)
+  -- Buffer-load autocmds may switch buffers, so unlock the window first.
+  vim.wo.winfixbuf = false
   vim.fn.bufload(buf)
   vim.bo[buf].buflisted = true
   vim.bo[buf].filetype = 'markdown'
 
-  vim.wo.winfixbuf = false
   vim.api.nvim_win_set_buf(0, buf)
   vim.wo.conceallevel = 2
   vim.wo.concealcursor = 'n'
@@ -60,7 +61,60 @@ local function jump_to_section(section)
   end
 end
 
-local function open_doc_in_cur_window(docs_path, section)
+local open_doc_in_cur_window
+
+local function reference_target(line)
+  local target = line:match('^%s+%d+%. (%S+)') or line:match('^\t(%S+)')
+  if not target then
+    return nil
+  end
+
+  -- Drop marker added when an ID reference cannot be resolved.
+  return target:gsub('\t%+.+$', '')
+end
+
+local function follow_reference(line)
+  local target = reference_target(line)
+  if not target then
+    return
+  end
+
+  if target:match('^https?://') then
+    vim.ui.open(target)
+    return
+  end
+
+  if not vim.startswith(target, 'local://') then
+    return
+  end
+
+  target = target:sub(#'local://' + 1)
+  local components = vim.split(target, '#')
+  if #components == 2 then
+    -- plain file name
+    open_doc_in_cur_window(data_folder() .. target .. '.html.md')
+  elseif #components == 3 then
+    -- file name+section ID
+    open_doc_in_cur_window(
+      data_folder() .. components[1] .. '#' .. components[2] .. '.html.md',
+      components[3]
+    )
+  elseif #components == 4 then
+    -- file name with two hashes+section ID (happens for lua)
+    open_doc_in_cur_window(
+      data_folder()
+        .. components[1]
+        .. '#'
+        .. components[2]
+        .. '#'
+        .. components[3]
+        .. '.html.md',
+      components[4]
+    )
+  end
+end
+
+open_doc_in_cur_window = function(docs_path, section)
   local buf = open_file_buffer(docs_path)
   if not buf then
     return nil
@@ -74,40 +128,7 @@ local function open_doc_in_cur_window(docs_path, section)
       vim.fn.line('.'),
       false
     )[1]
-    local m = string.match(line, '^%s+%d+%. local://')
-    if m == nil and vim.startswith(line, '\tlocal://') then
-      -- sometimes the format is not "number. link", but "number. desc\n\tlink". maybe when the link has
-      -- a description? this happens with rust
-      m = string.match(line, '^\tlocal://')
-    end
-    if m then
-      -- when parsing the local:// url, drop "<tab>+" text at the end,
-      -- we add this marker when we can't resolve the ID reference
-      local target = line:sub(#m + 1):gsub('\t%+.+$', '')
-      local components = vim.split(target, '#')
-      if #components == 2 then
-        -- plain file name
-        open_doc_in_cur_window(data_folder() .. target .. '.html.md')
-      elseif #components == 3 then
-        -- file name+section ID
-        open_doc_in_cur_window(
-          data_folder() .. components[1] .. '#' .. components[2] .. '.html.md',
-          components[3]
-        )
-      elseif #components == 4 then
-        -- file name with two hashes+section ID (happens for lua)
-        open_doc_in_cur_window(
-          data_folder()
-            .. components[1]
-            .. '#'
-            .. components[2]
-            .. '#'
-            .. components[3]
-            .. '.html.md',
-          components[4]
-        )
-      end
-    end
+    follow_reference(line)
   end, { buffer = buf })
 
   jump_to_section(section)
@@ -169,4 +190,6 @@ return {
   open_doc_in_cur_window = open_doc_in_cur_window,
   open_doc_in_new_window = open_doc_in_new_window,
   filename_to_display = filename_to_display,
+  reference_target = reference_target,
+  follow_reference = follow_reference,
 }

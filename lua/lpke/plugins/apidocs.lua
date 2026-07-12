@@ -116,6 +116,7 @@ local function config()
 
   apidocs.setup({
     picker = 'telescope',
+    follow_link_keymap = 'gd',
   })
 end
 

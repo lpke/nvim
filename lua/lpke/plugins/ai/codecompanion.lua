@@ -467,8 +467,10 @@ local function config()
           goto_file_under_cursor = {
             modes = { n = 'gd' },
             index = 22,
-            callback = 'keymaps.goto_file_under_cursor',
-            description = 'Open the file under cursor in a new tab.',
+            callback = function()
+              require('lpke.plugins.ai.helpers.reference_jump').open_under_cursor()
+            end,
+            description = 'Open file reference under cursor at its line and column.',
           },
           new_chat = {
             modes = { n = 'gn' },
