@@ -2,6 +2,75 @@ local function data_folder()
   return vim.fn.stdpath('data') .. '/apidocs-data/'
 end
 
+local doc_web_paths = {}
+
+local function sanitize_fname(fname)
+  return fname:gsub('/', '_'):gsub("'", '_'):sub(1, 255 - 8)
+end
+
+local function resolve_doc_web_url(docs_path, callback)
+  local relative_path = docs_path:sub(#data_folder() + 1)
+  local source, filename = relative_path:match('^([^/]+)/(.+)$')
+  if not source or not filename then
+    callback(nil, 'invalid documentation path')
+    return
+  end
+
+  local function resolve(paths)
+    local path = paths[filename]
+    if not path then
+      callback(nil, 'source page not found')
+      return
+    end
+    callback('https://devdocs.io/' .. source .. '/' .. path)
+  end
+
+  if doc_web_paths[source] then
+    resolve(doc_web_paths[source])
+    return
+  end
+
+  vim.system(
+    {
+      'curl',
+      '-fLsS',
+      'https://documents.devdocs.io/' .. source .. '/index.json',
+    },
+    { text = true },
+    vim.schedule_wrap(function(result)
+      local ok, index = pcall(vim.json.decode, result.stdout or '')
+      if
+        result.code ~= 0
+        or not ok
+        or type(index) ~= 'table'
+        or type(index.entries) ~= 'table'
+      then
+        callback(nil, 'failed to fetch source index')
+        return
+      end
+
+      local paths = { ['index#index.html.md'] = '' }
+      for _, entry in ipairs(index.entries) do
+        local local_name = sanitize_fname(entry.name .. '#' .. entry.path)
+          .. '.html.md'
+        paths[local_name] = entry.path
+      end
+      doc_web_paths[source] = paths
+      resolve(paths)
+    end)
+  )
+end
+
+local function open_doc_web_url(docs_path)
+  resolve_doc_web_url(docs_path, function(url, err)
+    if not url then
+      vim.notify('Apidocs: ' .. err, vim.log.levels.ERROR)
+      return
+    end
+    vim.ui.open(url)
+  end)
+end
+
 -- https://stackoverflow.com/a/34953646/516188
 local function escape_pattern(text)
   return text:gsub('([^%w])', '%%%1')
@@ -131,6 +200,15 @@ open_doc_in_cur_window = function(docs_path, section)
     follow_reference(line)
   end, { buffer = buf })
 
+  require('lpke.core.helpers').keymap_set({
+    'n',
+    '<leader><CR>',
+    function()
+      open_doc_web_url(docs_path)
+    end,
+    { buffer = buf, desc = 'API docs: Open source page' },
+  })
+
   jump_to_section(section)
   return buf
 end
@@ -190,6 +268,7 @@ return {
   open_doc_in_cur_window = open_doc_in_cur_window,
   open_doc_in_new_window = open_doc_in_new_window,
   filename_to_display = filename_to_display,
+  open_doc_web_url = open_doc_web_url,
   reference_target = reference_target,
   follow_reference = follow_reference,
 }

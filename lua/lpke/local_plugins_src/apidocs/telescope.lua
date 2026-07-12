@@ -21,6 +21,11 @@ local function telescope_attach_mappings(prompt_bufnr, map)
 
   map('i', '<cr>', open_selection, { buffer = true })
   map('n', '<cr>', open_selection, { buffer = true })
+  map('n', '<leader><CR>', function()
+    local entry =
+      require('telescope.actions.state').get_selected_entry(prompt_bufnr)
+    common.open_doc_web_url(entry.filename or entry.value)
+  end, { desc = 'API docs: Open source page' })
   return true
 end
 
