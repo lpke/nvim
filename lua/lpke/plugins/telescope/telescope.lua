@@ -26,6 +26,13 @@ local function config()
     })
   end
 
+  local function toggle_preview_wrap(bufnr)
+    local preview_win = actions_state.get_current_picker(bufnr).preview_win
+    if preview_win and vim.api.nvim_win_is_valid(preview_win) then
+      vim.wo[preview_win].wrap = not vim.wo[preview_win].wrap
+    end
+  end
+
   -- stylua: ignore start
   -- theme
   helpers.set_hl_multi({
@@ -105,6 +112,7 @@ local function config()
           -- ['<C-l>'] = actions.preview_scrolling_right,
           ['<F2>p'] = actions_layout.toggle_preview,
           ['<A-p>'] = actions_layout.toggle_preview,
+          ['<A-w>'] = toggle_preview_wrap,
 
           -- SELECTIONS
           ['<Tab>'] = function(bufnr)
@@ -184,6 +192,7 @@ local function config()
           -- LAYOUT CONTROL
           ['<F2>p'] = actions_layout.toggle_preview,
           ['<A-p>'] = actions_layout.toggle_preview,
+          ['<A-w>'] = toggle_preview_wrap,
           ['<F2>O'] = actions_layout.toggle_mirror,
           ['<A-O>'] = actions_layout.toggle_mirror,
 

@@ -192,6 +192,7 @@ Telescope picker controls:
   <F2>n / <A-n>         Open in tab.
   <C-j>/<C-k>           Scroll preview.
   <F2>p / <A-p>         Toggle preview.
+  <A-w>                 Toggle line wrapping in preview.
   <A-/>                 Toggle file/dir picker with live grep, keeping prompt
                         text and current insert/normal mode.
   <Tab>/<S-Tab>         Toggle selection and move.
