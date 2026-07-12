@@ -16,6 +16,7 @@ M.static = {
   { 'h-full', 'height', '100%' },
   { 'rounded', 'border-radius', '0.25rem' },
   { 'border', 'border', '1px solid currentColor' },
+  { 'box-border', 'box-sizing', 'border-box' },
   { 'justify-start', 'justify-content', 'flex-start' },
   { 'justify-center', 'justify-content', 'center' },
   { 'justify-end', 'justify-content', 'flex-end' },
