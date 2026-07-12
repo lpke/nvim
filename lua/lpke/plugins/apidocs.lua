@@ -122,6 +122,43 @@ end
 
 local function init()
   local helpers = require('lpke.core.helpers')
+  local docs_path = vim.fn.stdpath('data') .. '/apidocs-data/'
+
+  local function set_doc_keymaps(event)
+    local path = vim.api.nvim_buf_get_name(event.buf)
+    if
+      not vim.startswith(path, docs_path) or not vim.endswith(path, '.html.md')
+    then
+      return
+    end
+
+    helpers.keymap_set_multi({
+      {
+        'n',
+        '<leader><CR>',
+        function()
+          require('lpke.local_plugins_src.apidocs.common').open_doc_url(path)
+        end,
+        { buffer = event.buf, desc = 'API docs: Open original source page' },
+      },
+      {
+        'n',
+        '<leader><leader><CR>',
+        function()
+          require('lpke.local_plugins_src.apidocs.common').open_doc_web_url(
+            path
+          )
+        end,
+        { buffer = event.buf, desc = 'API docs: Open DevDocs page' },
+      },
+    })
+  end
+
+  vim.api.nvim_create_autocmd({ 'FileType', 'BufEnter' }, {
+    group = vim.api.nvim_create_augroup('LpkeApiDocsKeymaps', { clear = true }),
+    pattern = '*',
+    callback = set_doc_keymaps,
+  })
 
   helpers.keymap_set_multi({
     {

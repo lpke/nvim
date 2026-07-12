@@ -2,31 +2,26 @@ local function data_folder()
   return vim.fn.stdpath('data') .. '/apidocs-data/'
 end
 
-local doc_web_paths = {}
+local doc_indexes = {}
+local derived_source_urls = {}
+local installed_source_urls = {}
 
 local function sanitize_fname(fname)
   return fname:gsub('/', '_'):gsub("'", '_'):sub(1, 255 - 8)
 end
 
-local function resolve_doc_web_url(docs_path, callback)
+local function doc_path_parts(docs_path)
   local relative_path = docs_path:sub(#data_folder() + 1)
   local source, filename = relative_path:match('^([^/]+)/(.+)$')
   if not source or not filename then
-    callback(nil, 'invalid documentation path')
-    return
+    return nil, nil, 'invalid documentation path'
   end
+  return source, filename
+end
 
-  local function resolve(paths)
-    local path = paths[filename]
-    if not path then
-      callback(nil, 'source page not found')
-      return
-    end
-    callback('https://devdocs.io/' .. source .. '/' .. path)
-  end
-
-  if doc_web_paths[source] then
-    resolve(doc_web_paths[source])
+local function resolve_doc_index(source, callback)
+  if doc_indexes[source] then
+    callback(doc_indexes[source])
     return
   end
 
@@ -38,36 +33,160 @@ local function resolve_doc_web_url(docs_path, callback)
     },
     { text = true },
     vim.schedule_wrap(function(result)
-      local ok, index = pcall(vim.json.decode, result.stdout or '')
+      local ok, data = pcall(vim.json.decode, result.stdout or '')
       if
         result.code ~= 0
         or not ok
-        or type(index) ~= 'table'
-        or type(index.entries) ~= 'table'
+        or type(data) ~= 'table'
+        or type(data.entries) ~= 'table'
       then
         callback(nil, 'failed to fetch source index')
         return
       end
 
-      local paths = { ['index#index.html.md'] = '' }
-      for _, entry in ipairs(index.entries) do
-        local local_name = sanitize_fname(entry.name .. '#' .. entry.path)
+      local index = {
+        paths = { ['index#index.html.md'] = '' },
+        filenames = { [''] = 'index#index.html.md' },
+      }
+      for _, entry in ipairs(data.entries) do
+        local filename = sanitize_fname(entry.name .. '#' .. entry.path)
           .. '.html.md'
-        paths[local_name] = entry.path
+        index.paths[filename] = entry.path
+        index.filenames[entry.path] = filename
       end
-      doc_web_paths[source] = paths
-      resolve(paths)
+      doc_indexes[source] = index
+      callback(index)
     end)
   )
 end
 
-local function open_doc_web_url(docs_path)
-  resolve_doc_web_url(docs_path, function(url, err)
-    if not url then
-      vim.notify('Apidocs: ' .. err, vim.log.levels.ERROR)
+local function resolve_doc_web_url(docs_path, callback)
+  local source, filename, err = doc_path_parts(docs_path)
+  if not source then
+    callback(nil, err)
+    return
+  end
+
+  resolve_doc_index(source, function(index, index_err)
+    if not index then
+      callback(nil, index_err)
       return
     end
-    vim.ui.open(url)
+
+    local path = index.paths[filename]
+    if path == nil then
+      callback(nil, 'source page not found')
+      return
+    end
+    callback('https://devdocs.io/' .. source .. '/' .. path)
+  end)
+end
+
+local function valid_url(url)
+  return type(url) == 'string' and url:match('^https?://') and url or nil
+end
+
+local function installed_source_url(source, filename)
+  if installed_source_urls[source] then
+    return valid_url(installed_source_urls[source][filename])
+  end
+
+  local path = data_folder() .. source .. '/.source_urls.json'
+  if vim.fn.filereadable(path) ~= 1 then
+    return nil
+  end
+
+  local ok, urls = pcall(vim.json.decode, table.concat(vim.fn.readfile(path)))
+  if not ok or type(urls) ~= 'table' then
+    return nil
+  end
+
+  installed_source_urls[source] = urls
+  return valid_url(urls[filename])
+end
+
+local function attribution_url_from_doc(path)
+  if vim.fn.filereadable(path) ~= 1 then
+    return nil
+  end
+
+  local last_url
+  for line in io.lines(path) do
+    local url = line:match('^%s*%d+%.%s+(https?://%S+)%s*$')
+    if url then
+      last_url = url
+    end
+  end
+  return last_url
+end
+
+local function resolve_doc_source_url(docs_path, callback)
+  local source, filename, err = doc_path_parts(docs_path)
+  if not source then
+    callback(nil, nil, err)
+    return
+  end
+
+  local installed_url = installed_source_url(source, filename)
+  if installed_url then
+    callback(installed_url)
+    return
+  end
+
+  if derived_source_urls[docs_path] then
+    callback(derived_source_urls[docs_path])
+    return
+  end
+
+  resolve_doc_index(source, function(index, index_err)
+    if not index then
+      callback(nil, nil, index_err)
+      return
+    end
+
+    local entry_path = index.paths[filename]
+    if entry_path == nil then
+      callback(nil, nil, 'source page not found')
+      return
+    end
+
+    local devdocs_url = 'https://devdocs.io/' .. source .. '/' .. entry_path
+    local base_path = entry_path:match('^[^#]*')
+    local base_filename = index.filenames[base_path]
+    local source_url = base_filename
+        and attribution_url_from_doc(
+          data_folder() .. source .. '/' .. base_filename
+        )
+      or nil
+    local fragment = entry_path:match('#(.+)$')
+    if source_url and fragment then
+      source_url = source_url:gsub('#.*$', '') .. '#' .. fragment
+    end
+
+    if source_url then
+      derived_source_urls[docs_path] = source_url
+    end
+    callback(source_url, devdocs_url)
+  end)
+end
+
+local function open_url(url, err)
+  if not url then
+    vim.notify('Apidocs: ' .. err, vim.log.levels.ERROR)
+    return
+  end
+  vim.ui.open(url)
+end
+
+local function open_doc_url(docs_path)
+  resolve_doc_source_url(docs_path, function(source_url, devdocs_url, err)
+    open_url(source_url or devdocs_url, err)
+  end)
+end
+
+local function open_doc_web_url(docs_path)
+  resolve_doc_web_url(docs_path, function(url, err)
+    open_url(url, err)
   end)
 end
 
@@ -200,15 +319,6 @@ open_doc_in_cur_window = function(docs_path, section)
     follow_reference(line)
   end, { buffer = buf })
 
-  require('lpke.core.helpers').keymap_set({
-    'n',
-    '<leader><CR>',
-    function()
-      open_doc_web_url(docs_path)
-    end,
-    { buffer = buf, desc = 'API docs: Open source page' },
-  })
-
   jump_to_section(section)
   return buf
 end
@@ -268,6 +378,7 @@ return {
   open_doc_in_cur_window = open_doc_in_cur_window,
   open_doc_in_new_window = open_doc_in_new_window,
   filename_to_display = filename_to_display,
+  open_doc_url = open_doc_url,
   open_doc_web_url = open_doc_web_url,
   reference_target = reference_target,
   follow_reference = follow_reference,

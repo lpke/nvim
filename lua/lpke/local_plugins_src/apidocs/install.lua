@@ -19,6 +19,30 @@ local function sanitize_fname(fname)
   return fname:gsub('/', '_'):gsub("'", '_'):sub(1, 255 - 8) -- 8 == ".html.md"
 end
 
+local function attribution_url(html)
+  local url = html:match(
+    '<a[^>]-href="(https?://[^"]+)"[^>]-class="_attribution%-link"'
+  ) or html:match(
+    '<a[^>]-class="_attribution%-link"[^>]-href="(https?://[^"]+)"'
+  )
+  return url and url:gsub('&amp;', '&') or nil
+end
+
+local function source_urls_for_outputs(output_paths, source_urls_by_path)
+  local source_urls = {}
+  for out_path, orig_path in pairs(output_paths) do
+    local base_path, fragment = orig_path:match('^([^#]+)#?(.*)$')
+    local url = source_urls_by_path[base_path]
+    if url then
+      if fragment ~= '' then
+        url = url:gsub('#.*$', '') .. '#' .. fragment
+      end
+      source_urls[out_path .. '.md'] = url
+    end
+  end
+  return source_urls
+end
+
 -- if the line contains table cells it's sensitive to alignment...
 -- in that case compensate the neovim conceal that hides the ` and other characters
 -- by adding extra spaces not to break the table borders alignment.
@@ -413,6 +437,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
           local name_to_contents = {}
           local out_path_to_orig_path = {}
           local out_path_to_orig_containing_path = {}
+          local source_urls_by_path = {}
 
           local query = vim.treesitter.query.parse(
             'html',
@@ -428,6 +453,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
 
           -- save all the files
           for _, key in ipairs(vim.tbl_keys(data)) do
+            source_urls_by_path[key] = attribution_url(data[key])
             local sanitized_key =
               sanitize_fname((path_to_name[key] or key) .. '#' .. key)
             out_path_to_orig_path[sanitized_key .. '.html'] = key
@@ -677,6 +703,14 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
               end
             end
           end
+
+          local source_urls =
+            source_urls_for_outputs(out_path_to_orig_path, source_urls_by_path)
+          vim.fn.writefile(
+            { vim.json.encode(source_urls) },
+            target_path .. '/.source_urls.json'
+          )
+
           local elapsed_writing = (vim.loop.hrtime() - start_writing) / 1e9
 
           local start_elinks = vim.loop.hrtime()

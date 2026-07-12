@@ -538,7 +538,8 @@ Symbols and docs:
   <BS>fa                Open installed API docs picker.
   <BS>fA                Search installed API docs.
   In API docs: gd       Follow local:// references or open external URLs.
-  In API docs/picker: <leader><CR> Open selected doc on DevDocs.
+  In API docs/picker: <leader><CR> Open original source (DevDocs fallback).
+  In API docs/picker: <leader><leader><CR> Always open on DevDocs.
   :ApidocsInstall       Install DevDocs-backed API docs, e.g. JavaScript.
   <leader>u             Undotree.
   <BS>ft                Todo comments Telescope.
