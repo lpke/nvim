@@ -138,7 +138,11 @@ local function config()
 
     -- jump/list related code
     { 'nC', '<leader>*', 'Telescope lsp_references', { desc = 'Show LSP references' }, },
-    { 'nC', 'gd', 'Telescope lsp_definitions', { desc = 'Show LSP definitions' }, },
+    { 'n', 'gd', function()
+      if not helpers.open_url_under_cursor() then
+        vim.cmd('Telescope lsp_definitions')
+      end
+    end, { desc = 'Open URL or show LSP definitions' }, },
     { 'nC', 'gt', 'Telescope lsp_type_definitions', { desc = 'Show LSP type definitions' }, },
     { 'nC', 'gi', 'Telescope lsp_implementations', { desc = 'Show LSP implementations' }, },
   })

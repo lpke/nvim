@@ -60,12 +60,16 @@ function M.reference_at(line, col)
 end
 
 function M.open_under_cursor()
+  if require('lpke.core.helpers').open_url_under_cursor() then
+    return
+  end
+
   local cursor = vim.api.nvim_win_get_cursor(0)
   local reference =
     M.reference_at(vim.api.nvim_get_current_line(), cursor[2] + 1)
   if not reference then
     vim.notify(
-      'CodeCompanion: no readable file reference under cursor',
+      'CodeCompanion: no URL or readable file reference under cursor',
       vim.log.levels.INFO
     )
     return

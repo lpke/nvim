@@ -327,12 +327,13 @@ Mason:
 Navigation and actions:
   gr                    Rename.
   ga                    Code action.
-  gh                    Hover.
+  gh                    Open hover; press again to focus its floating window.
   gl                    Line diagnostics float.
   <leader>l             Telescope diagnostics for current buffer.
   [l / ]l               Previous/next diagnostic with float.
   <leader>*             References.
   gd / gt / gi          Definition, type definition, implementation.
+  In LSP hover: gd      Open HTTP(S) link under cursor in browser.
   <leader>R             Restart LSPs for current filetype.
 
 Diagnostics:
@@ -433,8 +434,8 @@ Chat buffer keys:
   ga                    Change adapter.
   gs                    Toggle system prompt.
   gta / gtx             Toggle/clear chat approvals.
-  gd                    Open file reference under cursor in a new tab. Supports
-                        path, path:line, and path:line:column.
+  gd                    Open HTTP(S) link in browser or file reference in a new
+                        tab. Supports path, path:line, and path:line:column.
   gn                    New chat.
   gh                    Saved chat history.
   gH                    History/resume/drafts action picker.

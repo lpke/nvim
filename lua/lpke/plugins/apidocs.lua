@@ -54,10 +54,14 @@ local function config()
             vim.schedule(function()
               if kind == 'open' then
                 next_search_default_text = prompt
-                require('lpke.local_plugins_src.apidocs.api').apidocs_search({ picker = 'telescope' })
+                require('lpke.local_plugins_src.apidocs.api').apidocs_search({
+                  picker = 'telescope',
+                })
               else
                 next_open_default_text = prompt
-                require('lpke.local_plugins_src.apidocs.api').apidocs_open({ picker = 'telescope' })
+                require('lpke.local_plugins_src.apidocs.api').apidocs_open({
+                  picker = 'telescope',
+                })
               end
             end)
           end
@@ -133,6 +137,15 @@ local function init()
     end
 
     helpers.keymap_set_multi({
+      {
+        'n',
+        'gd',
+        require('lpke.local_plugins_src.apidocs.common').follow_reference_under_cursor,
+        {
+          buffer = event.buf,
+          desc = 'API docs: Open URL or follow reference',
+        },
+      },
       {
         'n',
         '<leader><CR>',

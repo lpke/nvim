@@ -470,7 +470,7 @@ local function config()
             callback = function()
               require('lpke.plugins.ai.helpers.reference_jump').open_under_cursor()
             end,
-            description = 'Open file reference under cursor at its line and column.',
+            description = 'Open URL or file reference under cursor.',
           },
           new_chat = {
             modes = { n = 'gn' },

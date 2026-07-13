@@ -1,3 +1,5 @@
+local helpers = require('lpke.core.helpers')
+
 local function data_folder()
   return vim.fn.stdpath('data') .. '/apidocs-data/'
 end
@@ -262,13 +264,17 @@ local function reference_target(line)
 end
 
 local function follow_reference(line)
+  if helpers.open_url_under_cursor() then
+    return
+  end
+
   local target = reference_target(line)
   if not target then
     return
   end
 
   if target:match('^https?://') then
-    vim.ui.open(target)
+    helpers.open_url(target)
     return
   end
 
@@ -302,6 +308,10 @@ local function follow_reference(line)
   end
 end
 
+local function follow_reference_under_cursor()
+  follow_reference(vim.api.nvim_get_current_line())
+end
+
 open_doc_in_cur_window = function(docs_path, section)
   local buf = open_file_buffer(docs_path)
   if not buf then
@@ -309,15 +319,12 @@ open_doc_in_cur_window = function(docs_path, section)
   end
 
   local follow_link_keymap = Config and Config.follow_link_keymap or '<C-]>'
-  vim.keymap.set('n', follow_link_keymap, function()
-    local line = vim.api.nvim_buf_get_lines(
-      0,
-      vim.fn.line('.') - 1,
-      vim.fn.line('.'),
-      false
-    )[1]
-    follow_reference(line)
-  end, { buffer = buf })
+  helpers.keymap_set({
+    'n',
+    follow_link_keymap,
+    follow_reference_under_cursor,
+    { buffer = buf, desc = 'API docs: Open URL or follow reference' },
+  })
 
   jump_to_section(section)
   return buf
@@ -382,4 +389,5 @@ return {
   open_doc_web_url = open_doc_web_url,
   reference_target = reference_target,
   follow_reference = follow_reference,
+  follow_reference_under_cursor = follow_reference_under_cursor,
 }
