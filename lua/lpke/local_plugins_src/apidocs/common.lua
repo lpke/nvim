@@ -330,6 +330,23 @@ open_doc_in_cur_window = function(docs_path, section)
   return buf
 end
 
+local function current_tab_is_empty_no_name()
+  local current_win = vim.api.nvim_get_current_win()
+  local non_float_wins = vim.tbl_filter(function(win)
+    return vim.api.nvim_win_get_config(win).relative == ''
+  end, vim.api.nvim_tabpage_list_wins(0))
+  if #non_float_wins ~= 1 or non_float_wins[1] ~= current_win then
+    return false
+  end
+
+  local buf = vim.api.nvim_get_current_buf()
+  return vim.api.nvim_buf_get_name(buf) == ''
+    and vim.bo[buf].buftype == ''
+    and not vim.bo[buf].modified
+    and vim.api.nvim_buf_line_count(buf) == 1
+    and vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] == ''
+end
+
 local function open_doc_in_new_window(docs_path)
   if vim.fn.filereadable(docs_path) ~= 1 then
     vim.notify(
@@ -337,6 +354,16 @@ local function open_doc_in_new_window(docs_path)
       vim.log.levels.ERROR
     )
     return nil
+  end
+
+  if current_tab_is_empty_no_name() then
+    local no_name_buf = vim.api.nvim_get_current_buf()
+    local buf = open_doc_in_cur_window(docs_path)
+    if buf then
+      vim.wo.winfixbuf = true
+      pcall(vim.api.nvim_buf_delete, no_name_buf, { force = false })
+    end
+    return buf
   end
 
   local previous_win = vim.api.nvim_get_current_win()
