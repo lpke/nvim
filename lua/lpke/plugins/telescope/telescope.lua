@@ -33,6 +33,25 @@ local function config()
     end
   end
 
+  local function mouse_select(prompt_bufnr)
+    local picker = actions_state.get_current_picker(prompt_bufnr)
+    local pos = vim.fn.getmousepos()
+
+    if pos.winid == picker.results_win then
+      vim.schedule(function()
+        picker:set_selection(pos.line - 1)
+      end)
+    end
+
+    return ''
+  end
+
+  local mouse_select_mapping = {
+    mouse_select,
+    type = 'action',
+    opts = { expr = true },
+  }
+
   -- stylua: ignore start
   -- theme
   helpers.set_hl_multi({
@@ -88,6 +107,16 @@ local function config()
 
       mappings = {
         i = {
+          -- MOUSE
+          ['<LeftMouse>'] = mouse_select_mapping,
+          ['<2-LeftMouse>'] = mouse_select_mapping,
+          ['<3-LeftMouse>'] = mouse_select_mapping,
+          ['<4-LeftMouse>'] = mouse_select_mapping,
+          ['<RightMouse>'] = mouse_select_mapping,
+          ['<2-RightMouse>'] = mouse_select_mapping,
+          ['<3-RightMouse>'] = mouse_select_mapping,
+          ['<4-RightMouse>'] = mouse_select_mapping,
+
           -- OPENING FILES
           ['<CR>'] = actions.select_default,
           ['<F2>.'] = actions.file_vsplit,
@@ -132,6 +161,16 @@ local function config()
           end,
         },
         n = {
+          -- MOUSE
+          ['<LeftMouse>'] = mouse_select_mapping,
+          ['<2-LeftMouse>'] = mouse_select_mapping,
+          ['<3-LeftMouse>'] = mouse_select_mapping,
+          ['<4-LeftMouse>'] = mouse_select_mapping,
+          ['<RightMouse>'] = mouse_select_mapping,
+          ['<2-RightMouse>'] = mouse_select_mapping,
+          ['<3-RightMouse>'] = mouse_select_mapping,
+          ['<4-RightMouse>'] = mouse_select_mapping,
+
           -- HACKS/FIXES
           ['u'] = function(bufnr)
             local num_selected = 0
