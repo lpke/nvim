@@ -25,7 +25,7 @@ return { -- vue
     t({ '', '</script>' }),
   }),
   _s({
-    trig = 'st',
+    trig = 'ss',
     name = 'Scoped style block',
   }, { t({ '<style scoped>', '  ' }), i(1), t({ '', '</style>' }) }),
   _s(

@@ -95,6 +95,34 @@ return ct(test_snippets, { -- js
   }, fmt('Promise.any([<>]);', { i(1) })),
   _s(
     {
+      trig = 'st',
+      name = 'setTimeout',
+    },
+    fmtc(
+      [[
+        setTimeout(() => {{
+          {}
+        }}, {});
+      ]],
+      { i(1), i(2) }
+    )
+  ),
+  _s(
+    {
+      trig = 'si',
+      name = 'setInterval',
+    },
+    fmtc(
+      [[
+        setInterval(() => {{
+          {}
+        }}, {});
+      ]],
+      { i(1), i(2) }
+    )
+  ),
+  _s(
+    {
       trig = 'rf',
       name = 'Return arrow function',
     },
@@ -120,6 +148,51 @@ return ct(test_snippets, { -- js
       ]],
       { i(1), i(2) }
     )
+  ),
+  _s(
+    {
+      trig = 'switch',
+      name = 'Switch statement',
+    },
+    fmt(
+      [[
+        switch (<>) {
+          <>
+        }
+      ]],
+      { i(1), i(2) }
+    )
+  ),
+  _s(
+    {
+      trig = 'c',
+      name = 'Switch case',
+      priority = 1100,
+    },
+    fmt(
+      [[
+        case '<>':
+          <>
+          break;
+      ]],
+      { i(1), i(2) }
+    ),
+    { condition = h.has_ts_ancestor('switch_statement') }
+  ),
+  _s(
+    {
+      trig = 'd',
+      name = 'Switch default',
+      priority = 1100,
+    },
+    fmt(
+      [[
+        default:
+          <>
+      ]],
+      { i(1) }
+    ),
+    { condition = h.has_ts_ancestor('switch_statement') }
   ),
   _s(
     {

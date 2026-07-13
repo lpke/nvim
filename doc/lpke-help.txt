@@ -570,17 +570,18 @@ Filetypes:
 Snippets:
   all: inline object/array.
   lua: function, if/else, for loops, print/Print, multiline string wrappers.
-  js/ts: functions, constructors from fields, promises, try/catch, debug logs,
-         Vitest import/scaffold, table, matcher, mock, spy, and timer snippets
-         in *.test.js/ts, plus DOM .id/.qs/.qsa/.ce/.ac/.rc/.cl suffixes and
-         .ael* event-listener and .pd/.sp/.sip event-control suffixes. .tb/.te
-         matcher suffixes work on non-empty lines.
+  js/ts: functions, constructors from fields, promises, try/catch, switch,
+         switch-only case (c)/default (d), setTimeout (st), setInterval (si),
+         debug logs, Vitest import/scaffold, table, matcher, mock, spy, and
+         timer snippets in *.test.js/ts, plus DOM .id/.qs/.qsa/.ce/.ac/.rc/.cl
+         suffixes and .ael* event-listener and .pd/.sp/.sip event-control
+         suffixes. .tb/.te matcher suffixes work on non-empty lines.
   jsx/tsx: React components, hooks, className, JSX expression wrappers,
            MUI sx/Box, and the same Tailwind-style shorthands as CSS. Plain
            triggers emit JS object properties; triggers ending in ; emit CSS.
   css: Tailwind-style layout, spacing, grid, text, color, border, and shadow
        shorthands.
-  vue: t/s/st create template, script setup lang="ts", scoped style blocks,
+  vue: t/s/ss create template, script setup lang="ts", scoped style blocks,
        defineProps/defineEmits, lifecycle hooks, and watchers; Vue also gets
        JS + TS snippets.
   html: scaffold, class attribute, form, input, label, image, DOM selectors,
@@ -595,7 +596,7 @@ Vue snippets. Use :HelpVue to open this section directly.
   cn   class attr; static classes.              `class="card is-active"`
   t    template block; SFC markup root.         `<template><UserCard /></template>`
   s    script setup; Composition API with TS.   `<script setup lang="ts">`
-  st   scoped style; local component CSS.       `<style scoped>.card {}</style>`
+  ss   scoped style; local component CSS.       `<style scoped>.card {}</style>`
   dp   defineProps; props + type + defaults.    `withDefaults(defineProps<{ dense?: boolean }>(), { dense: false })`
   e    defineEmits; typed parent events.        `const emit = defineEmits<{ save: [id: string] }>()`
   om   onMounted; DOM/client startup.           `onMounted(() => input.value?.focus())`

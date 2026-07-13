@@ -61,6 +61,44 @@ local function before_trigger_matches(pattern)
   end)
 end
 
+local function has_ts_ancestor(node_type)
+  return cond_obj.make_condition(function(line_to_cursor)
+    if #line_to_cursor == 0 then
+      return false
+    end
+
+    local pos = {
+      vim.api.nvim_win_get_cursor(0)[1] - 1,
+      #line_to_cursor - 1,
+    }
+    local parser_ok, parser = pcall(vim.treesitter.get_parser, 0)
+    if
+      not parser_ok
+      or not pcall(parser.parse, parser, { pos[1], pos[2], pos[1], pos[2] })
+    then
+      return false
+    end
+
+    local ok, node = pcall(vim.treesitter.get_node, {
+      pos = pos,
+      ignore_injections = false,
+    })
+
+    if not ok then
+      return false
+    end
+
+    while node do
+      if node:type() == node_type then
+        return true
+      end
+      node = node:parent()
+    end
+
+    return false
+  end)
+end
+
 local has_visual_selection = cond_obj.make_condition(function()
   local ok, selection = pcall(vim.api.nvim_buf_get_var, 0, 'LUASNIP_SELECT_RAW')
 
@@ -173,5 +211,6 @@ return {
   -- presets passable to `condition = ...` in last arg of `s()`
   exp_conds = exp_conds,
   before_trigger_matches = before_trigger_matches,
+  has_ts_ancestor = has_ts_ancestor,
   has_visual_selection = has_visual_selection,
 }
