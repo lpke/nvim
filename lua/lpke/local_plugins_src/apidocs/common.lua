@@ -402,6 +402,7 @@ local function filename_to_display(filename)
   if #components == 4 then
     display = display .. '#' .. components[2]
   end
+  display = display:gsub('\226\128\139', '')
   return display
 end
 
