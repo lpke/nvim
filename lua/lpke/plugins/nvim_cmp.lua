@@ -155,7 +155,13 @@ local function config()
       { name = 'nvim_lsp', keyword_length = 3 }, -- LSP
       { name = 'luasnip', keyword_length = 5 }, -- snippets
       { name = 'path' }, -- file system paths
-      { name = 'buffer', keyword_length = 5 }, -- text within current buffer
+      {
+        name = 'buffer',
+        keyword_length = 5,
+        entry_filter = function(entry)
+          return not entry.exact
+        end,
+      }, -- text within current buffer
       { name = 'render-markdown' },
     }),
 
