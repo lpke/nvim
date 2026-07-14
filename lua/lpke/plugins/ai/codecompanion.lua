@@ -7,6 +7,7 @@ local ai_config = require('lpke.plugins.ai.helpers.config')
 local caveman = require('lpke.plugins.ai.helpers.caveman')
 local img_clip = require('lpke.plugins.ai.helpers.img_clip')
 local slash_commands = require('lpke.plugins.ai.helpers.slash_commands')
+local submit_guard = require('lpke.plugins.ai.helpers.submit_guard')
 
 local function notify(msg)
   vim.notify(msg, vim.log.levels.INFO, { title = 'CodeCompanion' })
@@ -148,6 +149,8 @@ local function config()
           -- Never pass that placeholder to codex-acp, which can persist it globally.
           adapter.env.OPENAI_API_KEY = nil
           adapter.env.CODEX_API_KEY = nil
+          adapter.handlers.form_messages =
+            submit_guard.wrap_acp_form_messages(adapter.handlers.form_messages)
           return adapter
         end,
         opts = {
@@ -231,8 +234,7 @@ local function config()
             },
             index = 2,
             callback = function(chat)
-              vim.cmd('stopinsert')
-              chat:submit()
+              submit_guard.submit(chat)
             end,
             description = 'Send',
           },
@@ -580,6 +582,7 @@ local function config()
   })
 
   require('lpke.plugins.ai.helpers.keymap_help').setup()
+  submit_guard.setup()
   require('lpke.plugins.ai.helpers.slash_command_completion').patch_cmp()
   require('lpke.plugins.ai.helpers.acp_lifecycle').setup()
   require('lpke.plugins.ai.helpers.history_scope').setup()

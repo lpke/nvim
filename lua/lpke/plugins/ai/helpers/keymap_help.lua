@@ -81,7 +81,7 @@ local sections = {
         modes = { n = { '<A-d>', '<F2>d' }, i = { '<A-d>', '<F2>d' } },
       },
       {
-        description = 'Send and scroll submitted prompt to top',
+        description = 'Send non-empty prompt and scroll it to top',
         modes = { n = { '<CR>', '<C-s>' }, i = '<C-s>' },
       },
       {
