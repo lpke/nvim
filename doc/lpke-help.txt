@@ -193,14 +193,14 @@ Telescope picker controls:
   <C-j>/<C-k>           Scroll preview.
   <F2>p / <A-p>         Toggle preview.
   <A-w>                 Toggle line wrapping in preview.
-  <A-/>                 Toggle file/dir picker with live grep, keeping prompt
-                        text and current insert/normal mode.
+  <F2>s / <A-s>         Toggle Find Files and Find Directories, keeping prompt.
+  <A-/>                 Toggle Find in Files and current file/directory picker,
+                        keeping prompt text and current insert/normal mode.
   <Tab>/<S-Tab>         Toggle selection and move.
   q or <C-q>            Send to quickfix, depending on mode.
   dD                    Delete selected item where supported.
   h                     Parent/history action where supported.
-  In file/dir pickers: <F2>s toggles file/dir mode, - goes parent,
-                       <BS><BS> reopens from selected parent,
+  In file/dir pickers: - goes parent, <BS><BS> reopens from selected parent,
                        <BS>/ greps selected parent.
 
 Other navigation pickers:
