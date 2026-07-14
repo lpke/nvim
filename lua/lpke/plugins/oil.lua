@@ -84,18 +84,6 @@ local function config()
         desc = 'Oil: If IN_VSCODE and file, run "cursor -r", else open normally',
         mode = 'n',
       },
-      ['<leader><CR>'] = {
-        callback = function()
-          local dir = oil.get_current_dir()
-          local entry = oil.get_cursor_entry()
-          if entry then
-            local fullpath = dir .. entry.name
-            vim.fn.jobstart({ 'cursor', '-r', fullpath })
-          end
-        end,
-        desc = 'Oil: Run "cursor -r" on selected entry',
-        mode = 'n',
-      },
       ['-'] = 'actions.parent',
       ['gd'] = 'actions.open_cwd',
       ['gD'] = {

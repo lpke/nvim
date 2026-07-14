@@ -151,7 +151,7 @@ Oil:
   - or <BS>s            Open Oil in the current window.
   <F2>> / <A->>         Open Oil in a vertical split.
   <F2>< / <A-<>         Open Oil in a horizontal split.
-  In Oil: <CR> opens entry; <leader><CR> opens entry in Cursor.
+  In Oil: <CR> opens entry.
   In Oil: - parent, gd cwd, gD git root, gh home, gE OS browser.
   :OH opens current .html file, or selected .html file in Oil, in a browser.
   :OHS does the same with browser live reload on saves. Managed OHS servers can
