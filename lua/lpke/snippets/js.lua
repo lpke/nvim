@@ -59,11 +59,11 @@ return ct(test_snippets, { -- js
     trig = 'conf',
     name = 'Constructor with fields',
   }, d(1, class_helpers.constructor_with_fields)),
-  _s({
+  s({
     trig = 'pall',
     name = 'Promise.all',
   }, fmt('Promise.all([<>]);', { i(1) })),
-  _s({
+  s({
     trig = 'palls',
     name = 'Promise.allSettled',
   }, fmt('Promise.allSettled([<>]);', { i(1) })),
@@ -77,23 +77,23 @@ return ct(test_snippets, { -- js
       { i(1) }
     )
   ),
-  _s({
+  s({
     trig = 'pres',
     name = 'Promise.resolve',
   }, fmt('Promise.resolve(<>);', { i(1) })),
-  _s({
+  s({
     trig = 'prej',
     name = 'Promise.reject',
   }, fmt('Promise.reject(<>);', { i(1) })),
-  _s({
+  s({
     trig = 'prace',
     name = 'Promise.race',
   }, fmt('Promise.race([<>]);', { i(1) })),
-  _s({
+  s({
     trig = 'pany',
     name = 'Promise.any',
   }, fmt('Promise.any([<>]);', { i(1) })),
-  _s(
+  s(
     {
       trig = 'st',
       name = 'setTimeout',
@@ -107,7 +107,7 @@ return ct(test_snippets, { -- js
       { i(1), i(2, '0') }
     )
   ),
-  _s(
+  s(
     {
       trig = 'si',
       name = 'setInterval',
