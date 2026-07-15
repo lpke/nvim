@@ -285,6 +285,7 @@ Windows:
   <F2>y / <F2>p         Copy/paste current buffer into another window.
   <F2>Y / <F2>P         Copy/paste current tab layout sizing.
   <F2>O                Rotate windows.
+  <leader><A-O>         Flip left/right window groups.
   <F2>s / <A-s>         Toggle window zoom for current tab.
   <F2>; / <A-;>         Equalize splits.
 

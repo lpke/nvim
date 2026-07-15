@@ -1,5 +1,6 @@
 local helpers = require('lpke.core.helpers')
 local no_name = require('lpke.core.globals.no_name')
+local windows = require('lpke.core.globals.windows')
 
 --[[  SYNTAX: {'<modes><R=rec,E=expr,C=:,!=sil,D=delete>', <lhs>, <rhs>, <desc>, {opts}}
 
@@ -128,8 +129,9 @@ helpers.keymap_set_multi({
   {'nC', '<A-y>', 'lua Lpke_copy_buffer()', { desc = 'Yank current buffer details' }},
   {'nC', '<F2>p', 'lua Lpke_paste_buffer()', { desc = 'Paste yanked buffer details' }},
   {'nC', '<A-p>', 'lua Lpke_paste_buffer()', { desc = 'Paste yanked buffer details' }},
-  {'n', '<F2>O', '<C-w>r', { desc = 'Rotate windows in current split' }},
-  {'n', '<A-O>', '<C-w>r', { desc = 'Rotate windows in current split' }},
+  {'n', '<F2>O', windows.rotate_windows, { desc = 'Rotate windows in current split' }},
+  {'n', '<A-O>', windows.rotate_windows, { desc = 'Rotate windows in current split' }},
+  {'n', '<leader><A-O>', windows.flip_sides, { desc = 'Flip left/right window groups' }},
   -- copy/pasting layout
   {'nC', '<F2>Y', 'lua Lpke_copy_layout()', { desc = 'Yank current tab layout' }},
   {'nC', '<A-Y>', 'lua Lpke_copy_layout()', { desc = 'Yank current tab layout' }},
