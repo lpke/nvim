@@ -278,15 +278,7 @@ local function config()
             end,
             description = 'Stop Request',
           },
-          clear = {
-            modes = { n = 'gx' },
-            index = 6,
-            callback = function(chat)
-              chat:clear()
-              notify('Chat cleared')
-            end,
-            description = 'Clear Chat',
-          },
+          clear = false,
           codeblock = {
             modes = { n = 'gc' },
             index = 7,
@@ -504,11 +496,10 @@ local function config()
             modes = { n = 'gX' },
             index = 26,
             callback = function(chat)
-              require('lpke.plugins.ai.helpers.chat_functions').delete_current_chat(
-                chat
-              )
+              chat:close()
+              notify('Chat closed')
             end,
-            description = 'Delete current chat',
+            description = 'Close current chat',
           },
         },
         slash_commands = slash_commands,

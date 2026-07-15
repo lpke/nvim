@@ -426,7 +426,6 @@ Chat buffer keys:
                         the top of visible chat windows.
   <C-c>                 Close chat; another open chat is shown if present.
   <leader>Q             Stop request.
-  gx                    Clear chat.
   gr                    Regenerate.
   gc / gy               Insert code block / yank code.
   gp / gw               Toggle buffer sync all / diff.
@@ -440,7 +439,7 @@ Chat buffer keys:
   gn                    New chat.
   gh                    Saved chat history.
   gH                    History/resume/drafts action picker.
-  gX                    Delete current chat.
+  gX                    Close current chat without deleting saved history.
 
 Models/adapters:
   Default chat adapter is Codex ACP. Inline/cmd/title generation use Copilot.
