@@ -574,8 +574,9 @@ Snippets:
          switch-only case (c)/default (d), setTimeout (st), setInterval (si),
          debug logs, Vitest import/scaffold, table, matcher, mock, spy, and
          timer snippets in *.test.js/ts, plus fixed-document
-         did/ds/dsa/dce helpers, DOM lookup suffixes .id/.qs/.qsa, and tree
-         suffixes
+         did/ds/dsa/dce helpers, array suffixes .fe (forEach), .map, .filter,
+         .reduce, .find, .findIndex, .some, .every, and .fm (flatMap), DOM
+         lookup suffixes .id/.qs/.qsa, and tree suffixes
          .ac/.rc/.ap/.pp/.bf/.af/.rw/.rch/.rm, class suffixes
          .cl/.cla/.clr/.clt, attribute suffixes .ga/.sa/.ra/.ta, text suffix
          .tc, .ael* event-listeners, and .pd/.sp/.sip event-control suffixes.

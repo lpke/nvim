@@ -36,6 +36,13 @@ local function event_listener_suffix(trig, event, editable)
   )
 end
 
+local function array_callback_suffix(trig, method)
+  return postfix_s({
+    trig = trig,
+    name = method .. ' suffix',
+  }, fmtc('.' .. method .. '(({}) => {})', { i(1, 'item'), i(2) }))
+end
+
 return ct(test_snippets, { -- js
   _s(
     {
@@ -347,6 +354,37 @@ return ct(test_snippets, { -- js
     trig = 'dce',
     name = 'Document Create Element',
   }, { t("document.createElement('"), i(1), t("')") }),
+  postfix_s(
+    {
+      trig = '.fe',
+      name = 'forEach suffix',
+    },
+    fmtc(
+      [[
+      .forEach(({}) => {{
+        {}
+      }});
+    ]],
+      { i(1, 'item'), i(2) }
+    )
+  ),
+  array_callback_suffix('.map', 'map'),
+  array_callback_suffix('.filter', 'filter'),
+  postfix_s(
+    {
+      trig = '.reduce',
+      name = 'reduce suffix',
+    },
+    fmtc(
+      '.reduce(({}, {}) => {}, {})',
+      { i(1, 'acc'), i(2, 'item'), i(3), i(4, 'initialValue') }
+    )
+  ),
+  array_callback_suffix('.find', 'find'),
+  array_callback_suffix('.findIndex', 'findIndex'),
+  array_callback_suffix('.some', 'some'),
+  array_callback_suffix('.every', 'every'),
+  array_callback_suffix('.fm', 'flatMap'),
   postfix_s({
     trig = '.id',
     name = 'getElementById suffix',
