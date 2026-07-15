@@ -11,15 +11,34 @@ local fmtc = require('luasnip.extras.fmt').fmt -- default delimeter: {} (curly)
 local fmta = require('luasnip.extras.fmt').fmta -- default delimeter: <> (angled)
 local exp_conds = require('luasnip.extras.expand_conditions')
 local helpers = require('lpke.core.helpers')
+local config = require('lpke.snippets.config')
 
 local no_hyphen_boundary = exp_conds.trigger_not_preceded_by('[%w_-]')
 
--- `s()` with `-` treated as part of a word. Use `s_allow_hyphen()` to opt out.
-local function s(params, nodes, opts)
+local function apply_prefix_priority(params)
   if type(params) == 'string' then
     params = { trig = params }
+  else
+    params = helpers.merge_tables(params)
   end
 
+  if params.priority ~= nil then
+    return params
+  end
+
+  for _, prefix in ipairs(config.priority_prefixes) do
+    if params.trig:sub(1, #prefix) == prefix then
+      params.priority = config.prefixed_priority
+      break
+    end
+  end
+
+  return params
+end
+
+-- `s()` with `-` treated as part of a word. Use `s_allow_hyphen()` to opt out.
+local function s(params, nodes, opts)
+  params = apply_prefix_priority(params)
   params = helpers.merge_tables(params, { wordTrig = false })
   opts = opts or {}
   opts = helpers.merge_tables(opts, {
@@ -31,7 +50,7 @@ local function s(params, nodes, opts)
 end
 
 local function s_allow_hyphen(params, nodes, opts)
-  return luasnip_s(params, nodes, opts)
+  return luasnip_s(apply_prefix_priority(params), nodes, opts)
 end
 
 -- `s()` that adds `{ condition = exp_conds.line_begin }` by default

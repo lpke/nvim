@@ -104,7 +104,7 @@ return ct(test_snippets, { -- js
           {}
         }}, {});
       ]],
-      { i(1), i(2) }
+      { i(1), i(2, '0') }
     )
   ),
   _s(
@@ -118,7 +118,7 @@ return ct(test_snippets, { -- js
           {}
         }}, {});
       ]],
-      { i(1), i(2) }
+      { i(1), i(2, '1000') }
     )
   ),
   _s(
@@ -294,7 +294,7 @@ return ct(test_snippets, { -- js
     },
     fmt(
       [[
-        for (let <> of <><>) {
+        for (const <> of <><>) {
           <>
         }
       ]],
@@ -308,7 +308,7 @@ return ct(test_snippets, { -- js
     },
     fmt(
       [[
-        for (let <> in <>) {
+        for (const <> in <>) {
           <>
         }
       ]],
@@ -331,6 +331,22 @@ return ct(test_snippets, { -- js
     trig = 'ced',
     name = 'Console Error Debug',
   }, fmt('console.error({ <> });', { i(1) })),
+  s({
+    trig = 'did',
+    name = 'Document Element by ID',
+  }, { t("document.getElementById('"), i(1), t("')") }),
+  s({
+    trig = 'ds',
+    name = 'Document Query Selector',
+  }, { t("document.querySelector('"), i(1), t("')") }),
+  s({
+    trig = 'dsa',
+    name = 'Document Query Selector All',
+  }, { t("document.querySelectorAll('"), i(1), t("')") }),
+  s({
+    trig = 'dce',
+    name = 'Document Create Element',
+  }, { t("document.createElement('"), i(1), t("')") }),
   postfix_s({
     trig = '.id',
     name = 'getElementById suffix',
@@ -344,21 +360,77 @@ return ct(test_snippets, { -- js
     name = 'querySelectorAll suffix',
   }, { t(".querySelectorAll('"), i(1), t("')") }),
   postfix_s({
-    trig = '.ce',
-    name = 'Create element suffix',
-  }, { t("document.createElement('"), i(1), t("')") }),
-  postfix_s({
     trig = '.ac',
     name = 'appendChild suffix',
-  }, { t('.appendChild('), i(1), t(')') }),
+  }, { t('.appendChild('), i(1), t(');') }),
   postfix_s({
     trig = '.rc',
     name = 'removeChild suffix',
-  }, { t('.removeChild('), i(1), t(')') }),
+  }, { t('.removeChild('), i(1), t(');') }),
+  postfix_s({
+    trig = '.ap',
+    name = 'append suffix',
+  }, { t('.append('), i(1), t(');') }),
+  postfix_s({
+    trig = '.pp',
+    name = 'prepend suffix',
+  }, { t('.prepend('), i(1), t(');') }),
+  postfix_s({
+    trig = '.bf',
+    name = 'before suffix',
+  }, { t('.before('), i(1), t(');') }),
+  postfix_s({
+    trig = '.af',
+    name = 'after suffix',
+  }, { t('.after('), i(1), t(');') }),
+  postfix_s({
+    trig = '.rw',
+    name = 'replaceWith suffix',
+  }, { t('.replaceWith('), i(1), t(');') }),
+  postfix_s({
+    trig = '.rch',
+    name = 'replaceChildren suffix',
+  }, { t('.replaceChildren('), i(1), t(');') }),
+  postfix_s({
+    trig = '.rm',
+    name = 'remove suffix',
+  }, t('.remove();')),
   postfix_s({
     trig = '.cl',
     name = 'classList suffix',
   }, t('.classList')),
+  postfix_s({
+    trig = '.cla',
+    name = 'classList add suffix',
+  }, { t(".classList.add('"), i(1), t("');") }),
+  postfix_s({
+    trig = '.clr',
+    name = 'classList remove suffix',
+  }, { t(".classList.remove('"), i(1), t("');") }),
+  postfix_s({
+    trig = '.clt',
+    name = 'classList toggle suffix',
+  }, { t(".classList.toggle('"), i(1), t("');") }),
+  postfix_s({
+    trig = '.ga',
+    name = 'getAttribute suffix',
+  }, { t(".getAttribute('"), i(1), t("')") }),
+  postfix_s({
+    trig = '.sa',
+    name = 'setAttribute suffix',
+  }, { t(".setAttribute('"), i(1), t("', '"), i(2), t("');") }),
+  postfix_s({
+    trig = '.ra',
+    name = 'removeAttribute suffix',
+  }, { t(".removeAttribute('"), i(1), t("');") }),
+  postfix_s({
+    trig = '.ta',
+    name = 'toggleAttribute suffix',
+  }, { t(".toggleAttribute('"), i(1), t("');") }),
+  postfix_s({
+    trig = '.tc',
+    name = 'textContent assignment suffix',
+  }, { t('.textContent = '), i(1), t(';') }),
   postfix_s({
     trig = '.pd',
     name = 'preventDefault suffix',
