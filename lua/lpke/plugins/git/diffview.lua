@@ -692,15 +692,6 @@ local function config()
 
     helpers.keymap_set({
       'n',
-      's',
-      function()
-        call_in_diffview_file_panel(actions.toggle_stage_entry)
-      end,
-      opts('Diffview: Stage / unstage the selected entry'),
-    })
-
-    helpers.keymap_set({
-      'n',
       'S',
       function()
         call_in_diffview_file_panel(actions.stage_all)
