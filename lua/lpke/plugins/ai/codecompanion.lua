@@ -163,7 +163,9 @@ local function config()
               CODEX_CONFIG = function()
                 return vim.json.encode({
                   model = ai_config.adapter_default_model('codex'),
-                  model_reasoning_effort = 'medium',
+                  model_reasoning_effort = ai_config.adapter_default_reasoning_effort(
+                    'codex'
+                  ),
                 })
               end,
             },
@@ -172,7 +174,9 @@ local function config()
               session_config_options = {
                 model = ai_config.adapter_default_model('codex'),
                 mode = 'Full Access',
-                thought_level = 'medium',
+                thought_level = ai_config.adapter_default_reasoning_effort(
+                  'codex'
+                ),
               },
             },
           })

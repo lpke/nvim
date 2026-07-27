@@ -9,6 +9,7 @@ M.adapters = {
   codex = {
     display = 'Codex',
     default_model = 'gpt_5_6_sol',
+    default_reasoning_effort = 'high',
     model_cycle = { 'gpt_5_6_sol', 'gpt_5_5' },
   },
 }
@@ -251,6 +252,11 @@ end
 function M.adapter_default_model(adapter)
   local adapter_config = M.adapters[adapter] or {}
   return M.model_id(adapter_config.default_model)
+end
+
+function M.adapter_default_reasoning_effort(adapter)
+  local adapter_config = M.adapters[adapter] or {}
+  return adapter_config.default_reasoning_effort
 end
 
 function M.adapter_display_name(adapter)
