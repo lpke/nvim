@@ -91,6 +91,15 @@ local sections = {
     },
   },
   {
+    title = 'Reference File Tab Keymaps',
+    keymaps = {
+      {
+        description = 'Close gd file tab and return to source chat',
+        modes = { n = '<C-o>' },
+      },
+    },
+  },
+  {
     title = 'History Picker Keymaps',
     keymaps = {
       {

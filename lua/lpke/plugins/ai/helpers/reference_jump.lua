@@ -1,5 +1,77 @@
 local M = {}
 
+local api = vim.api
+local return_state_var = 'lpke_codecompanion_reference_jump'
+
+local function return_state(tab)
+  local ok, state = pcall(api.nvim_tabpage_get_var, tab, return_state_var)
+  if ok and type(state) == 'table' then
+    return state
+  end
+end
+
+local function clear_return_state(tab)
+  pcall(api.nvim_tabpage_del_var, tab, return_state_var)
+end
+
+local function source_is_live(state)
+  return type(state.source_buf) == 'number'
+    and type(state.source_tab) == 'number'
+    and type(state.source_win) == 'number'
+    and api.nvim_buf_is_valid(state.source_buf)
+    and api.nvim_tabpage_is_valid(state.source_tab)
+    and api.nvim_win_is_valid(state.source_win)
+    and api.nvim_win_get_tabpage(state.source_win) == state.source_tab
+    and api.nvim_win_get_buf(state.source_win) == state.source_buf
+end
+
+local function setup_return_handler()
+  local group = api.nvim_create_augroup('LpkeCodeCompanionReferenceJump', {
+    clear = true,
+  })
+
+  api.nvim_create_autocmd('BufEnter', {
+    group = group,
+    callback = function(event)
+      local target_tab = api.nvim_get_current_tabpage()
+      local state = return_state(target_tab)
+      if not state or event.buf ~= state.source_buf then
+        return
+      end
+
+      local target_win = api.nvim_get_current_win()
+      local target_is_unchanged = target_win == state.target_win
+        and #api.nvim_tabpage_list_wins(target_tab) == 1
+      if not target_is_unchanged or not source_is_live(state) then
+        clear_return_state(target_tab)
+        return
+      end
+
+      clear_return_state(target_tab)
+      vim.schedule(function()
+        if
+          not api.nvim_tabpage_is_valid(target_tab)
+          or api.nvim_get_current_tabpage() ~= target_tab
+          or api.nvim_get_current_win() ~= target_win
+          or api.nvim_get_current_buf() ~= state.source_buf
+          or #api.nvim_tabpage_list_wins(target_tab) ~= 1
+          or not source_is_live(state)
+        then
+          return
+        end
+
+        if
+          pcall(vim.cmd.tabclose) and api.nvim_win_is_valid(state.source_win)
+        then
+          api.nvim_set_current_win(state.source_win)
+        end
+      end)
+    end,
+  })
+end
+
+setup_return_handler()
+
 local function is_pasted_image(reference)
   local image_dir =
     vim.fs.normalize(require('lpke.plugins.ai.helpers.img_clip').dir_path())
@@ -86,14 +158,29 @@ function M.open_under_cursor()
     return
   end
 
-  require('codecompanion.utils.ui').tabnew_reuse(reference.path)
-  local line_count = vim.api.nvim_buf_line_count(0)
+  local source_buf = api.nvim_get_current_buf()
+  local source_tab = api.nvim_get_current_tabpage()
+  local source_win = api.nvim_get_current_win()
+  local tab_count = #api.nvim_list_tabpages()
+  local target_win =
+    require('codecompanion.utils.ui').tabnew_reuse(reference.path)
+  local target_tab = api.nvim_win_get_tabpage(target_win)
+
+  if #api.nvim_list_tabpages() > tab_count then
+    api.nvim_tabpage_set_var(target_tab, return_state_var, {
+      source_buf = source_buf,
+      source_tab = source_tab,
+      source_win = source_win,
+      target_win = target_win,
+    })
+  elseif target_tab ~= source_tab then
+    clear_return_state(target_tab)
+  end
+
+  local line_count = api.nvim_buf_line_count(0)
   local line = math.min(reference.line, line_count)
-  local line_length = #vim.api.nvim_buf_get_lines(0, line - 1, line, false)[1]
-  vim.api.nvim_win_set_cursor(
-    0,
-    { line, math.min(reference.col - 1, line_length) }
-  )
+  local line_length = #api.nvim_buf_get_lines(0, line - 1, line, false)[1]
+  api.nvim_win_set_cursor(0, { line, math.min(reference.col - 1, line_length) })
 end
 
 return M

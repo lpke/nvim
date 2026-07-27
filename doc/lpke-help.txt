@@ -439,6 +439,9 @@ Chat buffer keys:
   gd                    Open HTTP(S) link in browser, a pasted image's directory
                         in the OS file explorer, or a file reference in a new tab.
                         Supports path, path:line, and path:line:column.
+  <C-o>                 From a file tab newly opened by gd, close that tab and
+                        return to the source chat. Requires an unchanged
+                        single-window tab and the original chat window.
   gn                    New chat.
   gh                    Saved chat history.
   gH                    History/resume/drafts action picker.
