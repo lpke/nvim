@@ -1,5 +1,11 @@
 local M = {}
 
+local function is_pasted_image(reference)
+  local image_dir =
+    vim.fs.normalize(require('lpke.plugins.ai.helpers.img_clip').dir_path())
+  return vim.fs.dirname(reference.path) == image_dir
+end
+
 local function parse_target(target)
   target = vim.trim(target)
   target = target:gsub('^file://', '')
@@ -72,6 +78,11 @@ function M.open_under_cursor()
       'CodeCompanion: no URL or readable file reference under cursor',
       vim.log.levels.INFO
     )
+    return
+  end
+
+  if is_pasted_image(reference) then
+    require('lpke.core.helpers').open_directory(vim.fs.dirname(reference.path))
     return
   end
 

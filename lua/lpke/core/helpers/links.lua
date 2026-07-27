@@ -95,6 +95,23 @@ function M.open_url(url)
   return true
 end
 
+---@param path string
+---@return boolean opened
+function M.open_directory(path)
+  path = vim.fs.normalize(path)
+  if vim.fn.isdirectory(path) ~= 1 then
+    vim.notify('Directory does not exist: ' .. path, vim.log.levels.ERROR)
+    return false
+  end
+
+  local _, err = vim.ui.open(path)
+  if err then
+    vim.notify('Failed to open directory: ' .. err, vim.log.levels.ERROR)
+    return false
+  end
+  return true
+end
+
 ---@return boolean opened
 function M.open_url_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)

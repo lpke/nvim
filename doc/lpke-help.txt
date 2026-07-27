@@ -434,8 +434,9 @@ Chat buffer keys:
   ga                    Change adapter.
   gs                    Toggle system prompt.
   gta / gtx             Toggle/clear chat approvals.
-  gd                    Open HTTP(S) link in browser or file reference in a new
-                        tab. Supports path, path:line, and path:line:column.
+  gd                    Open HTTP(S) link in browser, a pasted image's directory
+                        in the OS file explorer, or a file reference in a new tab.
+                        Supports path, path:line, and path:line:column.
   gn                    New chat.
   gh                    Saved chat history.
   gH                    History/resume/drafts action picker.

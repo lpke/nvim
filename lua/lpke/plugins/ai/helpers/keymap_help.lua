@@ -42,7 +42,7 @@ local sections = {
     title = 'Chat Buffer Keymaps',
     keymaps = {
       {
-        description = 'Open URL or file reference under cursor',
+        description = 'Open URL, pasted image directory, or file reference',
         modes = { n = 'gd' },
       },
       { description = 'Cycle between AI models', modes = { n = '<leader>m' } },

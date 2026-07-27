@@ -500,7 +500,7 @@ local function config()
             callback = function()
               require('lpke.plugins.ai.helpers.reference_jump').open_under_cursor()
             end,
-            description = 'Open URL or file reference under cursor.',
+            description = 'Open URL, pasted image directory, or file reference under cursor.',
           },
           new_chat = {
             modes = { n = 'gn' },
