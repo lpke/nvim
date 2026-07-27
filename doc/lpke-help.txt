@@ -180,8 +180,10 @@ Telescope basics:
 
 Telescope prompt syntax:
   @dir  query           Search from dir instead of picker cwd.
+  @.  query             Search from active Oil/current file dir; fallback cwd.
   @~  query             Search from home.
   @*dir  query          Search from dir and include normally ignored files.
+  @*.  query            Search from active dir and include ignored files.
   query  *.lua          In live grep, extra double-space parts become rg globs.
 
 Telescope picker controls:

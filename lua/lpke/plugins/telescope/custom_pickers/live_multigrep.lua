@@ -10,7 +10,12 @@ local action_state = require('telescope.actions.state')
 local ts_helpers = require('lpke.plugins.telescope.helpers')
 local ignore = require('lpke.plugins.telescope.ignore')
 
-local function switch_to_file_picker(prompt_bufnr, initial_mode, toggle_target)
+local function switch_to_file_picker(
+  prompt_bufnr,
+  initial_mode,
+  toggle_target,
+  source_opts
+)
   local smart_find_ai = require('lpke.plugins.telescope.smart_find_ai')
   local current_picker = action_state.get_current_picker(prompt_bufnr)
   local current_query = current_picker:_get_prompt()
@@ -20,7 +25,7 @@ local function switch_to_file_picker(prompt_bufnr, initial_mode, toggle_target)
   local opts = ts_helpers.telescope_file_grep_toggle_opts({
     initial_mode = initial_mode,
     default_text = current_query,
-  }, toggle_target)
+  }, toggle_target, source_opts)
 
   if current_picker.cwd then
     opts.cwd = current_picker.cwd
@@ -34,10 +39,13 @@ local live_multigrep = function(opts)
   opts = opts or {}
   ts_helpers.telescope_file_grep_toggle_opts(opts)
   opts.cwd = ts_helpers.normalize_cwd(opts.cwd or vim.fn.getcwd())
+  local source_cwd = ts_helpers.telescope_source_cwd(opts)
 
-  local parsed_prompt = ts_helpers.parse_multigrep_prompt('', opts.cwd)
+  local parsed_prompt =
+    ts_helpers.parse_multigrep_prompt('', opts.cwd, source_cwd)
   opts.on_input_filter_cb = function(prompt)
-    parsed_prompt = ts_helpers.parse_multigrep_prompt(prompt, opts.cwd)
+    parsed_prompt =
+      ts_helpers.parse_multigrep_prompt(prompt, opts.cwd, source_cwd)
     return { prompt = parsed_prompt.search }
   end
 
@@ -89,10 +97,10 @@ local live_multigrep = function(opts)
 
     local toggle_target = ts_helpers.telescope_file_grep_toggle_target(opts)
     map('i', '<A-/>', function()
-      switch_to_file_picker(prompt_bufnr, 'insert', toggle_target)
+      switch_to_file_picker(prompt_bufnr, 'insert', toggle_target, opts)
     end)
     map('n', '<A-/>', function()
-      switch_to_file_picker(prompt_bufnr, 'normal', toggle_target)
+      switch_to_file_picker(prompt_bufnr, 'normal', toggle_target, opts)
     end)
     return true
   end

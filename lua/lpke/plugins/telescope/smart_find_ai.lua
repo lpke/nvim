@@ -54,7 +54,8 @@ local function switch_to_picker(
   picker_func,
   keep_query,
   initial_mode,
-  next_opts
+  next_opts,
+  source_opts
 )
   local current_picker = action_state.get_current_picker(cur_prompt_buf)
   local current_query = current_picker:_get_prompt()
@@ -62,6 +63,7 @@ local function switch_to_picker(
   actions.close(cur_prompt_buf)
 
   local opts = vim.deepcopy(next_opts or {})
+  ts_helpers.telescope_file_grep_toggle_opts(opts, nil, source_opts)
   if current_cwd and not opts.cwd then
     opts.cwd = current_cwd
   end
@@ -330,7 +332,12 @@ local function find_directories_finder(opts, parsed)
 end
 
 -- Helper function to setup common keymaps for both pickers
-local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
+local function setup_common_keymaps(
+  prompt_bufnr,
+  map,
+  is_directory_picker,
+  picker_opts
+)
   local current_file_kind = is_directory_picker and 'directories' or 'files'
 
   -- Switch picker keymaps
@@ -338,10 +345,24 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
     local target_func = is_directory_picker and M.find_files
       or M.find_directories
     map('i', keymap, function()
-      switch_to_picker(prompt_bufnr, target_func, true, 'insert')
+      switch_to_picker(
+        prompt_bufnr,
+        target_func,
+        true,
+        'insert',
+        nil,
+        picker_opts
+      )
     end)
     map('n', keymap, function()
-      switch_to_picker(prompt_bufnr, target_func, true, 'normal')
+      switch_to_picker(
+        prompt_bufnr,
+        target_func,
+        true,
+        'normal',
+        nil,
+        picker_opts
+      )
     end)
   end
 
@@ -350,14 +371,15 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
     local function switch_to_grep(initial_mode)
       local opts = ts_helpers.telescope_file_grep_toggle_opts({
         prompt_title = 'Find in Files',
-      }, current_file_kind)
+      }, current_file_kind, picker_opts)
 
       switch_to_picker(
         prompt_bufnr,
         require('lpke.plugins.telescope.custom_pickers.live_multigrep'),
         true,
         initial_mode,
-        opts
+        opts,
+        picker_opts
       )
     end
 
@@ -379,9 +401,9 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
 
       local target_func = is_directory_picker and M.find_directories
         or M.find_files
-      target_func({
+      target_func(ts_helpers.telescope_file_grep_toggle_opts({
         cwd = parent_dir,
-      })
+      }, current_file_kind, picker_opts))
     end)
   end
 
@@ -400,7 +422,7 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
         ts_helpers.telescope_file_grep_toggle_opts({
           prompt_title = 'Find in Files',
           cwd = resolved_parent_dir,
-        }, current_file_kind)
+        }, current_file_kind, picker_opts)
       )
     end)
   end
@@ -415,10 +437,10 @@ local function setup_common_keymaps(prompt_bufnr, map, is_directory_picker)
 
     local target_func = is_directory_picker and M.find_directories
       or M.find_files
-    target_func({
+    target_func(ts_helpers.telescope_file_grep_toggle_opts({
       cwd = parent_dir,
       initial_mode = 'normal',
-    })
+    }, current_file_kind, picker_opts))
   end)
 end
 
@@ -431,6 +453,7 @@ function M.find_directories(opts)
   end
 
   local initial_query = opts.default_text or ''
+  local source_cwd = ts_helpers.telescope_source_cwd(opts)
 
   -- Update gap path when cwd is specified
   if opts.cwd then
@@ -440,12 +463,13 @@ function M.find_directories(opts)
   end
 
   opts.default_text = initial_query
-  local parsed_prompt = ts_helpers.parse_prompt_cwd(initial_query, opts.cwd)
+  local parsed_prompt =
+    ts_helpers.parse_prompt_cwd(initial_query, opts.cwd, source_cwd)
   local current_root_key = prompt_root_key(parsed_prompt)
   local original_on_input_filter_cb = opts.on_input_filter_cb
 
   opts.on_input_filter_cb = function(prompt)
-    parsed_prompt = ts_helpers.parse_prompt_cwd(prompt, opts.cwd)
+    parsed_prompt = ts_helpers.parse_prompt_cwd(prompt, opts.cwd, source_cwd)
     local result = original_on_input_filter_cb
         and original_on_input_filter_cb(parsed_prompt.prompt)
       or {}
@@ -467,7 +491,7 @@ function M.find_directories(opts)
       original_attach_mappings(prompt_bufnr, map)
     end
 
-    setup_common_keymaps(prompt_bufnr, map, true)
+    setup_common_keymaps(prompt_bufnr, map, true, opts)
 
     actions.select_default:replace(function()
       actions.close(prompt_bufnr)
@@ -546,6 +570,7 @@ function M.find_files(opts)
   end
 
   local initial_query = opts.default_text or ''
+  local source_cwd = ts_helpers.telescope_source_cwd(opts)
 
   -- Update gap path when cwd is specified
   if opts.cwd then
@@ -557,12 +582,13 @@ function M.find_files(opts)
   -- Set default_text for the builtin picker
   opts.default_text = initial_query
 
-  local parsed_prompt = ts_helpers.parse_prompt_cwd(initial_query, opts.cwd)
+  local parsed_prompt =
+    ts_helpers.parse_prompt_cwd(initial_query, opts.cwd, source_cwd)
   local current_root_key = prompt_root_key(parsed_prompt)
   local original_on_input_filter_cb = opts.on_input_filter_cb
 
   opts.on_input_filter_cb = function(prompt)
-    parsed_prompt = ts_helpers.parse_prompt_cwd(prompt, opts.cwd)
+    parsed_prompt = ts_helpers.parse_prompt_cwd(prompt, opts.cwd, source_cwd)
     local result = original_on_input_filter_cb
         and original_on_input_filter_cb(parsed_prompt.prompt)
       or {}
@@ -587,7 +613,7 @@ function M.find_files(opts)
     end
 
     -- Setup common keymaps
-    setup_common_keymaps(prompt_bufnr, map, false)
+    setup_common_keymaps(prompt_bufnr, map, false, opts)
 
     -- Open oil window at selected file's directory with <leader><CR>
     map('n', '<leader><CR>', function()

@@ -5,6 +5,29 @@ local M = {}
 
 local file_grep_toggle_state_key = '_lpke_file_grep_toggle'
 
+local function current_source_cwd()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local source_cwd
+
+  if path_helpers.get_oil_buf_type(bufnr) == 'oil' then
+    local ok, oil = pcall(require, 'oil')
+    if ok then
+      source_cwd = oil.get_current_dir(bufnr)
+    end
+  elseif path_helpers.get_buf_type(bufnr) == '' then
+    local buf_name = path_helpers.get_buf_name(bufnr)
+    if buf_name ~= '' then
+      source_cwd = vim.fn.isdirectory(buf_name) == 1 and buf_name
+        or vim.fn.fnamemodify(buf_name, ':p:h')
+    end
+  end
+
+  if source_cwd and vim.fn.isdirectory(source_cwd) == 1 then
+    return M.normalize_cwd(source_cwd)
+  end
+  return M.normalize_cwd(vim.fn.getcwd())
+end
+
 local function normalize_file_grep_toggle_kind(kind)
   if kind == 'directories' then
     return 'directories'
@@ -70,9 +93,10 @@ function M.prompt_cwd_path_arg(cwd_arg)
   return path_helpers.expand_home(cwd_arg)
 end
 
-function M.parse_prompt_cwd(prompt, base_cwd)
+function M.parse_prompt_cwd(prompt, base_cwd, source_cwd)
   prompt = prompt or ''
   base_cwd = M.normalize_cwd(base_cwd)
+  source_cwd = M.normalize_cwd(source_cwd or base_cwd)
 
   local unrestricted_prefix, cwd_arg, rest =
     parse_prompt_cwd_parts(prompt, base_cwd)
@@ -91,8 +115,12 @@ function M.parse_prompt_cwd(prompt, base_cwd)
   end
 
   cwd_arg = trim(cwd_arg)
-  local cwd = M.resolve_prompt_cwd(cwd_arg, base_cwd)
-  local path_arg = M.prompt_cwd_path_arg(cwd_arg)
+  local is_source_cwd = cwd_arg == '.'
+  local cwd = is_source_cwd and source_cwd
+    or M.resolve_prompt_cwd(cwd_arg, base_cwd)
+  local path_arg = is_source_cwd
+      and (vim.fs.relpath(base_cwd, source_cwd) or source_cwd)
+    or M.prompt_cwd_path_arg(cwd_arg)
   return {
     raw_prompt = prompt,
     prompt = rest or '',
@@ -102,12 +130,13 @@ function M.parse_prompt_cwd(prompt, base_cwd)
     path_arg = path_arg,
     has_cwd_arg = path_arg ~= nil,
     unrestricted = unrestricted_prefix == '*',
+    is_source_cwd = is_source_cwd,
     valid_cwd = vim.fn.isdirectory(cwd) == 1,
   }
 end
 
-function M.parse_multigrep_prompt(prompt, base_cwd)
-  local parsed = M.parse_prompt_cwd(prompt, base_cwd)
+function M.parse_multigrep_prompt(prompt, base_cwd, source_cwd)
+  local parsed = M.parse_prompt_cwd(prompt, base_cwd, source_cwd)
   local pieces = vim.split(parsed.prompt, '  ', {
     plain = true,
     trimempty = false,
@@ -125,13 +154,24 @@ function M.parse_multigrep_prompt(prompt, base_cwd)
   return parsed
 end
 
-function M.telescope_file_grep_toggle_opts(opts, current_kind)
+function M.telescope_file_grep_toggle_opts(opts, current_kind, source_opts)
   opts = opts or {}
-  local state = vim.deepcopy(opts[file_grep_toggle_state_key] or {})
+  local state = vim.deepcopy(
+    opts[file_grep_toggle_state_key]
+      or (source_opts and source_opts[file_grep_toggle_state_key])
+      or {}
+  )
   state.file_kind =
     normalize_file_grep_toggle_kind(current_kind or state.file_kind)
+  state.source_cwd = state.source_cwd or current_source_cwd()
   opts[file_grep_toggle_state_key] = state
   return opts
+end
+
+function M.telescope_source_cwd(opts)
+  opts = opts or {}
+  local state = opts[file_grep_toggle_state_key] or {}
+  return M.normalize_cwd(state.source_cwd or vim.fn.getcwd())
 end
 
 function M.telescope_file_grep_toggle_target(opts)
