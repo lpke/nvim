@@ -13,6 +13,38 @@ local function notify(msg)
   vim.notify(msg, vim.log.levels.INFO, { title = 'CodeCompanion' })
 end
 
+local function patch_copilot_token_error_notify()
+  local token = require('codecompanion.adapters.http.copilot.token')
+  if token._lpke_missing_token_notify then
+    return
+  end
+  token._lpke_missing_token_notify = true
+
+  local missing_token_notified = false
+  local original_init = token.init
+  token.init = function(...)
+    local ok = original_init(...)
+    if ok or missing_token_notified then
+      return ok
+    end
+
+    local state = token.fetch()
+    if state and state.oauth_token then
+      return ok
+    end
+
+    missing_token_notified = true
+    vim.schedule(function()
+      vim.notify(
+        'GitHub Copilot token missing; run :Copilot auth',
+        vim.log.levels.ERROR,
+        { title = 'CodeCompanion' }
+      )
+    end)
+    return ok
+  end
+end
+
 local function setup_startup_codex()
   if vim.env.LPKE_NVIM_CODEX ~= '1' then
     return
@@ -572,6 +604,7 @@ local function config()
     },
   })
 
+  patch_copilot_token_error_notify()
   require('lpke.plugins.ai.helpers.keymap_help').setup()
   submit_guard.setup()
   require('lpke.plugins.ai.helpers.slash_command_completion').patch_cmp()

@@ -841,6 +841,34 @@ local function patch_history_title_generator()
     return vim.tbl_filter(is_title_message, messages or {})
   end
 
+  local function prompt_fallback_title(messages)
+    local user_role = require('codecompanion.config').constants.USER_ROLE
+    for _, msg in ipairs(messages or {}) do
+      if msg.role == user_role then
+        local words = {}
+        for word in msg.content:gmatch('%S+') do
+          table.insert(words, word)
+          if #words == 10 then
+            break
+          end
+        end
+        return table.concat(words, ' ')
+      end
+    end
+  end
+
+  local function copilot_token_missing(generator)
+    local opts = generator.opts.title_generation_opts or {}
+    if opts.adapter ~= 'copilot' then
+      return false
+    end
+
+    local token = require('codecompanion.adapters.http.copilot.token').fetch({
+      force = true,
+    })
+    return not (token and token.oauth_token)
+  end
+
   local original_count_user_messages = TitleGenerator._count_user_messages
   TitleGenerator._count_user_messages = function(self, chat)
     local title_chat = vim.tbl_extend('force', {}, chat or {})
@@ -865,6 +893,15 @@ local function patch_history_title_generator()
     end
     M.restore_saved_title(title_chat)
     title_chat.messages = title_messages(title_chat.messages)
+
+    if copilot_token_missing(self) then
+      local fallback_title = prompt_fallback_title(title_chat.messages)
+      if fallback_title and fallback_title ~= '' then
+        apply_chat_title(chat, fallback_title)
+        return callback(fallback_title)
+      end
+    end
+
     return original_generate(self, title_chat, callback, is_refresh)
   end
 
