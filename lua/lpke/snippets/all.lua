@@ -42,6 +42,44 @@ end
 return require('lpke.core.helpers').concat_arrs(symbol_snippets, { -- all
   _s(
     {
+      trig = '``````([%w%._+-]+)',
+      name = 'Six-backtick fenced code block',
+      regTrig = true,
+      wordTrig = false,
+    },
+    fmt(
+      [[
+``````<>
+<>
+``````
+]],
+      {
+        f(function(_, snip)
+          return snip.captures[1] or ''
+        end, {}),
+        d(1, sel),
+      }
+    )
+  ),
+  _s(
+    {
+      trig = '``````',
+      name = 'Six-backtick fenced code block',
+      wordTrig = false,
+    },
+    fmt(
+      [[
+``````
+<>
+``````
+]],
+      {
+        d(1, sel),
+      }
+    )
+  ),
+  _s(
+    {
       trig = '```([%w%._+-]+)',
       name = 'Fenced code block',
       regTrig = true,
