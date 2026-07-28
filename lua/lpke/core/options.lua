@@ -101,8 +101,11 @@ helpers.set_options(M.vim_opts)
 -- GLOBAL VARIABLES
 --------------------------
 
+-- use the local terminal's clipboard over SSH
+if vim.env.SSH_CONNECTION then
+  vim.g.clipboard = 'osc52'
 -- wsl clipboard support
-if helpers.is_wsl then
+elseif helpers.is_wsl then
   vim.g.clipboard = {
     name = 'WslClipboard',
     copy = {
