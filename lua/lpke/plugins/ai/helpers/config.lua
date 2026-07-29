@@ -9,7 +9,7 @@ M.adapters = {
   codex = {
     display = 'Codex',
     default_model = 'gpt_5_6_sol',
-    default_reasoning_effort = 'high',
+    default_reasoning_effort = 'medium',
     model_cycle = { 'gpt_5_6_sol', 'gpt_5_5' },
   },
 }
