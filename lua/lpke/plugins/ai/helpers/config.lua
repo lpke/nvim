@@ -122,6 +122,16 @@ M.models = {
     aliases = { 'gpt5.6s', 'gpt5.6' },
     display = 'GPT-5.6s',
   },
+  gpt_5_6_terra = {
+    id = 'gpt-5.6-terra',
+    aliases = { 'gpt5.6t' },
+    display = 'GPT-5.6t',
+  },
+  gpt_5_6_luna = {
+    id = 'gpt-5.6-luna',
+    aliases = { 'gpt5.6l' },
+    display = 'GPT-5.6l',
+  },
   gpt_5_5 = {
     id = 'gpt-5.5',
     aliases = { 'gpt5.5' },
