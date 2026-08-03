@@ -5,6 +5,10 @@ vim.filetype.add({
   },
 })
 
+local tmpl_filetype_map = {
+  md = 'markdown',
+}
+
 -- handle chezmoi templates
 vim.filetype.add({
   filename = {
@@ -15,7 +19,7 @@ vim.filetype.add({
   pattern = {
     -- *.<filetype>.tmpl -> <filetype>
     ['.*%.(%a+)%.tmpl'] = function(_, _, ext)
-      return ext
+      return tmpl_filetype_map[ext] or ext
     end,
   },
 })
