@@ -1,5 +1,20 @@
 local M = {}
 
+local function codex_defaults()
+  local hostname = vim.uv.os_gethostname()
+  if
+    vim.uv.os_uname().sysname == 'Darwin'
+    and type(hostname) == 'string'
+    and hostname:find('Luke-', 1, true) == 1
+  then
+    return 'gpt_5_6_luna', 'xhigh'
+  end
+
+  return 'gpt_5_6_sol', 'medium'
+end
+
+local codex_default_model, codex_default_reasoning_effort = codex_defaults()
+
 M.adapters = {
   copilot = {
     display = 'Copilot',
@@ -8,8 +23,8 @@ M.adapters = {
   },
   codex = {
     display = 'Codex',
-    default_model = 'gpt_5_6_sol',
-    default_reasoning_effort = 'medium',
+    default_model = codex_default_model,
+    default_reasoning_effort = codex_default_reasoning_effort,
     model_cycle = { 'gpt_5_6_sol', 'gpt_5_5' },
   },
 }
