@@ -619,6 +619,78 @@ local function config()
   require('lpke.plugins.ai.helpers.drafts').setup()
   require('lpke.plugins.ai.helpers.folds').setup()
 
+  local function set_history_buffer_title(bufnr, title)
+    if
+      type(bufnr) ~= 'number'
+      or type(title) ~= 'string'
+      or not vim.api.nvim_buf_is_valid(bufnr)
+    then
+      return
+    end
+
+    local function try_title(candidate)
+      return pcall(vim.api.nvim_buf_set_name, bufnr, candidate)
+    end
+
+    if try_title(title) then
+      return
+    end
+
+    for attempt = 1, 10 do
+      if try_title(title .. ' (' .. attempt .. ')') then
+        return
+      end
+    end
+  end
+
+  -- codecompanion-history's post-rename buffer lookup can miss open chats.
+  -- Also update matching chats through CodeCompanion's current registry.
+  local history_storage = require('codecompanion._extensions.history.storage')
+  if not history_storage._lpke_rename_title_patched then
+    local original_rename_chat = history_storage.rename_chat
+
+    history_storage.rename_chat = function(self, save_id, new_title)
+      local renamed = original_rename_chat(self, save_id, new_title)
+      if not renamed then
+        return renamed
+      end
+
+      local function sync_open_chat_title()
+        local codecompanion = require('codecompanion')
+        local registry = require('codecompanion.interactions.shared.registry')
+
+        for _, entry in ipairs(registry.list()) do
+          if entry.interaction == 'chat' then
+            local chat = codecompanion.buf_get_chat(entry.bufnr)
+            if
+              chat
+              and chat.opts
+              and tostring(chat.opts.save_id) == tostring(save_id)
+            then
+              chat.opts.title = new_title
+              if type(chat.set_title) == 'function' then
+                pcall(chat.set_title, chat, new_title)
+              end
+              set_history_buffer_title(entry.bufnr, new_title)
+            end
+          end
+        end
+      end
+
+      sync_open_chat_title()
+
+      -- UI:_set_buf_title schedules its write after rename_chat returns. Wait
+      -- one additional event-loop turn so this sync remains the final write.
+      vim.schedule(function()
+        vim.schedule(sync_open_chat_title)
+      end)
+
+      return renamed
+    end
+
+    history_storage._lpke_rename_title_patched = true
+  end
+
   -- codecompanion-history hard-codes a leading "✨ " when it renames chat
   -- buffers. It fires this event with the unprefixed title immediately after
   -- setting the name, so use that as a narrow post-processing hook.
@@ -629,30 +701,7 @@ local function config()
     }),
     callback = function(args)
       local data = args.data or {}
-      local bufnr = data.bufnr
-      local title = data.title
-
-      if
-        type(bufnr) ~= 'number'
-        or type(title) ~= 'string'
-        or not vim.api.nvim_buf_is_valid(bufnr)
-      then
-        return
-      end
-
-      local function try_title(candidate)
-        return pcall(vim.api.nvim_buf_set_name, bufnr, candidate)
-      end
-
-      if try_title(title) then
-        return
-      end
-
-      for attempt = 1, 10 do
-        if try_title(title .. ' (' .. attempt .. ')') then
-          return
-        end
-      end
+      set_history_buffer_title(data.bufnr, data.title)
     end,
   })
 
