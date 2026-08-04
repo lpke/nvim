@@ -39,6 +39,15 @@ local function setup_return_handler()
         return
       end
 
+      local _, jump_index = unpack(vim.fn.getjumplist())
+      if
+        type(state.return_jump_index) ~= 'number'
+        or jump_index ~= state.return_jump_index - 1
+      then
+        clear_return_state(target_tab)
+        return
+      end
+
       local target_win = api.nvim_get_current_win()
       local target_is_unchanged = target_win == state.target_win
         and #api.nvim_tabpage_list_wins(target_tab) == 1
@@ -167,12 +176,17 @@ function M.open_under_cursor()
   local target_tab = api.nvim_win_get_tabpage(target_win)
 
   if #api.nvim_list_tabpages() > tab_count then
-    api.nvim_tabpage_set_var(target_tab, return_state_var, {
-      source_buf = source_buf,
-      source_tab = source_tab,
-      source_win = source_win,
-      target_win = target_win,
-    })
+    local jumps, jump_index = unpack(vim.fn.getjumplist(target_win))
+    local return_jump = jumps[jump_index]
+    if return_jump and return_jump.bufnr == source_buf then
+      api.nvim_tabpage_set_var(target_tab, return_state_var, {
+        source_buf = source_buf,
+        source_tab = source_tab,
+        source_win = source_win,
+        target_win = target_win,
+        return_jump_index = jump_index,
+      })
+    end
   elseif target_tab ~= source_tab then
     clear_return_state(target_tab)
   end

@@ -94,7 +94,7 @@ local sections = {
     title = 'Reference File Tab Keymaps',
     keymaps = {
       {
-        description = 'Close gd file tab and return to source chat',
+        description = 'Close gd file tab when older jump is source chat',
         modes = { n = '<C-o>' },
       },
     },
