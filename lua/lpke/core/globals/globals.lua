@@ -1,3 +1,8 @@
+local hostname = vim.uv.os_gethostname()
+Lpke_is_work_device = vim.uv.os_uname().sysname == 'Darwin'
+  and type(hostname) == 'string'
+  and hostname:find('Luke-', 1, true) == 1
+
 ---Wrapper for `print` that can handle printing tables nicely
 ---@param val any Value to print (can be table or any type)
 ---@param max_depth? integer Maximum depth to print nested tables (default: 0)

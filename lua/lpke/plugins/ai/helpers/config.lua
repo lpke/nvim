@@ -1,12 +1,7 @@
 local M = {}
 
 local function codex_defaults()
-  local hostname = vim.uv.os_gethostname()
-  if
-    vim.uv.os_uname().sysname == 'Darwin'
-    and type(hostname) == 'string'
-    and hostname:find('Luke-', 1, true) == 1
-  then
+  if Lpke_is_work_device then
     return 'gpt_5_6_luna', 'xhigh'
   end
 
@@ -14,6 +9,10 @@ local function codex_defaults()
 end
 
 local codex_default_model, codex_default_reasoning_effort = codex_defaults()
+local codex_model_cycle = { 'gpt_5_6_sol', 'gpt_5_5' }
+if Lpke_is_work_device then
+  table.insert(codex_model_cycle, 'gpt_5_6_luna')
+end
 
 M.adapters = {
   copilot = {
@@ -25,7 +24,7 @@ M.adapters = {
     display = 'Codex',
     default_model = codex_default_model,
     default_reasoning_effort = codex_default_reasoning_effort,
-    model_cycle = { 'gpt_5_6_sol', 'gpt_5_5' },
+    model_cycle = codex_model_cycle,
   },
 }
 M.adapter_cycle = { 'codex', 'copilot' }

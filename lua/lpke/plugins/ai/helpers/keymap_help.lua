@@ -45,7 +45,10 @@ local sections = {
         description = 'Open URL, pasted image directory, or file reference',
         modes = { n = 'gd' },
       },
-      { description = 'Cycle between AI models', modes = { n = '<leader>m' } },
+      {
+        description = 'Cycle configured models',
+        modes = { n = '<leader>m' },
+      },
       {
         description = 'Cycle between AI adapters',
         modes = { n = '<leader>M' },
