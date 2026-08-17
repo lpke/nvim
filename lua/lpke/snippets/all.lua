@@ -33,6 +33,7 @@ local symbols = {
   { ':triangle-down:', '▼' },
   { ':chevron-down:', '⌄' },
   { ':chevron-right:', '›' },
+  { ':heart:', '❤' },
 }
 
 for _, symbol in ipairs(symbols) do
