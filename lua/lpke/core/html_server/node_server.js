@@ -70,9 +70,13 @@ const clientTag = '<script defer src="' + clientPath + '"></script>';
 const clientJs = `
 (() => {
   const source = new EventSource('${eventsPath}');
+  const closeSource = () => source.close();
+
   source.addEventListener('reload', () => {
     window.location.reload();
   });
+  window.addEventListener('beforeunload', closeSource, { once: true });
+  window.addEventListener('pagehide', closeSource, { once: true });
 })();
 `;
 
