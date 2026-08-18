@@ -8,6 +8,7 @@ local uv = vim.uv or vim.loop
 
 local M = {}
 
+local browser_url
 local servers_by_path = {}
 local servers_by_port = {}
 local setup_done = false
@@ -89,6 +90,7 @@ end
 
 local function entry_from_server(server)
   return {
+    bind_host = server.bind_host,
     id = server.id,
     path = server.path,
     root = server.root,
@@ -121,6 +123,7 @@ end
 
 local function update_server_from_status(server, status)
   server.status = 'running'
+  server.bind_host = status.bind_host or server.bind_host
   server.port = tonumber(status.port) or server.port
   server.pid = tonumber(status.pid) or server.pid
   server.clients = tonumber(status.clients) or 0
@@ -129,7 +132,12 @@ local function update_server_from_status(server, status)
     or server.lease_expires_at
   server.last_heartbeat_at = tonumber(status.last_heartbeat_at)
     or server.last_heartbeat_at
-  server.url = status.url or server.url
+  server.url = browser_url(
+    server.port,
+    status.url_path or server.url_path,
+    server.bind_host,
+    false
+  )
   server.url_path = status.url_path or server.url_path
   if server.port then
     servers_by_port[server.port] = server
@@ -147,6 +155,7 @@ local function adopt_entry(entry, status, opts)
   if not server then
     server = {
       adopted = true,
+      bind_host = status.bind_host or entry.bind_host,
       clients = 0,
       id = status.id or entry.id,
       job_id = nil,
@@ -236,11 +245,13 @@ local function handle_event(server, event)
 
   if event.type == 'ready' then
     server.status = 'running'
+    server.bind_host = event.bind_host
     server.port = event.port
     server.pid = event.pid or server.pid
     server.clients = 0
     server.lease_expires_at = event.lease_expires_at
-    server.url = 'http://127.0.0.1:' .. event.port .. server.url_path
+    server.url =
+      browser_url(event.port, server.url_path, server.bind_host, false)
     servers_by_port[event.port] = server
     local ok = registry.upsert(entry_from_server(server))
     if not ok then
@@ -251,7 +262,25 @@ local function handle_event(server, event)
       )
     end
     heartbeat.attach(server)
-    open_url(server.url, server.opts)
+    local opened_url = browser_url(
+      server.port,
+      server.url_path,
+      server.bind_host,
+      server.opts.remote
+    )
+    local remote_url =
+      browser_url(server.port, server.url_path, server.bind_host, true)
+    open_url(opened_url, server.opts)
+    notify(
+      string.format(
+        'OHS: server started (opened %s): local: %s  remote: %s',
+        server.opts.remote and 'remote' or 'local',
+        server.url,
+        remote_url
+      ),
+      vim.log.levels.INFO,
+      server.opts
+    )
   elseif event.type == 'clients' then
     server.clients = event.count or 0
     server.lease_expires_at = event.lease_expires_at or server.lease_expires_at
@@ -369,6 +398,7 @@ local function start_new(path, opts)
   local token = random_hex(24)
 
   local server = {
+    bind_host = nil,
     clients = 0,
     id = id,
     job_id = nil,
@@ -462,7 +492,15 @@ local function maybe_use_registry_server(entry, opts, on_missing)
       local server = adopt_entry(entry, status, { heartbeat = true })
       if server and server.url then
         registry.upsert(entry_from_server(server))
-        open_url(server.url, opts)
+        open_url(
+          browser_url(
+            server.port,
+            server.url_path,
+            server.bind_host,
+            opts.remote
+          ),
+          opts
+        )
       end
       return
     end
@@ -505,7 +543,15 @@ function M.start_path(path, opts)
       return existing
     end
     if existing.url then
-      open_url(existing.url, opts)
+      open_url(
+        browser_url(
+          existing.port,
+          existing.url_path,
+          existing.bind_host,
+          opts.remote
+        ),
+        opts
+      )
     else
       notify(
         'OHS: server is still starting for ' .. path,
@@ -536,7 +582,7 @@ function M.start_path(path, opts)
   return start_new(path, opts)
 end
 
-function M.open_command(cmd)
+local function open_command(cmd, remote)
   local path = resolve_html_path()
   if not path then
     return
@@ -550,7 +596,15 @@ function M.open_command(cmd)
     )
   end
 
-  M.start_path(path, { restart = cmd and cmd.bang })
+  M.start_path(path, { remote = remote, restart = cmd and cmd.bang })
+end
+
+function M.open_command(cmd)
+  open_command(cmd, false)
+end
+
+function M.open_remote_command(cmd)
+  open_command(cmd, true)
 end
 
 local function find_memory_server(target)
@@ -698,6 +752,80 @@ local function format_expiry(ms)
   return 'expires:' .. os.date('%H:%M:%S', math.floor(ms / 1000))
 end
 
+local function is_private_ipv4(ip)
+  if ip:match('^10%.') or ip:match('^192%.168%.') then
+    return true
+  end
+  local second_octet = tonumber(ip:match('^172%.(%d+)%.'))
+  return second_octet and second_octet >= 16 and second_octet <= 31
+end
+
+local function local_network_ipv4s()
+  local ok, interfaces = pcall(uv.interface_addresses)
+  if not ok or type(interfaces) ~= 'table' then
+    return {}
+  end
+
+  local private, other, seen = {}, {}, {}
+  for _, addresses in pairs(interfaces) do
+    for _, address in ipairs(addresses) do
+      local ip = address.ip
+      if
+        not address.internal
+        and (address.family == 'inet' or address.family == 'IPv4')
+        and type(ip) == 'string'
+        and not seen[ip]
+      then
+        seen[ip] = true
+        table.insert(is_private_ipv4(ip) and private or other, ip)
+      end
+    end
+  end
+  table.sort(private)
+  table.sort(other)
+  return #private > 0 and private or other
+end
+
+local function default_route_ipv4()
+  local udp = uv.new_udp()
+  if not udp then
+    return nil
+  end
+
+  local ok = pcall(udp.connect, udp, '1.1.1.1', 80)
+  local address_ok, address = pcall(udp.getsockname, udp)
+  pcall(udp.close, udp)
+  if ok and address_ok and address and address.family == 'inet' then
+    return address.ip
+  end
+end
+
+browser_url = function(port, url_path, bind_host, remote)
+  local ip = '127.0.0.1'
+  if remote and bind_host == '0.0.0.0' then
+    ip = default_route_ipv4() or local_network_ipv4s()[1] or ip
+  end
+  return string.format('http://%s:%s%s', ip, port, url_path or '/')
+end
+
+local function format_lan_access(status)
+  if status.bind_host ~= '0.0.0.0' then
+    return '    LAN: unavailable for this server; restart with :OHS!'
+  end
+
+  local urls = {}
+  for _, ip in ipairs(local_network_ipv4s()) do
+    table.insert(
+      urls,
+      string.format('http://%s:%s%s', ip, status.port, status.url_path or '/')
+    )
+  end
+  if #urls == 0 then
+    return '    LAN: no local IPv4 address found'
+  end
+  return '    LAN: ' .. table.concat(urls, '  ')
+end
+
 local function format_status_line(status)
   local nvim_count = tonumber(status.active_heartbeat_count) or 0
   local browser_count = tonumber(status.clients) or 0
@@ -798,6 +926,7 @@ function M.list()
     local lines = { 'OHS servers:' }
     for _, status in ipairs(rows) do
       table.insert(lines, format_status_line(status))
+      table.insert(lines, format_lan_access(status))
     end
     if #stale > 0 then
       table.insert(lines, '  removed stale entries: ' .. #stale)
@@ -814,13 +943,14 @@ function M.help()
     {
       table.concat({
         'OHS commands:',
-        '  :OHS                 Open current/Oil .html with live reload',
+        '  :OHS                 Open current/Oil .html at localhost with live reload',
         '  :OHS!                Restart server for current/Oil .html',
+        '  :OHSr[!]             Open using LAN URL; ! restarts server',
         '  :OHSStop             Stop current file server',
         '  :OHSStop all         Stop all managed HTML live reload servers',
         '  :OHSStop <port|file> Stop specific server',
         '  :OHSDc               Stop this Nvim session from keeping servers alive',
-        '  :OHSList             List live servers, keepalives, and lease expiry',
+        '  :OHSList             List live servers, keepalives, expiry, and LAN URLs',
       }, '\n'),
     },
   }, true, {})

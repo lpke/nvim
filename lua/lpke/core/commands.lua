@@ -173,6 +173,7 @@ helpers.command_set_multi({
   { '', 'OE', open_explorer_here, { desc = 'Open current file or Oil directory in OS file explorer' } },
   { '', 'OH', open_html, { desc = 'Open current or selected Oil .html file in a browser' } },
   { 'B', 'OHS', html_server.open_command, { desc = 'Open current or selected .html file with browser live reload' } },
+  { 'B', 'OHSr', html_server.open_remote_command, { desc = 'Open current or selected .html file using its LAN live reload URL' } },
   { '*', 'OHSStop', html_server.stop_command, { desc = 'Stop HTML live reload server by current file, port, path, or all', complete = html_server.complete_stop } },
   { '', 'OHSDc', html_server.disconnect_current_session, { desc = 'Disconnect this Nvim session from OHS keepalives' } },
   { '', 'OHSList', html_server.list, { desc = 'List HTML live reload servers' } },

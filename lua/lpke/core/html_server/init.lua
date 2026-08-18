@@ -9,6 +9,7 @@ return {
   help = manager.help,
   list = manager.list,
   open_command = manager.open_command,
+  open_remote_command = manager.open_remote_command,
   start_path = manager.start_path,
   stop = manager.stop,
   stop_all = manager.stop_all,

@@ -15,6 +15,7 @@ const leaseMs = Number(process.argv[8] || 300000);
 const activeHeartbeatWindowMs = Number(process.argv[9] || 70000);
 const reloadDebounceMs = Number(process.argv[10] || 80);
 const browserKeepaliveMs = Number(process.argv[11] || 60000);
+const bindHost = '0.0.0.0';
 
 const clients = new Set();
 const heartbeatClients = new Map();
@@ -140,6 +141,7 @@ function registryEntry() {
     url_path: urlPath,
     url: port ? 'http://127.0.0.1:' + port + urlPath : null,
     host: '127.0.0.1',
+    bind_host: bindHost,
     port,
     pid: process.pid,
     token,
@@ -200,6 +202,7 @@ function statusPayload() {
     root,
     url_path: entryPath,
     url: port ? 'http://127.0.0.1:' + port + entryPath : null,
+    bind_host: bindHost,
     port,
     pid: process.pid,
     status: 'running',
@@ -567,13 +570,14 @@ try {
 
 scheduleLeaseShutdown();
 
-server.listen(0, '127.0.0.1', () => {
+server.listen(0, bindHost, () => {
   const address = server.address();
   port = address.port;
   upsertRegistry();
   log({
     type: 'ready',
     port,
+    bind_host: bindHost,
     pid: process.pid,
     entryPath,
     file,
