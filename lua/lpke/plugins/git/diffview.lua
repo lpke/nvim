@@ -190,6 +190,12 @@ local function config()
       })
     end
 
+    local function is_diffview_git_ui_panel(bufnr)
+      local filetype =
+        vim.api.nvim_get_option_value('filetype', { buf = bufnr })
+      return filetype == 'DiffviewFiles' or filetype == 'DiffviewFileHistory'
+    end
+
     vim.api.nvim_create_autocmd('FileType', {
       group = augroup,
       pattern = 'Diffview*',
@@ -204,10 +210,7 @@ local function config()
         for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
           if vim.api.nvim_win_is_valid(win) then
             local bufnr = vim.api.nvim_win_get_buf(win)
-            local filetype =
-              vim.api.nvim_get_option_value('filetype', { buf = bufnr })
-
-            if filetype == 'DiffviewFiles' then
+            if is_diffview_git_ui_panel(bufnr) then
               map_quit(event.buf)
               return
             end
@@ -218,7 +221,7 @@ local function config()
 
     vim.api.nvim_create_autocmd('FileType', {
       group = augroup,
-      pattern = 'DiffviewFiles',
+      pattern = { 'DiffviewFiles', 'DiffviewFileHistory' },
       once = true,
       callback = function(event)
         map_quit(event.buf)
@@ -228,10 +231,7 @@ local function config()
             for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
               if vim.api.nvim_win_is_valid(win) then
                 local bufnr = vim.api.nvim_win_get_buf(win)
-                local filetype =
-                  vim.api.nvim_get_option_value('filetype', { buf = bufnr })
-
-                if filetype == 'DiffviewFiles' then
+                if is_diffview_git_ui_panel(bufnr) then
                   target_tab = tab
                   break
                 end
@@ -256,7 +256,11 @@ local function config()
       end,
     })
 
-    diffview_open_or_focus()
+    if vim.env.LPKE_NVIM_DIFFVIEW_GIT_UI_MODE == 'history' then
+      vim.cmd('DiffviewFileHistory')
+    else
+      diffview_open_or_focus()
+    end
   end
 
   local function prev_conflict(key)

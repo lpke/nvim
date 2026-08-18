@@ -390,6 +390,7 @@ Fugitive:
   In fugitive: <leader>i closes the fugitive tab/window.
 
 Diffview:
+  Terminal: g opens changed/staged diffview; gc opens current branch history.
   <leader>i             Open/focus changed/staged diffview.
   <BS>gd                DiffviewOpen.
   <BS>gD                Start :DiffviewOpen with cursor for rev args.
