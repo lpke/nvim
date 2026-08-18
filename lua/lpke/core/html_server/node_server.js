@@ -503,12 +503,6 @@ function handleRequest(req, res) {
     return;
   }
 
-  if (pathname === '/') {
-    res.writeHead(302, { 'Location': entryPath });
-    res.end();
-    return;
-  }
-
   const rel = pathname.replace(/^\/+/, '');
   let target = path.resolve(root, rel);
   if (!isInside(target, root)) {
