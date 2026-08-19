@@ -31,6 +31,36 @@ local function home_ignore_file_args()
   return {}
 end
 
+local function path_picker_search(scope)
+  if scope == 'filesystem' then
+    return {
+      cwd = '/',
+      roots = { '/' },
+      exclude_args = root_fd_exclude_args(),
+      title = 'Filesystem',
+    }
+  end
+
+  local home = vim.fs.normalize(vim.fn.expand('~'))
+  local roots = { home }
+  local cwd = vim.fs.normalize(vim.fn.getcwd())
+  if cwd ~= home and not vim.startswith(cwd, home .. '/') then
+    table.insert(roots, cwd)
+  end
+
+  local exclude_args = {}
+  if vim.fn.has('macunix') == 1 then
+    exclude_args = { '--exclude', 'Library' }
+  end
+
+  return {
+    cwd = home,
+    roots = roots,
+    exclude_args = exclude_args,
+    title = #roots == 1 and 'Home' or 'Home + cwd',
+  }
+end
+
 return {
   ['caveman'] = {
     description = 'Toggle caveman response mode for HTTP adapters',
@@ -71,26 +101,37 @@ return {
         local line = vim.api.nvim_buf_get_lines(chat.bufnr, row, row + 1, false)[1]
           or ''
         local col = math.min(cursor[2], #line)
-        local insert_at_eol = col == #line
         local text = '`' .. path:gsub('`', '\\`') .. '`'
 
         vim.api.nvim_buf_set_text(chat.bufnr, row, col, row, col, { text })
+        local updated_line = vim.api.nvim_buf_get_lines(
+          chat.bufnr,
+          row,
+          row + 1,
+          false
+        )[1] or ''
+        local target_col = col + #text
+        local insert_at_eol = target_col == #updated_line
+
         for _, win in ipairs(vim.api.nvim_list_wins()) do
           if vim.api.nvim_win_get_buf(win) == chat.bufnr then
             vim.api.nvim_set_current_win(win)
-            vim.api.nvim_win_set_cursor(win, { cursor[1], col + #text })
-            vim.cmd('startinsert')
+            pcall(vim.cmd.stopinsert)
             if insert_at_eol then
-              vim.schedule(function()
-                Lpke_feedkeys('<Right>', 'n')
-              end)
+              vim.api.nvim_win_set_cursor(win, { cursor[1], target_col - 1 })
+              vim.cmd('startinsert!')
+            else
+              vim.api.nvim_win_set_cursor(win, { cursor[1], target_col })
+              vim.cmd('startinsert')
             end
+            vim.cmd('redraw')
             break
           end
         end
       end
 
       local path_picker_switch_keymaps = { '<F2>s', '<A-s>' }
+      local path_picker_scope_keymaps = { '<F2>r', '<A-r>' }
 
       local function pick_path(kind, cursor, opts)
         opts = opts or {}
@@ -101,43 +142,58 @@ return {
         local config_values = require('telescope.config').values
 
         local fd_type = kind == 'Directory' and 'd' or 'f'
-        local prompt_title = '/path - Select ' .. kind
-        local cwd = opts.cwd or '/'
+        local scope = opts.scope or 'home'
+        local search = path_picker_search(scope)
+        local prompt_title =
+          string.format('/path - Select %s [%s]', kind, search.title)
 
         local function switch_picker(prompt_bufnr, initial_mode)
           local current_picker = action_state.get_current_picker(prompt_bufnr)
           local next_kind = kind == 'Directory' and 'File' or 'Directory'
           local next_opts = {
-            cwd = current_picker.cwd or cwd,
             default_text = current_picker:_get_prompt(),
             initial_mode = initial_mode,
+            scope = scope,
           }
 
           actions.close(prompt_bufnr)
           pick_path(next_kind, cursor, next_opts)
         end
 
+        local function switch_scope(prompt_bufnr, initial_mode)
+          local current_picker = action_state.get_current_picker(prompt_bufnr)
+          local next_scope = scope == 'home' and 'filesystem' or 'home'
+          local default_text = current_picker:_get_prompt()
+
+          actions.close(prompt_bufnr)
+          pick_path(kind, cursor, {
+            default_text = default_text,
+            initial_mode = initial_mode,
+            scope = next_scope,
+          })
+        end
+
         pickers
           .new({}, {
             prompt_title = prompt_title,
-            cwd = cwd,
+            cwd = search.cwd,
             initial_mode = opts.initial_mode or 'insert',
             default_text = opts.default_text,
-            finder = finders.new_oneshot_job(util.concat_arrs(
-              {
-                'fd',
-                '--absolute-path',
-                '--hidden',
-                '--type',
-                fd_type,
-              },
-              home_ignore_file_args(),
-              root_fd_exclude_args(),
-              {
-                '.',
-                cwd,
-              }
-            )),
+            finder = finders.new_oneshot_job(
+              util.concat_arrs(
+                {
+                  'fd',
+                  '--absolute-path',
+                  '--hidden',
+                  '--type',
+                  fd_type,
+                },
+                home_ignore_file_args(),
+                search.exclude_args,
+                { '.' },
+                search.roots
+              )
+            ),
             sorter = config_values.generic_sorter({}),
             previewer = kind == 'Directory' and false
               or config_values.file_previewer({}),
@@ -150,15 +206,21 @@ return {
                   switch_picker(prompt_bufnr, 'normal')
                 end)
               end
+              for _, keymap in ipairs(path_picker_scope_keymaps) do
+                map('i', keymap, function()
+                  switch_scope(prompt_bufnr, 'insert')
+                end)
+                map('n', keymap, function()
+                  switch_scope(prompt_bufnr, 'normal')
+                end)
+              end
 
               actions.select_default:replace(function()
                 local entry = action_state.get_selected_entry()
                 actions.close(prompt_bufnr)
 
                 if entry then
-                  vim.schedule(function()
-                    insert_path(entry.value, cursor)
-                  end)
+                  insert_path(entry.value, cursor)
                 end
               end)
               return true

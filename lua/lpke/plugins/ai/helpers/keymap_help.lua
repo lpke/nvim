@@ -119,6 +119,19 @@ local sections = {
       },
     },
   },
+  {
+    title = '/path Picker Keymaps',
+    keymaps = {
+      {
+        description = 'Toggle file/directory search',
+        modes = { n = { '<A-s>', '<F2>s' }, i = { '<A-s>', '<F2>s' } },
+      },
+      {
+        description = 'Toggle home/filesystem scope',
+        modes = { n = { '<A-r>', '<F2>r' }, i = { '<A-r>', '<F2>r' } },
+      },
+    },
+  },
 }
 
 local function max_description_length()

@@ -474,7 +474,9 @@ Context/tools inside chats:
 
 Custom slash commands:
   /caveman              Toggle terse response mode for HTTP adapters.
-  /path                 Insert absolute file or directory path.
+  /path                 Insert absolute file or directory path. Searches home
+                        by default; <F2>s toggles file/directory and <F2>r
+                        toggles home/whole-filesystem scope (Alt also works).
   /git_files            Add git file list context, not file contents.
   /external_files       Share external directory for tools that need abs paths.
   /git_commits          Add recent git commit messages/metadata.
