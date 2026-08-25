@@ -4,6 +4,7 @@ local ai_config = require('lpke.plugins.ai.helpers.config')
 local acp_session_options =
   require('lpke.plugins.ai.helpers.acp_session_options')
 local cleanup = require('lpke.plugins.ai.helpers.cleanup')
+local codex_threads = require('lpke.plugins.ai.helpers.codex_threads')
 local img_clip = require('lpke.plugins.ai.helpers.img_clip')
 local model_swap = require('lpke.plugins.ai.helpers.model_swap')
 
@@ -42,6 +43,8 @@ function M.setup()
       { desc = 'CodeCompanion: ACP approval preset' }},
     { 'n', '<leader>X', cleanup.open,
       { desc = 'CodeCompanion: Cleanup chats' }},
+    { 'n', 'gA', function() codex_threads.open() end,
+      { desc = 'CodeCompanion: Inspect Codex subagents' }},
     { 'n!', '<leader>I', img_clip.paste_image,
       { desc = 'CodeCompanion: Paste image' }},
     { 'in', '<A-a>', function() chat_fns.insert_http_tool_text('@{agent} ') end,
@@ -84,6 +87,10 @@ function M.setup()
         Lpke_cc_adapter(cmd.fargs)
       end
     end, { desc = 'CodeCompanion: Swap to (or between) adapters' } },
+    { '?', 'CodexAgents', codex_threads.command, {
+      desc = 'CodeCompanion: Inspect local or Mac Codex subagents',
+      complete = codex_threads.complete,
+    } },
   })
   -- stylua: ignore end
 end

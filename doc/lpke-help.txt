@@ -450,6 +450,14 @@ Chat buffer keys:
   gn                    New chat.
   gh                    Saved chat history.
   gH                    History/resume/drafts action picker.
+  gA                    Open live Codex subagent dashboard. Choose current
+                        chat descendants, all local agents, or Mac agents over
+                        ssh mbp. The dashboard shows full delegated prompts and
+                        responses when Codex exposes them. Press <CR> anywhere
+                        in an entry to inspect its complete transcript. Press h
+                        to hide runs completed so far; later completions remain
+                        visible. Press u to restore all runs. Hidden state lasts
+                        for the current Neovim session and parent thread.
   gX                    Close current chat without deleting saved history.
 
 Models/adapters:
@@ -460,6 +468,9 @@ Models/adapters:
   <leader>a             Codex ACP approval preset picker.
   :Model son|opus|gpt|gem|... sets or cycles model aliases.
   :Adapter codex|copilot sets or cycles adapter.
+  :CodexAgents [current|local|mbp] opens the live read-only subagent dashboard
+  with untruncated delegated prompts and responses.
+  In dashboard/transcript buffers: r refreshes, s changes source, q closes.
 
 Context/tools inside chats:
   <leader>I             Paste image.

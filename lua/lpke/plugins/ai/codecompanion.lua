@@ -160,6 +160,10 @@ local function config()
             },
             -- New Codex ACP sessions inherit CLI state unless explicitly overridden.
             env = {
+              CODEX_PATH = function()
+                local path = vim.fn.exepath('codex')
+                return path ~= '' and path or nil
+              end,
               CODEX_CONFIG = function()
                 return vim.json.encode({
                   model = ai_config.adapter_default_model('codex'),
@@ -618,6 +622,7 @@ local function config()
   require('lpke.plugins.ai.helpers.history_search').setup()
   require('lpke.plugins.ai.helpers.drafts').setup()
   require('lpke.plugins.ai.helpers.folds').setup()
+  require('lpke.plugins.ai.helpers.codex_threads').setup()
 
   local function set_history_buffer_title(bufnr, title)
     if

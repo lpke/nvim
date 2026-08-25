@@ -61,6 +61,10 @@ local sections = {
         description = 'ACP approval preset',
         modes = { n = '<leader>a' },
       },
+      {
+        description = 'View full Codex subagent prompts and responses',
+        modes = { n = 'gA' },
+      },
       { description = 'Cleanup chats', modes = { n = '<leader>X' } },
       { description = 'Paste image', modes = { n = '<leader>I' } },
       {
@@ -99,6 +103,19 @@ local sections = {
       {
         description = 'Close gd file tab when older jump is source chat',
         modes = { n = '<C-o>' },
+      },
+    },
+  },
+  {
+    title = 'Codex Subagent Dashboard Keymaps',
+    keymaps = {
+      {
+        description = 'Hide runs completed so far',
+        modes = { n = 'h' },
+      },
+      {
+        description = 'Show all subagent runs',
+        modes = { n = 'u' },
       },
     },
   },
