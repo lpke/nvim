@@ -5,6 +5,7 @@ local acp_session_options =
   require('lpke.plugins.ai.helpers.acp_session_options')
 local cleanup = require('lpke.plugins.ai.helpers.cleanup')
 local codex_threads = require('lpke.plugins.ai.helpers.codex_threads')
+local folds = require('lpke.plugins.ai.helpers.folds')
 local img_clip = require('lpke.plugins.ai.helpers.img_clip')
 local model_swap = require('lpke.plugins.ai.helpers.model_swap')
 
@@ -45,6 +46,10 @@ function M.setup()
       { desc = 'CodeCompanion: Cleanup chats' }},
     { 'n', 'gA', function() codex_threads.open() end,
       { desc = 'CodeCompanion: Inspect Codex subagents' }},
+    { 'n', 'gF', function()
+      folds.toggle_long_chat(require('codecompanion').buf_get_chat(0))
+    end,
+      { desc = 'CodeCompanion: Toggle older chat lines' }},
     { 'n!', '<leader>I', img_clip.paste_image,
       { desc = 'CodeCompanion: Paste image' }},
     { 'in', '<A-a>', function() chat_fns.insert_http_tool_text('@{agent} ') end,

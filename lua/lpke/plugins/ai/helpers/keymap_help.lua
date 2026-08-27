@@ -65,6 +65,10 @@ local sections = {
         description = 'View full Codex subagent prompts and responses',
         modes = { n = 'gA' },
       },
+      {
+        description = 'Toggle older chat lines for long-thread performance',
+        modes = { n = 'gF' },
+      },
       { description = 'Cleanup chats', modes = { n = '<leader>X' } },
       { description = 'Paste image', modes = { n = '<leader>I' } },
       {

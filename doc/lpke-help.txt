@@ -440,6 +440,11 @@ Chat buffer keys:
   ga                    Change adapter.
   gs                    Toggle system prompt.
   gta / gtx             Toggle/clear chat approvals.
+  gF                    Hide/show whole older messages in chats over 600 lines.
+                        Hiding keeps at least the latest 300 lines visible
+                        without changing the chat buffer or model context. The
+                        hidden range refreshes after submits, responses, and
+                        stops, and whenever hiding is turned back on.
   gd                    Open HTTP(S) link in browser, a pasted image's directory
                         in the OS file explorer, or a file reference in a new tab.
                         Supports path, path:line, and path:line:column.
