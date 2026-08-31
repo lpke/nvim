@@ -3,6 +3,72 @@ local M = {}
 
 local util = require('lpke.core.helpers.util')
 
+local mac_clipboard_host = 'mbp'
+
+local function notify_mac_clipboard_error(action, result)
+  local message = vim.trim(result.stderr or '')
+  if message == '' then
+    message = 'exit code ' .. result.code
+  end
+  vim.notify(
+    'Mac clipboard ' .. action .. ' failed: ' .. message,
+    vim.log.levels.ERROR
+  )
+end
+
+-- sends the global clipboard register to the Mac clipboard over SSH
+function M.copy_global_clipboard_to_mac()
+  vim.system(
+    { 'ssh', mac_clipboard_host, 'pbcopy' },
+    { stdin = vim.fn.getreg('+'), text = true },
+    function(result)
+      if result.code ~= 0 then
+        vim.schedule(function()
+          notify_mac_clipboard_error('copy', result)
+        end)
+      end
+    end
+  )
+end
+
+-- arms a global yank expression to copy to the Mac after the yank completes
+function M.yank_to_mac(keys)
+  local yank_autocmd
+  local mode_autocmd = vim.api.nvim_create_autocmd('ModeChanged', {
+    pattern = 'no*:n',
+    once = true,
+    callback = function()
+      pcall(vim.api.nvim_del_autocmd, yank_autocmd)
+    end,
+  })
+
+  yank_autocmd = vim.api.nvim_create_autocmd('TextYankPost', {
+    once = true,
+    callback = function()
+      pcall(vim.api.nvim_del_autocmd, mode_autocmd)
+      if vim.v.event.operator == 'y' and vim.v.event.regname == '+' then
+        M.copy_global_clipboard_to_mac()
+      end
+    end,
+  })
+
+  return keys
+end
+
+-- fetches the Mac clipboard over SSH, updates +, then pastes it
+function M.paste_from_mac(above)
+  local result = vim
+    .system({ 'ssh', mac_clipboard_host, 'pbpaste' }, { text = true })
+    :wait()
+  if result.code ~= 0 then
+    notify_mac_clipboard_error('paste', result)
+    return
+  end
+
+  vim.fn.setreg('+', result.stdout or '', 'v')
+  vim.cmd('normal! "+' .. (above and 'P' or 'p'))
+end
+
 -- pastes from register with unix line endings
 function M.paste_unix(register, above)
   local content = vim.fn.getreg(register)

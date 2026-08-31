@@ -343,4 +343,19 @@ else
     {'nv', '<leader>P', '"+P', { desc = 'Global clipboard paste (before cursor)' }},
   })
 end
+
+if vim.fn.has('macunix') == 0 then
+  helpers.keymap_set_multi({
+    {'nvE', '<leader><leader>y', function() return helpers.yank_to_mac('"+y') end,
+      { desc = 'Global clipboard yank, then copy to Mac' }},
+    {'nE', '<leader><leader>Y', function() return helpers.yank_to_mac('"+y$') end,
+      { desc = 'Global clipboard yank to end of line, then copy to Mac' }},
+    {'nE', '<leader><leader>ygG', function() return helpers.yank_to_mac('mzgg"+yG`z') end,
+      { desc = 'Global clipboard yank entire buffer, then copy to Mac (without moving cursor)' }},
+    {'nv!', '<leader><leader>p', function() helpers.paste_from_mac() end,
+      { desc = 'Fetch Mac clipboard, then paste' }},
+    {'nv!', '<leader><leader>P', function() helpers.paste_from_mac(true) end,
+      { desc = 'Fetch Mac clipboard, then paste before cursor' }},
+  })
+end
 -- stylua: ignore end

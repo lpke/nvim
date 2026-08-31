@@ -229,6 +229,9 @@ General movement/editing:
   Y                     Yank to end of line.
   <leader>y/Y           Yank to system clipboard.
   ygG / <leader>ygG     Yank whole buffer without moving cursor.
+  <leader><leader>y/Y   Yank to system clipboard, then copy it to the Mac.
+  <leader><leader>ygG   Yank whole buffer, then copy it to the Mac.
+  <leader><leader>p/P   Fetch the Mac clipboard, then paste after/before.
   J / gJ / <leader>J    Join lines while preserving cursor.
   go / gO               Add blank line below/above without entering insert.
   =*                    Indent whole file.
