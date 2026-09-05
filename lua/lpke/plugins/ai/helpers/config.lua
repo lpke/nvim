@@ -1,15 +1,6 @@
 local M = {}
 
-local function codex_defaults()
-  if Lpke_is_work_device then
-    return 'gpt_5_6_luna', 'xhigh'
-  end
-
-  return 'gpt_5_6_sol', 'medium'
-end
-
-local codex_default_model, codex_default_reasoning_effort = codex_defaults()
-local codex_model_cycle = { 'gpt_5_6_sol', 'gpt_5_5' }
+local codex_model_cycle = { 'gpt_5_6_sol', 'gpt_6_astra' }
 if Lpke_is_work_device then
   table.insert(codex_model_cycle, 'gpt_5_6_luna')
 end
@@ -18,12 +9,12 @@ M.adapters = {
   copilot = {
     display = 'Copilot',
     default_model = 'sonnet',
-    model_cycle = { 'sonnet', 'gpt' },
+    model_cycle = { 'sonnet', 'gpt_5_mini' },
   },
   codex = {
     display = 'Codex',
-    default_model = codex_default_model,
-    default_reasoning_effort = codex_default_reasoning_effort,
+    default_model = Lpke_is_work_device and 'gpt_5_6_luna' or 'gpt_6_astra',
+    default_reasoning_effort = 'high',
     model_cycle = codex_model_cycle,
   },
 }
@@ -72,7 +63,7 @@ M.defaults = {
   inline_adapter = 'copilot',
   cmd_adapter = 'copilot',
   title_generation_adapter = 'copilot',
-  title_generation_model = 'gpt',
+  title_generation_model = 'gpt_5_mini',
 }
 
 M.preferred_models = {
@@ -80,7 +71,7 @@ M.preferred_models = {
   son = 'sonnet_4_6',
   sonnet = 'sonnet_4_6',
   haiku = 'haiku_4_5',
-  gpt = 'gpt_5_mini',
+  gpt = 'gpt_6_astra',
   gem = 'gemini_3_1_pro',
   gemini = 'gemini_3_1_pro',
   grok = 'grok_code_fast_1',
@@ -131,19 +122,24 @@ M.models = {
     display = 'haiku-4.5',
     adapter_display = { copilot = 'haiku-4.5 (x0.33)' },
   },
+  gpt_6_astra = {
+    id = 'gpt-6-astra',
+    aliases = { 'astra' },
+    display = 'GPT-6a',
+  },
   gpt_5_6_sol = {
     id = 'gpt-5.6-sol',
-    aliases = { 'gpt5.6s', 'gpt5.6' },
+    aliases = { 'sol', 'gpt5.6s', 'gpt5.6' },
     display = 'GPT-5.6s',
   },
   gpt_5_6_terra = {
     id = 'gpt-5.6-terra',
-    aliases = { 'gpt5.6t' },
+    aliases = { 'terra', 'gpt5.6t' },
     display = 'GPT-5.6t',
   },
   gpt_5_6_luna = {
     id = 'gpt-5.6-luna',
-    aliases = { 'gpt5.6l' },
+    aliases = { 'luna', 'gpt5.6l' },
     display = 'GPT-5.6l',
   },
   gpt_5_5 = {

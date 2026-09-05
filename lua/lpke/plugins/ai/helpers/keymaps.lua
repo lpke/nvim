@@ -80,7 +80,7 @@ function M.setup()
   helpers.command_set_multi({
     { '*', 'Model', function(cmd)
       if #cmd.fargs == 0 then
-        print(':Model <model1> [<model2>...] | eg: son|opus|gpt|gem|<exact>')
+        print(':Model <model1> [<model2>...] | eg: son|opus|gpt|astra|sol|terra|luna|gem|<exact>')
       else
         Lpke_cc_model(cmd.fargs)
       end

@@ -469,12 +469,17 @@ Chat buffer keys:
   gX                    Close current chat without deleting saved history.
 
 Models/adapters:
-  Default chat adapter is Codex ACP. Inline/cmd/title generation use Copilot.
+  Default chat is Codex ACP with high reasoning, using GPT-5.6 Luna on work
+  devices and GPT-6 Astra elsewhere.
+  Inline/cmd/title generation use Copilot.
   <leader>m             Cycle configured models for current adapter.
   <leader>M             Cycle Codex/Copilot adapters.
   <leader>r             Codex ACP reasoning effort picker.
   <leader>a             Codex ACP approval preset picker.
-  :Model son|opus|gpt|gem|... sets or cycles model aliases.
+  :Model <model> [...]  Set or cycle aliases such as son, opus, gpt, astra,
+                        sol, terra, luna, gem, or exact model IDs.
+                        gpt/astra select GPT-6 Astra; sol/terra/luna select
+                        the corresponding GPT-5.6 model.
   :Adapter codex|copilot sets or cycles adapter.
   :CodexAgents [current|local|mbp] opens the live read-only subagent dashboard
   with untruncated delegated prompts and responses.
