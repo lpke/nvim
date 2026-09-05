@@ -1,4 +1,5 @@
 local M = {}
+local hints = require('lpke.plugins.ai.helpers.ui_hints')
 
 local function value_or_nil(value)
   return value ~= vim.NIL and value or nil
@@ -274,6 +275,10 @@ local function format_item(lines, item)
 end
 
 function M.thread_status(thread)
+  local current = status_name(thread.status)
+  if current == 'active' or current == 'running' or current == 'waiting' then
+    return current
+  end
   local turns = list(thread.turns)
   local last_turn = turns[#turns]
   if last_turn and last_turn.status then
@@ -387,21 +392,6 @@ local function execution_details(thread, execution)
   return lines
 end
 
-local function append_execution_section(lines, thread, execution, error)
-  local details = execution_details(thread, execution)
-  if #details > 0 and execution then
-    append_section(lines, 'Execution settings', table.concat(details, '\n'))
-  elseif error then
-    append_section(
-      lines,
-      'Execution settings',
-      '_Unavailable: ' .. error .. '_'
-    )
-  else
-    append_section(lines, 'Execution settings', '_Loading..._')
-  end
-end
-
 function M.parent_thread_id(thread)
   local spawn = spawn_source(thread)
   return text(thread.parentThreadId)
@@ -424,12 +414,14 @@ function M.delegated_prompt(thread, parent, live_prompt)
   end
 
   local spawn = spawn_source(thread)
-  for _, prompt in ipairs({
+  local prompts = {
     thread.delegationPrompt,
     spawn.prompt,
     spawn.message,
     spawn.task,
-  }) do
+  }
+  for index = 1, 4 do
+    local prompt = prompts[index]
     if
       type(prompt) == 'string'
       and prompt ~= ''
@@ -439,8 +431,11 @@ function M.delegated_prompt(thread, parent, live_prompt)
     end
   end
 
-  for _, turn in ipairs(list(parent and parent.turns)) do
-    for _, item in ipairs(list(turn.items)) do
+  local turns = list(parent and parent.turns)
+  for turn_index = #turns, 1, -1 do
+    local items = list(turns[turn_index].items)
+    for item_index = #items, 1, -1 do
+      local item = items[item_index]
       if
         item.type == 'collabAgentToolCall'
         and receiver_matches(item, thread.id)
@@ -491,63 +486,20 @@ function M.subagent_messages(thread)
   return messages
 end
 
-function M.thread_label(thread)
-  local name = single_line(thread.agentNickname) or single_line(thread.name)
-  local role = single_line(thread.agentRole)
-
-  local parts = { '[' .. M.thread_status(thread) .. ']' }
-  if name and name ~= '' then
-    table.insert(parts, name)
+local function excerpt(value)
+  value = single_line(value)
+  if value then
+    return vim.fn.strcharpart(value, 0, 140)
+      .. (vim.fn.strchars(value) > 140 and '…' or '')
   end
-  if role and role ~= '' then
-    table.insert(parts, '(' .. role .. ')')
-  end
-  table.insert(parts, '[' .. tostring(thread.id or '?') .. ']')
-  return table.concat(parts, ' ')
 end
 
-local function append_subagent_entry(
-  lines,
-  thread,
-  parent,
-  live_prompt,
-  load_error,
-  execution,
-  execution_error
-)
-  table.insert(lines, '## ' .. M.thread_label(thread))
-  table.insert(lines, '')
-
-  append_execution_section(lines, thread, execution, execution_error)
-
-  if load_error then
-    append_section(lines, 'Read error', load_error)
-    return
-  end
-
-  if not thread.turns then
-    table.insert(lines, '_Loading full thread..._')
-    table.insert(lines, '')
-    return
-  end
-
-  append_section(
-    lines,
-    'Delegated prompt',
-    M.delegated_prompt(thread, parent, live_prompt)
-      or '_Unavailable. Codex did not expose the encrypted spawn prompt._'
-  )
-
-  local messages = M.subagent_messages(thread)
-  if #messages == 0 then
-    append_section(lines, 'Subagent response', '_Waiting for output..._')
-    return
-  end
-
-  for _, message in ipairs(messages) do
-    local phase = message.phase and (' · ' .. message.phase) or ''
-    append_section(lines, 'Subagent response' .. phase, message.text)
-  end
+function M.is_active(thread)
+  local status = M.thread_status(thread):lower():gsub('[%s_-]', '')
+  return status == 'active'
+    or status == 'inprogress'
+    or status == 'running'
+    or status == 'waiting'
 end
 
 function M.dashboard(
@@ -557,73 +509,98 @@ function M.dashboard(
   parents,
   detail_errors,
   live_prompts,
-  executions,
-  execution_errors,
   hidden_count
 )
+  local groups = {
+    { name = 'Running', threads = {} },
+    { name = 'Finished', threads = {} },
+    { name = 'Other', threads = {} },
+  }
+  for _, summary in ipairs(threads) do
+    local thread = details[summary.id] or summary
+    local group = M.is_active(thread) and 1
+      or M.completion_marker(thread) and 2
+      or 3
+    table.insert(groups[group].threads, thread)
+  end
   local lines = {
     '# Codex subagents',
-    '',
-    'Source: `' .. scope.label .. '`',
-    'Updated: `' .. os.date('%Y-%m-%d %H:%M:%S') .. '`',
-    '',
-    '`<CR>` full transcript · `h` hide completed so far · `u` show all',
-    '`r` refresh · `s` change source · `q` close',
+    scope.label,
+    ('%d running · %d finished · %d other · %d hidden'):format(
+      #groups[1].threads,
+      #groups[2].threads,
+      #groups[3].threads,
+      hidden_count or 0
+    ),
     '',
   }
+  local hint_rows = hints.append(lines, {
+    {
+      { 'Enter', 'inspect' },
+      { 'J/K', 'agents' },
+      { 'h', (hidden_count or 0) > 0 and 'show finished' or 'hide finished' },
+    },
+    { { 'r', 'refresh' }, { 's', 'source' }, { 'gA/q/Esc', 'close' } },
+  })
+  lines[#lines + 1] = ''
   local line_threads = {}
-
-  hidden_count = hidden_count or 0
-  if hidden_count > 0 then
-    table.insert(lines, 5, 'Hidden: `' .. hidden_count .. '` completed run(s)')
-  end
-
   if #threads == 0 then
-    if hidden_count > 0 then
-      table.insert(lines, 'No visible subagent threads.')
-    else
-      table.insert(lines, 'No subagent threads found.')
-    end
-    return lines, line_threads
+    lines[#lines + 1] = 'No subagents to show.'
   end
-
-  details = details or {}
-  parents = parents or {}
-  detail_errors = detail_errors or {}
-  live_prompts = live_prompts or {}
-  executions = executions or {}
-  execution_errors = execution_errors or {}
-  for _, summary in ipairs(threads) do
-    local first_line = #lines + 1
-    local thread = details[summary.id] or summary
-    local parent = parents[M.parent_thread_id(thread)]
-    append_subagent_entry(
-      lines,
-      thread,
-      parent,
-      live_prompts[summary.id],
-      detail_errors[summary.id],
-      executions[summary.id],
-      execution_errors[summary.id]
-    )
-    table.insert(lines, '---')
-    table.insert(lines, '')
-    for line = first_line, #lines do
-      line_threads[line] = thread
+  for _, group in ipairs(groups) do
+    if #group.threads > 0 then
+      lines[#lines + 1] = '## ' .. group.name
+      lines[#lines + 1] = ''
+    end
+    for _, thread in ipairs(group.threads) do
+      local first = #lines + 1
+      local label = single_line(thread.agentNickname)
+        or single_line(thread.name)
+        or thread.id:sub(1, 8)
+      local role = single_line(thread.agentRole)
+      lines[#lines + 1] = ('[%s] %s%s · %s'):format(
+        M.thread_status(thread),
+        label,
+        role and (' / ' .. role) or '',
+        thread.id:sub(1, 8)
+      )
+      local prompt = M.delegated_prompt(
+        thread,
+        parents[M.parent_thread_id(thread)],
+        live_prompts[thread.id]
+      )
+      lines[#lines + 1] = '  Task: ' .. (excerpt(prompt) or 'Not available yet')
+      local messages = M.subagent_messages(thread)
+      local latest = messages[#messages]
+      lines[#lines + 1] = '  Latest: '
+        .. (
+          excerpt(detail_errors[thread.id])
+          or excerpt(latest and latest.text)
+          or 'No output yet'
+        )
+      lines[#lines + 1] = ''
+      for row = first, #lines do
+        line_threads[row] = thread
+      end
     end
   end
-
-  return lines, line_threads
+  return lines, line_threads, hint_rows
 end
 
-function M.thread(host, thread, execution, execution_error)
+function M.thread(host, thread, execution, execution_error, prompt)
   local lines = {
     '# Codex subagent',
+    '',
+  }
+  local hint_rows = hints.append(lines, {
+    { { 'Esc/q', 'back' }, { 'r', 'refresh' }, { 'gA', 'close panel' } },
+  })
+  vim.list_extend(lines, {
     '',
     'Host: `' .. host .. '`',
     'Status: `' .. M.thread_status(thread) .. '`',
     'Thread: `' .. tostring(thread.id or '?') .. '`',
-  }
+  })
 
   if text(thread.parentThreadId) then
     table.insert(lines, 'Parent: `' .. thread.parentThreadId .. '`')
@@ -648,10 +625,10 @@ function M.thread(host, thread, execution, execution_error)
   end
 
   table.insert(lines, '')
-  table.insert(lines, '`r` refresh · `s` subagent dashboard · `q` close')
-  table.insert(lines, '')
   table.insert(lines, '---')
   table.insert(lines, '')
+
+  append_section(lines, 'Delegated prompt', prompt)
 
   for index, turn in ipairs(list(thread.turns)) do
     local turn_details = { status_name(turn.status) }
@@ -673,7 +650,7 @@ function M.thread(host, thread, execution, execution_error)
     end
   end
 
-  return lines
+  return lines, hint_rows
 end
 
 return M

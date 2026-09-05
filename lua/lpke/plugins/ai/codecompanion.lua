@@ -622,6 +622,7 @@ local function config()
   require('lpke.plugins.ai.helpers.history_search').setup()
   require('lpke.plugins.ai.helpers.drafts').setup()
   require('lpke.plugins.ai.helpers.folds').setup()
+  require('lpke.plugins.ai.helpers.chat_history').setup()
   require('lpke.plugins.ai.helpers.codex_threads').setup()
 
   local function set_history_buffer_title(bufnr, title)

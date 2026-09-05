@@ -443,11 +443,18 @@ Chat buffer keys:
   ga                    Change adapter.
   gs                    Toggle system prompt.
   gta / gtx             Toggle/clear chat approvals.
-  gF                    Hide/show whole older messages in chats over 600 lines.
-                        Hiding keeps at least the latest 300 lines visible
-                        without changing the chat buffer or model context. The
-                        hidden range refreshes after submits, responses, and
-                        stops, and whenever hiding is turned back on.
+  gF                    Toggle older chat in a read-only history window.
+                        Long chats automatically move complete older turns out
+                        of the live buffer when idle. At least the latest 300
+                        lines, latest exchange, and current draft stay there.
+                        Model context and saved messages remain complete.
+                        History opens at its newest page, up to 500 lines per
+                        page. H / L go older / newer, with [p / ]p as aliases.
+                        Counts work, e.g. 3H moves back three pages. The border
+                        shows the current page even while scrolling. / searches
+                        all archived pages; n / N find next / previous matches.
+                        gF, q, or <Esc> closes history. Chat undo resets when
+                        older turns move to history; the draft text is kept.
   gd                    Open HTTP(S) link in browser, a pasted image's directory
                         in the OS file explorer, or a file reference in a new tab.
                         Supports path, path:line, and path:line:column.
@@ -458,14 +465,17 @@ Chat buffer keys:
   gn                    New chat.
   gh                    Saved chat history.
   gH                    History/resume/drafts action picker.
-  gA                    Open live Codex subagent dashboard. Choose current
-                        chat descendants, all local agents, or Mac agents over
-                        ssh mbp. The dashboard shows full delegated prompts and
-                        responses when Codex exposes them. Press <CR> anywhere
-                        in an entry to inspect its complete transcript. Press h
-                        to hide runs completed so far; later completions remain
-                        visible. Press u to restore all runs. Hidden state lasts
-                        for the current Neovim session and parent thread.
+  gA                    Toggle the current Codex thread's subagent overview.
+                        Running agents appear first, with status counts, task
+                        previews, and latest output. <CR> opens the full prompt
+                        and transcript in the same panel; <Esc>, q, or s returns
+                        to that overview. gA closes the panel from either view.
+                        J / K jump to the next / previous agent heading.
+                        j / k move freely. <Esc> also closes the overview.
+                        In the overview, h toggles between hiding runs completed
+                        so far and showing all runs. Later completions and
+                        restarted agents remain visible. Hidden state lasts for
+                        this Neovim session and parent thread. s changes source.
   gX                    Close current chat without deleting saved history.
 
 Models/adapters:
@@ -482,8 +492,10 @@ Models/adapters:
                         the corresponding GPT-5.6 model.
   :Adapter codex|copilot sets or cycles adapter.
   :CodexAgents [current|local|mbp] opens the live read-only subagent dashboard
-  with untruncated delegated prompts and responses.
-  In dashboard/transcript buffers: r refreshes, s changes source, q closes.
+  for current descendants, all local agents, or Mac agents over ssh mbp.
+  With no argument, choose a source. r refreshes either view. q closes the
+  overview or returns from a transcript. Full prompts depend on Codex exposing
+  them; execution settings load when inspecting a thread.
 
 Context/tools inside chats:
   <leader>I             Paste image.

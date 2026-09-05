@@ -4,10 +4,10 @@ local api = vim.api
 local client_module = require('lpke.plugins.ai.helpers.codex_threads.client')
 local formatter = require('lpke.plugins.ai.helpers.codex_threads.format')
 local helpers = require('lpke.core.helpers')
+local hints = require('lpke.plugins.ai.helpers.ui_hints')
 
 local DASHBOARD_POLL_MS = 1500
 local DASHBOARD_READ_CONCURRENCY = 6
-local DASHBOARD_LIVE_THREADS = 10
 local THREAD_POLL_MS = 600
 local MAX_THREADS = 500
 local SUBAGENT_SOURCE_KINDS = {
@@ -54,24 +54,30 @@ local function find_window(bufnr)
   end
 end
 
-local function show_buffer(bufnr)
+local function show_buffer(bufnr, target_win)
   local winid = find_window(bufnr)
   if winid then
     api.nvim_set_current_win(winid)
     return winid
   end
 
-  vim.cmd('botright vsplit')
+  if target_win and api.nvim_win_is_valid(target_win) then
+    api.nvim_set_current_win(target_win)
+  else
+    vim.cmd('botright vsplit')
+  end
   winid = api.nvim_get_current_win()
   api.nvim_win_set_buf(winid, bufnr)
-  vim.cmd('vertical resize 88')
+  if not target_win then
+    vim.cmd('vertical resize 72')
+  end
   vim.wo[winid].wrap = true
   vim.wo[winid].linebreak = true
   vim.wo[winid].conceallevel = 2
   return winid
 end
 
-local function replace_lines(bufnr, lines)
+local function replace_lines(bufnr, lines, hint_rows)
   if not valid_buffer(bufnr) then
     return
   end
@@ -83,8 +89,15 @@ local function replace_lines(bufnr, lines)
     end
   end
 
+  if
+    vim.deep_equal(api.nvim_buf_get_lines(bufnr, 0, -1, false), buffer_lines)
+  then
+    return
+  end
+
   local winid = find_window(bufnr)
   local cursor = winid and api.nvim_win_get_cursor(winid) or nil
+  local view = winid and api.nvim_win_call(winid, vim.fn.winsaveview)
   local old_count = api.nvim_buf_line_count(bufnr)
   local was_at_end = cursor and cursor[1] >= old_count
 
@@ -92,6 +105,7 @@ local function replace_lines(bufnr, lines)
   api.nvim_buf_set_lines(bufnr, 0, -1, false, buffer_lines)
   vim.bo[bufnr].modifiable = false
   vim.bo[bufnr].modified = false
+  hints.apply(bufnr, hint_rows)
 
   if not (winid and cursor) then
     return
@@ -99,7 +113,10 @@ local function replace_lines(bufnr, lines)
 
   local new_count = api.nvim_buf_line_count(bufnr)
   local row = was_at_end and new_count or math.min(cursor[1], new_count)
-  pcall(api.nvim_win_set_cursor, winid, { math.max(1, row), cursor[2] })
+  view.lnum = math.max(1, row)
+  api.nvim_win_call(winid, function()
+    vim.fn.winrestview(view)
+  end)
 end
 
 local function scratch_buffer(name)
@@ -125,7 +142,9 @@ local function start_polling(state, interval_ms, refresh)
         stop_timer(state)
         return
       end
-      refresh(state)
+      if find_window(state.bufnr) then
+        refresh(state)
+      end
     end)
   )
 end
@@ -206,7 +225,8 @@ local function sort_threads(threads)
   end)
 end
 
-local function list_threads(scope, callback, cursor, collected)
+local function list_threads(state, callback, cursor, collected)
+  local scope = state.scope
   collected = collected or {}
   local params = {
     cursor = cursor or vim.NIL,
@@ -222,6 +242,9 @@ local function list_threads(scope, callback, cursor, collected)
   client_module
     .get(scope.host)
     :request('thread/list', params, function(result, err)
+      if not valid_buffer(state.bufnr) then
+        return
+      end
       if err then
         callback(nil, err)
         return
@@ -233,7 +256,7 @@ local function list_threads(scope, callback, cursor, collected)
         and result.nextCursor ~= vim.NIL
         and #collected < MAX_THREADS
       then
-        list_threads(scope, callback, result.nextCursor, collected)
+        list_threads(state, callback, result.nextCursor, collected)
         return
       end
 
@@ -253,6 +276,17 @@ end
 local refresh_dashboard
 local open_thread
 local render_dashboard
+
+local function close_dashboard(state)
+  for _, view in pairs(thread_views) do
+    if view.dashboard == state and valid_buffer(view.bufnr) then
+      api.nvim_buf_delete(view.bufnr, { force = true })
+    end
+  end
+  if valid_buffer(state.bufnr) then
+    api.nvim_buf_delete(state.bufnr, { force = true })
+  end
+end
 
 local function detail_version(thread)
   local ok, status = pcall(vim.json.encode, thread.status)
@@ -290,36 +324,82 @@ local function visible_dashboard_threads(state)
   return visible, hidden_count
 end
 
-local function hide_completed_runs(state)
+local function toggle_completed_runs(state)
+  local show_all = not vim.tbl_isempty(state.hidden_completions)
   local hidden = 0
-  for _, summary in ipairs(state.threads) do
-    local marker = formatter.completion_marker(dashboard_thread(state, summary))
-    if marker and state.hidden_completions[summary.id] ~= marker then
-      state.hidden_completions[summary.id] = marker
-      hidden = hidden + 1
+  if show_all then
+    for thread_id in pairs(state.hidden_completions) do
+      state.hidden_completions[thread_id] = nil
+    end
+  else
+    for _, summary in ipairs(state.threads) do
+      local marker =
+        formatter.completion_marker(dashboard_thread(state, summary))
+      if marker then
+        state.hidden_completions[summary.id] = marker
+        hidden = hidden + 1
+      end
     end
   end
   render_dashboard(state)
   notify(
-    hidden > 0 and ('Hid ' .. hidden .. ' completed run(s)')
-      or 'No new completed runs to hide'
-  )
-end
-
-local function show_all_runs(state)
-  local restored = 0
-  for thread_id in pairs(state.hidden_completions) do
-    state.hidden_completions[thread_id] = nil
-    restored = restored + 1
-  end
-  render_dashboard(state)
-  notify(
-    restored > 0 and ('Restored ' .. restored .. ' run(s)')
-      or 'All runs are already visible'
+    show_all and 'Showing all runs'
+      or hidden > 0 and ('Hid ' .. hidden .. ' completed run(s)')
+      or 'No completed runs to hide'
   )
 end
 
 local function set_dashboard_keymaps(state)
+  local function move_agent(direction)
+    local row = api.nvim_win_get_cursor(0)[1]
+    local count = api.nvim_buf_line_count(state.bufnr)
+    local remaining = vim.v.count1
+    for candidate = row + direction, direction == 1 and count or 1, direction do
+      local thread = state.line_threads[candidate]
+      local previous = state.line_threads[candidate - 1]
+      if thread and (not previous or thread.id ~= previous.id) then
+        api.nvim_win_set_cursor(0, { candidate, 0 })
+        remaining = remaining - 1
+        if remaining == 0 then
+          return
+        end
+      end
+    end
+  end
+  helpers.keymap_set_multi({
+    {
+      'n!',
+      'J',
+      function()
+        move_agent(1)
+      end,
+      { buffer = state.bufnr, desc = 'Codex subagents: Next agent' },
+    },
+    {
+      'n!',
+      'K',
+      function()
+        move_agent(-1)
+      end,
+      { buffer = state.bufnr, desc = 'Codex subagents: Previous agent' },
+    },
+    {
+      'n!',
+      '<Esc>',
+      function()
+        close_dashboard(state)
+      end,
+      { buffer = state.bufnr, desc = 'Codex subagents: Close' },
+    },
+  })
+  helpers.keymap_set({
+    'n!',
+    'gA',
+    function()
+      close_dashboard(state)
+    end,
+    { buffer = state.bufnr, desc = 'Codex subagents: Close' },
+  })
   helpers.keymap_set_multi({
     {
       'n!',
@@ -333,7 +413,8 @@ local function set_dashboard_keymaps(state)
             thread.id,
             thread,
             state.executions[thread.id],
-            state.execution_errors[thread.id]
+            state.execution_errors[thread.id],
+            state
           )
         end
       end,
@@ -343,17 +424,9 @@ local function set_dashboard_keymaps(state)
       'n!',
       'h',
       function()
-        hide_completed_runs(state)
+        toggle_completed_runs(state)
       end,
-      { buffer = state.bufnr, desc = 'Codex subagents: Hide completed so far' },
-    },
-    {
-      'n!',
-      'u',
-      function()
-        show_all_runs(state)
-      end,
-      { buffer = state.bufnr, desc = 'Codex subagents: Show all runs' },
+      { buffer = state.bufnr, desc = 'Codex subagents: Toggle completed runs' },
     },
     {
       'n!',
@@ -375,7 +448,7 @@ local function set_dashboard_keymaps(state)
       'n!',
       'q',
       function()
-        api.nvim_buf_delete(state.bufnr, { force = true })
+        close_dashboard(state)
       end,
       { buffer = state.bufnr, desc = 'Codex subagents: Close' },
     },
@@ -402,19 +475,21 @@ render_dashboard = function(state)
   end
 
   local threads, hidden_count = visible_dashboard_threads(state)
-  local lines, line_threads = formatter.dashboard(
+  local details = {}
+  for _, summary in ipairs(threads) do
+    details[summary.id] = dashboard_thread(state, summary)
+  end
+  local lines, line_threads, hint_rows = formatter.dashboard(
     state.scope,
     threads,
-    state.details,
+    details,
     state.parents,
     state.detail_errors,
     live_prompts,
-    state.executions,
-    state.execution_errors,
     hidden_count
   )
   state.line_threads = line_threads
-  replace_lines(state.bufnr, lines)
+  replace_lines(state.bufnr, lines, hint_rows)
 end
 
 local function schedule_dashboard_render(state)
@@ -502,38 +577,21 @@ local function hydrate_dashboard(state, force, callback)
     })
   end
 
-  for index, thread in ipairs(state.threads) do
+  for _, thread in ipairs(state.threads) do
     local marker = formatter.completion_marker(dashboard_thread(state, thread))
     local is_hidden = marker and marker == state.hidden_completions[thread.id]
     if not is_hidden then
       local version = detail_version(thread)
       local refresh_child = force
-        or state.scope.parent_id ~= nil
-        or index <= DASHBOARD_LIVE_THREADS
+        or formatter.is_active(dashboard_thread(state, thread))
         or not state.details[thread.id]
         or state.detail_versions[thread.id] ~= version
       if refresh_child then
         add_task('child', thread.id, version)
       end
 
-      if
-        not state.execution_requested[thread.id]
-        or (force and state.execution_errors[thread.id])
-      then
-        state.execution_requested[thread.id] = true
-        add_task('execution', thread.id)
-      end
-
       local parent_id = formatter.parent_thread_id(thread)
-      if
-        parent_id
-        and (
-          force
-          or state.scope.parent_id ~= nil
-          or refresh_child
-          or not state.parents[parent_id]
-        )
-      then
+      if parent_id and (force or not state.parents[parent_id]) then
         add_task('parent', parent_id)
       end
     end
@@ -550,6 +608,9 @@ local function hydrate_dashboard(state, force, callback)
   local launch
 
   local function complete_task(task, result, err)
+    if not valid_buffer(state.bufnr) then
+      return
+    end
     active = active - 1
     remaining = remaining - 1
 
@@ -563,21 +624,10 @@ local function hydrate_dashboard(state, force, callback)
       end
     elseif task.kind == 'parent' and result and result.thread then
       state.parents[task.id] = result.thread
-    elseif task.kind == 'execution' then
-      if result then
-        state.executions[task.id] = execution_metadata(result)
-        state.execution_errors[task.id] = nil
-      elseif err then
-        state.execution_errors[task.id] = err
-      end
     end
 
     schedule_dashboard_render(state)
     if remaining == 0 then
-      if state.execution_client then
-        state.execution_client:stop()
-        state.execution_client = nil
-      end
       callback()
       return
     end
@@ -585,7 +635,11 @@ local function hydrate_dashboard(state, force, callback)
   end
 
   launch = function()
-    while active < DASHBOARD_READ_CONCURRENCY and next_index <= #tasks do
+    while
+      valid_buffer(state.bufnr)
+      and active < DASHBOARD_READ_CONCURRENCY
+      and next_index <= #tasks
+    do
       local task = tasks[next_index]
       next_index = next_index + 1
       active = active + 1
@@ -595,13 +649,6 @@ local function hydrate_dashboard(state, force, callback)
         threadId = task.id,
         includeTurns = true,
       }
-      if task.kind == 'execution' then
-        state.execution_client = state.execution_client
-          or client_module.Client.new(state.scope.host)
-        client = state.execution_client
-        method = 'thread/resume'
-        params = { threadId = task.id }
-      end
       client:request(method, params, function(result, err)
         complete_task(task, result, err)
       end)
@@ -617,7 +664,10 @@ refresh_dashboard = function(state, force)
   end
   state.inflight = true
 
-  list_threads(state.scope, function(threads, err)
+  list_threads(state, function(threads, err)
+    if not valid_buffer(state.bufnr) then
+      return
+    end
     if err then
       state.inflight = false
       report_state_error(state, err)
@@ -659,9 +709,7 @@ local function open_dashboard(scope)
     detail_errors = {},
     detail_versions = {},
     details = {},
-    execution_client = nil,
     execution_errors = {},
-    execution_requested = {},
     executions = {},
     inflight = false,
     hidden_completions = hidden_completions_by_scope[key] or {},
@@ -675,6 +723,7 @@ local function open_dashboard(scope)
   }
   hidden_completions_by_scope[key] = state.hidden_completions
   dashboards[key] = state
+  vim.bo[state.bufnr].bufhidden = 'hide'
   vim.b[state.bufnr].codex_subagent_dashboard = true
   set_dashboard_keymaps(state)
   api.nvim_create_autocmd('BufWipeout', {
@@ -682,10 +731,6 @@ local function open_dashboard(scope)
     once = true,
     callback = function()
       stop_timer(state)
-      if state.execution_client then
-        state.execution_client:stop()
-        state.execution_client = nil
-      end
       dashboards[key] = nil
     end,
   })
@@ -711,6 +756,9 @@ local function refresh_thread(state)
     includeTurns = true,
   }, function(result, err)
     state.inflight = false
+    if not valid_buffer(state.bufnr) then
+      return
+    end
     if err then
       report_state_error(state, err)
       if not state.thread then
@@ -729,7 +777,13 @@ local function refresh_thread(state)
 
     state.last_error = nil
     state.thread = result.thread
-    local ok, encoded = pcall(vim.json.encode, result.thread)
+    state.prompt = formatter.delegated_prompt(
+      result.thread,
+      state.dashboard
+        and state.dashboard.parents[formatter.parent_thread_id(result.thread)],
+      live_prompts[state.thread_id]
+    ) or state.prompt
+    local ok, encoded = pcall(vim.json.encode, { result.thread, state.prompt })
     local fingerprint = ok and vim.fn.sha256(encoded) or tostring(os.time())
     if state.fingerprint == fingerprint then
       return
@@ -742,7 +796,8 @@ local function refresh_thread(state)
         state.host,
         result.thread,
         state.execution,
-        state.execution_error
+        state.execution_error,
+        state.prompt
       )
     )
   end)
@@ -763,6 +818,10 @@ local function refresh_thread_execution(state)
     elseif err then
       state.execution_error = err
     end
+    if state.dashboard then
+      state.dashboard.executions[state.thread_id] = state.execution
+      state.dashboard.execution_errors[state.thread_id] = state.execution_error
+    end
     if valid_buffer(state.bufnr) and state.thread then
       replace_lines(
         state.bufnr,
@@ -770,7 +829,8 @@ local function refresh_thread_execution(state)
           state.host,
           state.thread,
           state.execution,
-          state.execution_error
+          state.execution_error,
+          state.prompt
         )
       )
     end
@@ -778,11 +838,39 @@ local function refresh_thread_execution(state)
 end
 
 local function set_thread_keymaps(state)
+  local function back()
+    local win = find_window(state.bufnr)
+    if state.dashboard and valid_buffer(state.dashboard.bufnr) then
+      show_buffer(state.dashboard.bufnr, win)
+    end
+    if valid_buffer(state.bufnr) then
+      api.nvim_buf_delete(state.bufnr, { force = true })
+    end
+  end
+  helpers.keymap_set({
+    'n!',
+    '<Esc>',
+    back,
+    { buffer = state.bufnr, desc = 'Codex subagent: Back' },
+  })
+  helpers.keymap_set({
+    'n!',
+    'gA',
+    function()
+      if state.dashboard then
+        close_dashboard(state.dashboard)
+      else
+        back()
+      end
+    end,
+    { buffer = state.bufnr, desc = 'Codex subagent: Close panel' },
+  })
   helpers.keymap_set_multi({
     {
       'n!',
       'r',
       function()
+        refresh_thread_execution(state)
         refresh_thread(state)
       end,
       { buffer = state.bufnr, desc = 'Codex subagent: Refresh' },
@@ -790,26 +878,30 @@ local function set_thread_keymaps(state)
     {
       'n!',
       's',
-      function()
-        M.open()
-      end,
+      back,
       { buffer = state.bufnr, desc = 'Codex subagent: Dashboard' },
     },
     {
       'n!',
       'q',
-      function()
-        api.nvim_buf_delete(state.bufnr, { force = true })
-      end,
-      { buffer = state.bufnr, desc = 'Codex subagent: Close' },
+      back,
+      { buffer = state.bufnr, desc = 'Codex subagent: Back' },
     },
   })
 end
 
-open_thread = function(host, thread_id, summary, execution, execution_error)
+open_thread = function(
+  host,
+  thread_id,
+  summary,
+  execution,
+  execution_error,
+  dashboard
+)
   local key = thread_key(host, thread_id)
   local state = thread_views[key]
   if state and valid_buffer(state.bufnr) then
+    state.dashboard = dashboard or state.dashboard
     state.execution = execution or state.execution
     state.execution_error = execution_error or state.execution_error
     show_buffer(state.bufnr)
@@ -828,6 +920,12 @@ open_thread = function(host, thread_id, summary, execution, execution_error)
     execution = execution,
     execution_error = execution_error,
     execution_inflight = false,
+    dashboard = dashboard,
+    prompt = summary and formatter.delegated_prompt(
+      summary,
+      dashboard and dashboard.parents[formatter.parent_thread_id(summary)],
+      live_prompts[thread_id]
+    ),
     thread = summary,
     thread_id = thread_id,
   }
@@ -850,9 +948,9 @@ open_thread = function(host, thread_id, summary, execution, execution_error)
       id = thread_id,
       status = 'loading',
       turns = {},
-    }, execution, execution_error)
+    }, execution, execution_error, state.prompt)
   )
-  show_buffer(state.bufnr)
+  show_buffer(state.bufnr, dashboard and find_window(dashboard.bufnr))
   refresh_thread_execution(state)
   refresh_thread(state)
   start_polling(state, THREAD_POLL_MS, refresh_thread)
@@ -900,6 +998,28 @@ function M.open(scope_name)
   else
     notify('Usage: :CodexAgents [current|local|mbp]', vim.log.levels.WARN)
   end
+end
+
+function M.toggle()
+  local parent_id = current_parent_id()
+  if not parent_id then
+    notify('No active Codex ACP chat with a session id', vim.log.levels.WARN)
+    return
+  end
+  local scope =
+    { label = 'Current chat', host = 'local', parent_id = parent_id }
+  local state = dashboards[scope_key(scope)]
+  if state then
+    local visible = find_window(state.bufnr)
+    for _, view in pairs(thread_views) do
+      visible = visible or (view.dashboard == state and find_window(view.bufnr))
+    end
+    if visible then
+      close_dashboard(state)
+      return
+    end
+  end
+  open_dashboard(scope)
 end
 
 function M.command(cmd)

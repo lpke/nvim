@@ -62,11 +62,11 @@ local sections = {
         modes = { n = '<leader>a' },
       },
       {
-        description = 'View full Codex subagent prompts and responses',
+        description = 'Toggle current thread subagent overview',
         modes = { n = 'gA' },
       },
       {
-        description = 'Toggle older chat lines for long-thread performance',
+        description = 'Browse older chat without expanding the live buffer',
         modes = { n = 'gF' },
       },
       { description = 'Cleanup chats', modes = { n = '<leader>X' } },
@@ -114,13 +114,47 @@ local sections = {
     title = 'Codex Subagent Dashboard Keymaps',
     keymaps = {
       {
-        description = 'Hide runs completed so far',
-        modes = { n = 'h' },
+        description = 'Inspect full prompt and transcript',
+        modes = { n = '<CR>' },
+      },
+      { description = 'Refresh overview', modes = { n = 'r' } },
+      { description = 'Next / previous agent', modes = { n = { 'J', 'K' } } },
+      {
+        description = 'Choose current / local / Mac source',
+        modes = { n = 's' },
       },
       {
-        description = 'Show all subagent runs',
-        modes = { n = 'u' },
+        description = 'Close subagent panel',
+        modes = { n = { 'gA', 'q', '<Esc>' } },
       },
+      {
+        description = 'Toggle visibility of runs completed so far',
+        modes = { n = 'h' },
+      },
+    },
+  },
+  {
+    title = 'Older Chat Keymaps',
+    keymaps = {
+      { description = 'Older page', modes = { n = { 'H', '[p' } } },
+      { description = 'Newer page', modes = { n = { 'L', ']p' } } },
+      { description = 'Search all older chat pages', modes = { n = '/' } },
+      { description = 'Next / previous match', modes = { n = { 'n', 'N' } } },
+      {
+        description = 'Close older chat',
+        modes = { n = { 'gF', 'q', '<Esc>' } },
+      },
+    },
+  },
+  {
+    title = 'Codex Subagent Transcript Keymaps',
+    keymaps = {
+      {
+        description = 'Return to the same overview',
+        modes = { n = { '<Esc>', 'q', 's' } },
+      },
+      { description = 'Refresh transcript and settings', modes = { n = 'r' } },
+      { description = 'Close subagent panel', modes = { n = 'gA' } },
     },
   },
   {
