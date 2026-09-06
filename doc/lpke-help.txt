@@ -160,6 +160,10 @@ Oil:
   survive Nvim restarts; :OHSDc disconnects this Nvim keepalive, and :OHSList
   shows keepalives and lease expiry. Use :OHSr to open the same server through
   its local-network URL.
+  OHS uses the shared Node server installed by chezmoi at
+  ~/.local/share/html-server/server.cjs. Apply chezmoi after updating the config.
+  A trusted repository may provide .html-server.cjs with handleRequest and
+  beforeReload hooks. OHS loads that executable project config on server start.
   In Oil: <F2>p preview, gs sort, g. hidden, g\ trash view.
   In Oil: <F2>. vsplit, <F2>, split, <F2>n tab.
   In Oil: yd yanks current directory, yp yanks selected path.
