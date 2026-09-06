@@ -423,6 +423,14 @@ Other git helpers:
   :Gsquash              Run interactive zsh gitsquash helper from current cwd.
 
 AI                                                          *lpke-ai*
+
+CODEX THREAD STARTUP                              *lpke-codex-thread-startup*
+
+From a terminal, c --thread FULL_UUID [dir] opens that Codex session directly
+in fullscreen CodeCompanion. c [dir] still starts a fresh chat. The optional
+directory has the same meaning for either form. Opening a thread sends no prompt.
+A missing or unloadable session shows an error. Existing personal thread links
+are handled by the optional local integration, including ownership checks.
 ==============================================================================
 
 Opening chats:

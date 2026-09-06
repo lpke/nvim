@@ -235,6 +235,8 @@ function M.extra_lines()
     '',
     '',
     '### LPKE Custom CodeCompanion Help',
+    '',
+    'Terminal: `c --thread UUID [dir]` opens that Codex thread fullscreen.',
   }
   local max_length = max_description_length()
 

@@ -45,36 +45,6 @@ local function patch_copilot_token_error_notify()
   end
 end
 
-local function setup_startup_codex()
-  if vim.env.LPKE_NVIM_CODEX ~= '1' then
-    return
-  end
-
-  local function open()
-    require('lpke.plugins.ai.helpers.chat_functions').open_fullscreen_chat({
-      replace_current_window = true,
-      silent = true,
-    })
-    pcall(vim.cmd, 'silent! tabonly')
-    require('lpke.core.local_extensions').call('startup_chat')
-  end
-
-  if vim.v.vim_did_enter == 1 then
-    vim.schedule(open)
-    return
-  end
-
-  vim.api.nvim_create_autocmd('VimEnter', {
-    once = true,
-    group = vim.api.nvim_create_augroup('LpkeCodeCompanionStartupCodex', {
-      clear = true,
-    }),
-    callback = function()
-      vim.schedule(open)
-    end,
-  })
-end
-
 local function setup_submit_scroll_top()
   vim.api.nvim_create_autocmd('User', {
     pattern = 'CodeCompanionChatSubmitted',
@@ -738,7 +708,7 @@ local function config()
   end
 
   require('lpke.core.local_extensions').call('codecompanion_ready')
-  setup_startup_codex()
+  require('lpke.plugins.ai.helpers.startup_codex').setup()
 end
 
 return {

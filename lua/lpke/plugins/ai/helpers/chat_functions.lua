@@ -853,6 +853,7 @@ function M.open_fullscreen_chat(opts)
   local chat = create_hidden_chat({
     hidden = true,
     window_opts = DETACHED_WINDOW_OPTS,
+    params = opts.adapter and { adapter = opts.adapter } or nil,
   })
 
   if not chat then
