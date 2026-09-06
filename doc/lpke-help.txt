@@ -520,6 +520,7 @@ Custom slash commands:
   /git_file_history     Add diffs for one file going back N versions.
 
 History and drafts:
+  Personal integrations may extend these workflows. Their help appears in g?.
   Saved chats auto-save to stdpath('data')/codecompanion-history and expire
   after 14 days.
   History picker supports project scoping; @* searches all projects.

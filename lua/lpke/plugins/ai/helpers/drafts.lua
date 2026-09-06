@@ -638,11 +638,13 @@ function M.save(bufnr)
   end
   clear_submitted_prompt(bufnr)
 
-  local ok = atomic_write(path, {
+  local data = {
     prompt = prompt_content,
     cwd = draft_cwd(bufnr, path),
     timestamp = os.time(),
-  })
+  }
+  require('lpke.core.local_extensions').call('draft_save', data, bufnr)
+  local ok = atomic_write(path, data)
 
   if ok then
     add_delete_path(bufnr, path)
@@ -741,6 +743,7 @@ function M.list_current_cwd()
     if
       data
       and data.cwd == current_cwd
+      and require('lpke.core.local_extensions').call('draft_matches', data) ~= false
       and type(data.prompt) == 'string'
       and draft_has_user_content(data.prompt)
       and type(data.timestamp) == 'number'
@@ -750,6 +753,7 @@ function M.list_current_cwd()
         prompt = data.prompt,
         cwd = data.cwd,
         timestamp = data.timestamp,
+        user_data = data.user_data,
       })
     end
   end
@@ -895,6 +899,9 @@ local function delete_selected(telescope, prompt_bufnr, chat, make_finder)
 end
 
 local function append_prompt(chat, item)
+  if require('lpke.core.local_extensions').call('draft_restore', chat, item) == false then
+    return
+  end
   if not chat or not chat.bufnr or not api.nvim_buf_is_valid(chat.bufnr) then
     notify('No current chat for draft restore', vim.log.levels.WARN)
     return

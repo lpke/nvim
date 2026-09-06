@@ -56,6 +56,7 @@ local function setup_startup_codex()
       silent = true,
     })
     pcall(vim.cmd, 'silent! tabonly')
+    require('lpke.core.local_extensions').call('startup_chat')
   end
 
   if vim.v.vim_did_enter == 1 then
@@ -133,7 +134,7 @@ local function config()
   require('lpke.plugins.ai.helpers.keymaps').setup()
   setup_submit_scroll_top()
 
-  codecompanion.setup({
+  local options = {
     adapters = {
       http = {
         copilot = function()
@@ -610,7 +611,9 @@ local function config()
         },
       },
     },
-  })
+  }
+  require('lpke.core.local_extensions').call('codecompanion_config', options)
+  codecompanion.setup(options)
 
   patch_copilot_token_error_notify()
   require('lpke.plugins.ai.helpers.keymap_help').setup()
@@ -734,6 +737,7 @@ local function config()
     end
   end
 
+  require('lpke.core.local_extensions').call('codecompanion_ready')
   setup_startup_codex()
 end
 

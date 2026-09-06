@@ -226,6 +226,10 @@ local function format_modes(modes)
   return table.concat(output, ' and ')
 end
 
+function M.add_section(section)
+  table.insert(sections, section)
+end
+
 function M.extra_lines()
   local lines = {
     '',

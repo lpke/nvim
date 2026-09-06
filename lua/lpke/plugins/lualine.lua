@@ -165,6 +165,10 @@ local function config()
 
       -- handle special cases
       if b.file_type == 'codecompanion' then
+        local label = require('lpke.core.local_extensions').call('statusline')
+        if label and label ~= '' then
+          return label
+        end
         return str:gsub('%[CodeCompanion%]', 'CodeCompanion')
       end
 

@@ -1,6 +1,7 @@
 -- everything to be accessible from `lpke.core`
 require('lpke.core.helpers')
 require('lpke.core.globals')
+require('lpke.core.local_extensions').setup()
 require('lpke.core.options')
 require('lpke.core.keymaps')
 require('lpke.core.tabline')

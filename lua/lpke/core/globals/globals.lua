@@ -2,6 +2,9 @@ local hostname = vim.uv.os_gethostname()
 Lpke_is_work_device = vim.uv.os_uname().sysname == 'Darwin'
   and type(hostname) == 'string'
   and hostname:find('Luke-', 1, true) == 1
+if vim.env.LPKE_IS_WORK_DEVICE ~= nil then
+  Lpke_is_work_device = vim.env.LPKE_IS_WORK_DEVICE == '1'
+end
 
 ---Wrapper for `print` that can handle printing tables nicely
 ---@param val any Value to print (can be table or any type)
