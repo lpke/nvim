@@ -46,7 +46,7 @@ function M.setup()
       { desc = 'CodeCompanion: Cleanup chats' }},
     { 'n', 'gA', function() codex_threads.toggle() end,
       { desc = 'CodeCompanion: Toggle current thread subagents' }},
-    { 'n', 'gF', function()
+    { 'n', 'go', function()
       chat_history.toggle(require('codecompanion').buf_get_chat(0))
     end,
       { desc = 'CodeCompanion: Toggle older chat history' }},

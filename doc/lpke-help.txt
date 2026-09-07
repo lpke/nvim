@@ -455,17 +455,17 @@ Chat buffer keys:
   ga                    Change adapter.
   gs                    Toggle system prompt.
   gta / gtx             Toggle/clear chat approvals.
-  gF                    Toggle older chat in a read-only history window.
+  go                    Toggle older chat in a read-only history window.
                         Long chats automatically move complete older turns out
                         of the live buffer when idle. At least the latest 300
                         lines, latest exchange, and current draft stay there.
                         Model context and saved messages remain complete.
                         History opens at its newest page, up to 500 lines per
-                        page. H / L go older / newer, with [p / ]p as aliases.
-                        Counts work, e.g. 3H moves back three pages. The border
+                        page. K / J go older / newer, with [p / ]p as aliases.
+                        Counts work, e.g. 3K moves back three pages. The border
                         shows the current page even while scrolling. / searches
                         all archived pages; n / N find next / previous matches.
-                        gF, q, or <Esc> closes history. Chat undo resets when
+                        go, q, or <Esc> closes history. Chat undo resets when
                         older turns move to history; the draft text is kept.
   gd                    Open HTTP(S) link in browser, a pasted image's directory
                         in the OS file explorer, or a file reference in a new tab.

@@ -142,17 +142,17 @@ assert(archive ~= chat.bufnr and not vim.bo[archive].modifiable)
 assert(api.nvim_buf_line_count(archive) <= 504, 'History page is unbounded')
 local newest = lines(archive)[1]
 assert(newest:match('Page %d+ of %d+'), 'Missing page indicator')
-key('H')
-assert(lines(archive)[1] ~= newest, 'H did not go to the previous page')
-key('L')
-eq(lines(archive)[1], newest, 'L did not go to the next page')
+key('K')
+assert(lines(archive)[1] ~= newest, 'K did not go to the previous page')
+key('J')
+eq(lines(archive)[1], newest, 'J did not go to the next page')
 local history_win = api.nvim_get_current_win()
 local footer = api.nvim_win_get_config(history_win).footer
 assert(
   footer and footer[1][1]:find('Page', 1, true),
   'Missing pinned page indicator'
 )
-press('2H')
+press('2K')
 local two_older = lines(archive)[1]
 key(']p')
 key(']p')
@@ -167,7 +167,7 @@ local reconstructed = {}
 repeat
   vim.list_extend(reconstructed, vim.list_slice(lines(archive), 5))
   local heading = lines(archive)[1]
-  key('L')
+  key('J')
   if lines(archive)[1] == heading then
     break
   end
@@ -189,7 +189,7 @@ eq(api.nvim_get_current_line(), match, 'Search did not wrap')
 key('N')
 eq(api.nvim_get_current_line(), match, 'Reverse search did not wrap')
 vim.ui.input = input
-key('gF')
+key('go')
 assert(not api.nvim_buf_is_valid(archive), 'History toggle leaked buffer')
 eq(api.nvim_get_current_buf(), chat.bufnr, 'History did not return to chat')
 
@@ -305,12 +305,12 @@ assert(
 )
 history.toggle(restored)
 local replay_archive = api.nvim_get_current_buf()
-press('999H')
+press('999K')
 local archived = {}
 repeat
   vim.list_extend(archived, vim.list_slice(lines(replay_archive), 5))
   local heading = lines(replay_archive)[1]
-  key('L')
+  key('J')
   if lines(replay_archive)[1] == heading then
     break
   end
@@ -321,7 +321,7 @@ eq(
   'Replayed history was lost or duplicated'
 )
 key('q')
-eq(lines(restored.bufnr), recent, 'Closing gF expanded the main buffer')
+eq(lines(restored.bufnr), recent, 'Closing go expanded the main buffer')
 api.nvim_buf_set_lines(restored.bufnr, -1, -1, false, { 'After replay' })
 eq(
   parser.messages(restored, restored.header_line).content,

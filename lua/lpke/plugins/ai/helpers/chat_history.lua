@@ -39,8 +39,8 @@ local function render_page(state)
     ),
   }
   local hint_rows = hints.append(lines, {
-    { { 'H', 'older page' }, { 'L', 'newer page' }, { '/', 'search all' } },
-    { { 'n/N', 'matches' }, { 'gF/q/Esc', 'close' } },
+    { { 'K', 'older page' }, { 'J', 'newer page' }, { '/', 'search all' } },
+    { { 'n/N', 'matches' }, { 'go/q/Esc', 'close' } },
   })
   lines[#lines + 1] = ''
   for row = state.first, last do
@@ -51,13 +51,9 @@ local function render_page(state)
   vim.bo[state.view].modifiable = false
   hints.apply(state.view, hint_rows)
   if state.win and api.nvim_win_is_valid(state.win) then
-    local edge = page == pages and ' · newest'
-      or page == 1 and ' · oldest'
-      or ''
     api.nvim_win_set_config(state.win, {
       footer = {
-        { (' Page %d / %d'):format(page, pages), 'DiagnosticInfo' },
-        { edge .. ' ', 'Comment' },
+        { (' Page %d / %d '):format(page, pages), 'DiagnosticInfo' },
       },
       footer_pos = 'right',
     })
@@ -175,7 +171,7 @@ function M.compact(chat)
     virt_lines = {
       {
         {
-          ('Older chat: %d lines · gF to browse'):format(#state.lines),
+          ('Older chat: %d lines · go to browse'):format(#state.lines),
           'Comment',
         },
       },
@@ -271,7 +267,7 @@ function M.toggle(chat)
       { buffer = state.view, desc = 'Older chat: Find match' },
     }
   end
-  for _, key in ipairs({ 'gF', 'q', '<Esc>' }) do
+  for _, key in ipairs({ 'go', 'q', '<Esc>' }) do
     maps[#maps + 1] = {
       'n!',
       key,
@@ -281,7 +277,7 @@ function M.toggle(chat)
       { buffer = state.view, desc = 'Older chat: Close' },
     }
   end
-  for key, direction in pairs({ H = -1, L = 1, ['[p'] = -1, [']p'] = 1 }) do
+  for key, direction in pairs({ K = -1, J = 1, ['[p'] = -1, [']p'] = 1 }) do
     maps[#maps + 1] = {
       'n!',
       key,

@@ -67,7 +67,7 @@ local sections = {
       },
       {
         description = 'Browse older chat without expanding the live buffer',
-        modes = { n = 'gF' },
+        modes = { n = 'go' },
       },
       { description = 'Cleanup chats', modes = { n = '<leader>X' } },
       { description = 'Paste image', modes = { n = '<leader>I' } },
@@ -136,13 +136,13 @@ local sections = {
   {
     title = 'Older Chat Keymaps',
     keymaps = {
-      { description = 'Older page', modes = { n = { 'H', '[p' } } },
-      { description = 'Newer page', modes = { n = { 'L', ']p' } } },
+      { description = 'Older page', modes = { n = { 'K', '[p' } } },
+      { description = 'Newer page', modes = { n = { 'J', ']p' } } },
       { description = 'Search all older chat pages', modes = { n = '/' } },
       { description = 'Next / previous match', modes = { n = { 'n', 'N' } } },
       {
         description = 'Close older chat',
-        modes = { n = { 'gF', 'q', '<Esc>' } },
+        modes = { n = { 'go', 'q', '<Esc>' } },
       },
     },
   },
