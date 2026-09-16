@@ -3,6 +3,48 @@ local M = {}
 local MAX_DIR_SIZE_BYTES = 2 * 1024 * 1024 * 1024
 
 local checked_size_this_session = false
+local inline_paste_patched = false
+
+function M.setup_inline_paste()
+  if inline_paste_patched then
+    return
+  end
+
+  local markup = require('img-clip.markup')
+  local config = require('img-clip.config')
+  local insert_markup = markup.insert_markup
+
+  -- img-clip always inserts whole lines. Chat image links belong at the cursor.
+  markup.insert_markup = function(input, is_file_path)
+    if vim.bo.filetype ~= 'codecompanion' then
+      return insert_markup(input, is_file_path)
+    end
+
+    local template = markup.get_template(input, is_file_path)
+    if not template then
+      return false
+    end
+
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local row, col = cursor[1] - 1, cursor[2]
+    local lines = vim.split(template, '\n', { plain = true })
+    vim.api.nvim_buf_set_text(0, row, col, row, col, lines)
+
+    local end_row = row + #lines
+    local end_col = #lines == 1 and col + #lines[1] or #lines[#lines]
+    vim.api.nvim_win_set_cursor(0, { end_row, end_col })
+    if config.get_opt('insert_mode_after_paste') then
+      if end_col == #vim.api.nvim_get_current_line() then
+        vim.cmd('startinsert!')
+      else
+        vim.cmd('startinsert')
+      end
+    end
+    return true
+  end
+
+  inline_paste_patched = true
+end
 
 function M.dir_path()
   return vim.fn.stdpath('data') .. '/img-clip-pasted-images'

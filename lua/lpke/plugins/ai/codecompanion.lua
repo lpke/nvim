@@ -731,6 +731,7 @@ return {
       commit = 'd8b6b030672f9f551a0e3526347699985a779d93',
       config = function(_, opts)
         require('img-clip').setup(opts)
+        img_clip.setup_inline_paste()
         vim.api.nvim_create_user_command('PasteImage', img_clip.paste_image, {
           desc = 'Paste image from system clipboard',
           force = true,
