@@ -2,225 +2,19 @@ local M = {}
 local path_helpers = require('lpke.core.helpers')
 
 local patched = false
-local last_rename = nil
 local suppress_history_reopen = false
 
 local function trim(str)
   return (str or ''):gsub('^%s+', ''):gsub('%s+$', '')
 end
 
-local title_status_messages = {
-  ['Deciding title...'] = true,
-  ['Refreshing title...'] = true,
-}
-
-local function clean_title(title)
-  if type(title) ~= 'string' then
-    return nil
-  end
-
-  return trim(title:gsub('^✨%s*', ''))
-end
-
-local function title_text(title)
-  if type(title) == 'table' then
-    return table.concat(
-      vim.tbl_filter(function(item)
-        return type(item) == 'string'
-      end, title),
-      ' '
-    )
-  end
-
-  return type(title) == 'string' and title or ''
-end
-
-local function valid_title(title)
-  title = clean_title(title)
-  if not title or title == '' or title_status_messages[title] then
-    return false
-  end
-
-  return not title:match('^%[CodeCompanion%]%s')
-    and title ~= 'CodeCompanion'
-    and title ~= ' CodeCompanion '
-end
-
-local function chat_for_buf(bufnr)
-  if type(bufnr) ~= 'number' or not vim.api.nvim_buf_is_valid(bufnr) then
-    return nil
-  end
-
-  local ok_chat, chat_mod = pcall(require, 'codecompanion.interactions.chat')
-  if ok_chat and type(chat_mod.buf_get_chat) == 'function' then
-    return chat_mod.buf_get_chat(bufnr)
-  end
-
-  local ok_codecompanion, codecompanion = pcall(require, 'codecompanion')
-  if ok_codecompanion and type(codecompanion.buf_get_chat) == 'function' then
-    return codecompanion.buf_get_chat(bufnr)
-  end
-end
-
-local function set_buf_title(bufnr, title)
-  if type(bufnr) ~= 'number' or not vim.api.nvim_buf_is_valid(bufnr) then
-    return
-  end
-
-  local function try_title(candidate)
-    return pcall(vim.api.nvim_buf_set_name, bufnr, candidate)
-  end
-
-  if try_title(title) then
-    return
-  end
-
-  for attempt = 1, 10 do
-    if try_title(title .. ' (' .. attempt .. ')') then
-      return
-    end
-  end
-end
-
-local function apply_chat_title(chat, title)
-  title = clean_title(title)
-  if type(chat) ~= 'table' or not valid_title(title) then
-    return false
-  end
-
-  chat.opts = chat.opts or {}
-  chat.opts.title = title
-  chat._lpke_history_title_locked = title
-
-  if type(chat.set_title) == 'function' then
-    chat._lpke_history_title_applying = true
-    local ok = pcall(function()
-      chat:set_title(title)
-    end)
-    chat._lpke_history_title_applying = nil
-
-    if not ok then
-      chat.title = title
-      if chat.ui then
-        chat.ui.title = title
-      end
-    end
-  else
-    chat.title = title
-
-    if chat.ui then
-      chat.ui.title = title
-    end
-  end
-
-  if chat.bufnr then
-    set_buf_title(chat.bufnr, title)
-  end
-
-  return true
-end
-
 local function history()
   return require('codecompanion').extensions.history
 end
 
-local function history_mod()
-  local ok_history, mod = pcall(function()
-    return require('codecompanion').extensions.history
-  end)
-
-  if ok_history and mod and type(mod.load_chat) == 'function' then
-    return mod
-  end
-end
-
-local function session_id_from_chat(chat)
-  return chat
-    and (
-      (chat.acp_connection and chat.acp_connection.session_id)
-      or chat.acp_session_id
-      or (chat.opts and chat.opts.acp_session_id)
-    )
-end
-
-local function saved_chat_by_save_id(save_id)
-  if type(save_id) ~= 'string' or save_id == '' then
-    return nil
-  end
-
-  local mod = history_mod()
-  return mod and mod.load_chat(save_id) or nil
-end
-
-local function saved_chat_by_session_id(session_id)
-  if type(session_id) ~= 'string' or session_id == '' then
-    return nil
-  end
-
-  local mod = history_mod()
-  if not mod or type(mod.get_chats) ~= 'function' then
-    return nil
-  end
-
-  local best_chat = nil
-  local best_updated_at = -1
-  for save_id, meta in pairs(mod.get_chats() or {}) do
-    if type(meta) == 'table' and meta.acp_session_id == session_id then
-      local saved = mod.load_chat(save_id)
-      local updated_at = tonumber(
-        meta.updated_at or (saved and saved.updated_at)
-      ) or 0
-      if
-        saved
-        and valid_title(saved.title)
-        and updated_at > best_updated_at
-      then
-        best_chat = saved
-        best_updated_at = updated_at
-      end
-    end
-  end
-
-  return best_chat
-end
-
-local function saved_chat_for_chat(chat)
-  if type(chat) ~= 'table' then
-    return nil
-  end
-
-  local saved = saved_chat_by_save_id(chat.opts and chat.opts.save_id)
-  if saved and valid_title(saved.title) then
-    return saved
-  end
-
-  return saved_chat_by_session_id(session_id_from_chat(chat))
-end
-
-function M.restore_saved_title(chat)
-  if type(chat) ~= 'table' then
-    return false
-  end
-
-  chat.opts = chat.opts or {}
-
-  local saved = saved_chat_for_chat(chat)
-  if saved and valid_title(saved.title) then
-    if type(saved.save_id) == 'string' and saved.save_id ~= '' then
-      chat.opts.save_id = saved.save_id
-    end
-    return apply_chat_title(chat, saved.title)
-  end
-
-  if valid_title(chat.opts.title) then
-    return apply_chat_title(chat, chat.opts.title)
-  end
-
-  if valid_title(chat._lpke_history_title_locked) then
-    return apply_chat_title(chat, chat._lpke_history_title_locked)
-  end
-
-  return false
+-- Retained for local extensions that use the history helper directly.
+M.restore_saved_title = function(chat)
+  return require('lpke.plugins.ai.helpers.chat_titles').restore(chat)
 end
 
 function M.normalize_path(path)
@@ -622,6 +416,31 @@ local function patch_telescope_history_picker()
         attach_mappings = function(prompt_bufnr)
           prompt_bufnr_ref = prompt_bufnr
 
+          local title_update = vim.api.nvim_create_autocmd('User', {
+            pattern = 'LpkeCodeCompanionTitleChanged',
+            callback = function(args)
+              local data = args.data or {}
+              for _, item in ipairs(self.config.items) do
+                if item.save_id == data.save_id then
+                  item.title, item.name = data.title, data.title
+                  content_cache[data.save_id] = nil
+                end
+              end
+              local ok_picker, picker =
+                pcall(action_state.get_current_picker, prompt_bufnr)
+              if ok_picker and picker then
+                picker:refresh(make_finder(), { reset_prompt = false })
+              end
+            end,
+          })
+          vim.api.nvim_create_autocmd('BufWipeout', {
+            buffer = prompt_bufnr,
+            once = true,
+            callback = function()
+              pcall(vim.api.nvim_del_autocmd, title_update)
+            end,
+          })
+
           local delete_selections = function()
             local picker = action_state.get_current_picker(prompt_bufnr)
             local selections = picker:get_multi_selection()
@@ -698,19 +517,6 @@ local function patch_telescope_history_picker()
                   error(err)
                 end
 
-                for _, item in ipairs(self.config.items) do
-                  if item.save_id == selection.value.save_id then
-                    item.title = new_title
-                    item.name = new_title
-                    item.updated_at = os.time()
-                  end
-                end
-
-                local ok_picker, picker =
-                  pcall(action_state.get_current_picker, prompt_bufnr)
-                if ok_picker and picker then
-                  picker:refresh(make_finder(), { reset_prompt = false })
-                end
                 refocus_picker()
               end)
             end
@@ -805,299 +611,6 @@ local function patch_history_ui_reopen()
   end
 end
 
-local function patch_history_title_generator()
-  local ok_generator, TitleGenerator =
-    pcall(require, 'codecompanion._extensions.history.title_generator')
-  if not ok_generator or TitleGenerator._lpke_visible_title_messages then
-    return
-  end
-  TitleGenerator._lpke_visible_title_messages = true
-  TitleGenerator._make_adapter_request =
-    require('lpke.plugins.ai.helpers.title_request').request
-
-  local function is_title_message(msg)
-    if type(msg) ~= 'table' then
-      return false
-    end
-
-    if msg.opts and msg.opts.visible == false then
-      return false
-    end
-
-    local opts = msg.opts or {}
-    local meta = msg._meta or {}
-    if opts.tag or opts.reference or opts.context_id then
-      return false
-    end
-    if meta.tag or meta.reference or meta.context_id then
-      return false
-    end
-    if msg.context then
-      return false
-    end
-
-    return type(msg.content) == 'string' and vim.trim(msg.content) ~= ''
-  end
-
-  local function title_messages(messages)
-    return vim.tbl_filter(is_title_message, messages or {})
-  end
-
-  local function prompt_fallback_title(messages)
-    local user_role = require('codecompanion.config').constants.USER_ROLE
-    for _, msg in ipairs(messages or {}) do
-      if msg.role == user_role then
-        local words = {}
-        for word in msg.content:gmatch('%S+') do
-          table.insert(words, word)
-          if #words == 10 then
-            break
-          end
-        end
-        return table.concat(words, ' ')
-      end
-    end
-  end
-
-  local function copilot_token_missing(generator)
-    local opts = generator.opts.title_generation_opts or {}
-    if opts.adapter ~= 'copilot' then
-      return false
-    end
-
-    local token = require('codecompanion.adapters.http.copilot.token').fetch({
-      force = true,
-    })
-    return not (token and token.copilot_token)
-  end
-
-  local original_count_user_messages = TitleGenerator._count_user_messages
-  TitleGenerator._count_user_messages = function(self, chat)
-    local title_chat = vim.tbl_extend('force', {}, chat or {})
-    M.restore_saved_title(title_chat)
-    title_chat.messages = title_messages(title_chat.messages)
-    return original_count_user_messages(self, title_chat)
-  end
-
-  local original_should_generate = TitleGenerator.should_generate
-  TitleGenerator.should_generate = function(self, chat)
-    if M.restore_saved_title(chat) then
-      return false, false
-    end
-    return original_should_generate(self, chat)
-  end
-
-  local original_generate = TitleGenerator.generate
-  TitleGenerator.generate = function(self, chat, callback, is_refresh)
-    local title_chat = vim.tbl_extend('force', {}, chat or {})
-    if M.restore_saved_title(chat) then
-      return callback(chat.opts.title)
-    end
-    M.restore_saved_title(title_chat)
-    title_chat.messages = title_messages(title_chat.messages)
-
-    local function on_title(title)
-      -- A rename can arrive while the HTTP request is still pending.
-      if M.restore_saved_title(chat) then
-        return callback(chat.opts.title)
-      end
-      if title_status_messages[title] then
-        return callback(title)
-      end
-
-      if not valid_title(title) then
-        title = prompt_fallback_title(title_chat.messages)
-      end
-      if valid_title(title) then
-        apply_chat_title(chat, title)
-      end
-      return callback(title)
-    end
-
-    if copilot_token_missing(self) then
-      return on_title(nil)
-    end
-
-    return original_generate(self, title_chat, on_title, is_refresh)
-  end
-
-  vim.api.nvim_create_autocmd('User', {
-    pattern = {
-      'CodeCompanionChatCreated',
-      'CodeCompanionACPChatRestored',
-      'CodeCompanionACPSessionPost',
-      'CodeCompanionRequestFinished',
-    },
-    group = vim.api.nvim_create_augroup(
-      'LpkeCodeCompanionHistoryTitleRestore',
-      {
-        clear = true,
-      }
-    ),
-    callback = function(args)
-      vim.schedule(function()
-        local data = args.data or {}
-        local bufnr = data.bufnr
-
-        local ok_codecompanion, codecompanion = pcall(require, 'codecompanion')
-        if
-          not ok_codecompanion
-          or type(codecompanion.buf_get_chat) ~= 'function'
-        then
-          return
-        end
-
-        if type(bufnr) == 'number' and vim.api.nvim_buf_is_valid(bufnr) then
-          M.restore_saved_title(codecompanion.buf_get_chat(bufnr))
-          return
-        end
-
-        for _, item in ipairs(codecompanion.buf_get_chat() or {}) do
-          M.restore_saved_title(item.chat)
-        end
-      end)
-    end,
-  })
-end
-
-local function patch_history_ui_titles()
-  local ok, UI = pcall(require, 'codecompanion._extensions.history.ui')
-  if not ok or UI._lpke_saved_title_guard then
-    return
-  end
-  UI._lpke_saved_title_guard = true
-
-  local original_update_chat_title = UI.update_chat_title
-  UI.update_chat_title = function(self, chat, ...)
-    M.restore_saved_title(chat)
-    return original_update_chat_title(self, chat, ...)
-  end
-
-  local original_set_buf_title = UI._set_buf_title
-  UI._set_buf_title = function(self, bufnr, title, ...)
-    local chat = chat_for_buf(bufnr)
-    local locked_title = chat and chat._lpke_history_title_locked
-    if valid_title(locked_title) then
-      local requested = clean_title(title_text(title)) or ''
-      if not vim.startswith(requested, locked_title) then
-        title = locked_title
-      end
-    end
-
-    return original_set_buf_title(self, bufnr, title, ...)
-  end
-end
-
-local function patch_codecompanion_chat_titles()
-  local ok, Chat = pcall(require, 'codecompanion.interactions.chat')
-  if not ok or Chat._lpke_saved_title_guard then
-    return
-  end
-  Chat._lpke_saved_title_guard = true
-
-  local original_set_title = Chat.set_title
-  Chat.set_title = function(self, title, ...)
-    local locked_title = self and self._lpke_history_title_locked
-    if
-      valid_title(locked_title)
-      and not self._lpke_history_title_applying
-      and clean_title(title) ~= locked_title
-    then
-      self.opts = self.opts or {}
-      self.opts.title = locked_title
-      return original_set_title(self, locked_title, ...)
-    end
-
-    return original_set_title(self, title, ...)
-  end
-end
-
-local function patch_history_rename()
-  local ok_storage, Storage =
-    pcall(require, 'codecompanion._extensions.history.storage')
-  if not ok_storage or Storage._lpke_rename_propagation then
-    return
-  end
-  Storage._lpke_rename_propagation = true
-
-  local original_rename_chat = Storage.rename_chat
-  Storage.rename_chat = function(self, save_id, new_title)
-    local ok = original_rename_chat(self, save_id, new_title)
-    if not ok then
-      return ok
-    end
-
-    last_rename = {
-      save_id = save_id,
-      title = new_title,
-    }
-
-    local ok_utils, utils =
-      pcall(require, 'codecompanion._extensions.history.utils')
-    if not ok_utils then
-      return ok
-    end
-
-    local summaries_path = self.base_path .. '/summaries_index.json'
-    local result = utils.read_json(summaries_path)
-    if not result.ok then
-      return ok
-    end
-
-    local changed = false
-    local summaries = result.data or {}
-    for _, summary in pairs(summaries) do
-      if summary.chat_id == save_id and summary.chat_title ~= new_title then
-        summary.chat_title = new_title
-        changed = true
-      end
-    end
-
-    if changed then
-      local write_result = utils.write_json(summaries_path, summaries)
-      if
-        write_result.ok
-        and type(self._invalidate_summaries_cache) == 'function'
-      then
-        self:_invalidate_summaries_cache()
-      end
-    end
-
-    return ok
-  end
-
-  vim.api.nvim_create_autocmd('User', {
-    pattern = 'CodeCompanionHistoryTitleRenamed',
-    group = vim.api.nvim_create_augroup('LpkeCodeCompanionHistoryRename', {
-      clear = true,
-    }),
-    callback = function(args)
-      local data = args.data or {}
-      local title = data.title or (last_rename and last_rename.title)
-      local save_id = last_rename and last_rename.save_id
-
-      if type(save_id) ~= 'string' or type(title) ~= 'string' then
-        return
-      end
-
-      local ok_codecompanion, codecompanion = pcall(require, 'codecompanion')
-      if
-        not ok_codecompanion
-        or type(codecompanion.buf_get_chat) ~= 'function'
-      then
-        return
-      end
-
-      for _, item in ipairs(codecompanion.buf_get_chat() or {}) do
-        local chat = item.chat
-        if chat and chat.opts and chat.opts.save_id == save_id then
-          apply_chat_title(chat, title)
-        end
-      end
-    end,
-  })
-end
-
 function M.setup()
   if patched then
     return
@@ -1106,10 +619,7 @@ function M.setup()
 
   patch_telescope_history_picker()
   patch_history_ui_reopen()
-  patch_codecompanion_chat_titles()
-  patch_history_ui_titles()
-  patch_history_title_generator()
-  patch_history_rename()
+  require('lpke.plugins.ai.helpers.chat_titles').setup()
 end
 
 return M

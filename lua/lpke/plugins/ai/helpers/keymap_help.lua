@@ -161,7 +161,7 @@ local sections = {
     title = 'History Picker Keymaps',
     keymaps = {
       {
-        description = 'Saved Chats: rename saved chat',
+        description = 'Saved Chats: permanently rename chat (overrides generation)',
         modes = { n = 'gr', i = '<M-r>' },
       },
       {

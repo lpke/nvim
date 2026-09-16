@@ -561,15 +561,8 @@ local function config()
           },
           ---Automatically generate titles for new chats
           auto_generate_title = true,
-          title_generation_opts = {
-            ---Adapter for generating titles (defaults to active chat's adapter, if nil)
-            adapter = ai_config.defaults.title_generation_adapter,
-            ---Model for generating titles (defaults to active chat's model, if nil)
-            model = ai_config.model_id(
-              ai_config.defaults.title_generation_model
-            ),
-            refresh_every_n_prompts = 0,
-          },
+          -- LPKE generates once through an isolated Codex invocation.
+          title_generation_opts = { refresh_every_n_prompts = 0 },
           ---On exiting and entering neovim, loads the last chat on opening chat
           continue_last_chat = false,
           ---When chat is cleared with `gx` delete the chat from history
@@ -597,92 +590,6 @@ local function config()
   require('lpke.plugins.ai.helpers.folds').setup()
   require('lpke.plugins.ai.helpers.chat_history').setup()
   require('lpke.plugins.ai.helpers.codex_threads').setup()
-
-  local function set_history_buffer_title(bufnr, title)
-    if
-      type(bufnr) ~= 'number'
-      or type(title) ~= 'string'
-      or not vim.api.nvim_buf_is_valid(bufnr)
-    then
-      return
-    end
-
-    local function try_title(candidate)
-      return pcall(vim.api.nvim_buf_set_name, bufnr, candidate)
-    end
-
-    if try_title(title) then
-      return
-    end
-
-    for attempt = 1, 10 do
-      if try_title(title .. ' (' .. attempt .. ')') then
-        return
-      end
-    end
-  end
-
-  -- codecompanion-history's post-rename buffer lookup can miss open chats.
-  -- Also update matching chats through CodeCompanion's current registry.
-  local history_storage = require('codecompanion._extensions.history.storage')
-  if not history_storage._lpke_rename_title_patched then
-    local original_rename_chat = history_storage.rename_chat
-
-    history_storage.rename_chat = function(self, save_id, new_title)
-      local renamed = original_rename_chat(self, save_id, new_title)
-      if not renamed then
-        return renamed
-      end
-
-      local function sync_open_chat_title()
-        local codecompanion = require('codecompanion')
-        local registry = require('codecompanion.interactions.shared.registry')
-
-        for _, entry in ipairs(registry.list()) do
-          if entry.interaction == 'chat' then
-            local chat = codecompanion.buf_get_chat(entry.bufnr)
-            if
-              chat
-              and chat.opts
-              and tostring(chat.opts.save_id) == tostring(save_id)
-            then
-              chat.opts.title = new_title
-              if type(chat.set_title) == 'function' then
-                pcall(chat.set_title, chat, new_title)
-              end
-              set_history_buffer_title(entry.bufnr, new_title)
-            end
-          end
-        end
-      end
-
-      sync_open_chat_title()
-
-      -- UI:_set_buf_title schedules its write after rename_chat returns. Wait
-      -- one additional event-loop turn so this sync remains the final write.
-      vim.schedule(function()
-        vim.schedule(sync_open_chat_title)
-      end)
-
-      return renamed
-    end
-
-    history_storage._lpke_rename_title_patched = true
-  end
-
-  -- codecompanion-history hard-codes a leading "✨ " when it renames chat
-  -- buffers. It fires this event with the unprefixed title immediately after
-  -- setting the name, so use that as a narrow post-processing hook.
-  vim.api.nvim_create_autocmd('User', {
-    pattern = 'CodeCompanionHistoryTitleSet',
-    group = vim.api.nvim_create_augroup('CodeCompanionHistoryTitleClean', {
-      clear = true,
-    }),
-    callback = function(args)
-      local data = args.data or {}
-      set_history_buffer_title(data.bufnr, data.title)
-    end,
-  })
 
   -- CodeCompanion hard-codes Reasoning and Response headings around reasoning.
   require('lpke.plugins.ai.helpers.reasoning_headings').patch()

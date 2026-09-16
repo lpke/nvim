@@ -558,34 +558,11 @@ local function patch_storage()
 
         local saved = self:load_chat(chat.opts.save_id)
         if saved then
-          if type(saved.title) == 'string' and saved.title ~= '' then
-            chat.opts.title = saved.title
-            chat.title = saved.title
-          elseif
-            (type(chat.opts.title) ~= 'string' or chat.opts.title == '')
-            and type(chat.title) == 'string'
-            and chat.title ~= ''
-          then
-            chat.opts.title = chat.title
-          end
-
-          if saved.title_refresh_count then
-            chat.opts.title_refresh_count = saved.title_refresh_count
-          end
-
           restore_messages = chat.messages
           restore_context_items = chat.context_items
           chat.messages = merge_messages(saved.messages, chat.messages)
           chat.context_items =
             merge_context_items(saved.context_items, chat.context_items)
-        end
-
-        if
-          (type(chat.opts.title) ~= 'string' or chat.opts.title == '')
-          and type(chat.title) == 'string'
-          and chat.title ~= ''
-        then
-          chat.opts.title = chat.title
         end
       end
     end

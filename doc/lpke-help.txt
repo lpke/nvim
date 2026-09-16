@@ -493,7 +493,11 @@ Chat buffer keys:
 Models/adapters:
   Default chat is Codex ACP with high reasoning, using GPT-5.6 Luna on work
   devices and GPT-6 Astra elsewhere.
-  Inline/cmd/title generation use Copilot.
+  Inline/cmd generation uses Copilot. Chat titles use Codex GPT-5.6 Luna with
+  low reasoning, once from the first typed prompt, without chat context or rules.
+  The title appears in the chat and saved history when ready. A failed or
+  interrupted attempt keeps a prompt-text fallback and never retries.
+  Renaming with gr in saved history permanently overrides automatic titles.
   <leader>m             Cycle configured models for current adapter.
   <leader>M             Cycle Codex/Copilot adapters.
   <leader>r             Codex ACP reasoning effort picker.

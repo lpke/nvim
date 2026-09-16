@@ -62,8 +62,8 @@ M.defaults = {
   chat_adapter = 'codex',
   inline_adapter = 'copilot',
   cmd_adapter = 'copilot',
-  title_generation_adapter = 'copilot',
-  title_generation_model = 'gpt_5_mini',
+  title_generation_model = 'gpt_5_6_luna',
+  title_generation_reasoning = 'low',
 }
 
 M.preferred_models = {
