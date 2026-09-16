@@ -14,7 +14,7 @@ function M.setup_inline_paste()
   local config = require('img-clip.config')
   local insert_markup = markup.insert_markup
 
-  -- img-clip always inserts whole lines. Chat image links belong at the cursor.
+  -- img-clip always inserts whole lines. Keep chat image links inline.
   markup.insert_markup = function(input, is_file_path)
     if vim.bo.filetype ~= 'codecompanion' then
       return insert_markup(input, is_file_path)
@@ -27,6 +27,11 @@ function M.setup_inline_paste()
 
     local cursor = vim.api.nvim_win_get_cursor(0)
     local row, col = cursor[1] - 1, cursor[2]
+    if vim.api.nvim_get_mode().mode:sub(1, 1) == 'n' then
+      -- Match `a`, including multibyte characters and an empty line.
+      local after_cursor = vim.api.nvim_get_current_line():sub(col + 1)
+      col = col + #vim.fn.matchstr(after_cursor, '^.')
+    end
     local lines = vim.split(template, '\n', { plain = true })
     vim.api.nvim_buf_set_text(0, row, col, row, col, lines)
 

@@ -812,6 +812,8 @@ local function patch_history_title_generator()
     return
   end
   TitleGenerator._lpke_visible_title_messages = true
+  TitleGenerator._make_adapter_request =
+    require('lpke.plugins.ai.helpers.title_request').request
 
   local function is_title_message(msg)
     if type(msg) ~= 'table' then
@@ -866,7 +868,7 @@ local function patch_history_title_generator()
     local token = require('codecompanion.adapters.http.copilot.token').fetch({
       force = true,
     })
-    return not (token and token.oauth_token)
+    return not (token and token.copilot_token)
   end
 
   local original_count_user_messages = TitleGenerator._count_user_messages
@@ -894,15 +896,29 @@ local function patch_history_title_generator()
     M.restore_saved_title(title_chat)
     title_chat.messages = title_messages(title_chat.messages)
 
-    if copilot_token_missing(self) then
-      local fallback_title = prompt_fallback_title(title_chat.messages)
-      if fallback_title and fallback_title ~= '' then
-        apply_chat_title(chat, fallback_title)
-        return callback(fallback_title)
+    local function on_title(title)
+      -- A rename can arrive while the HTTP request is still pending.
+      if M.restore_saved_title(chat) then
+        return callback(chat.opts.title)
       end
+      if title_status_messages[title] then
+        return callback(title)
+      end
+
+      if not valid_title(title) then
+        title = prompt_fallback_title(title_chat.messages)
+      end
+      if valid_title(title) then
+        apply_chat_title(chat, title)
+      end
+      return callback(title)
     end
 
-    return original_generate(self, title_chat, callback, is_refresh)
+    if copilot_token_missing(self) then
+      return on_title(nil)
+    end
+
+    return original_generate(self, title_chat, on_title, is_refresh)
   end
 
   vim.api.nvim_create_autocmd('User', {

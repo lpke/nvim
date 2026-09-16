@@ -51,7 +51,7 @@ function M.setup()
     end,
       { desc = 'CodeCompanion: Toggle older chat history' }},
     { 'n!', '<leader>I', img_clip.paste_image,
-      { desc = 'CodeCompanion: Paste image at cursor' }},
+      { desc = 'CodeCompanion: Paste image after cursor' }},
     { 'in', '<A-a>', function() chat_fns.insert_http_tool_text('@{agent} ') end,
       { desc = 'CodeCompanion: Insert agent tool' }},
     { 'in', '<F2>a', function() chat_fns.insert_http_tool_text('@{agent} ') end,

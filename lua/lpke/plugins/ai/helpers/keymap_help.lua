@@ -70,7 +70,7 @@ local sections = {
         modes = { n = 'go' },
       },
       { description = 'Cleanup chats', modes = { n = '<leader>X' } },
-      { description = 'Paste image at cursor', modes = { n = '<leader>I' } },
+      { description = 'Paste image after cursor', modes = { n = '<leader>I' } },
       {
         description = 'Insert agent tool',
         modes = { n = { '<A-a>', '<F2>a' }, i = { '<A-a>', '<F2>a' } },
