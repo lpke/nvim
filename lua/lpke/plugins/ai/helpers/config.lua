@@ -1,10 +1,5 @@
 local M = {}
 
-local codex_model_cycle = { 'gpt_5_6_sol', 'gpt_6_astra' }
-if Lpke_is_work_device then
-  table.insert(codex_model_cycle, 'gpt_5_6_luna')
-end
-
 M.adapters = {
   copilot = {
     display = 'Copilot',
@@ -13,9 +8,9 @@ M.adapters = {
   },
   codex = {
     display = 'Codex',
-    default_model = Lpke_is_work_device and 'gpt_5_6_luna' or 'gpt_6_astra',
+    default_model = 'gpt_6_1_sol',
     default_reasoning_effort = 'high',
-    model_cycle = codex_model_cycle,
+    model_cycle = { 'gpt_5_6_sol', 'gpt_6_astra', 'gpt_6_1_sol' },
   },
 }
 M.adapter_cycle = { 'codex', 'copilot' }
@@ -127,9 +122,14 @@ M.models = {
     aliases = { 'astra' },
     display = 'GPT-6a',
   },
+  gpt_6_1_sol = {
+    id = 'gpt-6.1-sol',
+    aliases = { 'sol', 'gpt6.1s', 'gpt6.1' },
+    display = 'GPT-6.1s',
+  },
   gpt_5_6_sol = {
     id = 'gpt-5.6-sol',
-    aliases = { 'sol', 'gpt5.6s', 'gpt5.6' },
+    aliases = { 'gpt5.6s', 'gpt5.6' },
     display = 'GPT-5.6s',
   },
   gpt_5_6_terra = {

@@ -46,7 +46,7 @@ local sections = {
         modes = { n = 'gd' },
       },
       {
-        description = 'Cycle configured models',
+        description = 'Cycle models: Codex 5.6 Sol / 6 Astra / 6.1 Sol',
         modes = { n = '<leader>m' },
       },
       {
