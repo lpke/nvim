@@ -46,7 +46,9 @@ local sections = {
         modes = { n = 'gd' },
       },
       {
-        description = 'Cycle models: Codex 5.6 Sol / 6 Astra / 6.1 Sol',
+        description = Lpke_is_work_device
+            and 'Cycle models: Codex 5.6 Luna / 6.1 Sol'
+          or 'Cycle models: Codex 6.1 Sol / 6 Astra / 5.6 Sol',
         modes = { n = '<leader>m' },
       },
       {

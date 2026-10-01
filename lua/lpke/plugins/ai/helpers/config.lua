@@ -10,7 +10,8 @@ M.adapters = {
     display = 'Codex',
     default_model = 'gpt_6_1_sol',
     default_reasoning_effort = 'high',
-    model_cycle = { 'gpt_5_6_sol', 'gpt_6_astra', 'gpt_6_1_sol' },
+    model_cycle = Lpke_is_work_device and { 'gpt_5_6_luna', 'gpt_6_1_sol' }
+      or { 'gpt_6_1_sol', 'gpt_6_astra', 'gpt_5_6_sol' },
   },
 }
 M.adapter_cycle = { 'codex', 'copilot' }

@@ -498,7 +498,8 @@ Models/adapters:
   interrupted attempt keeps a prompt-text fallback and never retries.
   Renaming with gr in saved history permanently overrides automatic titles.
   <leader>m             Cycle configured models for current adapter.
-                        Codex: GPT-5.6 Sol -> GPT-6 Astra -> GPT-6.1 Sol.
+                        Codex: GPT-6.1 Sol -> GPT-6 Astra -> GPT-5.6 Sol.
+                        Work devices: GPT-5.6 Luna -> GPT-6.1 Sol.
   <leader>M             Cycle Codex/Copilot adapters.
   <leader>r             Codex ACP reasoning effort picker.
   <leader>a             Codex ACP approval preset picker.
