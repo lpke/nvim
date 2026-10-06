@@ -1133,6 +1133,8 @@ local function config()
   })
 
   -- stylua: ignore start
+  helpers.command_set({ '0', 'Gc', 'DiffviewFileHistory %', { desc = 'Diffview: Open file commit history' } })
+
   helpers.keymap_set_multi({
     { 'nC', '<leader>gc', 'DiffviewFileHistory %', { desc = 'Diffview: Open file commit history' } },
     { 'nC', '<BS>gc', 'DiffviewFileHistory', { desc = 'Diffview: Open current branch commit history' } },
@@ -1177,6 +1179,7 @@ end
 return {
   'sindrets/diffview.nvim',
   commit = '4516612fe98ff56ae0415a259ff6361a89419b0a',
+  cmd = 'Gc',
   event = vim.env.LPKE_NVIM_DIFFVIEW_GIT_UI == '1' and 'VimEnter' or 'VeryLazy',
   config = config,
 }

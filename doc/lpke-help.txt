@@ -401,7 +401,7 @@ Diffview:
   <leader>i             Open/focus changed/staged diffview.
   <BS>gd                DiffviewOpen.
   <BS>gD                Start :DiffviewOpen with cursor for rev args.
-  <leader>gc            File history for current file.
+  <leader>gc / :Gc      File history for current file.
   <BS>gc                Current branch history.
   <BS>gH                Start :DiffviewFileHistory with cursor for paths.
   <BS>gs                Stash history.
