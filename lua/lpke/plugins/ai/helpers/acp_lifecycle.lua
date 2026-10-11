@@ -399,6 +399,7 @@ local function exact_load_session(conn, session_id, opts)
   local previous_loading_session = conn._loading_session
   local previous_on_session_update = conn._on_session_update
 
+  conn._lpke_session_load_error = nil
   conn.session_id = session_id
   conn._loading_session = true
   conn._on_session_update = opts.on_session_update
@@ -414,10 +415,15 @@ local function exact_load_session(conn, session_id, opts)
 
   conn._loading_session = previous_loading_session
   conn._on_session_update = previous_on_session_update
+  local load_error = conn._lpke_session_load_error
+  conn._lpke_session_load_error = nil
 
   if not ok or not loaded_session then
     conn.session_id = previous_session_id
-    return false
+    return false,
+      not ok and tostring(loaded_session)
+        or load_error
+        or 'Failed to load ACP session'
   end
 
   if
@@ -442,17 +448,6 @@ local function set_saved_session_id(chat, session_id)
   chat.acp_session_id = session_id
   chat.opts = chat.opts or {}
   chat.opts.acp_session_id = session_id
-end
-
-local function clear_saved_session_id(chat)
-  if not chat then
-    return
-  end
-
-  chat.acp_session_id = nil
-  if chat.opts then
-    chat.opts.acp_session_id = nil
-  end
 end
 
 function M.remember_session(chat)
@@ -488,15 +483,12 @@ function M.load_session(chat, session_id, opts)
   end
 
   set_connection_cwd(chat)
-  if
-    exact_load_session(conn, session_id, opts)
-    and conn.session_id == session_id
-  then
+  local loaded, err = exact_load_session(conn, session_id, opts)
+  if loaded and conn.session_id == session_id then
     return true
   end
 
-  clear_saved_session_id(chat)
-  return false
+  return false, err
 end
 
 function M.track_chat(chat)
@@ -861,17 +853,17 @@ local function guard_chat_visible(chat, ms)
   end, ms or 2000)
 end
 
-local function notify_acp_session_unavailable(chat)
-  if chat._lpke_acp_session_unavailable_notified then
+local function notify_acp_session_unavailable(chat, err)
+  local message = 'ACP session unavailable; opened saved history chat'
+  if err then
+    message = message .. ': ' .. tostring(err)
+  end
+  if chat._lpke_acp_session_unavailable_notified == message then
     return
   end
-  chat._lpke_acp_session_unavailable_notified = true
+  chat._lpke_acp_session_unavailable_notified = message
 
-  vim.notify(
-    'ACP session unavailable; opened saved history chat',
-    vim.log.levels.WARN,
-    { title = 'CodeCompanion' }
-  )
+  vim.notify(message, vim.log.levels.WARN, { title = 'CodeCompanion' })
 end
 
 local function patch_codecompanion()
@@ -883,6 +875,15 @@ local function patch_codecompanion()
   local ok_conn, Connection = pcall(require, 'codecompanion.acp')
   if ok_conn and not Connection._lpke_tree_disconnect then
     Connection._lpke_tree_disconnect = true
+
+    -- Upstream discards RPC errors when resuming the waiting coroutine.
+    local original_store_rpc_response = Connection.store_rpc_response
+    Connection.store_rpc_response = function(self, response)
+      if self._loading_session and response.error then
+        self._lpke_session_load_error = response.error.message
+      end
+      return original_store_rpc_response(self, response)
+    end
 
     local original_start = Connection.start_agent_process
     Connection.start_agent_process = function(self, ...)
@@ -1002,9 +1003,10 @@ local function patch_codecompanion()
             }
           or nil
 
-        local ok, loaded =
+        local ok, loaded, err =
           pcall(exact_load_session, conn, session_id, load_opts)
         if ok and loaded and conn.session_id == session_id then
+          chat._lpke_acp_session_unavailable_notified = nil
           link_buffer_to_session(chat)
           if should_restore and #updates > 0 then
             require('codecompanion.interactions.chat.acp.render').restore_session(
@@ -1035,14 +1037,10 @@ local function patch_codecompanion()
           return true
         end
 
-        if should_restore then
-          chat._lpke_restore_acp_session_updates = nil
-          notify_acp_session_unavailable(chat)
-          clear_saved_session_id(chat)
-          return true
-        end
-
-        clear_saved_session_id(chat)
+        -- Keep the saved ID so a retry resumes this thread. Returning success
+        -- here allowed later submissions to create an unrelated session.
+        notify_acp_session_unavailable(chat, ok and err or loaded)
+        return false
       end
 
       local ok = original_ensure_session(self, ...)

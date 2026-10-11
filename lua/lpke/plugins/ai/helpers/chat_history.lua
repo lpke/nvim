@@ -300,6 +300,7 @@ function M.toggle(chat)
 end
 
 function M.setup()
+  require('lpke.plugins.ai.helpers.acp_history_render').setup()
   local Chat = require('codecompanion.interactions.chat')
   local UI = require('codecompanion.interactions.chat.ui')
   if Chat._lpke_chat_history then

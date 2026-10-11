@@ -463,11 +463,13 @@ function M.resume_session_into_chat(chat, session, opts)
   }
   local ok_lifecycle, lifecycle =
     pcall(require, 'lpke.plugins.ai.helpers.acp_lifecycle')
-  local ok, loaded
+  local ok, loaded, load_error
   if ok_lifecycle and type(lifecycle.load_session) == 'function' then
-    ok, loaded = pcall(lifecycle.load_session, chat, session_id, load_opts)
+    ok, loaded, load_error =
+      pcall(lifecycle.load_session, chat, session_id, load_opts)
   else
-    ok, loaded = pcall(conn.load_session, conn, session_id, load_opts)
+    ok, loaded, load_error =
+      pcall(conn.load_session, conn, session_id, load_opts)
   end
 
   if not ok then
@@ -475,7 +477,7 @@ function M.resume_session_into_chat(chat, session, opts)
   end
 
   if not loaded then
-    return false, 'Failed to load ACP session'
+    return false, load_error or 'Failed to load ACP session'
   end
 
   if conn.session_id ~= session_id then

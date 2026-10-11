@@ -11,8 +11,15 @@ local function current_or_buf(bufnr)
   return bufnr
 end
 
+local pending_refresh = {}
+
 local function emit_text_changed(bufnr)
+  if pending_refresh[bufnr] then
+    return
+  end
+  pending_refresh[bufnr] = true
   vim.schedule(function()
+    pending_refresh[bufnr] = nil
     if vim.api.nvim_buf_is_valid(bufnr) then
       vim.api.nvim_exec_autocmds('TextChanged', { buffer = bufnr })
     end
