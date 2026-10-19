@@ -239,6 +239,9 @@ function M.extra_lines()
     '### LPKE Custom CodeCompanion Help',
     '',
     'Terminal: `c --thread UUID [dir]` opens that Codex thread fullscreen.',
+    'Command: `:AiContinue` enables retries for this Codex ACP chat until closed.',
+    'After a capacity ending, wait 30s, then send only `continue` while idle.',
+    'Drafts prevent retries. Timestamped notifications remain in `:messages`.',
   }
   local max_length = max_description_length()
 

@@ -509,6 +509,15 @@ Models/adapters:
                         gpt5.6s selects GPT-5.6 Sol; terra/luna select the
                         corresponding GPT-5.6 model.
   :Adapter codex|copilot sets or cycles adapter.
+  :AiContinue           Enable capacity retries for this Codex ACP chat until
+                        closed. When the latest response ends with "Selected
+                        model is at capacity. Please try a different model.",
+                        wait 30 seconds, then send only "continue" if the chat
+                        is still idle and its draft is empty. Minor wording,
+                        whitespace, case, and punctuation changes are accepted.
+                        Mentions earlier in a response do not trigger retries.
+                        New prompts and stopped requests cancel pending retries.
+                        Timestamped notifications are kept in :messages.
   :CodexAgents [current|local|mbp] opens the live read-only subagent dashboard
   for current descendants, all local agents, or Mac agents over ssh mbp.
   With no argument, choose a source. r refreshes either view. q closes the
