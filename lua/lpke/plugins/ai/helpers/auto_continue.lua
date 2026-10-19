@@ -10,7 +10,7 @@ local function notify(chat, message)
     vim.o.messagesopt = 'wait:0,' .. history
     local ok, err = pcall(
       vim.notify,
-      ('AiContinue %s [chat %d]: %s'):format(
+      ('Codex retry %s [chat %d]: %s'):format(
         os.date('%H:%M:%S'),
         chat.bufnr,
         message
@@ -137,17 +137,15 @@ local function record_response(chat, content)
     cycle = chat.cycle,
     session_id = session_id(chat),
   }
-  chat._lpke_auto_continue_response = response
   queue(chat, response)
 end
 
-function M.enable(chat)
-  if not chat or not model_swap.is_codex_adapter(chat.adapter) then
-    vim.notify('AiContinue requires a Codex ACP chat', vim.log.levels.WARN)
-    return
-  end
-  if chat._lpke_auto_continue then
-    notify(chat, 'already enabled')
+local function attach(chat)
+  if
+    not chat
+    or not model_swap.is_codex_adapter(chat.adapter)
+    or chat._lpke_auto_continue
+  then
     return
   end
 
@@ -156,7 +154,6 @@ function M.enable(chat)
   chat:add_callback('on_submitted', function()
     cancel(state)
     state.cancelled = false
-    chat._lpke_auto_continue_response = nil
   end)
   chat:add_callback('on_cancelled', function()
     state.cancelled = true
@@ -166,21 +163,24 @@ function M.enable(chat)
     state.cancelled = true
     cancel(state)
   end)
-  notify(chat, 'enabled for this chat')
-  if chat._lpke_auto_continue_response then
-    queue(chat, chat._lpke_auto_continue_response)
-  end
 end
 
 function M.setup()
-  require('lpke.core.helpers').command_set({
-    '0',
-    'AiContinue',
-    function()
-      M.enable(require('codecompanion').buf_get_chat(0))
+  api.nvim_create_autocmd('User', {
+    group = api.nvim_create_augroup('LpkeCodeCompanionAutoContinue', {
+      clear = true,
+    }),
+    pattern = { 'CodeCompanionChatCreated', 'CodeCompanionChatAdapter' },
+    callback = function(args)
+      local bufnr = args.data and args.data.bufnr
+      if bufnr then
+        attach(require('codecompanion').buf_get_chat(bufnr))
+      end
     end,
-    { desc = 'Retry Codex capacity endings with continue after 30 seconds' },
   })
+  for _, entry in ipairs(require('codecompanion').buf_get_chat()) do
+    attach(entry.chat)
+  end
 
   local Handler = require('codecompanion.interactions.chat.acp.handler')
   if Handler._lpke_auto_continue then

@@ -14,7 +14,7 @@ local api = vim.api
 local notifications, timers = {}, {}
 local original_notify, original_defer = vim.notify, vim.defer_fn
 vim.notify = function(message)
-  if not message:match('^AiContinue ') then
+  if not message:match('^Codex retry ') then
     return
   end
   assert(
@@ -54,31 +54,18 @@ require('codecompanion').setup({
 })
 require('lpke.plugins.ai.helpers.submit_guard').setup()
 local auto_continue = require('lpke.plugins.ai.helpers.auto_continue')
-auto_continue.setup()
 local Chat = require('codecompanion.interactions.chat')
 local Handler = require('codecompanion.interactions.chat.acp.handler')
 local adapters = require('codecompanion.adapters')
 local capacity = 'Selected model is at capacity. Please try a different model.'
 
-local function flush()
-  vim.wait(20, function()
-    return false
-  end)
-end
-
-local function new_chat(enable)
-  local chat = assert(Chat.new({
-    adapter = 'ollama',
-    buffer_context = {
-      bufnr = api.nvim_get_current_buf(),
-      filetype = 'lua',
-      filename = 'fixture.lua',
-      lines = {},
-    },
-  }))
-  chat.adapter = adapters.resolve('codex')
+-- New and restored ACP chats use a fake connection without starting an agent.
+require('codecompanion.interactions.chat.helpers').create_acp_connection = function(
+  chat,
+  callback
+)
   chat.acp_connection = {
-    session_id = 'fixture-' .. chat.bufnr,
+    session_id = chat.acp_session_id or 'fixture-' .. chat.bufnr,
     get_models = function()
       return {}
     end,
@@ -87,6 +74,27 @@ local function new_chat(enable)
     end,
     disconnect = function() end,
   }
+  if callback then
+    callback()
+  end
+end
+
+local function flush()
+  vim.wait(20, function()
+    return false
+  end)
+end
+
+local function new_chat(adapter, opts)
+  opts = opts or {}
+  opts.adapter = adapter or 'codex'
+  opts.buffer_context = {
+    bufnr = api.nvim_get_current_buf(),
+    filetype = 'lua',
+    filename = 'fixture.lua',
+    lines = {},
+  }
+  local chat = assert(Chat.new(opts))
   -- Use the real submit, handler, parser and ACP formatter with no agent process.
   chat._submit_acp = function(self, payload)
     self.last_prompt =
@@ -94,9 +102,6 @@ local function new_chat(enable)
     self.current_request = { cancel = function() end }
   end
   api.nvim_set_current_buf(chat.bufnr)
-  if enable ~= false then
-    vim.cmd('AiContinue')
-  end
   flush()
   return chat
 end
@@ -141,10 +146,13 @@ local function expire(timer)
 end
 
 local chat = new_chat()
-local state = chat._lpke_auto_continue
-vim.cmd('AiContinue')
-assert(chat._lpke_auto_continue == state, 'Enabling twice duplicated state')
 submit(chat)
+auto_continue.setup()
+local state = chat._lpke_auto_continue
+assert(state, 'An already running Codex chat was not attached')
+assert(vim.fn.exists(':AiContinue') == 0, 'Activation command still exists')
+auto_continue.setup()
+assert(chat._lpke_auto_continue == state, 'Repeated setup duplicated state')
 local handler = Handler.new(chat)
 handler:handle_message_chunk(capacity)
 assert(#timers == 0, 'Streamed text triggered a retry')
@@ -180,14 +188,46 @@ expire(timers[#timers])
 finish(chat, 'Done')
 assert(not state.pending, 'Successful response left a retry queued')
 
-local disabled = new_chat(false)
-submit(disabled)
+for _, target in ipairs({
+  new_chat(),
+  new_chat(nil, { acp_session_id = 'restored-fixture' }),
+}) do
+  assert(
+    target._lpke_auto_continue,
+    'A new or restored Codex chat was not attached'
+  )
+  submit(target)
+  count = #timers
+  finish(target, capacity)
+  assert(#timers == count + 1, 'A new or restored Codex chat did not retry')
+  expire(timers[#timers])
+  assert(target.current_request, 'Automatic retry was not submitted')
+  finish(target, 'Recovered')
+end
+
+local switched = new_chat('ollama')
+assert(not switched._lpke_auto_continue, 'HTTP chat was attached')
+switched:change_adapter('codex')
+flush()
+assert(
+  switched._lpke_auto_continue,
+  'Switching to Codex did not attach retries'
+)
+submit(switched)
 count = #timers
-finish(disabled, capacity)
-assert(#timers == count, 'An unenabled chat retried')
-vim.cmd('AiContinue')
-assert(#timers == count + 1, 'Enabling after a capacity ending did not retry')
-disabled:dispatch('on_cancelled')
+finish(switched, capacity)
+assert(#timers == count + 1, 'Switching to Codex did not enable retries')
+expire(timers[#timers])
+finish(switched, 'Recovered')
+
+local non_codex = new_chat('claude_code')
+assert(
+  not non_codex._lpke_auto_continue,
+  'A different ACP adapter was attached'
+)
+count = #timers
+finish(non_codex, capacity)
+assert(#timers == count, 'A different ACP adapter retried')
 
 for _, content in ipairs({
   capacity .. '\nI will keep working.',
@@ -299,5 +339,5 @@ assert(
   'Notification missing from message history'
 )
 print(
-  'PASS: capacity endings, completion, exact prompts, repeated retries, errors, interventions and notifications'
+  'PASS: automatic retries for existing/new/restored/switched Codex chats, capacity endings, exact prompts, errors, interventions and notifications'
 )
