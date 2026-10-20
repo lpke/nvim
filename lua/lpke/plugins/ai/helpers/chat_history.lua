@@ -9,10 +9,15 @@ local PAGE_LINES = 500
 local HEADER_LINES = 4
 
 local function close_view(state)
-  if state.view and api.nvim_buf_is_valid(state.view) then
-    api.nvim_buf_delete(state.view, { force = true })
+  local win, buf = state.win, state.view
+  state.win, state.view = nil, nil
+  -- Deleting the buffer alone can leave its floating window open and empty.
+  if win and api.nvim_win_is_valid(win) then
+    api.nvim_win_close(win, true)
   end
-  state.view = nil
+  if buf and api.nvim_buf_is_valid(buf) then
+    api.nvim_buf_delete(buf, { force = true })
+  end
 end
 
 local function forget(bufnr)
