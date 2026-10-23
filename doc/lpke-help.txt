@@ -160,6 +160,8 @@ Oil:
   survive Nvim restarts; :OHSDc disconnects this Nvim keepalive, and :OHSList
   shows keepalives and lease expiry. Use :OHSr to open the same server through
   its local-network URL.
+  New servers try port 55555, then each successive port through 65535 until free.
+  Existing servers keep their ports; use :OHS! to restart with this selection.
   OHS uses the shared Node server installed by chezmoi at
   ~/.local/share/html-server/server.cjs. Apply chezmoi after updating the config.
   A trusted repository may provide .html-server.cjs with handleRequest and
