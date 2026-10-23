@@ -11,6 +11,7 @@ lpke-help.txt	lpke-help.txt	/*lpke-help.txt*
 lpke-lsp	lpke-help.txt	/*lpke-lsp*
 lpke-orientation	lpke-help.txt	/*lpke-orientation*
 lpke-runner	lpke-help.txt	/*lpke-runner*
+lpke-send-in	lpke-help.txt	/*lpke-send-in*
 lpke-ui	lpke-help.txt	/*lpke-ui*
 lpke-vue-snippets	lpke-help.txt	/*lpke-vue-snippets*
 lpke-windows	lpke-help.txt	/*lpke-windows*

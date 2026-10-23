@@ -234,6 +234,10 @@ for _, content in ipairs({
   'You said: ' .. capacity .. '\nThat was just an example.',
   'Selected model is available. Please try a different model.',
   'Selected model is at capacity. Please try again later.',
+  'You said: ' .. capacity,
+  '> ' .. capacity,
+  '```txt\n' .. capacity .. '\n```',
+  '~~~txt\n' .. capacity .. '\n~~~',
 }) do
   submit(chat)
   count = #timers
@@ -265,6 +269,46 @@ assert(
   'Error retry included earlier prompts'
 )
 finish(chat, 'Recovered')
+
+-- Real failures follow tool/compaction summaries and retain automatic context.
+local contextual = new_chat()
+contextual.context_items = {
+  { id = '<rules>AGENTS.md</rules>', opts = { visible = true } },
+  { id = '<rules>/tmp/rules.md</rules>', opts = { visible = true } },
+  { id = '<file>hidden</file>', opts = { visible = false } },
+}
+submit(contextual)
+handler = Handler.new(contextual)
+handler:handle_message_chunk('Work in progress.')
+handler:process_tool_call({
+  toolCallId = 'compaction',
+  kind = 'think',
+  title = 'Compact conversation',
+  status = 'completed',
+})
+handler:handle_message_chunk('Selected model is at ')
+handler:handle_message_chunk('capacity. Please try a different model.')
+count = #timers
+handler:handle_complete()
+flush()
+assert(#timers == count + 1, 'Tool summary or automatic context blocked retry')
+expire(timers[#timers])
+assert(contextual.current_request, 'Contextual retry was not submitted')
+assert(
+  vim.deep_equal(
+    contextual.last_prompt,
+    { { type = 'text', text = 'continue' } }
+  ),
+  'Automatic context leaked into retry prompt'
+)
+finish(contextual, 'Done')
+
+submit(contextual)
+finish(contextual, capacity)
+local context_timer = timers[#timers]
+api.nvim_buf_set_lines(contextual.bufnr, -1, -1, false, { '> Keep this quote' })
+expire(context_timer)
+assert(not contextual.current_request, 'Context masked a user-authored quote')
 
 local interventions = {
   draft = function(target)

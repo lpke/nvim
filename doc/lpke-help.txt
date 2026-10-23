@@ -523,6 +523,26 @@ Capacity retries:
   Mentions earlier in a response do not trigger retries. New prompts and stopped
   requests cancel pending retries. Timestamped notifications stay in :messages.
 
+Scheduled prompts:                                          *lpke-send-in*
+  :SendIn 1m             Send this chat's draft after one minute.
+  :SendIn 2h             Send after two hours. Units: s, m, h, d; combinations
+                         such as 1h30m work. Durations must be under 25 days.
+  :SendIn list           List the pending send for this chat.
+  :SendIn list all       List pending sends across all chats in this Neovim.
+  :SendIn cancel         Cancel this chat's pending send.
+  :SendIn cancel 3       Cancel the listed send with ID 3, in any chat.
+  :SendIn cancel all     Cancel all pending sends in this Neovim.
+
+  These commands work only in CodeCompanion chat buffers. Write a non-empty
+  prompt in an idle chat before scheduling. Each chat can have one pending
+  send; scheduling again replaces it. The timer submits through CodeCompanion,
+  even if another buffer or window has focus. It does not press a keymap.
+  Editing the buffer, sending manually, stopping/closing/unloading the chat,
+  or switching its adapter/model cancels the send. The draft must remain
+  unchanged and the chat idle at the deadline; otherwise nothing is sent.
+  Timers are local to this Neovim process and do not survive exit/restart.
+  Queued times, cancellations and results remain in :messages.
+
 Context/tools inside chats:
   <leader>I             Paste image.
                         Images save to stdpath('data')/img-clip-pasted-images.

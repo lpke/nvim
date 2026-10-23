@@ -242,6 +242,9 @@ function M.extra_lines()
     'All Codex ACP chats automatically retry capacity endings after 30s.',
     'Retries send only `continue` while idle with an empty draft.',
     'Timestamped notifications remain in `:messages`.',
+    '`SendIn 1m` / `SendIn 2h`: send this draft later, even without focus.',
+    '`SendIn list [all]` / `SendIn cancel [id|all]`: inspect or cancel timers.',
+    'One timer per chat; editing, sending or closing cancels it. Timers end on exit.',
   }
   local max_length = max_description_length()
 

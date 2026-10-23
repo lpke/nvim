@@ -1,28 +1,17 @@
 local M = {}
 local api = vim.api
 local model_swap = require('lpke.plugins.ai.helpers.model_swap')
+local draft = require('lpke.plugins.ai.helpers.chat_draft')
+local chat_notify = require('lpke.plugins.ai.helpers.chat_notify')
 
 local function notify(chat, message)
-  vim.schedule(function()
-    -- Keep notifications in :messages without a hit-enter prompt.
-    local messagesopt = vim.o.messagesopt
-    local history = messagesopt:match('history:%d+') or 'history:500'
-    vim.o.messagesopt = 'wait:0,' .. history
-    local ok, err = pcall(
-      vim.notify,
-      ('Codex retry %s [chat %d]: %s'):format(
-        os.date('%H:%M:%S'),
-        chat.bufnr,
-        message
-      ),
-      vim.log.levels.INFO,
-      { title = 'CodeCompanion' }
+  chat_notify(
+    ('Codex retry %s [chat %d]: %s'):format(
+      os.date('%H:%M:%S'),
+      chat.bufnr,
+      message
     )
-    vim.o.messagesopt = messagesopt
-    if not ok then
-      error(err)
-    end
-  end)
+  )
 end
 
 local function capacity_ending(content)
@@ -30,17 +19,35 @@ local function capacity_ending(content)
     return false
   end
 
-  local normalized = content:lower():gsub('%p', ' '):gsub('%s+', ' ')
-  normalized = vim.trim(normalized)
+  if content:find('```', 1, true) or content:find('~~~', 1, true) then
+    return false
+  end
+  -- The error must start a line, rather than end a quoted example or sentence.
+  local candidates = {}
+  local start = math.max(1, #content - 511)
+  if start > 1 and content:sub(start - 1, start - 1) ~= '\n' then
+    local newline = content:find('\n', start, true)
+    if not newline then
+      return false
+    end
+    start = newline + 1
+  end
+  content = content:sub(start)
+  for offset in ('\n' .. content):gmatch('()\n') do
+    local tail = vim.trim(content:sub(offset))
+    if tail:match('^%a') then
+      candidates[#candidates + 1] =
+        vim.trim(tail:lower():gsub('%p', ' '):gsub('%s+', ' '))
+    end
+  end
   for _, subject in ipairs({ 'selected model', 'the selected model' }) do
     for _, condition in ipairs({ 'is at capacity', 'is currently at capacity' }) do
       for _, action in ipairs({ 'try a different model', 'try another model' }) do
         local ending = subject .. ' ' .. condition .. ' please ' .. action
-        if
-          normalized == ending
-          or normalized:sub(-#ending - 1) == ' ' .. ending
-        then
-          return true
+        for _, normalized in ipairs(candidates) do
+          if normalized == ending then
+            return true
+          end
         end
       end
     end
@@ -79,12 +86,7 @@ local function can_continue(chat, response)
     return false
   end
 
-  -- The prompt parser strips blockquotes as context, so inspect the raw draft.
-  local draft = table.concat(
-    api.nvim_buf_get_lines(chat.bufnr, chat.header_line, -1, false),
-    '\n'
-  )
-  return vim.trim(draft) == ''
+  return draft.empty(chat)
 end
 
 local function queue(chat, response)
@@ -188,12 +190,24 @@ function M.setup()
   end
   Handler._lpke_auto_continue = true
 
+  local original_chunk = Handler.handle_message_chunk
+  Handler.handle_message_chunk = function(self, content, ...)
+    if
+      self.chat.builder.state.last_type ~= self.chat.MESSAGE_TYPES.LLM_MESSAGE
+    then
+      self._lpke_assistant_chunks = {}
+    end
+    self._lpke_assistant_chunks = self._lpke_assistant_chunks or {}
+    table.insert(self._lpke_assistant_chunks, content)
+    return original_chunk(self, content, ...)
+  end
+
   local original_complete = Handler.handle_complete
   Handler.handle_complete = function(self, ...)
     -- ACP output also contains tool text. Only match when assistant text was last.
     local content = self.chat.builder.state.last_type
           == self.chat.MESSAGE_TYPES.LLM_MESSAGE
-        and table.concat(self.output, '')
+        and table.concat(self._lpke_assistant_chunks or {}, '')
       or nil
     local result = original_complete(self, ...)
     record_response(self.chat, content)
