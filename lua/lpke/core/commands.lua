@@ -11,11 +11,32 @@ vim.cmd('cabbrev r echo "shorthand for :read disabled"')
 vim.cmd('cabbrev re echo "shorthand for :read disabled"')
 vim.cmd('cabbrev rea echo "shorthand for :read disabled"')
 
-local function codex_usage()
-  local script = vim.fn.expand('~/.local/bin/cu')
-
-  if vim.fn.executable(script) ~= 1 then
-    vim.api.nvim_echo({ { script .. ' is not executable', 'ErrorMsg' } }, true, {})
+local function print_usage(name)
+  local windows = vim.fn.has('win32') == 1
+  local script = vim.fn.expand(
+    windows and ('~/bin/' .. name .. '.ps1') or ('~/.local/bin/' .. name)
+  )
+  local command = { script }
+  if windows then
+    local shell = vim.fn.exepath('pwsh')
+    if shell == '' then
+      shell = vim.fn.exepath('powershell')
+    end
+    if shell == '' or vim.fn.filereadable(script) ~= 1 then
+      vim.api.nvim_echo(
+        { { name .. ': PowerShell or script not found', 'ErrorMsg' } },
+        true,
+        {}
+      )
+      return
+    end
+    command = { shell, '-NoLogo', '-NoProfile', '-File', script }
+  elseif vim.fn.executable(script) ~= 1 then
+    vim.api.nvim_echo(
+      { { script .. ' is not executable', 'ErrorMsg' } },
+      true,
+      {}
+    )
     return
   end
 
@@ -27,26 +48,47 @@ local function codex_usage()
   end
 
   if vim.system then
-    vim.system({ script }, { text = true }, function(result)
-      echo_output(vim.trim(result.stdout ~= '' and result.stdout or result.stderr), result.code)
+    vim.system(command, { text = true }, function(result)
+      echo_output(
+        vim.trim(result.stdout ~= '' and result.stdout or result.stderr),
+        result.code
+      )
     end)
     return
   end
 
   local output = {}
-  vim.fn.jobstart({ script }, {
+  vim.fn.jobstart(command, {
     stdout_buffered = true,
     stderr_buffered = true,
     on_stdout = function(_, data)
-      vim.list_extend(output, vim.tbl_filter(function(line) return line ~= '' end, data))
+      vim.list_extend(
+        output,
+        vim.tbl_filter(function(line)
+          return line ~= ''
+        end, data)
+      )
     end,
     on_stderr = function(_, data)
-      vim.list_extend(output, vim.tbl_filter(function(line) return line ~= '' end, data))
+      vim.list_extend(
+        output,
+        vim.tbl_filter(function(line)
+          return line ~= ''
+        end, data)
+      )
     end,
     on_exit = function(_, code)
       echo_output(table.concat(output, '\n'), code)
     end,
   })
+end
+
+local function codex_usage()
+  print_usage('codex-usage')
+end
+
+local function claude_usage()
+  print_usage('claude-usage')
 end
 
 local function open_explorer_here()
@@ -202,6 +244,8 @@ helpers.command_set_multi({
   { '', 'PW', Lpke_active, { desc = 'Print details about the currently active tab/buffer/window' } },
   { '', 'CU', codex_usage, { desc = 'Print Codex usage' } },
   { '', 'CodexUsage', codex_usage, { desc = 'Print Codex usage' } },
+  { '', 'CLU', claude_usage, { desc = 'Print Claude usage' } },
+  { '', 'ClaudeUsage', claude_usage, { desc = 'Print Claude usage' } },
 
   -- yanking
   { '', 'Y', function() print('YP/p: buf name | YF: oil entry path | YD/d: cwd | YG/g: git root | YL/l: location | YT/t: tab ID | YB/b: buf ID | YW/w: win ID') end,

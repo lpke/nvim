@@ -73,7 +73,10 @@ General:
   :Bclean               Delete buffers not visible in any tab, keeping modified
                         buffers and CodeCompanion chats.
   :M, :Mes, :Messages   Open :messages in a bottom split named Message History.
-  :CU, :CodexUsage      Run ~/.local/bin/cu and echo Codex usage.
+  :CU, :CodexUsage      Run codex-usage and echo account usage asynchronously.
+  :CLU, :ClaudeUsage    Run claude-usage and echo account usage asynchronously.
+                        Uses chezmoi-managed scripts in ~/.local/bin, or
+                        ~/bin/*.ps1 on Windows. Failures appear in :messages.
 
 Terminals and external tools:
   :T [full]
