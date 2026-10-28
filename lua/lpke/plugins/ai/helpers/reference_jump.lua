@@ -1,6 +1,7 @@
 local M = {}
 
 local api = vim.api
+local references = require('lpke.core.helpers.references')
 local return_state_var = 'lpke_codecompanion_reference_jump'
 
 local function return_state(tab)
@@ -39,10 +40,11 @@ local function setup_return_handler()
         return
       end
 
-      local _, jump_index = unpack(vim.fn.getjumplist())
+      local jumps, jump_index = unpack(vim.fn.getjumplist())
+      -- Neovim may deduplicate old entries, shifting the saved jump's index.
       if
-        type(state.return_jump_index) ~= 'number'
-        or jump_index ~= state.return_jump_index - 1
+        jump_index >= #jumps
+        or not vim.deep_equal(jumps[jump_index + 1], state.return_jump)
       then
         clear_return_state(target_tab)
         return
@@ -87,64 +89,7 @@ local function is_pasted_image(reference)
   return vim.fs.dirname(reference.path) == image_dir
 end
 
-local function parse_target(target)
-  target = vim.trim(target)
-  target = target:gsub('^file://', '')
-  target = target:gsub('^[`<({%[]+', ''):gsub('[`>)}%],.;]+$', '')
-
-  local path, line, col = target:match('^(.*):(%d+):(%d+)$')
-  if not path then
-    path, line = target:match('^(.*):(%d+)$')
-  end
-  path = path or target
-
-  if vim.startswith(path, '~') then
-    path = vim.fn.expand(path)
-  elseif not vim.startswith(path, '/') then
-    path = vim.fs.normalize(vim.fn.getcwd() .. '/' .. path)
-  end
-
-  if vim.fn.filereadable(path) ~= 1 then
-    return nil
-  end
-
-  return {
-    path = vim.fs.normalize(path),
-    line = tonumber(line) or 1,
-    col = tonumber(col) or 1,
-  }
-end
-
-local function add_candidate(candidates, target, start_col, end_col)
-  local reference = parse_target(target)
-  if reference then
-    reference.start_col = start_col
-    reference.end_col = end_col
-    table.insert(candidates, reference)
-  end
-end
-
-function M.reference_at(line, col)
-  local candidates = {}
-
-  for start_col, target, end_col in line:gmatch('()%[[^%]]-%]%(([^%)]+)%)()') do
-    add_candidate(candidates, target, start_col, end_col - 1)
-  end
-  for start_col, target, end_col in line:gmatch('()`([^`]+)`()') do
-    add_candidate(candidates, target, start_col, end_col - 1)
-  end
-  for start_col, target, end_col in line:gmatch('()([^%s]+)()') do
-    add_candidate(candidates, target, start_col, end_col - 1)
-  end
-
-  for _, candidate in ipairs(candidates) do
-    if col >= candidate.start_col and col <= candidate.end_col then
-      candidate.start_col = nil
-      candidate.end_col = nil
-      return candidate
-    end
-  end
-end
+M.reference_at = references.reference_at
 
 function M.open_under_cursor()
   if require('lpke.core.helpers').open_url_under_cursor() then
@@ -171,8 +116,7 @@ function M.open_under_cursor()
   local source_tab = api.nvim_get_current_tabpage()
   local source_win = api.nvim_get_current_win()
   local tab_count = #api.nvim_list_tabpages()
-  local target_win =
-    require('codecompanion.utils.ui').tabnew_reuse(reference.path)
+  local target_win = references.open_file_reference(reference, { tab = true })
   local target_tab = api.nvim_win_get_tabpage(target_win)
 
   if #api.nvim_list_tabpages() > tab_count then
@@ -184,17 +128,12 @@ function M.open_under_cursor()
         source_tab = source_tab,
         source_win = source_win,
         target_win = target_win,
-        return_jump_index = jump_index,
+        return_jump = return_jump,
       })
     end
   elseif target_tab ~= source_tab then
     clear_return_state(target_tab)
   end
-
-  local line_count = api.nvim_buf_line_count(0)
-  local line = math.min(reference.line, line_count)
-  local line_length = #api.nvim_buf_get_lines(0, line - 1, line, false)[1]
-  api.nvim_win_set_cursor(0, { line, math.min(reference.col - 1, line_length) })
 end
 
 return M

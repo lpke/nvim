@@ -42,7 +42,7 @@ local sections = {
     title = 'Chat Buffer Keymaps',
     keymaps = {
       {
-        description = 'Open URL, pasted image directory, or file reference',
+        description = 'Follow link or file path in a tab; pasted images open their directory',
         modes = { n = 'gd' },
       },
       {

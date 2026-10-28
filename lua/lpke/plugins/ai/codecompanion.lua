@@ -475,7 +475,7 @@ local function config()
             callback = function()
               require('lpke.plugins.ai.helpers.reference_jump').open_under_cursor()
             end,
-            description = 'Open URL, pasted image directory, or file reference under cursor.',
+            description = 'Follow link or file path in a tab; pasted images open their directory.',
           },
           new_chat = {
             modes = { n = 'gn' },

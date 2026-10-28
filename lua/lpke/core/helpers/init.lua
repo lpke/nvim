@@ -1,4 +1,4 @@
----@class lpke.core.helpers: lpke.core.helpers.misc, lpke.core.helpers.util, lpke.core.helpers.config, lpke.core.helpers.print, lpke.core.helpers.info, lpke.core.helpers.format, lpke.core.helpers.links
+---@class lpke.core.helpers: lpke.core.helpers.misc, lpke.core.helpers.util, lpke.core.helpers.config, lpke.core.helpers.print, lpke.core.helpers.info, lpke.core.helpers.format, lpke.core.helpers.links, lpke.core.helpers.references
 local M = {}
 
 local misc = require('lpke.core.helpers.misc')
@@ -8,6 +8,7 @@ local print = require('lpke.core.helpers.print')
 local info = require('lpke.core.helpers.info')
 local format = require('lpke.core.helpers.format')
 local links = require('lpke.core.helpers.links')
+local references = require('lpke.core.helpers.references')
 
 -- make all available via `lpke.core.helpers.<function>`
 for k, v in pairs(misc) do
@@ -29,6 +30,9 @@ for k, v in pairs(format) do
   M[k] = v
 end
 for k, v in pairs(links) do
+  M[k] = v
+end
+for k, v in pairs(references) do
   M[k] = v
 end
 
