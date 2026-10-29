@@ -86,6 +86,20 @@ local function run()
     chat.acp_connection:get_models().currentModelId == 'gpt-6.1-sol',
     'configured model'
   )
+  local function full_access(connection)
+    for _, option in ipairs(connection:get_config_options()) do
+      if option.category == 'mode' then
+        return option.currentValue == 'full-access'
+      end
+    end
+    return false
+  end
+  check(
+    vim.wait(6000, function()
+      return full_access(chat.acp_connection)
+    end, 10),
+    'new session uses advertised full-access alias'
+  )
   local spawn = rows[1]
   local settings = vim.json.decode(spawn.config)
   check(
@@ -157,6 +171,12 @@ local function run()
       return #by_method(records(), 'session/set_config_option') >= 6
     end, 10),
     'resumed session defaults finish'
+  )
+  check(
+    vim.wait(6000, function()
+      return full_access(resumed.acp_connection)
+    end, 10),
+    'resumed session uses advertised full-access alias'
   )
   rows = records()
   check(

@@ -126,7 +126,7 @@ local function config()
               auth_method = 'chat-gpt',
               session_config_options = {
                 model = ai_config.adapter_default_model('codex'),
-                mode = 'Full Access',
+                mode = 'agent-full-access',
                 thought_level = ai_config.adapter_default_reasoning_effort(
                   'codex'
                 ),
@@ -440,6 +440,7 @@ local function config()
   require('lpke.plugins.ai.helpers.auto_continue').setup()
   require('lpke.plugins.ai.helpers.send_in').setup()
   require('lpke.plugins.ai.helpers.slash_command_completion').patch_cmp()
+  require('lpke.plugins.ai.helpers.codex_mode').setup()
   require('lpke.plugins.ai.helpers.acp_lifecycle').setup()
   require('lpke.plugins.ai.helpers.history_scope').setup()
   require('lpke.plugins.ai.helpers.history_acp').setup()
