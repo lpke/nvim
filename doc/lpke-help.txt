@@ -18,11 +18,6 @@ More ways to rediscover things:
   :Y                    Show yank helper commands.
   g?                    Show local help in Oil, Aerial, Diffview, and similar UIs.
 
-Editing this file:
-  Section tags use star-wrapped lpke-topic labels; links use |lpke-topic|.
-  After editing,
-  run :helptags doc so :help and <BS>fh see the updated tags.
-
 CONTENTS                                                  *lpke-contents*
   |lpke-orientation|       Prefixes, statusline, and conventions
   |lpke-commands|          User commands
@@ -34,7 +29,7 @@ CONTENTS                                                  *lpke-contents*
   |lpke-ai|                CodeCompanion and Copilot
   |lpke-runner|            Runner, terminals, messages
   |lpke-ui|                UI, sessions, markdown, symbols
-  |lpke-filetypes|         Filetypes, parsers, snippets
+  |lpke-filetypes|         Filetypes and snippets
   |lpke-vue-snippets|      Vue snippet quick reference
 
 ORIENTATION                                          *lpke-orientation*
@@ -43,8 +38,7 @@ ORIENTATION                                          *lpke-orientation*
 Core ideas:
   <leader> is Space.
   <BS> is the main "tools and pickers" prefix.
-  <F2>x and <A-x> are usually aliases. Your terminal maps Alt to F2-prefixed
-  sequences to avoid Esc ambiguity.
+  <F2>x and <A-x> are usually aliases.
   [] motions are repeatable with [[ and ]] after using a supported [x or ]x map.
   Many statusline items are clickable when using a GUI or terminal mouse.
 
@@ -75,8 +69,6 @@ General:
   :M, :Mes, :Messages   Open :messages in a bottom split named Message History.
   :CU, :CodexUsage      Run codex-usage and echo account usage asynchronously.
   :CLU, :ClaudeUsage    Run claude-usage and echo account usage asynchronously.
-                        Uses chezmoi-managed scripts in ~/.local/bin, or
-                        ~/bin/*.ps1 on Windows. Failures appear in :messages.
 
 Terminals and external tools:
   :T [full]
@@ -87,25 +79,18 @@ Terminals and external tools:
   :OE                   Open current file dir or Oil dir in OS file explorer.
   :OH                   Open current or selected Oil .html file in a browser.
   :OHS[!]               Open current or selected Oil .html file with live reload.
-                        Opens at localhost. Requires node. Use ! to restart its
-                        server. Servers stay alive while kept by Nvim or a
-                        browser tab, then expire after five minutes.
+                        Use ! to restart its server.
   :OHSr[!]              As :OHS, but opens at the preferred local-network URL.
   :OHSStop [all|port|file]
                         Stop current, all, port, or file HTML live reload server.
   :OHSDc                Stop this Nvim session from keeping OHS servers alive.
-  :OHSList              List servers, keepalives, browser clients, expiry, and
-                        URLs usable from other devices on the local network.
-  :OHSHelp              Print quick HTML live reload command help.
+  :OHSList              List live reload servers and their local/network URLs.
+  :OHSHelp              Show all HTML live reload commands and options.
   :TrashRestore         Open floating trash-restore.
 
-Debug/print:
-  :P                    Show print helper summary.
-  :P <lua>              Evaluate Lua and Print() the result.
-  :PP                   Print current buffer name.
-  :PC                   Print cwd.
-  :PG                   Print git root for current file/cwd.
-  :PW                   Print active tab/buffer/window IDs.
+Print helpers:
+  :P                    List print helper commands.
+  :P <lua>              Evaluate Lua and print the result.
 
 Yank helpers:
   :Y                    Show yank helper summary.
@@ -114,33 +99,12 @@ Yank helpers:
   :YC / :Yc [regs]      Yank cwd.
   :YG / :Yg [regs]      Yank git root.
   :YL / :Yl [regs]      Yank relative file:line. Add "blame" for author/time.
-  :YT / :Yt [regs]      Yank tab ID.
-  :YB / :Yb [regs]      Yank buffer ID.
-  :YW / :Yw [regs]      Yank window ID.
 
 Working directory:
-  Neovim has global (:cd), tab-local (:tcd), and window-local (:lcd) cwd.
-  vim.fn.getcwd() returns the effective cwd: window, else tab, else global.
-
-  :Cd                   Lpke_cd_here('global')  -> :cd current file/Oil dir.
-  :Tcd                  Lpke_cd_here('tab')     -> :tcd current file/Oil dir.
-  :Lcd                  Lpke_cd_here('window')  -> :lcd current file/Oil dir.
-
-  :Cdc                  Lpke_cd('', 'global')   -> :cd startup/global cwd.
-  :Tcdc                 Lpke_cd('', 'tab')      -> :tcd startup/global cwd.
-  :Lcdc                 Lpke_cd('', 'window')   -> :lcd startup/global cwd.
-
-  :Cdr                  Lpke_cd('git', 'global')  -> :cd git root or cwd.
-  :Tcdr                 Lpke_cd('git', 'tab')     -> :tcd git root or cwd.
-  :Lcdr                 Lpke_cd('git', 'window')  -> :lcd git root or cwd.
-
-  Lpke_cd(target, scope, log) target:
-    nil/''              startup/global cwd from vim.fn.getcwd(-1, -1).
-    'git'               Git root from current file/Oil dir; fallback effective cwd.
-    existing path       That path.
-  scope defaults to 'global'; valid: 'global', 'tab', 'window'.
-  log=true shows a notification. Lpke_cd_here(scope, log) only accepts normal
-  file buffers and Oil buffers, then forwards the resolved dir to Lpke_cd().
+  :Cd / :Tcd / :Lcd     Use current file/Oil directory.
+  :Cdc / :Tcdc / :Lcdc  Use Neovim's global cwd.
+  :Cdr / :Tcdr / :Lcdr  Use current file/Oil Git root, falling back to cwd.
+                        Each row uses global / tab / window scope respectively.
 
 Other:
   :NNRestore [n], :NN   Restore latest [No Name] scratch backups.
@@ -159,16 +123,6 @@ Oil:
   In Oil: <CR> opens entry.
   In Oil: - parent, gd cwd, gD git root, gh home, gE OS browser.
   :OH opens current .html file, or selected .html file in Oil, in a browser.
-  :OHS does the same with browser live reload on saves. Managed OHS servers can
-  survive Nvim restarts; :OHSDc disconnects this Nvim keepalive, and :OHSList
-  shows keepalives and lease expiry. Use :OHSr to open the same server through
-  its local-network URL.
-  New servers try port 55555, then each successive port through 65535 until free.
-  Existing servers keep their ports; use :OHS! to restart with this selection.
-  OHS uses the shared Node server installed by chezmoi at
-  ~/.local/share/html-server/server.cjs. Apply chezmoi after updating the config.
-  A trusted repository may provide .html-server.cjs with handleRequest and
-  beforeReload hooks. OHS loads that executable project config on server start.
   In Oil: <F2>p preview, gs sort, g. hidden, g\ trash view.
   In Oil: <F2>. vsplit, <F2>, split, <F2>n tab.
   In Oil: yd yanks current directory, yp yanks selected path.
@@ -277,7 +231,6 @@ Text objects and motions:
 Comments/surround:
   gc/gcc/gco/gcO/gcA    Comment.nvim line operations with TSX-aware context.
   gb/gbb                Block comments.
-  nvim-surround         Uses plugin defaults, with move_cursor=false.
 
 Completion/snippets/autopairs:
   <F2>m / <A-M>         Toggle automatic nvim-cmp menu.
@@ -317,8 +270,7 @@ Tabs and buffers:
   <C-w>QQ / <C-w>QZ     Quit/write-quit without auto-saving session.
 
 [No Name] buffers:
-  Closing the last visible modified [No Name] buffer writes a backup under
-  stdpath('data')/no-name-backups before deleting it.
+  Closing the last view of a modified [No Name] buffer saves a scratch backup.
   :NNRestore [n] restores the newest scratch backup(s) in new tabs.
 
 Quickfix:
@@ -333,14 +285,9 @@ Quickfix:
 LSP, DIAGNOSTICS, FORMAT, LINT                            *lpke-lsp*
 ==============================================================================
 
-Configured LSP servers:
-  html, cssls, tailwindcss, ts_ls, eslint, jsonls, graphql, lua_ls, vimls,
-  emmet_ls, bashls, pyright, taplo, powershell_es.
-
 Mason:
   <BS>im                Mason UI.
   <BS>ip                LspInfo.
-  Mason installs LSPs plus pylint, prettier, stylua, shfmt, isort, black.
 
 Navigation and actions:
   gr                    Rename.
@@ -353,13 +300,8 @@ Navigation and actions:
   gd                    Follow a link/file reference, otherwise LSP definition.
                         HTTP(S) URLs open in the browser. Files and directories
                         open in the current window; <C-o>/<C-i> go back/forward.
-                        Works on Markdown link labels or destinations, reference
-                        links, autolinks, and plain/quoted/backticked paths.
-                        Relative paths try the current file's directory, its Git
-                        root, then cwd. Absolute, ~/ and $VAR/${VAR} paths work,
-                        as do file:// URIs and percent-encoded destinations.
-                        Locations: path:line[:column], path#Lline[Ccolumn],
-                        path#heading, or #heading in the current file.
+                        Accepts Markdown links, paths with :line[:column] or
+                        #Lline[Ccolumn], and #heading anchors.
   gt / gi               Type definition, implementation.
   <leader>R             Restart LSPs for current filetype.
 
@@ -374,15 +316,12 @@ Diagnostics:
   <A-I>                 Toggle inferred JavaScript relaxed/full diagnostics.
   Inferred JavaScript defaults to relaxed diagnostics while retaining
   TypeScript checking and missing-import code actions.
-  Lua diagnostics filter ignores unused locals named with _.
 
 Format/lint:
   ==                    Format file with conform, fallback to gg=G.
   <BS>ic                ConformInfo.
   <F2>T / <A-T>         Toggle nvim-lint globally.
   <leader>L             Run linter for current file.
-  Formatters: prettier, stylua, isort+black, shfmt, taplo.
-  Pylint is the only active nvim-lint linter.
 
 GIT                                                        *lpke-git*
 ==============================================================================
@@ -440,11 +379,8 @@ AI                                                          *lpke-ai*
 
 CODEX THREAD STARTUP                              *lpke-codex-thread-startup*
 
-From a terminal, c --thread FULL_UUID [dir] opens that Codex session directly
-in fullscreen CodeCompanion. c [dir] still starts a fresh chat. The optional
-directory has the same meaning for either form. Opening a thread sends no prompt.
-A missing or unloadable session shows an error. Existing personal thread links
-are handled by the optional local integration, including ownership checks.
+  c [dir]               Open a fresh fullscreen CodeCompanion chat.
+  c --thread UUID [dir] Resume a Codex thread fullscreen without sending a prompt.
 ==============================================================================
 
 Opening chats:
@@ -470,49 +406,28 @@ Chat buffer keys:
   gl                    Chat picker.
   ga                    Choose adapter and model.
   go                    Toggle older chat in a read-only history window.
-                        Long chats automatically move complete older turns out
-                        of the live buffer when idle. At least the latest 300
-                        lines, latest exchange, and current draft stay there.
-                        Model context and saved messages remain complete.
-                        History opens at its newest page, up to 500 lines per
-                        page. K / J go older / newer, with [p / ]p as aliases.
-                        Counts work, e.g. 3K moves back three pages. The border
-                        shows the current page even while scrolling. / searches
-                        all archived pages; n / N find next / previous matches.
-                        go, q, or <Esc> closes history. Chat undo resets when
-                        older turns move to history; the draft text is kept.
+                        K / J or [p / ]p go older / newer; counts work.
+                        / searches all pages; n / N find next / previous matches.
+                        go, q, or <Esc> closes history.
   gd                    Open HTTP(S) link in browser, a pasted image's directory
                         in the OS file explorer, or a file reference in a new tab.
                         Uses the same link/path/location formats as normal gd.
                         Chat paths resolve from the project/cwd.
-  <C-o>                 From a file tab newly opened by gd, close that tab when
-                        the next older jump is the original source chat jump.
-                        Otherwise, follow the jumplist normally. Requires an
-                        unchanged single-window tab and original chat window.
+  <C-o>                 From a gd file tab, return to chat and close that tab
+                        when the previous jump is the source chat and the tab
+                        layout is unchanged; otherwise follow the jumplist.
   gn                    New chat.
   gh                    Saved chat history.
   gH                    History/resume/drafts action picker.
   gA                    Toggle the current Codex thread's subagent overview.
-                        Running agents appear first, with status counts, task
-                        previews, and latest output. <CR> opens the full prompt
-                        and transcript in the same panel; <Esc>, q, or s returns
-                        to that overview. gA closes the panel from either view.
-                        J / K jump to the next / previous agent heading.
-                        j / k move freely. <Esc> also closes the overview.
-                        In the overview, h toggles between hiding runs completed
-                        so far and showing all runs. Later completions and
-                        restarted agents remain visible. Hidden state lasts for
-                        this Neovim session and parent thread. s changes source.
+                        <CR> opens a transcript; <Esc>, q, or s returns.
+                        J / K jump between agents; h hides/shows completed runs.
+                        s chooses a source; gA closes either view.
   gX                    Close current chat without deleting saved history.
 
 Models:
-  Automatic CodeCompanion rule loading is disabled for chats.
   Default chat is Codex ACP with GPT-6.1 Sol and high reasoning on all devices.
-  Inline/cmd generation uses Copilot. Chat titles use Codex GPT-5.6 Luna with
-  low reasoning, once from the first typed prompt, without chat context or rules.
-  The title appears in the chat and saved history when ready. A failed or
-  interrupted attempt keeps a prompt-text fallback and never retries.
-  Renaming with gr in saved history permanently overrides automatic titles.
+  Inline prompts use Copilot. In saved history, gr renames the chat.
   <leader>m             Cycle configured models for current adapter.
                         Codex: GPT-6.1 Sol -> GPT-6 Astra -> GPT-5.6 Sol.
                         Work devices: GPT-5.6 Luna -> GPT-6.1 Sol.
@@ -528,19 +443,12 @@ Models:
                         gpt5.6s selects GPT-5.6 Sol; terra/luna select the
                         corresponding GPT-5.6 model.
   :Adapter codex|copilot sets or cycles adapters.
-  :CodexAgents [current|local|mbp] opens the live read-only subagent dashboard
-  for current descendants, all local agents, or Mac agents over ssh mbp.
-  With no argument, choose a source. r refreshes either view. q closes the
-  overview or returns from a transcript. Full prompts depend on Codex exposing
-  them; execution settings load when inspecting a thread.
+  :CodexAgents          Choose a source for the read-only subagent dashboard.
+                        r refreshes; q closes or returns from a transcript.
 
 Capacity retries:
-  All Codex ACP chats automatically retry when the latest response ends with
-  "Selected model is at capacity. Please try a different model." After 30
-  seconds, send only "continue" if the chat is still idle and its draft is empty.
-  Minor wording, whitespace, case, and punctuation changes are accepted.
-  Mentions earlier in a response do not trigger retries. New prompts and stopped
-  requests cancel pending retries. Timestamped notifications stay in :messages.
+  Codex ACP chats retry capacity errors after 30 seconds while idle with an
+  empty draft. New prompts and stopped requests cancel pending retries.
 
 Scheduled prompts:                                          *lpke-send-in*
   :SendIn 1m             Send this chat's draft after one minute.
@@ -552,23 +460,14 @@ Scheduled prompts:                                          *lpke-send-in*
   :SendIn cancel 3       Cancel the listed send with ID 3, in any chat.
   :SendIn cancel all     Cancel all pending sends in this Neovim.
 
-  These commands work only in CodeCompanion chat buffers. Write a non-empty
-  prompt in an idle chat before scheduling. Each chat can have one pending
-  send; scheduling again replaces it. The timer submits through CodeCompanion,
-  even if another buffer or window has focus. It does not press a keymap.
-  Editing the buffer, sending manually, stopping/closing/unloading the chat,
-  or switching its adapter/model cancels the send. The draft must remain
-  unchanged and the chat idle at the deadline; otherwise nothing is sent.
-  Timers are local to this Neovim process and do not survive exit/restart.
-  Queued times, cancellations and results remain in :messages.
+  Schedule a non-empty draft in an idle CodeCompanion chat. One timer per chat;
+  scheduling again replaces it. Sends work even when the chat is not focused.
+  Editing, sending, stopping/closing the chat, or changing adapter/model cancels
+  the timer. Timers end when Neovim exits. See :messages for timer status.
 
 Context inside chats:
   <leader>I             Save clipboard image and insert its absolute path after
-                        the cursor. Sends the path as ordinary text without an
-                        attachment. The agent needs an image-viewing tool to
-                        inspect the file.
-                        Images save to stdpath('data')/img-clip-pasted-images.
-                        First paste warns if that directory is over 2 GB.
+                        the cursor.
   <F2>b / <A-b>         Insert absolute path for last source buffer/Oil dir.
   <F2>d / <A-d>         Insert #{diagnostics}.
   <F2>B / <A-B>         Insert #{buffers}.
@@ -585,20 +484,14 @@ Custom slash commands:
 
 History and drafts:
   Personal integrations may extend these workflows. Their help appears in g?.
-  Saved chats auto-save to stdpath('data')/codecompanion-history and expire
-  after 14 days.
+  gh opens saved chats, which expire after 14 days.
   History picker supports project scoping; @* searches all projects.
-  Draft prompts auto-save to stdpath('data')/codecompanion-drafts and can be
-  restored from gH -> Draft prompts.
+  gH -> Draft prompts restores saved drafts.
   <leader>X in a chat opens cleanup: close empty chats or suspend ACP chats.
 
 Copilot:
   <F2>C / <A-C>         Toggle Copilot globally for buffers.
   <F2><Tab>/<A-Tab>     Trigger/next suggestion from insert mode.
-  Copilot is lazy-loaded on InsertEnter and shown as C in lualine.
-  Copilot uses fnm exec --using=v$LPKE_NVIM_NODE_VERSION node; default 24.
-  Project LSPs, formatters, and runner commands still use the shell/direnv
-  environment Neovim was launched in.
 
 RUNNER, TERMINALS, MESSAGES                              *lpke-runner*
 ==============================================================================
@@ -609,9 +502,6 @@ Runner:
   <BS>rX                Kill active runner jobs.
   Supported filetypes include JS/TS via node/tsx, Python, Lua, sh/bash/zsh,
   Ruby, Go, Rust, PHP, Perl, and HTML via jsdom.
-  Unsaved/modified buffers run from a temp file. Saved clean buffers run their
-  real file. TypeScript tries to find an upward tsconfig, skipping repo root
-  tsconfig.json.
 
 Floating tools:
   :Term [full]          Floating terminal at current cwd.
@@ -664,8 +554,7 @@ Symbols and docs:
   <F2>c / <A-c>         Toggle Treesitter context sticky header.
   <A-m>                 Toggle render-markdown in markdown/help/CodeCompanion.
 
-Theme:
-  Rose Pine main variant with custom gray, diagnostic, git, and UI highlights.
+Inspect:
   <leader>t             :Inspect highlight under cursor.
   <leader>T             :InspectTree parsed tree.
 
@@ -673,39 +562,16 @@ FILETYPES AND SNIPPETS                                *lpke-filetypes*
 ==============================================================================
 
 Filetypes:
-  .mdx uses mdx filetype but markdown parser.
-  *.scaffold-backup detects as the original filename before the backup suffix.
-  Chezmoi templates map dot_zshrc.tmpl/dot_zshenv.tmpl to zsh,
-  dot_gitconfig.tmpl to gitconfig, and *.<ft>.tmpl to <ft>.
-  Markdown removes formatoptions t/c so textwidth remains useful for manual
-  formatting without hard-wrapping while typing.
-  Markdown inline import/export lines are injected as TSX.
+  .mdx                  Edit MDX with Markdown highlighting.
+  *.scaffold-backup     Edit backups with their original filetype.
+  *.tmpl                Chezmoi templates use the underlying filetype.
 
 Snippets:
-  all: inline object/array.
-  lua: function, if/else, for loops, print/Print, multiline string wrappers.
-  js/ts: functions, constructors from fields, promises, try/catch, switch,
-         switch-only case (c)/default (d), setTimeout (st), setInterval (si),
-         debug logs, Vitest import/scaffold, table, matcher, mock, spy, and
-         timer snippets in *.test.js/ts, plus fixed-document
-         did/ds/dsa/dce helpers, array suffixes .fe (forEach), .map, .filter,
-         .reduce, .find, .findIndex, .some, .every, and .fm (flatMap), DOM
-         lookup suffixes .id/.qs/.qsa, and tree suffixes
-         .ac/.rc/.ap/.pp/.bf/.af/.rw/.rch/.rm, class suffixes
-         .cl/.cla/.clr/.clt, attribute suffixes .ga/.sa/.ra/.ta, text suffix
-         .tc, .ael* event-listeners, and .pd/.sp/.sip event-control suffixes.
-         .tb/.te matcher suffixes work on non-empty lines.
-  jsx/tsx: React components, hooks, className, JSX expression wrappers,
-           MUI sx/Box, and the same Tailwind-style shorthands as CSS. Plain
-           triggers emit JS object properties; triggers ending in ; emit CSS.
-  css: Tailwind-style layout, spacing, grid, text, color, border, and shadow
-       shorthands.
-  vue: t/s/ss create template, script setup lang="ts", scoped style blocks,
-       defineProps/defineEmits, lifecycle hooks, and watchers; Vue also gets
-       JS + TS snippets.
-  html: scaffold, class attribute, form, input, label, image, DOM selectors,
-        and all JS snippets.
-  Snippets inherit so TSX gets TS + JSX + JS + HTML helpers.
+  <BS>fs                Browse snippet triggers, descriptions, and expansions.
+                        Filter filetypes with "query  js ts".
+  CSS and JSX/TSX use Tailwind-style shorthands. In JSX/TSX, plain triggers
+  emit object properties; triggers ending in ; emit CSS.
+  :HelpVue              Vue trigger quick reference below.
 
 VUE SNIPPETS                                      *lpke-vue-snippets*
 ==============================================================================

@@ -230,14 +230,12 @@ function M.extra_lines()
     '### LPKE Custom CodeCompanion Help',
     '',
     'Terminal: `c --thread UUID [dir]` opens that Codex thread fullscreen.',
-    'Automatic rule loading is disabled for chats.',
     'After reasoning or tool calls, start a new chat to change adapters.',
-    'All Codex ACP chats automatically retry capacity endings after 30s.',
-    'Retries send only `continue` while idle with an empty draft.',
-    'Timestamped notifications remain in `:messages`.',
+    'Codex ACP chats retry capacity errors after 30s while idle with an empty draft.',
     '`SendIn 1m` / `SendIn 2h`: send this draft later, even without focus.',
     '`SendIn list [all]` / `SendIn cancel [id|all]`: inspect or cancel timers.',
-    'One timer per chat; editing, sending or closing cancels it. Timers end on exit.',
+    'One timer per chat; editing, sending, stopping/closing or changing adapter/model cancels it.',
+    'Timers end on exit. See `:messages` for timer status.',
   }
   local max_length = max_description_length()
 
