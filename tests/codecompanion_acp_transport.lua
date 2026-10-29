@@ -4,6 +4,7 @@ local config = require('codecompanion.config')
 local Chat = require('codecompanion.interactions.chat')
 local fixture = vim.fn.tempname()
 vim.fn.mkdir(fixture, 'p')
+fixture = assert(vim.uv.fs_realpath(fixture))
 local factory = config.adapters.acp.codex
 local profile = 'normal'
 local original_title = require('lpke.plugins.ai.helpers.title_request').request

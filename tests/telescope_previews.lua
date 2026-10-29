@@ -78,7 +78,7 @@ local function run()
 
   require('telescope.builtin').find_files({
     cwd = root,
-    find_command = { 'rg', '--files' },
+    find_command = { 'rg', '--no-config', '--files', '--glob', '*.lua' },
   })
   wait(preview_ready, 'file preview ready')
   for cycle = 1, 3 do
