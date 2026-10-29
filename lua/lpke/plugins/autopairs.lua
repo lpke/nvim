@@ -45,6 +45,13 @@ local function config()
   autopairs.remove_rule('```')
   autopairs.remove_rule('```.*$')
 
+  -- Avoid pairing quotes directly after words or identifiers.
+  for _, quote in ipairs({ "'", '"' }) do
+    for _, rule in ipairs(autopairs.get_rules(quote)) do
+      rule:with_pair(cond.not_before_regex('[%w_]'))
+    end
+  end
+
   autopairs.remove_rule('(')
   autopairs.add_rule(
     Rule('(', ')')
