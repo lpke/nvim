@@ -1,4 +1,3 @@
-local caveman = require('lpke.plugins.ai.helpers.caveman')
 local util = require('lpke.core.helpers.util')
 
 local root_fd_exclude_patterns = {
@@ -62,21 +61,18 @@ local function path_picker_search(scope)
 end
 
 return {
-  ['caveman'] = {
-    description = 'Toggle caveman response mode for HTTP adapters',
-    enabled = function(opts)
-      local adapter = opts and opts.adapter
-      return type(adapter) == 'table' and adapter.type == 'http'
-    end,
-    callback = function(chat)
-      caveman.slash(chat)
-    end,
-    opts = {
-      contains_code = false,
-    },
-  },
+  ['fetch'] = { opts = { adapter = 'jina' } },
   ['image'] = {
+    path = 'lpke.plugins.ai.helpers.slash_image',
+    description = 'Insert an image',
+    enabled = function(opts)
+      return opts.adapter
+        and opts.adapter.opts
+        and opts.adapter.opts.vision == true
+    end,
     opts = {
+      provider = 'telescope',
+      filetypes = { 'png', 'jpg', 'jpeg', 'gif', 'webp' },
       dirs = {
         vim.fn.expand('~/Pictures'),
         vim.fn.expand('~/Screenshots'),
@@ -245,11 +241,10 @@ return {
         local result = handle:read('*a')
         handle:close()
         local file_count = #vim.split(vim.trim(result), '\n')
-        chat:add_context(
-          { role = 'user', content = result },
-          'git',
-          '<git-files-list files="' .. file_count .. '" />'
-        )
+        chat:add_context({ role = 'user', content = result }, {
+          source = 'git',
+          id = '<git-files-list files="' .. file_count .. '" />',
+        })
       else
         return vim.notify(
           'No git files available',
@@ -287,24 +282,29 @@ return {
             .. ' rev-parse --is-inside-work-tree 2>/dev/null'
         )
         if vim.v.shell_error == 0 and git_check:match('true') then
-          files_output = vim.fn.system(
-            'git -C ' .. vim.fn.shellescape(dir) .. ' ls-files'
-          )
+          files_output =
+            vim.fn.system('git -C ' .. vim.fn.shellescape(dir) .. ' ls-files')
         else
-          local result = vim.system(
-            util.concat_arrs({
-              'fd',
-              '--hidden',
-              '--type',
-              'f',
-              '--max-results',
-              '500',
-            }, home_ignore_file_args(), {
-              '.',
-              dir,
-            }),
-            { text = true }
-          ):wait()
+          local result = vim
+            .system(
+              util.concat_arrs(
+                {
+                  'fd',
+                  '--hidden',
+                  '--type',
+                  'f',
+                  '--max-results',
+                  '500',
+                },
+                home_ignore_file_args(),
+                {
+                  '.',
+                  dir,
+                }
+              ),
+              { text = true }
+            )
+            :wait()
           files_output = result.code == 0 and result.stdout or result.stderr
         end
         local context_content = string.format(
@@ -315,11 +315,10 @@ return {
           dir,
           files_output or '(could not list files)'
         )
-        chat:add_context(
-          { role = 'user', content = context_content },
-          'directory',
-          '<external-files>' .. dir .. '</external-files>'
-        )
+        chat:add_context({ role = 'user', content = context_content }, {
+          source = 'directory',
+          id = '<external-files>' .. dir .. '</external-files>',
+        })
         vim.notify(
           'Added external directory: ' .. dir,
           vim.log.levels.INFO,
@@ -427,11 +426,10 @@ return {
             count,
             result
           )
-          chat:add_context(
-            { role = 'user', content = content },
-            'git',
-            '<git-commit-logs commits="' .. count .. '" />'
-          )
+          chat:add_context({ role = 'user', content = content }, {
+            source = 'git',
+            id = '<git-commit-logs commits="' .. count .. '" />',
+          })
           vim.notify(
             string.format('Added %d git commits to context', count),
             vim.log.levels.INFO,
@@ -453,18 +451,15 @@ return {
           if input == nil then
             return
           end
-          local cleaned =
-            vim.trim(input):gsub('^%((.-)%)$', '%1')
+          local cleaned = vim.trim(input):gsub('^%((.-)%)$', '%1')
           local count = tonumber(cleaned)
           if not count or count < 1 then
             count = 5
           end
 
           -- Get the last N commit hashes
-          local log_cmd = string.format(
-            'git log -n %d --pretty=format:"%%H"',
-            count
-          )
+          local log_cmd =
+            string.format('git log -n %d --pretty=format:"%%H"', count)
           local log_handle = io.popen(log_cmd)
           if not log_handle then
             return vim.notify(
@@ -475,12 +470,8 @@ return {
           end
           local hashes_raw = log_handle:read('*a')
           log_handle:close()
-          local hashes =
-            vim.split(vim.trim(hashes_raw), '\n')
-          if
-            #hashes == 0
-            or (hashes[1] == '' and #hashes == 1)
-          then
+          local hashes = vim.split(vim.trim(hashes_raw), '\n')
+          if #hashes == 0 or (hashes[1] == '' and #hashes == 1) then
             return vim.notify(
               'No git commits found',
               vim.log.levels.INFO,
@@ -497,30 +488,22 @@ return {
               hash
             )
             local meta_handle = io.popen(meta_cmd)
-            local meta = meta_handle
-                and meta_handle:read('*a')
-              or ''
+            local meta = meta_handle and meta_handle:read('*a') or ''
             if meta_handle then
               meta_handle:close()
             end
 
             -- Get full diff for this commit
-            local diff_cmd = string.format(
-              'git diff %s~1..%s 2>/dev/null',
-              hash,
-              hash
-            )
+            local diff_cmd =
+              string.format('git diff %s~1..%s 2>/dev/null', hash, hash)
             local diff_handle = io.popen(diff_cmd)
-            local diff = diff_handle
-                and diff_handle:read('*a')
-              or ''
+            local diff = diff_handle and diff_handle:read('*a') or ''
             if diff_handle then
               diff_handle:close()
             end
 
             if diff == '' then
-              diff =
-                '(initial commit or no parent diff available)'
+              diff = '(initial commit or no parent diff available)'
             end
 
             table.insert(
@@ -539,18 +522,12 @@ return {
             #hashes,
             table.concat(parts, '\n\n')
           )
-          chat:add_context(
-            { role = 'user', content = content },
-            'git',
-            '<git-commit-history versions="'
-              .. #hashes
-              .. '" />'
-          )
+          chat:add_context({ role = 'user', content = content }, {
+            source = 'git',
+            id = '<git-commit-history versions="' .. #hashes .. '" />',
+          })
           vim.notify(
-            string.format(
-              'Added %d commits with diffs to context',
-              #hashes
-            ),
+            string.format('Added %d commits with diffs to context', #hashes),
             vim.log.levels.INFO,
             { title = 'CodeCompanion' }
           )
@@ -636,10 +613,7 @@ return {
                 local hashes_raw = log_handle:read('*a')
                 log_handle:close()
                 local hashes = vim.split(vim.trim(hashes_raw), '\n')
-                if
-                  #hashes == 0
-                  or (hashes[1] == '' and #hashes == 1)
-                then
+                if #hashes == 0 or (hashes[1] == '' and #hashes == 1) then
                   return vim.notify(
                     'No history found for ' .. selected_file,
                     vim.log.levels.INFO,
@@ -656,8 +630,7 @@ return {
                     hash
                   )
                   local meta_handle = io.popen(meta_cmd)
-                  local meta = meta_handle and meta_handle:read('*a')
-                    or ''
+                  local meta = meta_handle and meta_handle:read('*a') or ''
                   if meta_handle then
                     meta_handle:close()
                   end
@@ -670,15 +643,13 @@ return {
                     vim.fn.shellescape(selected_file)
                   )
                   local diff_handle = io.popen(diff_cmd)
-                  local diff = diff_handle and diff_handle:read('*a')
-                    or ''
+                  local diff = diff_handle and diff_handle:read('*a') or ''
                   if diff_handle then
                     diff_handle:close()
                   end
 
                   if diff == '' then
-                    diff =
-                      '(initial commit or no parent diff available)'
+                    diff = '(initial commit or no parent diff available)'
                   end
 
                   table.insert(
@@ -698,15 +669,14 @@ return {
                   #hashes,
                   table.concat(parts, '\n\n')
                 )
-                chat:add_context(
-                  { role = 'user', content = content },
-                  'git',
-                  '<git-file-history versions="'
+                chat:add_context({ role = 'user', content = content }, {
+                  source = 'git',
+                  id = '<git-file-history versions="'
                     .. #hashes
                     .. '">'
                     .. selected_file
-                    .. '</git-file-history>'
-                )
+                    .. '</git-file-history>',
+                })
                 vim.notify(
                   string.format(
                     'Added %d versions of %s to context',

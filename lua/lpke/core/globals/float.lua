@@ -215,7 +215,7 @@ function Lpke_term(cmd, term_opts)
   end
   vim.cmd('startinsert')
 
-  local chan_id = vim.b.terminal_job_id
+  local chan_id = vim.bo.channel
   if term_opts.command then
     return { buf = float.buf, win = float.win, chan_id = chan_id }
   end
@@ -250,7 +250,7 @@ function Lpke_ranger(cmd)
   vim.cmd('terminal')
   vim.cmd('startinsert')
 
-  local chan_id = vim.b.terminal_job_id
+  local chan_id = vim.bo.channel
   vim.cmd('sleep 500m')
   vim.api.nvim_chan_send(chan_id, 'cd ' .. current_dir .. '\n')
   vim.cmd('sleep 100m')
@@ -278,7 +278,7 @@ function Lpke_trash_restore(dir)
   vim.cmd('terminal')
   vim.cmd('startinsert')
 
-  local chan_id = vim.b.terminal_job_id
+  local chan_id = vim.bo.channel
   vim.cmd('sleep 500m')
   vim.api.nvim_chan_send(chan_id, 'cd ' .. dir .. '\n')
   vim.cmd('sleep 100m')

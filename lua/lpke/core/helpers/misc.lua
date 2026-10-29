@@ -86,7 +86,7 @@ end
 
 -- stop currently focused terminal
 function M.stop_term()
-  vim.fn.jobstop(vim.b.terminal_job_id)
+  vim.fn.jobstop(vim.bo.channel)
   vim.cmd('sleep 100m')
   Lpke_feedkeys('<Esc>', 'n')
 end

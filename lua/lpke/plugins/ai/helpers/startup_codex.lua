@@ -2,10 +2,13 @@ local M = {}
 
 function M.open(thread_id)
   local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
-  chat_fns.open_fullscreen_chat({
+  local chat = chat_fns.open_fullscreen_chat({
     replace_current_window = true,
     silent = true,
     adapter = thread_id and 'codex' or nil,
+    acp_session_id = thread_id,
+    acp_connection_only = thread_id ~= nil,
+    restore_acp_session = thread_id ~= nil,
   })
   pcall(vim.cmd, 'silent! tabonly')
   if require('lpke.core.local_extensions').call('startup_chat', thread_id) then
@@ -15,21 +18,12 @@ function M.open(thread_id)
     return
   end
 
-  local chat = require('codecompanion').last_chat()
-  local lifecycle = require('lpke.plugins.ai.helpers.acp_lifecycle')
-  lifecycle.ensure_chat_ready(chat, function()
-    local ok, err =
-      require('lpke.plugins.ai.helpers.history_acp').resume_session_into_chat(
-        chat,
-        thread_id
-      )
-    if not ok then
-      vim.notify(
-        'Could not open Codex thread: ' .. tostring(err),
-        vim.log.levels.ERROR
-      )
-    end
-  end)
+  if chat then
+    chat.opts.acp_connection_only = nil
+    require('lpke.plugins.ai.helpers.acp_lifecycle').ensure_chat_connection(
+      chat
+    )
+  end
 end
 
 function M.setup()

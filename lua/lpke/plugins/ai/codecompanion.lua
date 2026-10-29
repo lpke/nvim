@@ -1,10 +1,4 @@
--- Global functions (Lpke_cc_model, Lpke_cc_adapter) are defined as side effects
--- of requiring this module.
-require('lpke.plugins.ai.helpers.model_swap')
-
-local cmd_approval = require('lpke.plugins.ai.helpers.cmd_approval')
 local ai_config = require('lpke.plugins.ai.helpers.config')
-local caveman = require('lpke.plugins.ai.helpers.caveman')
 local img_clip = require('lpke.plugins.ai.helpers.img_clip')
 local slash_commands = require('lpke.plugins.ai.helpers.slash_commands')
 local submit_guard = require('lpke.plugins.ai.helpers.submit_guard')
@@ -74,31 +68,11 @@ local function setup_submit_scroll_top()
   })
 end
 
-local function system_prompt(ctx)
-  return caveman.system_prompt(ctx)
-    .. '\n\n'
-    .. 'Git rules: For git repositories, NEVER perform git actions that alter the organised state of the repository unless explicitly asked to. For example: you must not stage, unstage, commit, rebase, push, or pull changes.'
-end
-
 local function config()
   local codecompanion = require('codecompanion')
 
   local spinner = require('lpke.plugins.ai.helpers.chat_spinner')
   spinner:init()
-
-  -- Enable YOLO mode by default on every new chat buffer
-  vim.api.nvim_create_autocmd('User', {
-    pattern = 'CodeCompanionChatCreated',
-    callback = function(args)
-      local bufnr = args.data and args.data.bufnr
-      if bufnr then
-        require('codecompanion.interactions.chat.tools.approvals'):toggle_yolo_mode(
-          bufnr
-        )
-        notify('Chat approvals enabled')
-      end
-    end,
-  })
 
   -- Set up keymaps and commands
   require('lpke.plugins.ai.helpers.keymaps').setup()
@@ -123,10 +97,7 @@ local function config()
             },
           })
         end,
-        opts = {
-          show_presets = false,
-          show_model_choices = true,
-        },
+        opts = { show_presets = false, show_model_choices = true },
       },
       acp = {
         codex = function()
@@ -167,13 +138,13 @@ local function config()
           -- Never pass that placeholder to codex-acp, which can persist it globally.
           adapter.env.OPENAI_API_KEY = nil
           adapter.env.CODEX_API_KEY = nil
-          adapter.handlers.form_messages =
-            submit_guard.wrap_acp_form_messages(adapter.handlers.form_messages)
+          adapter.handlers.request.build_messages =
+            submit_guard.wrap_acp_build_messages(
+              adapter.handlers.request.build_messages
+            )
           return adapter
         end,
-        opts = {
-          show_presets = false,
-        },
+        opts = { show_presets = false },
       },
     },
     display = {
@@ -189,48 +160,12 @@ local function config()
         adapter = ai_config.defaults.chat_adapter,
         roles = {
           llm = function(adapter)
-            return caveman.llm_role(adapter)
+            local name = adapter.formatted_name
+              or adapter.name
+              or adapter.type
+              or 'LLM'
+            return 'CodeCompanion (' .. name .. ')'
           end,
-        },
-        opts = {
-          system_prompt = function(ctx)
-            return system_prompt(ctx)
-          end,
-        },
-        tools = {
-          -- Override tool descriptions to support absolute paths outside cwd,
-          -- but ONLY when the user has explicitly shared an external directory
-          -- via the /external_files slash command.
-          ['read_file'] = {
-            description = 'Read the contents of a file in the current working directory. Also supports absolute paths for files in external directories, but ONLY if the user has explicitly shared that directory via the /external_files slash command.',
-          },
-          ['create_file'] = {
-            description = 'Create a new file in the current working directory. Also supports absolute paths for files in external directories, but ONLY if the user has explicitly shared that directory via the /external_files slash command.',
-          },
-          ['insert_edit_into_file'] = {
-            description = 'Edit existing files with multiple automatic fallback interactions. Works on files in the current working directory. Also supports absolute paths for files in external directories, but ONLY if the user has explicitly shared that directory via the /external_files slash command.',
-          },
-          ['file_search'] = {
-            description = 'Search for files by glob pattern in the current working directory. For searching in external directories, use run_command instead.',
-          },
-          ['grep_search'] = {
-            description = 'Search for text in files in the current working directory. For searching in external directories, use run_command instead.',
-          },
-          ['delete_file'] = {
-            description = 'Delete a file. Only works for files within the current working directory.',
-            opts = {
-              allowed_in_yolo_mode = true,
-            },
-          },
-          ['run_command'] = {
-            opts = {
-              require_cmd_approval = true,
-              require_approval_before = cmd_approval,
-            },
-          },
-          opts = {
-            wait_timeout = 120000, -- time to accept edit
-          },
         },
         keymaps = {
           options = {
@@ -252,6 +187,7 @@ local function config()
             },
             index = 2,
             callback = function(chat)
+              vim.cmd('stopinsert')
               submit_guard.submit(chat)
             end,
             description = 'Send',
@@ -309,18 +245,17 @@ local function config()
             callback = 'keymaps.yank_code',
             description = 'Yank Code',
           },
-          -- pin and watch no longer exist in v19
-          -- replaced by buffer_sync_all and buffer_sync_diff
-          buffer_sync_all = {
+          -- Keep the familiar pin/watch keys for full/diff context syncing.
+          sync_all = {
             modes = { n = 'gp' },
             index = 9,
-            callback = 'keymaps.buffer_sync_all',
+            callback = 'keymaps.sync_all',
             description = 'Toggle buffer syncing',
           },
-          buffer_sync_diff = {
+          sync_diff = {
             modes = { n = 'gw' },
             index = 10,
-            callback = 'keymaps.buffer_sync_diff',
+            callback = 'keymaps.sync_diff',
             description = 'Toggle buffer diff syncing',
           },
           next_chat = {
@@ -368,69 +303,8 @@ local function config()
           change_adapter = {
             modes = { n = 'ga' },
             index = 16,
-            callback = function(chat)
-              local cc_config = require('codecompanion.config')
-              local utils = require('codecompanion.utils')
-              local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
-              local change_adapter = require(
-                'codecompanion.interactions.chat.keymaps.change_adapter'
-              )
-
-              if cc_config.display.chat.show_settings then
-                return utils.notify(
-                  "Adapter can't be changed when `display.chat.show_settings = true`",
-                  vim.log.levels.WARN
-                )
-              end
-
-              local from_adapter = chat.adapter
-              local current_adapter = chat.adapter.name
-              local adapters_list =
-                change_adapter.get_adapters_list(current_adapter)
-
-              vim.ui.select(adapters_list, {
-                prompt = 'Select Adapter',
-                kind = 'codecompanion.nvim',
-                format_item = function(adapter)
-                  if adapter == current_adapter then
-                    return '* ' .. adapter
-                  end
-                  return '  ' .. adapter
-                end,
-              }, function(selected_adapter)
-                if not selected_adapter then
-                  return
-                end
-
-                local function on_adapter_ready()
-                  chat_fns.sync_http_tools_for_adapter_change(
-                    chat.bufnr,
-                    from_adapter,
-                    chat.adapter
-                  )
-
-                  caveman.refresh_system_prompt(chat)
-
-                  return change_adapter.select_model(chat)
-                end
-
-                if current_adapter ~= selected_adapter then
-                  require('lpke.plugins.ai.helpers.acp_lifecycle').suspend_chat(
-                    chat,
-                    {
-                      stop_request = true,
-                      delay_ms = 100,
-                      close_chat = false,
-                    }
-                  )
-                  chat:change_adapter(selected_adapter, on_adapter_ready)
-                  notify('Chat adapter changed')
-                else
-                  return on_adapter_ready()
-                end
-              end)
-            end,
-            description = 'Change adapter',
+            callback = require('lpke.plugins.ai.helpers.model_swap').show_adapter_picker,
+            description = 'Change adapter/model',
           },
           fold_code = {
             modes = { n = 'gf' },
@@ -444,38 +318,10 @@ local function config()
             callback = 'keymaps.debug',
             description = 'View debug info',
           },
-          system_prompt = {
-            modes = { n = 'gs' },
-            index = 19,
-            callback = function(chat)
-              chat:toggle_system_prompt()
-              notify('System prompt toggled')
-            end,
-            description = 'Toggle the system prompt',
-          },
-          yolo_mode = {
-            modes = { n = 'gta' },
-            index = 21,
-            callback = function(chat)
-              local approvals =
-                require('codecompanion.interactions.chat.tools.approvals')
-              approvals:toggle_yolo_mode(chat.bufnr)
-              require('lualine').refresh()
-              notify('Chat approvals toggled')
-            end,
-            description = 'Toggle YOLO mode',
-          },
-          clear_approvals = {
-            modes = { n = 'gtx' },
-            index = 20,
-            callback = function(chat)
-              local approvals =
-                require('codecompanion.interactions.chat.tools.approvals')
-              approvals:reset(chat.bufnr)
-              notify('Chat approvals cleared')
-            end,
-            description = 'Clear approvals',
-          },
+          system_prompt = false,
+          yolo_mode = false,
+          clear_approvals = false,
+          copilot_stats = false,
           goto_file_under_cursor = {
             modes = { n = 'gd' },
             index = 22,
@@ -488,7 +334,7 @@ local function config()
             modes = { n = 'gn' },
             index = 23,
             callback = function()
-              require('lpke.plugins.ai.helpers.chat_functions').open_new_chat_with_tools({
+              require('lpke.plugins.ai.helpers.chat_functions').open_new_chat({
                 from_chat_keymap = true,
               })
             end,
@@ -584,6 +430,9 @@ local function config()
   }
   require('lpke.core.local_extensions').call('codecompanion_config', options)
   codecompanion.setup(options)
+  -- Summary generation requires HTTP chats; saved summaries remain browsable.
+  require('codecompanion.config').interactions.chat.keymaps['Generate Summary'] =
+    nil
 
   patch_copilot_token_error_notify()
   require('lpke.plugins.ai.helpers.keymap_help').setup()
@@ -601,14 +450,8 @@ local function config()
   require('lpke.plugins.ai.helpers.codex_threads').setup()
 
   -- CodeCompanion hard-codes Reasoning and Response headings around reasoning.
-  require('lpke.plugins.ai.helpers.reasoning_headings').patch()
+  require('lpke.plugins.ai.helpers.chat_render').patch()
   require('lpke.plugins.ai.helpers.reasoning_separators').patch()
-  require('lpke.plugins.ai.helpers.reasoning_highlights').patch()
-
-  -- Patch the ask_questions tool to use a Telescope picker with
-  -- wrapped text and a preview pane instead of the default vim.ui.select
-  -- which truncates long questions and option descriptions.
-  require('lpke.plugins.ai.helpers.ask_questions_ui').patch()
 
   -- Suppress CodeCompanion's notify log handler to prevent blocking
   -- "Press Enter" prompts on tool errors. Errors are still written to
@@ -629,7 +472,7 @@ end
 
 return {
   'olimorris/codecompanion.nvim',
-  commit = 'cdc69269cf4878983604d5c8093e2963753d1cfe',
+  commit = '142eadffdaa8dd06060646b6f8ef74e99c42ab06',
   config = config,
   dependencies = {
     -- required

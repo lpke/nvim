@@ -1,30 +1,8 @@
 local M = {}
+local registry = require('lpke.plugins.ai.helpers.chat_registry')
 
 local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
 local lifecycle = require('lpke.plugins.ai.helpers.acp_lifecycle')
-
-local function current_chat()
-  local ok, chat_module = pcall(require, 'codecompanion.interactions.chat')
-  if not ok or type(chat_module.buf_get_chat) ~= 'function' then
-    return nil
-  end
-  return chat_module.buf_get_chat(0)
-end
-
-local function open_chats()
-  local ok, codecompanion = pcall(require, 'codecompanion')
-  if not ok or type(codecompanion.buf_get_chat) ~= 'function' then
-    return {}
-  end
-
-  local chats = {}
-  for _, item in ipairs(codecompanion.buf_get_chat() or {}) do
-    if item.chat then
-      table.insert(chats, item.chat)
-    end
-  end
-  return chats
-end
 
 local function is_acp_chat(chat)
   return chat and chat.adapter and chat.adapter.type == 'acp'
@@ -103,27 +81,6 @@ local function notify_suspend_result(result)
   vim.notify(msg, vim.log.levels.INFO, { title = 'CodeCompanion' })
 end
 
-local function stop_current_request(chat)
-  if not chat then
-    vim.notify('No current CodeCompanion chat', vim.log.levels.INFO, {
-      title = 'CodeCompanion',
-    })
-    return
-  end
-
-  if not chat.current_request and not chat.current_tool then
-    vim.notify('No current request to stop', vim.log.levels.INFO, {
-      title = 'CodeCompanion',
-    })
-    return
-  end
-
-  chat:stop()
-  vim.notify('Stopped current request', vim.log.levels.INFO, {
-    title = 'CodeCompanion',
-  })
-end
-
 local function is_empty_chat(chat)
   if
     not chat
@@ -142,13 +99,12 @@ local function is_empty_chat(chat)
   end
 
   return chat_fns.is_empty_chat(chat.bufnr)
-    or chat_fns.is_chat_only_http_tool_context(chat.bufnr)
 end
 
 function M.close_empty_chats(current)
   local closed = 0
 
-  for _, chat in ipairs(open_chats()) do
+  for _, chat in ipairs(registry.list()) do
     if chat ~= current and is_empty_chat(chat) then
       local ok = pcall(function()
         chat:close()
@@ -189,15 +145,13 @@ local function handle_choice(chat, choice)
       delay_ms = 100,
     })
     notify_suspend_result(result)
-  elseif choice.value == 'stop_current_request' then
-    stop_current_request(chat)
   elseif choice.value == 'close_empty_chats' then
     M.close_empty_chats(chat)
   end
 end
 
 function M.open()
-  local chat = current_chat()
+  local chat = registry.get()
 
   vim.ui.select(build_choices(chat), {
     prompt = 'CodeCompanion Cleanup',

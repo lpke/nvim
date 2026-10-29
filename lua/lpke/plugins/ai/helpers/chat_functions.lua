@@ -1,13 +1,9 @@
 local M = {}
 
-local helpers = require('lpke.core.helpers')
-local model_swap = require('lpke.plugins.ai.helpers.model_swap')
-
-local DEFAULT_HTTP_TOOL_LINES = {
-  '@{agent} @{fetch_webpage} @{web_search}',
-}
-
-local EMPTY_CHAT_TRAILING_BLANKS = 2
+local chats = require('lpke.plugins.ai.helpers.chat_registry')
+local source = require('lpke.plugins.ai.helpers.chat_source')
+M.setup_source_buffer_tracking = source.setup
+M.insert_last_source_path = source.insert
 local DETACHED_CHAT_BUF_VAR = 'lpke_cc_detached_tab'
 local DETACHED_CHAT_WIN_VAR = 'lpke_cc_detached_win'
 local DETACHED_WINDOW_OPTS = {
@@ -17,14 +13,6 @@ local DETACHED_WINDOW_OPTS = {
     relativenumber = false,
   },
 }
-
-local DEFAULT_HTTP_TOOL_LINE_SET = {}
-for _, line in ipairs(DEFAULT_HTTP_TOOL_LINES) do
-  DEFAULT_HTTP_TOOL_LINE_SET[line] = true
-end
-
-local last_source_bufnr
-local source_tracker_started = false
 
 local function put_text(text)
   vim.api.nvim_put({ text }, 'c', vim.fn.mode() == 'n', true)
@@ -40,167 +28,14 @@ local function notify_later(msg)
   end, 20)
 end
 
-local function open_chats()
-  local ok, codecompanion = pcall(require, 'codecompanion')
-  if not ok or type(codecompanion.buf_get_chat) ~= 'function' then
-    return {}
-  end
-
-  local chats = {}
-  for _, item in ipairs(codecompanion.buf_get_chat() or {}) do
-    if item.chat then
-      table.insert(chats, item.chat)
-    end
-  end
-  return chats
-end
-
 local function new_chat_msg(prefix)
-  return string.format('%s (%d)', prefix, #open_chats())
-end
-
-local function sorted_chat_entries(opts)
-  opts = opts or {}
-  local registry = require('codecompanion.interactions.shared.registry')
-  local entries = vim.tbl_filter(function(entry)
-    return entry.interaction == 'chat'
-      and (opts.detached ~= false or not M.is_detached_chat_buf(entry.bufnr))
-  end, registry.list())
-
-  table.sort(entries, function(a, b)
-    return a.bufnr < b.bufnr
-  end)
-
-  return entries
+  return string.format('%s (%d)', prefix, #chats.list())
 end
 
 local function buf_visible(bufnr)
-  if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
-    return false
-  end
-
-  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
-      if vim.api.nvim_win_get_buf(win) == bufnr then
-        return true
-      end
-    end
-  end
-  return false
-end
-
-local function is_codecompanion_buf(bufnr)
-  if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
-    return false
-  end
-
-  local filetype = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
-  return filetype == 'codecompanion' or filetype == 'codecompanion_input'
-end
-
-local function is_oil_buf(bufnr)
-  return helpers.get_oil_buf_type(bufnr) == 'oil'
-end
-
-local function track_source_buf(bufnr)
-  if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
-    return
-  end
-
-  if is_codecompanion_buf(bufnr) then
-    return
-  end
-
-  local name = vim.api.nvim_buf_get_name(bufnr)
-  if name == '' then
-    return
-  end
-
-  last_source_bufnr = bufnr
-end
-
-local function source_path_for_buf(bufnr)
-  if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
-    return nil
-  end
-
-  if is_oil_buf(bufnr) then
-    local ok, oil = pcall(require, 'oil')
-    if not ok then
-      return nil
-    end
-
-    local dir = oil.get_current_dir(bufnr)
-    if dir and dir ~= '' then
-      return vim.fn.fnamemodify(dir, ':p')
-    end
-    return nil
-  end
-
-  local name = vim.api.nvim_buf_get_name(bufnr)
-  if name ~= '' then
-    return vim.fn.fnamemodify(name, ':p')
-  end
-end
-
-local function source_path()
-  if
-    last_source_bufnr
-    and vim.api.nvim_buf_is_valid(last_source_bufnr)
-    and not is_codecompanion_buf(last_source_bufnr)
-  then
-    local path = source_path_for_buf(last_source_bufnr)
-    if path then
-      return path
-    end
-  end
-
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    local bufnr = vim.api.nvim_win_get_buf(win)
-    if not is_codecompanion_buf(bufnr) then
-      local path = source_path_for_buf(bufnr)
-      if path then
-        return path
-      end
-    end
-  end
-end
-
-local function escaped_path_text(path)
-  return '`' .. path:gsub('`', '\\`') .. '`'
-end
-
-local function insert_text_at_cursor(text)
-  local bufnr = vim.api.nvim_get_current_buf()
-  if not vim.api.nvim_buf_is_valid(bufnr) then
-    return
-  end
-
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  local row = cursor[1] - 1
-  local line = vim.api.nvim_buf_get_lines(bufnr, row, row + 1, false)[1] or ''
-  local col = math.min(cursor[2], #line)
-
-  vim.api.nvim_buf_set_text(bufnr, row, col, row, col, { text })
-  vim.api.nvim_win_set_cursor(0, { cursor[1], col + #text })
-end
-
-function M.setup_source_buffer_tracking()
-  if source_tracker_started then
-    return
-  end
-  source_tracker_started = true
-
-  vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter' }, {
-    group = vim.api.nvim_create_augroup('LpkeCodeCompanionSourcePath', {
-      clear = true,
-    }),
-    callback = function(args)
-      track_source_buf(args.buf)
-    end,
-  })
-
-  track_source_buf(vim.api.nvim_get_current_buf())
+  return bufnr
+    and vim.api.nvim_buf_is_valid(bufnr)
+    and #vim.fn.win_findbuf(bufnr) > 0
 end
 
 function M.is_detached_chat_buf(bufnr)
@@ -254,7 +89,7 @@ local function unmark_detached_chat(bufnr)
   vim.b[bufnr][DETACHED_CHAT_BUF_VAR] = false
   vim.b[bufnr][DETACHED_CHAT_WIN_VAR] = nil
 
-  local chat = require('codecompanion').buf_get_chat(bufnr)
+  local chat = chats.get(bufnr)
   if chat and chat.ui then
     chat.ui.window_opts = nil
   end
@@ -272,7 +107,7 @@ local function mark_detached_chat(chat)
   )
   vim.api.nvim_create_autocmd({ 'BufWinLeave', 'BufDelete', 'BufWipeout' }, {
     group = group,
-    buffer = chat.bufnr,
+    buf = chat.bufnr,
     callback = function(args)
       vim.schedule(function()
         if not detached_win_valid(args.buf) or not buf_visible(args.buf) then
@@ -353,6 +188,14 @@ local function create_hidden_chat(opts)
     auto_submit = false,
     hidden = true,
   })
+  if opts.acp_session_id then
+    -- The public chat wrapper drops ACP session arguments before Chat.new.
+    opts.adapter = opts.params and opts.params.adapter
+    opts.params = nil
+    opts.buffer_context =
+      require('codecompanion.utils.context').get(vim.api.nvim_get_current_buf())
+    return require('codecompanion.interactions.chat').new(opts)
+  end
   return require('codecompanion').chat(opts)
 end
 
@@ -371,7 +214,6 @@ local function is_disposable_empty_chat(chat)
   end
 
   return M.is_empty_chat(chat.bufnr)
-    or M.is_chat_only_http_tool_context(chat.bufnr)
 end
 
 local function hide_chat_window(chat)
@@ -382,12 +224,7 @@ local function hide_chat_window(chat)
 end
 
 function M.restore_context_from_current()
-  local ok, codecompanion = pcall(require, 'codecompanion')
-  if not ok or type(codecompanion.buf_get_chat) ~= 'function' then
-    return nil
-  end
-
-  local chat = codecompanion.buf_get_chat(0)
+  local chat = chats.get()
   if not chat then
     return nil
   end
@@ -421,6 +258,12 @@ function M.after_restore(target_chat, ctx)
 
   ctx = ctx or M.take_restore_context()
   if not ctx then
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      if vim.api.nvim_win_get_buf(win) == target_chat.bufnr then
+        vim.api.nvim_set_current_win(win)
+        break
+      end
+    end
     return
   end
 
@@ -476,18 +319,11 @@ function M.open_history()
 end
 
 local function first_sidebar_chat()
-  local ok, codecompanion = pcall(require, 'codecompanion')
-  if not ok or type(codecompanion.buf_get_chat) ~= 'function' then
-    return nil
-  end
-
-  for _, entry in ipairs(sorted_chat_entries({ detached = false })) do
-    local chat = codecompanion.buf_get_chat(entry.bufnr)
-    if chat then
+  for _, chat in ipairs(chats.list()) do
+    if not M.is_detached_chat_buf(chat.bufnr) then
       return chat
     end
   end
-  return nil
 end
 
 local function visible_sidebar_win()
@@ -518,7 +354,7 @@ function M.chat_position(bufnr)
     bufnr = vim.api.nvim_get_current_buf()
   end
 
-  local entries = sorted_chat_entries()
+  local entries = chats.list()
   local total = #entries
   local idx = chat_index(bufnr, entries)
 
@@ -529,113 +365,8 @@ function M.chat_position(bufnr)
   return idx, total
 end
 
-local function is_http_tool_line(line)
-  return DEFAULT_HTTP_TOOL_LINE_SET[line] == true
-end
-
-local function should_keep_blank_before_insert(bufnr, row)
-  local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1] or ''
-  local prev_line = row > 1
-      and vim.api.nvim_buf_get_lines(bufnr, row - 2, row - 1, false)[1]
-    or ''
-
-  return line == '' and prev_line:match('^## ') ~= nil
-end
-
-local function is_empty_chat_lines(lines, ignore_line)
-  for _, line in ipairs(lines) do
-    if
-      line ~= ''
-      and not line:match('^## ')
-      and not line:match('^> ')
-      and not (ignore_line and ignore_line(line))
-    then
-      return false
-    end
-  end
-  return true
-end
-
-local function normalize_empty_chat_padding(lines)
-  if not is_empty_chat_lines(lines) then
-    return lines
-  end
-
-  while #lines > 0 and lines[#lines] == '' do
-    table.remove(lines)
-  end
-
-  for _ = 1, EMPTY_CHAT_TRAILING_BLANKS do
-    table.insert(lines, '')
-  end
-  return lines
-end
-
--- Insert HTTP-only CodeCompanion tool variables at the current cursor position.
--- ACP adapters expose their own tools, so these prompt variables are noise there.
-function M.insert_http_tools()
-  if not model_swap.is_http_chat(0) then
-    return false
-  end
-
-  local bufnr = vim.api.nvim_get_current_buf()
-  local row = vim.api.nvim_win_get_cursor(0)[1]
-
-  if should_keep_blank_before_insert(bufnr, row) then
-    vim.api.nvim_buf_set_lines(
-      bufnr,
-      row,
-      row,
-      false,
-      vim.deepcopy(DEFAULT_HTTP_TOOL_LINES)
-    )
-    vim.api.nvim_win_set_cursor(0, { row + #DEFAULT_HTTP_TOOL_LINES, 0 })
-    return true
-  end
-
-  for i, line in ipairs(DEFAULT_HTTP_TOOL_LINES) do
-    if i == 1 then
-      vim.cmd('normal! i' .. line)
-    else
-      vim.cmd('normal! o' .. line)
-    end
-  end
-  return true
-end
-
-function M.insert_http_tool_text(text)
-  if not model_swap.is_http_chat(0) then
-    return false
-  end
-
-  put_text(text)
-  return true
-end
-
 function M.insert_context_text(text)
   put_text(text)
-end
-
-function M.insert_last_source_path()
-  M.setup_source_buffer_tracking()
-
-  local path = source_path()
-  if not path then
-    notify('No source buffer path available')
-    return
-  end
-
-  insert_text_at_cursor(escaped_path_text(path))
-end
-
-function M.has_http_tool_context(bufnr)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  for _, line in ipairs(lines) do
-    if is_http_tool_line(line) then
-      return true
-    end
-  end
-  return false
 end
 
 -- Build a code block from a selection string, trimming any trailing blank line.
@@ -665,91 +396,32 @@ end
 -- Check if a chat buffer is empty/untouched (only has the initial header,
 -- optionally with auto-injected context like AGENTS.md rules)
 function M.is_empty_chat(bufnr)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  return is_empty_chat_lines(lines)
-end
-
-function M.is_chat_only_http_tool_context(bufnr)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  return M.has_http_tool_context(bufnr)
-    and is_empty_chat_lines(lines, is_http_tool_line)
-end
-
-function M.remove_http_tool_context(bufnr)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local filtered = vim.tbl_filter(function(line)
-    return not is_http_tool_line(line)
-  end, lines)
-
-  if #filtered ~= #lines then
-    filtered = normalize_empty_chat_padding(filtered)
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, filtered)
-    if vim.api.nvim_get_current_buf() == bufnr then
-      vim.api.nvim_win_set_cursor(0, { #filtered, 0 })
-    end
-    return true
-  end
-
-  return false
-end
-
-function M.add_http_tool_context(bufnr)
-  if bufnr == 0 then
-    bufnr = vim.api.nvim_get_current_buf()
-  end
-
-  if not M.is_empty_chat(bufnr) or M.has_http_tool_context(bufnr) then
+  local chat = chats.get(bufnr)
+  if
+    not chat or not require('lpke.plugins.ai.helpers.chat_draft').empty(chat)
+  then
     return false
   end
-
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local insert_at = #lines
-  while insert_at > 0 and lines[insert_at] == '' do
-    insert_at = insert_at - 1
+  local system_role = require('codecompanion.config').constants.SYSTEM_ROLE
+  for _, message in ipairs(chat.messages or {}) do
+    if
+      message.role ~= system_role
+      and not (message.opts and message.opts.visible == false)
+    then
+      for _, content in ipairs({
+        message.content or '',
+        message.reasoning or '',
+      }) do
+        if
+          (type(content) == 'string' and vim.trim(content) ~= '')
+          or (type(content) == 'table' and not vim.tbl_isempty(content))
+        then
+          return false
+        end
+      end
+    end
   end
-
-  local inserted_lines =
-    vim.list_extend({ '' }, vim.deepcopy(DEFAULT_HTTP_TOOL_LINES))
-  vim.list_extend(inserted_lines, { '', '' })
-  vim.api.nvim_buf_set_lines(bufnr, insert_at, #lines, false, inserted_lines)
-
-  if vim.api.nvim_get_current_buf() == bufnr then
-    vim.api.nvim_win_set_cursor(0, { insert_at + #inserted_lines, 0 })
-  end
-
   return true
-end
-
-function M.sync_http_tools_for_adapter_change(bufnr, from_adapter, to_adapter)
-  if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
-    return false
-  end
-
-  if
-    model_swap.is_http_adapter(from_adapter)
-    and model_swap.is_acp_adapter(to_adapter)
-    and M.is_chat_only_http_tool_context(bufnr)
-  then
-    local changed = M.remove_http_tool_context(bufnr)
-    if changed then
-      notify('Chat tools removed')
-    end
-    return changed
-  end
-
-  if
-    model_swap.is_acp_adapter(from_adapter)
-    and model_swap.is_http_adapter(to_adapter)
-    and M.is_empty_chat(bufnr)
-  then
-    local changed = M.add_http_tool_context(bufnr)
-    if changed then
-      notify('Chat tools added')
-    end
-    return changed
-  end
-
-  return false
 end
 
 -- Close any codecompanion windows in other tabs
@@ -771,8 +443,8 @@ function M.close_cc_in_other_tabs()
   end
 end
 
--- Toggle chat, insert HTTP tools only if it's a fresh/empty HTTP chat.
-function M.toggle_cc_with_default_tools()
+-- Toggle the reusable sidebar chat.
+function M.toggle_chat()
   if M.toggle_if_already_in_chat() then
     return
   end
@@ -786,21 +458,11 @@ function M.toggle_cc_with_default_tools()
 
   local chat = first_sidebar_chat() or create_hidden_chat()
   open_sidebar_chat(chat)
-  if
-    vim.bo.filetype == 'codecompanion'
-    and M.is_empty_chat(vim.api.nvim_get_current_buf())
-  then
-    vim.cmd('normal! G')
-    if M.insert_http_tools() then
-      vim.cmd('normal! G2o')
-      notify('Chat tools added')
-    end
-  end
   vim.cmd('stopinsert')
 end
 
--- Always open a new chat, adding HTTP tools only for HTTP adapters.
-function M.open_new_chat_with_tools(opts)
+-- Always open a new chat in the current chat layout.
+function M.open_new_chat(opts)
   opts = opts or {}
   local from_detached_chat = vim.bo.filetype == 'codecompanion'
     and M.is_detached_chat_buf(0)
@@ -814,39 +476,31 @@ function M.open_new_chat_with_tools(opts)
   else
     open_sidebar_chat(chat)
   end
-  if M.insert_http_tools() then
-    vim.cmd('normal! G2o')
-    follow_chat(chat)
-    notify_later(
-      new_chat_msg(
-        from_detached_chat and 'New fullscreen chat with tools'
-          or 'New chat with tools'
-      )
-    )
-  else
-    notify_later(
-      new_chat_msg(from_detached_chat and 'New fullscreen chat' or 'New chat')
-    )
-  end
+  notify_later(
+    new_chat_msg(from_detached_chat and 'New fullscreen chat' or 'New chat')
+  )
   follow_chat(chat)
   vim.cmd('stopinsert')
 end
 
 function M.open_fullscreen_chat(opts)
   opts = opts or {}
-  local chat_module = require('codecompanion.interactions.chat')
-  local current_chat = chat_module.buf_get_chat(0)
+  local current_chat = chats.get()
 
-  if vim.bo.filetype == 'codecompanion' and current_chat then
+  if
+    not opts.acp_session_id
+    and vim.bo.filetype == 'codecompanion'
+    and current_chat
+  then
     if M.is_detached_chat_buf(current_chat.bufnr) then
       notify('Already in detached tab')
-      return
+      return current_chat
     end
 
     current_chat.ui:hide()
     open_detached_chat(current_chat)
     notify('Fullscreen chat')
-    return
+    return current_chat
   end
 
   vim.g.lpke_cc_chat_create_notified = true
@@ -854,6 +508,9 @@ function M.open_fullscreen_chat(opts)
     hidden = true,
     window_opts = DETACHED_WINDOW_OPTS,
     params = opts.adapter and { adapter = opts.adapter } or nil,
+    acp_session_id = opts.acp_session_id,
+    acp_connection_only = opts.acp_connection_only,
+    restore_acp_session = opts.restore_acp_session,
   })
 
   if not chat then
@@ -866,73 +523,52 @@ function M.open_fullscreen_chat(opts)
     opts.replace_current_window and { win = vim.api.nvim_get_current_win() }
       or nil
   )
-  if not opts.skip_initial_tools and M.insert_http_tools() then
-    vim.cmd('normal! G2o')
-    follow_chat(chat)
-    if not opts.silent then
-      notify_later(new_chat_msg('Fullscreen chat with tools'))
-    end
-  else
-    if not opts.silent then
-      notify_later(new_chat_msg('Fullscreen chat'))
-    end
+  if not opts.silent then
+    notify_later(new_chat_msg('Fullscreen chat'))
   end
   follow_chat(chat)
+  return chat
+end
+
+local function capture_selection()
+  vim.cmd('normal! "vy')
+  return vim.fn.getreg('v'), vim.bo.filetype
+end
+
+local function append_selection(selection, filetype)
+  if selection == '' or vim.bo.filetype ~= 'codecompanion' then
+    return false
+  end
+  vim.cmd('normal! Go')
+  vim.api.nvim_put(M.build_code_block(selection, filetype), 'l', true, true)
+  vim.cmd('normal! 2o')
+  follow_chat(chats.get(0))
+  vim.cmd('stopinsert')
+  return true
 end
 
 function M.open_fullscreen_chat_with_context_selection()
-  vim.cmd('normal! "vy')
-  local selection = vim.fn.getreg('v')
-  local filetype = vim.bo.filetype
-
-  M.open_fullscreen_chat({ skip_initial_tools = true })
-
-  if selection == '' or vim.bo.filetype ~= 'codecompanion' then
-    return
-  end
-
-  vim.cmd(M.insert_http_tools() and 'normal! 2o' or 'normal! Go')
-  vim.api.nvim_put(M.build_code_block(selection, filetype), 'l', true, true)
-  vim.cmd('normal! 2o')
-  local chat = require('codecompanion').buf_get_chat(0)
-  follow_chat(chat)
-  vim.cmd('stopinsert')
+  local selection, filetype = capture_selection()
+  M.open_fullscreen_chat()
+  append_selection(selection, filetype)
 end
 
 function M.open_new_chat_with_context_selection()
   if M.toggle_if_already_in_chat() then
     return
   end
-  -- copy selection before opening the chat
-  vim.cmd('normal! "vy')
-  local selection = vim.fn.getreg('v')
-  local filetype = vim.bo.filetype
+  local selection, filetype = capture_selection()
   vim.g.lpke_cc_chat_create_notified = true
-  local chat = create_hidden_chat()
-  open_sidebar_chat(chat)
-  local inserted_tools = M.insert_http_tools()
-  notify_later(
-    new_chat_msg(
-      inserted_tools and 'New chat with selection/tools'
-        or 'New chat with selection'
-    )
-  )
-  if selection ~= '' then
-    vim.cmd(inserted_tools and 'normal! 2o' or 'normal! Go')
-    vim.api.nvim_put(M.build_code_block(selection, filetype), 'l', true, true)
-    vim.cmd('normal! 2o')
-  end
-  vim.cmd('stopinsert')
+  open_sidebar_chat(create_hidden_chat())
+  notify_later(new_chat_msg('New chat with selection'))
+  append_selection(selection, filetype)
 end
 
 function M.toggle_chat_with_context_selection()
   if M.toggle_if_already_in_chat() then
     return
   end
-  -- copy selection
-  vim.cmd('normal! "vy')
-  local selection = vim.fn.getreg('v')
-  local filetype = vim.bo.filetype
+  local selection, filetype = capture_selection()
   -- check for codecompanion windows in current tab
   local cc_win = nil
   for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
@@ -952,32 +588,23 @@ function M.toggle_chat_with_context_selection()
   else
     vim.cmd('CodeCompanionChat Toggle')
   end
-  -- insert selection in a code block
-  if selection ~= '' then
-    local is_fresh = M.is_empty_chat(vim.api.nvim_get_current_buf())
-    if is_fresh and M.insert_http_tools() then
-      vim.cmd('normal! 2o')
-      notify('Chat selection added with tools')
-    else
-      vim.cmd('normal! Go')
-      notify('Chat selection added')
-    end
-    vim.api.nvim_put(M.build_code_block(selection, filetype), 'l', true, true)
-    vim.cmd('normal! 2o')
-    vim.cmd('stopinsert')
+  if append_selection(selection, filetype) then
+    notify('Chat selection added')
   end
 end
 
-function M.open_inline_prompt_with_context()
-  if vim.bo.filetype == 'codecompanion' then
+function M.open_inline_prompt_with_context(opts)
+  if
+    vim.bo.filetype == 'codecompanion'
+    or vim.bo.filetype == 'codecompanion_input'
+  then
     return
   end
-  vim.cmd('CodeCompanion')
-  vim.api.nvim_input('#{buffer} ')
+  return require('lpke.plugins.ai.helpers.inline').open(opts)
 end
 
 function M.swap_chat(chat, direction)
-  local entries = sorted_chat_entries()
+  local entries = chats.list()
   local total = #entries
   if total <= 1 then
     notify('No other chats')
@@ -992,9 +619,7 @@ function M.swap_chat(chat, direction)
 
   local next_idx = direction > 0 and (current_idx % total) + 1
     or ((current_idx - 2 + total) % total) + 1
-  local next_entry = entries[next_idx]
-  local target = next_entry
-    and require('codecompanion').buf_get_chat(next_entry.bufnr)
+  local target = entries[next_idx]
   if not (target and target.ui) then
     notify('Chat not found')
     return
@@ -1012,21 +637,30 @@ function M.swap_chat(chat, direction)
   notify(string.format('Chat %d/%d', next_idx, total))
 end
 
-function M.delete_current_chat(chat)
-  chat = chat or require('codecompanion.interactions.chat').buf_get_chat(0)
+function M.delete_current_chat(chat, opts)
+  chat = chat or chats.get(0)
   if not chat then
     return
   end
 
   local others = vim.tbl_filter(function(other)
     return other ~= chat
-  end, open_chats())
+  end, chats.list())
 
   local save_id = chat.opts and chat.opts.save_id
   if save_id then
     pcall(function()
       require('codecompanion').extensions.history.delete_chat(save_id)
     end)
+  end
+
+  if opts and opts.hidden then
+    chat:close()
+    if #others == 0 then
+      create_hidden_chat()
+    end
+    notify('Chat deleted')
+    return
   end
 
   if #others > 0 then
@@ -1036,7 +670,11 @@ function M.delete_current_chat(chat)
         chat.ui:hide()
       end
       if target.ui then
-        target.ui:open()
+        if M.is_detached_chat_buf(target.bufnr) then
+          M.focus_detached_chat(target)
+        else
+          open_sidebar_chat(target)
+        end
       end
     end)
     chat:close()

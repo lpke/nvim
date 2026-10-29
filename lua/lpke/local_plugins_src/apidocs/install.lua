@@ -385,7 +385,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
     file:write('set terminal._template_.type = 2\n')
     file:close()
   end
-  local start_install = vim.loop.hrtime()
+  local start_install = vim.uv.hrtime()
   local mtime = slugs_to_mtimes[choice]
   vim.system(
     {
@@ -525,10 +525,10 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
             file:write(apply_source_specific_workarounds(choice, contents))
             file:close()
 
-            local start_parse = vim.loop.hrtime()
+            local start_parse = vim.uv.hrtime()
             local parser = vim.treesitter.get_string_parser(contents, 'html')
             local tree = parser:parse()[1]
-            local elapsed = (vim.loop.hrtime() - start_parse) / 1e9
+            local elapsed = (vim.uv.hrtime() - start_parse) / 1e9
             all_parsing = all_parsing + elapsed
 
             name_to_contents[sanitized_key] = contents
@@ -536,7 +536,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
             name_and_id_to_string_nearby[sanitized_key] = {}
             name_known_byte_offsets[sanitized_key] = { #contents }
 
-            local start_ids = vim.loop.hrtime()
+            local start_ids = vim.uv.hrtime()
             for id, node, metadata in query:iter_captures(tree:root(), contents) do
               if node:next_named_sibling():named_child_count() > 0 then
                 local id_val = vim.treesitter.get_node_text(
@@ -639,7 +639,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
           end
 
           -- now extract all the entries to non-html files
-          local start_writing = vim.loop.hrtime()
+          local start_writing = vim.uv.hrtime()
           for path, name in pairs(path_to_name) do
             local file_id = vim.split(path, '#')
             local sanitized_fname = sanitize_fname(name)
@@ -711,11 +711,11 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
             target_path .. '/.source_urls.json'
           )
 
-          local elapsed_writing = (vim.loop.hrtime() - start_writing) / 1e9
+          local elapsed_writing = (vim.uv.hrtime() - start_writing) / 1e9
 
-          local start_elinks = vim.loop.hrtime()
+          local start_elinks = vim.uv.hrtime()
           -- convert the html to text, on 8 processes concurrently (-P8)
-          local sysname = vim.loop.os_uname().sysname
+          local sysname = vim.uv.os_uname().sysname
           local xargs_cmd = 'xargs'
           if sysname == 'Darwin' then
             -- need a larger buffer than default on OSX.
@@ -735,9 +735,9 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
               -- [[find . -maxdepth 1 -name '*.html' -print0 | xargs -0 -P 8 -I param sh -c "elinks -config-dir ]] .. data_folder .. [[ -dump 'param' > 'param'.md"]]
             }, { cwd = target_path })
             :wait()
-          local elapsed_elinks = (vim.loop.hrtime() - start_elinks) / 1e9
+          local elapsed_elinks = (vim.uv.hrtime() - start_elinks) / 1e9
 
-          local start_pp = vim.loop.hrtime()
+          local start_pp = vim.uv.hrtime()
 
           -- unfortunately i must post-process the markdown to fix conceal table alignment and fix links..
           vim
@@ -788,9 +788,9 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
                   end
                 end
 
-                local elapsed_pp = (vim.loop.hrtime() - start_pp) / 1e9
+                local elapsed_pp = (vim.uv.hrtime() - start_pp) / 1e9
 
-                local elapsed = (vim.loop.hrtime() - start_install) / 1e9
+                local elapsed = (vim.uv.hrtime() - start_install) / 1e9
 
                 vim.notify(
                   'Finished fetching documentation for '

@@ -1,6 +1,8 @@
 local M = {}
+local registry = require('lpke.plugins.ai.helpers.chat_registry')
 
 local api = vim.api
+local chat_draft = require('lpke.plugins.ai.helpers.chat_draft')
 
 local DRAFT_DIR = vim.fn.stdpath('data') .. '/codecompanion-drafts'
 local DEBOUNCE_MS = 400
@@ -15,44 +17,8 @@ local function ensure_dir()
   vim.fn.mkdir(DRAFT_DIR, 'p')
 end
 
-local function cc_config()
-  local ok, config = pcall(require, 'codecompanion.config')
-  if ok then
-    return config
-  end
-
-  return nil
-end
-
-local function user_role()
-  local config = cc_config()
-  if
-    config
-    and config.interactions
-    and config.interactions.chat
-    and config.interactions.chat.roles
-    and type(config.interactions.chat.roles.user) == 'string'
-  then
-    return config.interactions.chat.roles.user
-  end
-
-  return 'Me'
-end
-
 local function cwd()
   return vim.fn.getcwd()
-end
-
-local function is_codecompanion_buf(bufnr)
-  if not bufnr or not api.nvim_buf_is_valid(bufnr) then
-    return false
-  end
-
-  local ok, filetype = pcall(function()
-    return vim.bo[bufnr].filetype
-  end)
-
-  return ok and filetype == 'codecompanion'
 end
 
 local function draft_path()
@@ -156,14 +122,9 @@ local function draft_cwd(bufnr, path)
 end
 
 local function open_codecompanion_buffers()
-  local bufs = {}
-  for _, bufnr in ipairs(api.nvim_list_bufs()) do
-    if is_codecompanion_buf(bufnr) then
-      table.insert(bufs, bufnr)
-    end
-  end
-
-  return bufs
+  return vim.tbl_map(function(chat)
+    return chat.bufnr
+  end, registry.list())
 end
 
 local function primary_path(bufnr)
@@ -256,249 +217,12 @@ local function clear_paths(bufnr)
   del_buf_var(bufnr, 'lpke_cc_draft_cwd')
 end
 
-local function is_header(line)
-  return type(line) == 'string' and line:match('^##%s+') ~= nil
-end
-
-local function header_separator()
-  local config = cc_config()
-  return config
-      and config.display
-      and config.display.chat
-      and config.display.chat.separator
-    or '─'
-end
-
-local function role_header_matches(line, role)
-  if type(line) ~= 'string' or type(role) ~= 'string' or role == '' then
-    return false
-  end
-
-  local header = '## ' .. role
-  if line == header then
-    return true
-  end
-
-  return line:match(
-    '^' .. vim.pesc(header) .. '%s+' .. vim.pesc(header_separator())
-  ) ~= nil
-end
-
-local function is_user_header(line)
-  return role_header_matches(line, user_role())
-end
-
-local function chat_for_buf(bufnr)
-  local ok, chat_module = pcall(require, 'codecompanion.interactions.chat')
-  if not ok or type(chat_module.buf_get_chat) ~= 'function' then
-    return nil
-  end
-
-  return chat_module.buf_get_chat(bufnr)
-end
-
-local function visible_context_lines(bufnr)
-  local chat = chat_for_buf(bufnr)
-  if not chat or type(chat.context_items) ~= 'table' then
-    return nil
-  end
-
-  local config = cc_config()
-  local icons = config
-      and config.display
-      and config.display.chat
-      and config.display.chat.icons
-    or {}
-
-  local lines = {}
-  for _, context in ipairs(chat.context_items) do
-    if
-      context
-      and type(context.id) == 'string'
-      and context.id ~= ''
-      and not (context.opts and context.opts.visible == false)
-    then
-      local icon = ''
-      if context.opts and context.opts.sync_all then
-        icon = icons.buffer_sync_all or ''
-      elseif context.opts and context.opts.sync_diff then
-        icon = icons.buffer_sync_diff or ''
-      end
-
-      table.insert(lines, '> - ' .. icon .. context.id)
-    end
-  end
-
-  return #lines > 0 and lines or nil
-end
-
-local function strip_generic_leading_context_block(lines)
-  local start = 1
-  while lines[start] and vim.trim(lines[start]) == '' do
-    start = start + 1
-  end
-
-  if lines[start] ~= '> Context:' then
-    return lines
-  end
-
-  local cursor = start + 1
-  local saw_context_item = false
-  while lines[cursor] and lines[cursor]:match('^>%s*%-%s+') do
-    saw_context_item = true
-    cursor = cursor + 1
-  end
-
-  if not saw_context_item then
-    return lines
-  end
-
-  if lines[cursor] and lines[cursor] ~= '' then
-    return lines
-  end
-
-  local remove_to = cursor - 1
-  if lines[cursor] == '' then
-    remove_to = cursor
-  end
-
-  local stripped = {}
-  for i, line in ipairs(lines) do
-    if i < start or i > remove_to then
-      table.insert(stripped, line)
-    end
-  end
-
-  return stripped
-end
-
-local function strip_leading_context_block(bufnr, lines)
-  local context_lines = visible_context_lines(bufnr)
-  if not context_lines then
-    return strip_generic_leading_context_block(lines)
-  end
-
-  local start = 1
-  while lines[start] and vim.trim(lines[start]) == '' do
-    start = start + 1
-  end
-
-  if lines[start] ~= '> Context:' then
-    return strip_generic_leading_context_block(lines)
-  end
-
-  local cursor = start + 1
-  for _, context_line in ipairs(context_lines) do
-    if lines[cursor] ~= context_line then
-      return strip_generic_leading_context_block(lines)
-    end
-
-    cursor = cursor + 1
-  end
-
-  if
-    lines[cursor]
-    and lines[cursor] ~= ''
-    and lines[cursor]:match('^>%s*%-%s+')
-  then
-    return strip_generic_leading_context_block(lines)
-  end
-
-  local remove_to = cursor - 1
-  if lines[cursor] == '' then
-    remove_to = cursor
-  end
-
-  local stripped = {}
-  for i, line in ipairs(lines) do
-    if i < start or i > remove_to then
-      table.insert(stripped, line)
-    end
-  end
-
-  return stripped
+local function active_prompt(bufnr)
+  return chat_draft.prompt(registry.get(bufnr))
 end
 
 local function draft_has_user_content(prompt)
-  if type(prompt) ~= 'string' or vim.trim(prompt) == '' then
-    return false
-  end
-
-  local lines = strip_generic_leading_context_block(
-    vim.split(prompt, '\n', { plain = true })
-  )
-
-  return vim.trim(table.concat(lines, '\n')) ~= ''
-end
-
-local function llm_role(bufnr)
-  local config = cc_config()
-  local role = config
-      and config.interactions
-      and config.interactions.chat
-      and config.interactions.chat.roles
-      and config.interactions.chat.roles.llm
-    or nil
-
-  if type(role) == 'function' then
-    local chat = chat_for_buf(bufnr)
-    local ok, resolved = pcall(role, chat and chat.adapter or {})
-    if ok and type(resolved) == 'string' then
-      return resolved
-    end
-    return nil
-  end
-
-  if type(role) == 'string' then
-    return role
-  end
-
-  return nil
-end
-
-local function is_llm_header(bufnr, line)
-  local role = llm_role(bufnr)
-  if role_header_matches(line, role) then
-    return true
-  end
-
-  return type(line) == 'string'
-    and line:match('^##%s+CodeCompanion%s*%(') ~= nil
-end
-
-local function active_prompt(bufnr)
-  if not api.nvim_buf_is_valid(bufnr) then
-    return nil
-  end
-
-  if not is_codecompanion_buf(bufnr) then
-    return nil
-  end
-
-  local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local last_role_header = nil
-
-  for i, line in ipairs(lines) do
-    if is_header(line) then
-      if is_user_header(line) then
-        last_role_header = { kind = 'user', line = i }
-      elseif is_llm_header(bufnr, line) then
-        last_role_header = { kind = 'llm', line = i }
-      end
-    end
-  end
-
-  if not last_role_header or last_role_header.kind ~= 'user' then
-    return nil
-  end
-
-  return {
-    header = last_role_header.line,
-    lines = strip_leading_context_block(
-      bufnr,
-      vim.list_slice(lines, last_role_header.line + 1)
-    ),
-  }
+  return type(prompt) == 'string' and vim.trim(prompt) ~= ''
 end
 
 local function draft_marks(active_bufnr)
@@ -706,7 +430,7 @@ function M.attach(bufnr)
 
   api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
     group = group,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       M.schedule_save(bufnr)
     end,
@@ -714,7 +438,7 @@ function M.attach(bufnr)
 
   api.nvim_create_autocmd({ 'InsertLeave', 'BufLeave', 'BufHidden' }, {
     group = group,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       stop_timer(bufnr)
       M.save(bufnr)
@@ -723,7 +447,7 @@ function M.attach(bufnr)
 
   api.nvim_create_autocmd({ 'BufUnload', 'BufDelete' }, {
     group = group,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       stop_timer(bufnr)
       M.save(bufnr)
@@ -771,7 +495,7 @@ local function active_bufnr(chat)
   end
 
   local bufnr = api.nvim_get_current_buf()
-  if is_codecompanion_buf(bufnr) then
+  if registry.get(bufnr) then
     return bufnr
   end
 
@@ -899,7 +623,10 @@ local function delete_selected(telescope, prompt_bufnr, chat, make_finder)
 end
 
 local function append_prompt(chat, item)
-  if require('lpke.core.local_extensions').call('draft_restore', chat, item) == false then
+  if
+    require('lpke.core.local_extensions').call('draft_restore', chat, item)
+    == false
+  then
     return
   end
   if not chat or not chat.bufnr or not api.nvim_buf_is_valid(chat.bufnr) then

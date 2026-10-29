@@ -323,7 +323,7 @@ open_doc_in_cur_window = function(docs_path, section)
     'n',
     follow_link_keymap,
     follow_reference_under_cursor,
-    { buffer = buf, desc = 'API docs: Open URL or follow reference' },
+    { buf = buf, desc = 'API docs: Open URL or follow reference' },
   })
 
   jump_to_section(section)

@@ -1,13 +1,13 @@
 local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
 local helpers = require('lpke.core.helpers')
 local ai_config = require('lpke.plugins.ai.helpers.config')
+local models = require('lpke.plugins.ai.helpers.model_swap')
 local acp_session_options =
   require('lpke.plugins.ai.helpers.acp_session_options')
 local cleanup = require('lpke.plugins.ai.helpers.cleanup')
 local codex_threads = require('lpke.plugins.ai.helpers.codex_threads')
 local chat_history = require('lpke.plugins.ai.helpers.chat_history')
 local img_clip = require('lpke.plugins.ai.helpers.img_clip')
-local model_swap = require('lpke.plugins.ai.helpers.model_swap')
 
 local M = {}
 
@@ -16,8 +16,8 @@ function M.setup()
 
   -- stylua: ignore start
   helpers.keymap_set_multi({
-    { 'in', '<A-f>', chat_fns.toggle_cc_with_default_tools, { desc = 'CodeCompanion: Toggle chat buffer with HTTP tools' }},
-    { 'in', '<F2>f', chat_fns.toggle_cc_with_default_tools, { desc = 'CodeCompanion: Toggle chat buffer with HTTP tools' }},
+    { 'in', '<A-f>', chat_fns.toggle_chat, { desc = 'CodeCompanion: Toggle chat buffer' }},
+    { 'in', '<F2>f', chat_fns.toggle_chat, { desc = 'CodeCompanion: Toggle chat buffer' }},
     { 'in', '<A-F>', chat_fns.open_fullscreen_chat, { desc = 'CodeCompanion: Open fullscreen chat tab' }},
     { 'in', '<F2>F', chat_fns.open_fullscreen_chat, { desc = 'CodeCompanion: Open fullscreen chat tab' }},
     { 'v', '<A-f>', chat_fns.toggle_chat_with_context_selection, { desc = 'CodeCompanion: Toggle chat buffer, add context and selection' }},
@@ -25,19 +25,13 @@ function M.setup()
     { 'v', '<A-F>', chat_fns.open_fullscreen_chat_with_context_selection, { desc = 'CodeCompanion: Open fullscreen chat tab with selection' }},
     { 'v', '<F2>F', chat_fns.open_fullscreen_chat_with_context_selection, { desc = 'CodeCompanion: Open fullscreen chat tab with selection' }},
     { 'ni', '<C-l>', chat_fns.open_inline_prompt_with_context, { desc = 'CodeCompanion: Open inline prompt with context' }},
-    { 'v', '<C-l>', ":<C-u>'<,'>CodeCompanion<cr>#{buffer} ", { desc = 'CodeCompanion: Open inline prompt with context and selection' }},
+    { 'v', '<C-l>', function() chat_fns.open_inline_prompt_with_context({ visual = true }) end, { desc = 'CodeCompanion: Open inline prompt with context and selection' }},
   })
   helpers.ft_keymap_set_multi('codecompanion', {
-    { 'n', '<leader>m', function()
-      if model_swap.is_codex_chat(0) then
-        Lpke_cc_model(ai_config.adapter_model_cycle('codex'))
-      else
-        Lpke_cc_model(ai_config.adapter_model_cycle('copilot'))
-      end
-    end,
-      { desc = 'CodeCompanion: Cycle between AI models' }},
-    { 'n', '<leader>M', function() Lpke_cc_adapter(ai_config.adapter_cycle) end,
-      { desc = 'CodeCompanion: Cycle between AI adapters' }},
+    { 'n', '<leader>m', function() models.select(ai_config.adapter_model_cycle(models.get_cur_adapter(0))) end,
+      { desc = 'CodeCompanion: Cycle models' }},
+    { 'n', '<leader>M', function() models.cycle_adapters(ai_config.adapter_cycle) end,
+      { desc = 'CodeCompanion: Cycle adapters' }},
     { 'n', '<leader>r', acp_session_options.show_reasoning,
       { desc = 'CodeCompanion: ACP reasoning effort' }},
     { 'n', '<leader>a', acp_session_options.show_approval,
@@ -52,18 +46,6 @@ function M.setup()
       { desc = 'CodeCompanion: Toggle older chat history' }},
     { 'n!', '<leader>I', img_clip.paste_image,
       { desc = 'CodeCompanion: Save clipboard image and insert its path' }},
-    { 'in', '<A-a>', function() chat_fns.insert_http_tool_text('@{agent} ') end,
-      { desc = 'CodeCompanion: Insert agent tool' }},
-    { 'in', '<F2>a', function() chat_fns.insert_http_tool_text('@{agent} ') end,
-      { desc = 'CodeCompanion: Insert agent tool' }},
-    { 'in', '<A-A>', function() chat_fns.insert_http_tool_text('@{agent} @{fetch_webpage} @{web_search} ') end,
-      { desc = 'CodeCompanion: Insert agent + web tools' }},
-    { 'in', '<F2>A', function() chat_fns.insert_http_tool_text('@{agent} @{fetch_webpage} @{web_search} ') end,
-      { desc = 'CodeCompanion: Insert agent + web tools' }},
-    { 'in', '<A-S>', function() chat_fns.insert_http_tool_text('@{fetch_webpage} @{web_search} ') end,
-      { desc = 'CodeCompanion: Insert web tools' }},
-    { 'in', '<F2>S', function() chat_fns.insert_http_tool_text('@{fetch_webpage} @{web_search} ') end,
-      { desc = 'CodeCompanion: Insert web tools' }},
     { 'in', '<A-b>', chat_fns.insert_last_source_path,
       { desc = 'CodeCompanion: Insert last source buffer path' }},
     { 'in', '<F2>b', chat_fns.insert_last_source_path,
@@ -82,15 +64,12 @@ function M.setup()
       if #cmd.fargs == 0 then
         print(':Model <model1> [<model2>...] | eg: son|opus|gpt|astra|sol|terra|luna|gem|<exact>')
       else
-        Lpke_cc_model(cmd.fargs)
+        models.select(cmd.fargs)
       end
     end, { desc = 'CodeCompanion: Swap to (or between) models' } },
     { '*', 'Adapter', function(cmd)
-      if #cmd.fargs == 0 then
-        print(':Adapter <adapter1> [<adapter2>...] | eg: codex|copilot')
-      else
-        Lpke_cc_adapter(cmd.fargs)
-      end
+      if #cmd.fargs == 0 then print(':Adapter <adapter1> [<adapter2>...] | eg: codex|copilot')
+      else models.cycle_adapters(cmd.fargs) end
     end, { desc = 'CodeCompanion: Swap to (or between) adapters' } },
     { '?', 'CodexAgents', codex_threads.command, {
       desc = 'CodeCompanion: Inspect local or Mac Codex subagents',

@@ -65,8 +65,17 @@ require('codecompanion.interactions.chat.helpers').create_acp_connection = funct
   callback
 )
   chat.acp_connection = {
+    is_ready = function()
+      return true
+    end,
+    is_connected = function()
+      return true
+    end,
     session_id = chat.acp_session_id or 'fixture-' .. chat.bufnr,
     get_models = function()
+      return {}
+    end,
+    build_name_map = function()
       return {}
     end,
     get_config_options = function()
@@ -97,8 +106,10 @@ local function new_chat(adapter, opts)
   local chat = assert(Chat.new(opts))
   -- Use the real submit, handler, parser and ACP formatter with no agent process.
   chat._submit_acp = function(self, payload)
-    self.last_prompt =
-      self.adapter.handlers.form_messages(self.adapter, payload.messages, {})
+    self.last_prompt = adapters.call_handler(self.adapter, 'build_messages', {
+      messages = payload.messages,
+      capabilities = {},
+    })
     self.current_request = { cancel = function() end }
   end
   api.nvim_set_current_buf(chat.bufnr)
@@ -188,6 +199,25 @@ expire(timers[#timers])
 finish(chat, 'Done')
 assert(not state.pending, 'Successful response left a retry queued')
 
+submit(chat)
+count = #timers
+local split_handler = Handler.new(chat)
+split_handler:handle_message_chunk('Selected model is at ')
+split_handler:handle_message_chunk('capacity. Please try a ')
+split_handler:handle_message_chunk('different model.')
+split_handler:handle_complete()
+flush()
+assert(
+  #timers == count + 1,
+  'Split assistant chunks did not form a capacity ending'
+)
+expire(timers[#timers])
+assert(
+  vim.deep_equal(chat.last_prompt, { { type = 'text', text = 'continue' } }),
+  'Split-chunk retry changed prompt'
+)
+finish(chat, 'Recovered')
+
 for _, target in ipairs({
   new_chat(),
   new_chat(nil, { acp_session_id = 'restored-fixture' }),
@@ -207,7 +237,7 @@ end
 
 local switched = new_chat('ollama')
 assert(not switched._lpke_auto_continue, 'HTTP chat was attached')
-switched:change_adapter('codex')
+switched:change_adapter({ adapter = 'codex' })
 flush()
 assert(
   switched._lpke_auto_continue,

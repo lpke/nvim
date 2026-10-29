@@ -1,20 +1,11 @@
 local M = {}
+local registry = require('lpke.plugins.ai.helpers.chat_registry')
 local pending = {}
 local patched = false
 local storage
 
 local function history()
   return require('codecompanion').extensions.history
-end
-
-local function chats()
-  return require('codecompanion').buf_get_chat() or {}
-end
-
-local function session_id(chat)
-  return (chat.acp_connection and chat.acp_connection.session_id)
-    or chat.acp_session_id
-    or (chat.opts and chat.opts.acp_session_id)
 end
 
 local function clean(title)
@@ -88,7 +79,7 @@ local function saved_chat(chat, store)
   if saved and settled(saved.title, saved.lpke_title) then
     return saved
   end
-  local id = session_id(chat)
+  local id = registry.session_id(chat)
   if not id then
     return saved
   end
@@ -182,8 +173,7 @@ local function write_title(store, saved, title, state)
   then
     return false
   end
-  for _, item in ipairs(chats()) do
-    local chat = item.chat
+  for _, chat in ipairs(registry.list()) do
     if chat.opts.save_id == saved.save_id then
       apply(chat, title, state)
     end
@@ -326,9 +316,9 @@ function M.setup()
   local save_file = Storage._save_chat_to_file
   Storage._save_chat_to_file = function(self, data, ...)
     if not data.lpke_title then
-      for _, item in ipairs(chats()) do
-        if item.chat.opts.save_id == data.save_id then
-          data.lpke_title = item.chat.opts.lpke_title
+      for _, chat in ipairs(registry.list()) do
+        if chat.opts.save_id == data.save_id then
+          data.lpke_title = chat.opts.lpke_title
           break
         end
       end
@@ -368,7 +358,7 @@ function M.setup()
     pattern = 'CodeCompanionHistoryTitleSet',
     callback = function(args)
       local data = args.data or {}
-      local chat = data.bufnr and Chat.buf_get_chat(data.bufnr)
+      local chat = data.bufnr and registry.get(data.bufnr)
       local title = clean(data.title)
       local locked = chat and chat._lpke_history_title_locked
       if locked then
@@ -391,7 +381,7 @@ function M.setup()
     callback = function(args)
       local bufnr = args.data and args.data.bufnr
       if args.match == 'CodeCompanionChatCreated' and bufnr then
-        local chat = Chat.buf_get_chat(bufnr)
+        local chat = registry.get(bufnr)
         if chat and not chat.opts.save_id then
           -- Upstream uses seconds alone, so quick new chats can share history.
           -- Assign before its scheduled ChatCreated handler runs.
@@ -404,7 +394,7 @@ function M.setup()
       end
       vim.schedule(function()
         if bufnr then
-          M.restore(Chat.buf_get_chat(bufnr))
+          M.restore(registry.get(bufnr))
         end
       end)
     end,

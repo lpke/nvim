@@ -13,7 +13,7 @@ local sections = {
     title = 'Global Keymaps',
     keymaps = {
       {
-        description = 'Toggle sidebar chat with HTTP tools',
+        description = 'Toggle sidebar chat',
         modes = { n = { '<A-f>', '<F2>f' }, i = { '<A-f>', '<F2>f' } },
       },
       {
@@ -47,12 +47,12 @@ local sections = {
       },
       {
         description = Lpke_is_work_device
-            and 'Cycle models: Codex 5.6 Luna / 6.1 Sol'
-          or 'Cycle models: Codex 6.1 Sol / 6 Astra / 5.6 Sol',
+            and 'Cycle models: Codex 5.6 Luna / 6.1 Sol; Copilot Sonnet / GPT mini'
+          or 'Cycle models: Codex 6.1 Sol / 6 Astra / 5.6 Sol; Copilot Sonnet / GPT mini',
         modes = { n = '<leader>m' },
       },
       {
-        description = 'Cycle between AI adapters',
+        description = 'Cycle Codex/Copilot adapters',
         modes = { n = '<leader>M' },
       },
       {
@@ -77,18 +77,6 @@ local sections = {
         modes = { n = '<leader>I' },
       },
       {
-        description = 'Insert agent tool',
-        modes = { n = { '<A-a>', '<F2>a' }, i = { '<A-a>', '<F2>a' } },
-      },
-      {
-        description = 'Insert agent and web tools',
-        modes = { n = { '<A-A>', '<F2>A' }, i = { '<A-A>', '<F2>A' } },
-      },
-      {
-        description = 'Insert web tools',
-        modes = { n = { '<A-S>', '<F2>S' }, i = { '<A-S>', '<F2>S' } },
-      },
-      {
         description = 'Insert last source path or Oil directory',
         modes = { n = { '<A-b>', '<F2>b' }, i = { '<A-b>', '<F2>b' } },
       },
@@ -97,7 +85,7 @@ local sections = {
         modes = { n = { '<A-d>', '<F2>d' }, i = { '<A-d>', '<F2>d' } },
       },
       {
-        description = 'Send non-empty prompt and scroll it to top',
+        description = 'Send, return to normal mode and scroll prompt to top',
         modes = { n = { '<CR>', '<C-s>' }, i = '<C-s>' },
       },
       {
@@ -242,7 +230,8 @@ function M.extra_lines()
     '### LPKE Custom CodeCompanion Help',
     '',
     'Terminal: `c --thread UUID [dir]` opens that Codex thread fullscreen.',
-    'Automatic rule loading is disabled for all chat adapters.',
+    'Automatic rule loading is disabled for chats.',
+    'After reasoning or tool calls, start a new chat to change adapters.',
     'All Codex ACP chats automatically retry capacity endings after 30s.',
     'Retries send only `continue` while idle with an empty draft.',
     'Timestamped notifications remain in `:messages`.',

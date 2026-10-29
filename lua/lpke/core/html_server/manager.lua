@@ -4,7 +4,7 @@ local http = require('lpke.core.html_server.http')
 local paths = require('lpke.core.html_server.paths')
 local registry = require('lpke.core.html_server.registry')
 
-local uv = vim.uv or vim.loop
+local uv = vim.uv
 
 local M = {}
 

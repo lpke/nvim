@@ -434,7 +434,7 @@ local function patch_telescope_history_picker()
             end,
           })
           vim.api.nvim_create_autocmd('BufWipeout', {
-            buffer = prompt_bufnr,
+            buf = prompt_bufnr,
             once = true,
             callback = function()
               pcall(vim.api.nvim_del_autocmd, title_update)
@@ -553,37 +553,37 @@ local function patch_telescope_history_picker()
               'n',
               self.config.keymaps.delete.n,
               delete_selections,
-              { buffer = prompt_bufnr, silent = true, nowait = true },
+              { buf = prompt_bufnr, silent = true, nowait = true },
             },
             {
               'i',
               self.config.keymaps.delete.i,
               delete_selections,
-              { buffer = prompt_bufnr, silent = true, nowait = true },
+              { buf = prompt_bufnr, silent = true, nowait = true },
             },
             {
               'n',
               self.config.keymaps.rename.n,
               rename_selection,
-              { buffer = prompt_bufnr, silent = true, nowait = true },
+              { buf = prompt_bufnr, silent = true, nowait = true },
             },
             {
               'i',
               self.config.keymaps.rename.i,
               rename_selection,
-              { buffer = prompt_bufnr, silent = true, nowait = true },
+              { buf = prompt_bufnr, silent = true, nowait = true },
             },
             {
               'n',
               self.config.keymaps.duplicate.n,
               duplicate_selection,
-              { buffer = prompt_bufnr, silent = true, nowait = true },
+              { buf = prompt_bufnr, silent = true, nowait = true },
             },
             {
               'i',
               self.config.keymaps.duplicate.i,
               duplicate_selection,
-              { buffer = prompt_bufnr, silent = true, nowait = true },
+              { buf = prompt_bufnr, silent = true, nowait = true },
             },
           })
 

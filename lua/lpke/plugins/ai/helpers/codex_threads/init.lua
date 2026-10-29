@@ -373,7 +373,7 @@ local function set_dashboard_keymaps(state)
       function()
         move_agent(1)
       end,
-      { buffer = state.bufnr, desc = 'Codex subagents: Next agent' },
+      { buf = state.bufnr, desc = 'Codex subagents: Next agent' },
     },
     {
       'n!',
@@ -381,7 +381,7 @@ local function set_dashboard_keymaps(state)
       function()
         move_agent(-1)
       end,
-      { buffer = state.bufnr, desc = 'Codex subagents: Previous agent' },
+      { buf = state.bufnr, desc = 'Codex subagents: Previous agent' },
     },
     {
       'n!',
@@ -389,7 +389,7 @@ local function set_dashboard_keymaps(state)
       function()
         close_dashboard(state)
       end,
-      { buffer = state.bufnr, desc = 'Codex subagents: Close' },
+      { buf = state.bufnr, desc = 'Codex subagents: Close' },
     },
   })
   helpers.keymap_set({
@@ -398,7 +398,7 @@ local function set_dashboard_keymaps(state)
     function()
       close_dashboard(state)
     end,
-    { buffer = state.bufnr, desc = 'Codex subagents: Close' },
+    { buf = state.bufnr, desc = 'Codex subagents: Close' },
   })
   helpers.keymap_set_multi({
     {
@@ -418,7 +418,7 @@ local function set_dashboard_keymaps(state)
           )
         end
       end,
-      { buffer = state.bufnr, desc = 'Codex subagents: Inspect thread' },
+      { buf = state.bufnr, desc = 'Codex subagents: Inspect thread' },
     },
     {
       'n!',
@@ -426,7 +426,7 @@ local function set_dashboard_keymaps(state)
       function()
         toggle_completed_runs(state)
       end,
-      { buffer = state.bufnr, desc = 'Codex subagents: Toggle completed runs' },
+      { buf = state.bufnr, desc = 'Codex subagents: Toggle completed runs' },
     },
     {
       'n!',
@@ -434,7 +434,7 @@ local function set_dashboard_keymaps(state)
       function()
         refresh_dashboard(state, true)
       end,
-      { buffer = state.bufnr, desc = 'Codex subagents: Refresh' },
+      { buf = state.bufnr, desc = 'Codex subagents: Refresh' },
     },
     {
       'n!',
@@ -442,7 +442,7 @@ local function set_dashboard_keymaps(state)
       function()
         M.open()
       end,
-      { buffer = state.bufnr, desc = 'Codex subagents: Change source' },
+      { buf = state.bufnr, desc = 'Codex subagents: Change source' },
     },
     {
       'n!',
@@ -450,7 +450,7 @@ local function set_dashboard_keymaps(state)
       function()
         close_dashboard(state)
       end,
-      { buffer = state.bufnr, desc = 'Codex subagents: Close' },
+      { buf = state.bufnr, desc = 'Codex subagents: Close' },
     },
   })
 end
@@ -727,7 +727,7 @@ local function open_dashboard(scope)
   vim.b[state.bufnr].codex_subagent_dashboard = true
   set_dashboard_keymaps(state)
   api.nvim_create_autocmd('BufWipeout', {
-    buffer = state.bufnr,
+    buf = state.bufnr,
     once = true,
     callback = function()
       stop_timer(state)
@@ -851,7 +851,7 @@ local function set_thread_keymaps(state)
     'n!',
     '<Esc>',
     back,
-    { buffer = state.bufnr, desc = 'Codex subagent: Back' },
+    { buf = state.bufnr, desc = 'Codex subagent: Back' },
   })
   helpers.keymap_set({
     'n!',
@@ -863,7 +863,7 @@ local function set_thread_keymaps(state)
         back()
       end
     end,
-    { buffer = state.bufnr, desc = 'Codex subagent: Close panel' },
+    { buf = state.bufnr, desc = 'Codex subagent: Close panel' },
   })
   helpers.keymap_set_multi({
     {
@@ -873,19 +873,19 @@ local function set_thread_keymaps(state)
         refresh_thread_execution(state)
         refresh_thread(state)
       end,
-      { buffer = state.bufnr, desc = 'Codex subagent: Refresh' },
+      { buf = state.bufnr, desc = 'Codex subagent: Refresh' },
     },
     {
       'n!',
       's',
       back,
-      { buffer = state.bufnr, desc = 'Codex subagent: Dashboard' },
+      { buf = state.bufnr, desc = 'Codex subagent: Dashboard' },
     },
     {
       'n!',
       'q',
       back,
-      { buffer = state.bufnr, desc = 'Codex subagent: Back' },
+      { buf = state.bufnr, desc = 'Codex subagent: Back' },
     },
   })
 end
@@ -934,7 +934,7 @@ open_thread = function(
   vim.b[state.bufnr].codex_thread_id = thread_id
   set_thread_keymaps(state)
   api.nvim_create_autocmd('BufWipeout', {
-    buffer = state.bufnr,
+    buf = state.bufnr,
     once = true,
     callback = function()
       stop_timer(state)

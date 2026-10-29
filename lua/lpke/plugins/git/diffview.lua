@@ -171,7 +171,7 @@ local function config()
         'Q',
         quit_diffview_git_ui,
         {
-          buffer = bufnr,
+          buf = bufnr,
           desc = 'Quit Diffview git UI',
           nowait = true,
           silent = true,
@@ -182,7 +182,7 @@ local function config()
         '<leader>i',
         quit_diffview_git_ui,
         {
-          buffer = bufnr,
+          buf = bufnr,
           desc = 'Quit Diffview git UI',
           nowait = true,
           silent = true,
@@ -364,7 +364,7 @@ local function config()
 
     vim.api.nvim_create_autocmd('BufWritePost', {
       group = diffview_commit_augroup,
-      buffer = bufnr,
+      buf = bufnr,
       callback = function(event)
         vim.b[event.buf].lpke_diffview_commit_written = true
       end,
@@ -372,7 +372,7 @@ local function config()
 
     vim.api.nvim_create_autocmd('BufDelete', {
       group = diffview_commit_augroup,
-      buffer = bufnr,
+      buf = bufnr,
       once = true,
       callback = function(event)
         local commit_info = {
@@ -610,7 +610,7 @@ local function config()
 
   function install_diffview_commit_keymaps(bufnr)
     local opts = function(desc)
-      return { buffer = bufnr, desc = desc }
+      return { buf = bufnr, desc = desc }
     end
 
     helpers.keymap_set({

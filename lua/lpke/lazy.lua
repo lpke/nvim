@@ -76,5 +76,8 @@ require('lpke.core.helpers').keymap_set_multi({
   { 'nC', '<BS>il', 'Lazy', { desc = 'Open lazy.nvim GUI' } },
 })
 
+-- Register scoped module adaptations before Lazy sources plugin files.
+require('lpke.plugins.helpers.deprecations').setup()
+
 -- setup lazy
 require('lazy').setup(lazy_plugins, lazy_options)

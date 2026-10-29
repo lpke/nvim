@@ -1,4 +1,5 @@
 local M = {}
+local registry = require('lpke.plugins.ai.helpers.chat_registry')
 
 local setup_done = false
 local preview_ns =
@@ -205,20 +206,17 @@ local function search_chats(chats, parsed, opts)
 end
 
 local function open_chat(chat_data, restore_context)
-  local chat_module = require('codecompanion.interactions.chat')
   local codecompanion = require('codecompanion')
   local active_chat = codecompanion.last_chat()
 
-  for _, data in ipairs(chat_module.buf_get_chat() or {}) do
-    local chat = data.chat
-    if chat and chat.opts and chat.opts.save_id == chat_data.save_id then
-      if active_chat and active_chat ~= chat and active_chat.ui:is_active() then
-        active_chat.ui:hide()
-      end
-      chat.ui:open()
-      chat_fns.after_restore(chat, restore_context)
-      return chat
+  local chat = registry.find_save(chat_data.save_id)
+  if chat then
+    if active_chat and active_chat ~= chat and active_chat.ui:is_active() then
+      active_chat.ui:hide()
     end
+    chat.ui:open()
+    chat_fns.after_restore(chat, restore_context)
+    return chat
   end
 
   local messages = vim.deepcopy(chat_data.messages or {})
@@ -250,7 +248,7 @@ local function open_chat(chat_data, restore_context)
     )
   end
 
-  local chat = chat_module.new({
+  local chat = require('codecompanion.interactions.chat').new({
     acp_session_id = chat_data.acp_session_id,
     adapter = adapter,
     buffer_context = context,
@@ -264,8 +262,6 @@ local function open_chat(chat_data, restore_context)
     chat.context:add(item)
   end
 
-  chat.tool_registry.schemas = chat_data.schemas or {}
-  chat.tool_registry.in_use = chat_data.in_use or {}
   chat.cycle = chat_data.cycle or 1
   chat.opts.title_refresh_count = chat_data.title_refresh_count or 0
   chat_fns.after_restore(chat, restore_context)

@@ -529,7 +529,7 @@ end
 
 return {
   'nvim-telescope/telescope.nvim',
-  commit = 'b4da76be54691e854d3e0e02c36b0245f945c2c7',
+  commit = 'e3f1b6ecc1cbfb7f7de50e59d35faa429a3ed184',
   dependencies = {
     {
       'nvim-lua/plenary.nvim',

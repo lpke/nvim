@@ -1,6 +1,6 @@
 local config = require('lpke.core.html_server.config')
 
-local uv = vim.uv or vim.loop
+local uv = vim.uv
 
 local M = {}
 

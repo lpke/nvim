@@ -21,7 +21,7 @@ local function emit_text_changed(bufnr)
   vim.schedule(function()
     pending_refresh[bufnr] = nil
     if vim.api.nvim_buf_is_valid(bufnr) then
-      vim.api.nvim_exec_autocmds('TextChanged', { buffer = bufnr })
+      vim.api.nvim_exec_autocmds('TextChanged', { buf = bufnr })
     end
   end)
 end
@@ -75,7 +75,7 @@ local function config()
           '<A-m>',
           Lpke_toggle_render_markdown,
           {
-            buffer = ctx.buf,
+            buf = ctx.buf,
             desc = 'Render Markdown: Toggle buffer rendering',
           },
         })

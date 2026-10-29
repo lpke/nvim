@@ -73,50 +73,41 @@ M.preferred_models = {
   grok = 'grok_code_fast_1',
 }
 
--- Note: Copilot-specific display names include premium request multipliers as at 29/04/2026.
--- https://docs.github.com/en/copilot/concepts/billing/copilot-requests
 M.models = {
   opus_4_7 = {
     id = 'claude-opus-4.7',
     aliases = { 'opus4.7' },
     display = 'opus-4.7',
-    adapter_display = { copilot = 'opus-4.7 (x7.5)' },
   },
   opus_4_6 = {
     id = 'claude-opus-4.6',
     aliases = { 'opus4.6' },
     display = 'opus-4.6',
-    adapter_display = { copilot = 'opus-4.6 (x3)' },
   },
   opus_4_5 = {
     id = 'claude-opus-4.5',
     aliases = { 'opus4.5' },
     display = 'opus-4.5',
-    adapter_display = { copilot = 'opus-4.5 (x3)' },
   },
   sonnet_4_6 = {
     id = 'claude-sonnet-4.6',
     aliases = { 'son4.6' },
     display = 'sonnet-4.6',
-    adapter_display = { copilot = 'sonnet-4.6 (x1)' },
   },
   sonnet_4_5 = {
     id = 'claude-sonnet-4.5',
     aliases = { 'son4.5' },
     display = 'sonnet-4.5',
-    adapter_display = { copilot = 'sonnet-4.5 (x1)' },
   },
   sonnet_4 = {
     id = 'claude-sonnet-4',
     aliases = { 'son4' },
     display = 'sonnet-4',
-    adapter_display = { copilot = 'sonnet-4 (x1)' },
   },
   haiku_4_5 = {
     id = 'claude-haiku-4.5',
     aliases = { 'haiku4.5' },
     display = 'haiku-4.5',
-    adapter_display = { copilot = 'haiku-4.5 (x0.33)' },
   },
   gpt_6_astra = {
     id = 'gpt-6-astra',
@@ -147,7 +138,6 @@ M.models = {
     id = 'gpt-5.5',
     aliases = { 'gpt5.5' },
     display = 'GPT-5.5',
-    adapter_display = { copilot = 'GPT-5.5 (x7.5)' },
   },
   gpt_5_4 = {
     id = 'gpt-5.4',
@@ -178,67 +168,56 @@ M.models = {
     id = 'gpt-5.2',
     aliases = { 'gpt5.2' },
     display = 'GPT-5.2',
-    adapter_display = { copilot = 'GPT-5.2 (x1)' },
   },
   gpt_5_1 = {
     id = 'gpt-5.1',
     aliases = { 'gpt5.1' },
     display = 'GPT-5.1',
-    adapter_display = { copilot = 'GPT-5.1 (x1)' },
   },
   gpt_5_1_codex_max = {
     id = 'gpt-5.1-codex-max',
     aliases = { 'gpt5.1cM' },
     display = 'GPT-5.1cM',
-    adapter_display = { copilot = 'GPT-5.1cM (x1)' },
   },
   gpt_5_1_codex = {
     id = 'gpt-5.1-codex',
     aliases = { 'gpt5.1c' },
     display = 'GPT-5.1c',
-    adapter_display = { copilot = 'GPT-5.1c (x1)' },
   },
   gpt_5_mini = {
     id = 'gpt-5-mini',
     aliases = { 'gpt5m' },
     display = 'GPT-5m',
-    adapter_display = { copilot = 'GPT-5m (∞)' },
   },
   gpt_4_1 = {
     id = 'gpt-4.1',
     aliases = { 'gpt4.1' },
     display = 'GPT-4.1',
-    adapter_display = { copilot = 'GPT-4.1 (∞)' },
   },
   gpt_4o = {
     id = 'gpt-4o',
     aliases = { 'gpt4o' },
     display = 'GPT-4o',
-    adapter_display = { copilot = 'GPT-4o (∞)' },
   },
   gemini_3_1_pro = {
     id = 'gemini-3.1-pro-preview',
     aliases = { 'gem3.1' },
     display = 'gemini-3.1p',
-    adapter_display = { copilot = 'gemini-3.1p (x1)' },
   },
   gemini_3_flash = {
     id = 'gemini-3-flash-preview',
     aliases = { 'gem3' },
     display = 'gemini-3f',
-    adapter_display = { copilot = 'gemini-3f (x0.33)' },
   },
   gemini_2_5_pro = {
     id = 'gemini-2.5-pro',
     aliases = { 'gem2.5' },
     display = 'gemini-2.5p',
-    adapter_display = { copilot = 'gemini-2.5p (x1)' },
   },
   grok_code_fast_1 = {
     id = 'grok-code-fast-1',
     aliases = { 'grok1' },
     display = 'grok-fast-1',
-    adapter_display = { copilot = 'grok-fast-1 (x0.25)' },
   },
 }
 
@@ -296,14 +275,13 @@ function M.adapter_model_cycle(adapter)
   return cycle
 end
 
-function M.lualine_model_name(model, adapter)
+function M.lualine_model_name(model)
   local entry = model_lookup[model]
   if not entry then
     return model
   end
 
-  local adapter_display = entry.adapter_display or {}
-  return adapter_display[adapter] or entry.display or entry.id
+  return entry.display or entry.id
 end
 
 return M

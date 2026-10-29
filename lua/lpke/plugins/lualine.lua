@@ -19,6 +19,8 @@ local modes = {
 }
 
 local function config()
+  -- Lualine's own loader bypasses package.preload unless the module is cached.
+  require('lualine.utils.fn_store')
   local lualine = require('lualine')
   local tc = Lpke_theme_colors
   local llm_spinner = require('lpke.plugins.ai.helpers.lualine_spinner')
@@ -274,38 +276,6 @@ local function config()
 
   local llm_panel_bg = tc.overlaybump
 
-  local llm_yolo_status = {
-    function()
-      local bufnr = vim.api.nvim_get_current_buf()
-      local approvals =
-        require('codecompanion.interactions.chat.tools.approvals')
-      if approvals:is_approved(bufnr) then
-        return 'Y'
-      else
-        return 'A'
-      end
-    end,
-    cond = function()
-      if vim.bo.filetype ~= 'codecompanion' then
-        return false
-      end
-
-      local chat = require('codecompanion').buf_get_chat(0)
-      return chat and chat.adapter and chat.adapter.type == 'http'
-    end,
-    padding = { left = 0, right = 1 },
-    color = function()
-      local bufnr = vim.api.nvim_get_current_buf()
-      local approvals =
-        require('codecompanion.interactions.chat.tools.approvals')
-      if approvals:is_approved(bufnr) then
-        return { bg = llm_panel_bg, fg = tc.growthminus }
-      else
-        return { bg = llm_panel_bg, fg = tc.muted }
-      end
-    end,
-  }
-
   local function llm_codex_mode_is_full()
     local mode = model_swap.get_cur_acp_mode(0)
     return mode and mode:lower():find('full', 1, true) ~= nil
@@ -315,7 +285,7 @@ local function config()
     function()
       local mode = model_swap.get_cur_acp_mode(0)
       if not mode then
-        return nil
+        return ''
       end
 
       local mode_lower = mode:lower()
@@ -350,7 +320,7 @@ local function config()
     function()
       local adapter = model_swap.get_cur_adapter(0)
       if not adapter then
-        return nil
+        return ''
       end
 
       return ai_config.adapter_display_name(adapter) .. ':'
@@ -380,15 +350,12 @@ local function config()
 
   local llm_model = {
     function()
-      local bufnr = vim.api.nvim_get_current_buf()
-      local chat = require('codecompanion').buf_get_chat(bufnr)
-      if not chat then
-        return nil
+      local model = model_swap.get_cur_model(0)
+      if type(model) ~= 'string' then
+        return ''
       end
-      local model = model_swap.get_cur_model(bufnr)
-      local display =
-        ai_config.lualine_model_name(model, chat.adapter and chat.adapter.name)
-      return display
+      local display = ai_config.lualine_model_name(model)
+      return display or ''
     end,
     cond = function()
       return vim.bo.filetype == 'codecompanion'
@@ -402,7 +369,7 @@ local function config()
       local bufnr = vim.api.nvim_get_current_buf()
       local reasoning =
         acp_session_options.get_current_value('reasoning', bufnr)
-      return reasoning and reasoning:lower() or nil
+      return reasoning and reasoning:lower() or ''
     end,
     cond = function()
       return vim.bo.filetype == 'codecompanion'
@@ -619,7 +586,6 @@ local function config()
         git_components[1],
         git_components[2],
         -- codecompanion details
-        llm_yolo_status,
         llm_codex_mode_status,
         llm_adapter,
         llm_model,
@@ -760,7 +726,7 @@ end
 
 return {
   'nvim-lualine/lualine.nvim',
-  commit = 'a94fc68960665e54408fe37dcf573193c4ce82c9',
+  commit = '14c70b0e1e482805b12429f2c2c81369bbb649d0',
   lazy = false,
   priority = 800,
   config = config,

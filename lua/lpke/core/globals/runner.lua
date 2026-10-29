@@ -355,7 +355,7 @@ function Lpke_run_buf()
     -- Store buffer reference and set up cleanup autocmd
     Lpke_run_buf_output_buf = output_buf
     vim.api.nvim_create_autocmd('BufWipeout', {
-      buffer = output_buf,
+      buf = output_buf,
       once = true,
       callback = function()
         Lpke_run_buf_output_buf = nil

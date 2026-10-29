@@ -54,7 +54,7 @@ Statusline hints:
   R toggles render-markdown for supported buffers.
   Git diff counts open a Fugitive diff against staging when clicked.
   Branch opens a Fugitive diff against HEAD when clicked.
-  CodeCompanion buffers show chat position, adapter, model, mode/approval, and
+  CodeCompanion buffers show chat position, adapter, model, Codex mode, and
   ACP reasoning effort.
 
 Tabline:
@@ -448,17 +448,19 @@ are handled by the optional local integration, including ownership checks.
 ==============================================================================
 
 Opening chats:
-  <F2>f / <A-f>         Toggle CodeCompanion sidebar chat with HTTP tools.
+  <F2>f / <A-f>         Toggle CodeCompanion sidebar chat.
   <F2>F / <A-F>         Open fullscreen chat tab.
   Visual <F2>f/<A-f>    Toggle chat and include selection/context.
   Visual <F2>F/<A-F>    Fullscreen chat with selection/context.
   <C-l>                 Inline CodeCompanion prompt with context.
+                        Buffer context is supplied automatically. Visual mode
+                        limits edits to the selected range.
 
 Chat buffer keys:
   g?                    Show CodeCompanion help. LPKE custom keymaps are at
                         the bottom under LPKE Custom CodeCompanion Help.
-  <CR> or <C-s>         Send. After submit, the submitted prompt is scrolled to
-                        the top of visible chat windows.
+  <CR> or <C-s>         Send and return to normal mode. After submit, the prompt
+                        is scrolled to the top of visible chat windows.
   <C-c>                 Close chat; another open chat is shown if present.
   <leader>Q             Stop request.
   gr                    Regenerate.
@@ -466,9 +468,7 @@ Chat buffer keys:
   gp / gw               Toggle buffer sync all / diff.
   g. / g,               Next/previous open chat.
   gl                    Chat picker.
-  ga                    Change adapter.
-  gs                    Toggle system prompt.
-  gta / gtx             Toggle/clear chat approvals.
+  ga                    Choose adapter and model.
   go                    Toggle older chat in a read-only history window.
                         Long chats automatically move complete older turns out
                         of the live buffer when idle. At least the latest 300
@@ -505,8 +505,8 @@ Chat buffer keys:
                         this Neovim session and parent thread. s changes source.
   gX                    Close current chat without deleting saved history.
 
-Models/adapters:
-  Automatic CodeCompanion rule loading is disabled for all chat adapters.
+Models:
+  Automatic CodeCompanion rule loading is disabled for chats.
   Default chat is Codex ACP with GPT-6.1 Sol and high reasoning on all devices.
   Inline/cmd generation uses Copilot. Chat titles use Codex GPT-5.6 Luna with
   low reasoning, once from the first typed prompt, without chat context or rules.
@@ -516,15 +516,18 @@ Models/adapters:
   <leader>m             Cycle configured models for current adapter.
                         Codex: GPT-6.1 Sol -> GPT-6 Astra -> GPT-5.6 Sol.
                         Work devices: GPT-5.6 Luna -> GPT-6.1 Sol.
+                        Copilot: Sonnet 4.6 -> GPT-5 mini.
   <leader>M             Cycle Codex/Copilot adapters.
+                        After reasoning or tool calls, start a new chat to
+                        change adapters. Model changes still work in that chat.
   <leader>r             Codex ACP reasoning effort picker.
   <leader>a             Codex ACP approval preset picker.
-  :Model <model> [...]  Set or cycle aliases such as son, opus, gpt, astra,
-                        sol, terra, luna, gem, or exact model IDs.
+  :Model <model> [...]  Set or cycle son, opus, gpt, astra, sol, terra,
+                        luna, gem, or exact model IDs.
                         gpt/astra select GPT-6 Astra; sol selects GPT-6.1 Sol.
                         gpt5.6s selects GPT-5.6 Sol; terra/luna select the
                         corresponding GPT-5.6 model.
-  :Adapter codex|copilot sets or cycles adapter.
+  :Adapter codex|copilot sets or cycles adapters.
   :CodexAgents [current|local|mbp] opens the live read-only subagent dashboard
   for current descendants, all local agents, or Mac agents over ssh mbp.
   With no argument, choose a source. r refreshes either view. q closes the
@@ -559,28 +562,24 @@ Scheduled prompts:                                          *lpke-send-in*
   Timers are local to this Neovim process and do not survive exit/restart.
   Queued times, cancellations and results remain in :messages.
 
-Context/tools inside chats:
+Context inside chats:
   <leader>I             Save clipboard image and insert its absolute path after
                         the cursor. Sends the path as ordinary text without an
                         attachment. The agent needs an image-viewing tool to
                         inspect the file.
                         Images save to stdpath('data')/img-clip-pasted-images.
                         First paste warns if that directory is over 2 GB.
-  <F2>a / <A-a>         Insert @{agent} for HTTP chats.
-  <F2>A / <A-A>         Insert agent + web tools.
-  <F2>S / <A-S>         Insert web tools only.
   <F2>b / <A-b>         Insert absolute path for last source buffer/Oil dir.
   <F2>d / <A-d>         Insert #{diagnostics}.
   <F2>B / <A-B>         Insert #{buffers}.
 
 Custom slash commands:
-  /caveman              Toggle terse response mode for HTTP adapters.
   /path                 Insert absolute file or directory path. Searches home
                         by default; <F2>s toggles file/directory and <F2>r
                         toggles home/whole-filesystem scope (Alt also works).
-  /git_files            Add git file list context, not file contents.
+  /git_files_list       Add git file list context, not file contents.
   /external_files       Share external directory for tools that need abs paths.
-  /git_commits          Add recent git commit messages/metadata.
+  /git_commit_logs      Add recent git commit messages/metadata.
   /git_commit_history   Add diffs for recent commits.
   /git_file_history     Add diffs for one file going back N versions.
 

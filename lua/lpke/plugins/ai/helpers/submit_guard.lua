@@ -29,6 +29,20 @@ local function is_codex_acp(chat)
     and chat.adapter.name == 'codex'
 end
 
+local function prevent_preparing(chat)
+  if not is_codex_acp(chat) then
+    return
+  end
+  local lifecycle = require('lpke.plugins.ai.helpers.acp_lifecycle')
+  if lifecycle.is_preparing(chat) then
+    if not chat._lpke_session_preparing then
+      lifecycle.ensure_chat_connection(chat)
+    end
+    notify('ACP session is not ready; your draft has been kept')
+    return false
+  end
+end
+
 local function prevent_empty(chat)
   if has_prompt(chat) then
     return
@@ -57,11 +71,25 @@ function M.attach(chat)
       return
     end
 
+    if prevent_preparing(current_chat) == false then
+      return false
+    end
     return prevent_empty(current_chat)
   end)
 end
 
 function M.setup()
+  local Chat = require('codecompanion.interactions.chat')
+  if not Chat._lpke_ready_guard then
+    local submit = Chat.submit
+    Chat.submit = function(chat, ...)
+      if prevent_preparing(chat) == false then
+        return
+      end
+      return submit(chat, ...)
+    end
+    Chat._lpke_ready_guard = true
+  end
   vim.api.nvim_create_autocmd('User', {
     pattern = 'CodeCompanionChatCreated',
     group = vim.api.nvim_create_augroup('LpkeCodeCompanionSubmitGuard', {
@@ -78,9 +106,9 @@ function M.setup()
   })
 end
 
-function M.wrap_acp_form_messages(form_messages)
-  return function(adapter, messages, capabilities)
-    local prompt = form_messages(adapter, messages, capabilities)
+function M.wrap_acp_build_messages(build_messages)
+  return function(adapter, args)
+    local prompt = build_messages(adapter, args)
     if type(prompt) == 'table' and not vim.tbl_isempty(prompt) then
       return prompt
     end

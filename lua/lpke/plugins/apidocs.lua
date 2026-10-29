@@ -1,32 +1,8 @@
 local function config()
   local apidocs = require('lpke.local_plugins_src.apidocs.api')
-  local apidocs_common = require('lpke.local_plugins_src.apidocs.common')
   local apidocs_telescope = require('lpke.local_plugins_src.apidocs.telescope')
   local next_open_default_text = nil
   local next_search_default_text = nil
-
-  local function with_keymap_buf_alias(fn)
-    return function(...)
-      local original_keymap_set = vim.keymap.set
-
-      rawset(vim.keymap, 'set', function(mode, lhs, rhs, opts)
-        if opts and opts.buf ~= nil and opts.buffer == nil then
-          opts = vim.tbl_extend('force', {}, opts, { buffer = opts.buf })
-          opts.buf = nil
-        end
-
-        return original_keymap_set(mode, lhs, rhs, opts)
-      end)
-
-      local ok, result = pcall(fn, ...)
-      rawset(vim.keymap, 'set', original_keymap_set)
-
-      if not ok then
-        error(result, 2)
-      end
-      return result
-    end
-  end
 
   local function with_telescope_insert_mode(fn)
     return function(...)
@@ -107,17 +83,10 @@ local function config()
     end
   end
 
-  apidocs_telescope.apidocs_open = with_telescope_insert_mode(
-    with_keymap_buf_alias(apidocs_telescope.apidocs_open)
-  )
-  apidocs_telescope.apidocs_search = with_telescope_insert_mode(
-    with_keymap_buf_alias(apidocs_telescope.apidocs_search)
-  )
-  apidocs_common.open_doc_in_cur_window =
-    with_keymap_buf_alias(apidocs_common.open_doc_in_cur_window)
-  apidocs_common.open_doc_in_new_window =
-    with_keymap_buf_alias(apidocs_common.open_doc_in_new_window)
-
+  apidocs_telescope.apidocs_open =
+    with_telescope_insert_mode(apidocs_telescope.apidocs_open)
+  apidocs_telescope.apidocs_search =
+    with_telescope_insert_mode(apidocs_telescope.apidocs_search)
   apidocs.setup({
     picker = 'telescope',
     follow_link_keymap = 'gd',
@@ -142,7 +111,7 @@ local function init()
         'gd',
         require('lpke.local_plugins_src.apidocs.common').follow_reference_under_cursor,
         {
-          buffer = event.buf,
+          buf = event.buf,
           desc = 'API docs: Open URL or follow reference',
         },
       },
@@ -152,7 +121,7 @@ local function init()
         function()
           require('lpke.local_plugins_src.apidocs.common').open_doc_url(path)
         end,
-        { buffer = event.buf, desc = 'API docs: Open original source page' },
+        { buf = event.buf, desc = 'API docs: Open original source page' },
       },
       {
         'n',
@@ -162,7 +131,7 @@ local function init()
             path
           )
         end,
-        { buffer = event.buf, desc = 'API docs: Open DevDocs page' },
+        { buf = event.buf, desc = 'API docs: Open DevDocs page' },
       },
     })
   end

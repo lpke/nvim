@@ -30,7 +30,7 @@ local function ensure_dir()
 end
 
 local function epoch_ms()
-  local sec, usec = (vim.uv or vim.loop).gettimeofday()
+  local sec, usec = vim.uv.gettimeofday()
   return sec * 1000 + math.floor(usec / 1000)
 end
 

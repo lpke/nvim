@@ -1,18 +1,10 @@
 local M = {}
+local registry = require('lpke.plugins.ai.helpers.chat_registry')
 
 local patched = false
 
 local function is_acp_chat(chat)
   return chat and chat.adapter and chat.adapter.type == 'acp'
-end
-
-local function session_id_from_chat(chat)
-  return chat
-    and (
-      (chat.acp_connection and chat.acp_connection.session_id)
-      or chat.acp_session_id
-      or (chat.opts and chat.opts.acp_session_id)
-    )
 end
 
 function M.short_session_id(session_id)
@@ -40,21 +32,6 @@ function M.format_session_kind(session_id, kind)
   return '[' .. kind .. ']'
 end
 
-local function open_chats()
-  local ok, codecompanion = pcall(require, 'codecompanion')
-  if not ok or type(codecompanion.buf_get_chat) ~= 'function' then
-    return {}
-  end
-
-  local chats = {}
-  for _, item in ipairs(codecompanion.buf_get_chat() or {}) do
-    if item.chat then
-      table.insert(chats, item.chat)
-    end
-  end
-  return chats
-end
-
 local function open_chat(chat)
   if not (chat and chat.ui and type(chat.ui.open) == 'function') then
     return false
@@ -79,36 +56,12 @@ local function open_chat(chat)
   return ok
 end
 
-local function find_open_chat_by_save_id(save_id)
-  if type(save_id) ~= 'string' or save_id == '' then
-    return nil
-  end
-
-  for _, chat in ipairs(open_chats()) do
-    if chat.opts and chat.opts.save_id == save_id then
-      return chat
-    end
-  end
-end
-
-local function find_open_chat_by_session_id(session_id)
-  if type(session_id) ~= 'string' or session_id == '' then
-    return nil
-  end
-
-  for _, chat in ipairs(open_chats()) do
-    if is_acp_chat(chat) and session_id_from_chat(chat) == session_id then
-      return chat
-    end
-  end
-end
-
 local function remember_chat_session(chat)
   if not is_acp_chat(chat) then
     return nil
   end
 
-  local session_id = session_id_from_chat(chat)
+  local session_id = registry.session_id(chat)
   if not session_id then
     return nil
   end
@@ -131,7 +84,7 @@ local function enrich_chat_data(chat_data)
     return chat_data
   end
 
-  local chat = find_open_chat_by_save_id(chat_data.save_id)
+  local chat = registry.find_save(chat_data.save_id)
   local session_id = remember_chat_session(chat)
   if session_id then
     chat_data.acp_session_id = session_id
@@ -404,7 +357,7 @@ local function compact_acp_session_index(storage, target_session_id)
 end
 
 local function save_open_acp_chats()
-  for _, chat in ipairs(open_chats()) do
+  for _, chat in ipairs(registry.list()) do
     save_acp_chat(chat)
   end
 end
@@ -422,119 +375,61 @@ local function with_session_marker(title, session_id)
   return marker .. ' ' .. title
 end
 
-local function set_chat_session(chat, session_id)
-  if not chat or type(session_id) ~= 'string' or session_id == '' then
-    return
-  end
-
-  chat.acp_session_id = session_id
-  chat.opts = chat.opts or {}
-  chat.opts.acp_session_id = session_id
-end
-
 function M.resume_session_into_chat(chat, session, opts)
   opts = opts or {}
-  local restore_context = opts.restore_context
   local session_id = type(session) == 'table' and session.sessionId or session
 
   if type(session_id) ~= 'string' or session_id == '' then
     return false, 'Missing ACP session ID'
   end
-
   if not is_acp_chat(chat) then
     return false, 'Selected chat is not using an ACP adapter'
   end
 
-  local conn = chat.acp_connection
-  if
-    not conn
-    or not conn.can_load_session
-    or not conn:can_load_session()
-    or not conn.load_session
-  then
-    return false, 'ACP adapter cannot load sessions'
-  end
-
+  local lifecycle = require('lpke.plugins.ai.helpers.acp_lifecycle')
   local updates = {}
-  local load_opts = {
+  local loaded, err = lifecycle.load_session(chat, session_id, {
     on_session_update = function(update)
       table.insert(updates, update)
     end,
-  }
-  local ok_lifecycle, lifecycle =
-    pcall(require, 'lpke.plugins.ai.helpers.acp_lifecycle')
-  local ok, loaded, load_error
-  if ok_lifecycle and type(lifecycle.load_session) == 'function' then
-    ok, loaded, load_error =
-      pcall(lifecycle.load_session, chat, session_id, load_opts)
-  else
-    ok, loaded, load_error =
-      pcall(conn.load_session, conn, session_id, load_opts)
-  end
+    after_load = function()
+      require('codecompanion.interactions.chat.acp.commands').link_buffer_to_session(
+        chat.bufnr,
+        session_id
+      )
+      require('lpke.plugins.ai.helpers.chat_replay').restore(chat, updates)
+      chat._lpke_acp_session_restored = session_id
+      chat._lpke_restore_acp_session_updates = nil
 
-  if not ok then
-    return false, loaded
-  end
-
-  if not loaded then
-    return false, load_error or 'Failed to load ACP session'
-  end
-
-  if conn.session_id ~= session_id then
-    return false, 'Failed to load ACP session'
-  end
-
-  require('codecompanion.interactions.chat.acp.commands').link_buffer_to_session(
-    chat.bufnr,
-    conn.session_id
-  )
-
-  require('codecompanion.interactions.chat.acp.render').restore_session(
-    chat,
-    updates
-  )
-  chat._lpke_acp_session_restored = session_id
-  chat._lpke_restore_acp_session_updates = nil
-
-  local title = type(session) == 'table' and session.title or opts.title
-  if type(title) == 'string' and title ~= '' then
-    chat:set_title(title)
-    chat.opts = chat.opts or {}
-    chat.opts.title = title
-  end
-
-  if ok_lifecycle and lifecycle.remember_session then
-    lifecycle.remember_session(chat)
-  else
-    set_chat_session(chat, session_id)
-  end
-
-  local ok_scope, history_scope =
-    pcall(require, 'lpke.plugins.ai.helpers.history_scope')
-  if ok_scope and type(history_scope.restore_saved_title) == 'function' then
-    history_scope.restore_saved_title(chat)
-  end
-
-  vim.api.nvim_exec_autocmds('User', {
-    pattern = 'CodeCompanionACPChatRestored',
-    data = {
-      bufnr = chat.bufnr,
-      id = chat.id,
-      session_id = conn.session_id,
-      title = chat.title,
-    },
+      local title = type(session) == 'table' and session.title or opts.title
+      if type(title) == 'string' and title ~= '' then
+        chat:set_title(title)
+        chat.opts = chat.opts or {}
+        chat.opts.title = title
+      end
+      lifecycle.remember_session(chat)
+      require('lpke.plugins.ai.helpers.history_scope').restore_saved_title(chat)
+      vim.api.nvim_exec_autocmds('User', {
+        pattern = 'CodeCompanionACPChatRestored',
+        data = {
+          bufnr = chat.bufnr,
+          id = chat.id,
+          session_id = session_id,
+          title = chat.title,
+        },
+      })
+      require('lpke.plugins.ai.helpers.chat_functions').after_restore(
+        chat,
+        opts.restore_context
+      )
+    end,
   })
-
+  if not loaded then
+    return false, err or 'Failed to load ACP session'
+  end
   vim.notify('ACP session resumed', vim.log.levels.INFO, {
     title = 'CodeCompanion',
   })
-
-  local ok_chat_fns, chat_fns =
-    pcall(require, 'lpke.plugins.ai.helpers.chat_functions')
-  if ok_chat_fns then
-    chat_fns.after_restore(chat, restore_context)
-  end
-
   return true
 end
 
@@ -687,7 +582,7 @@ local function patch_history_ui()
         or nil
       local chat_data = self.storage and self.storage:load_chat(save_id)
       local session_id = chat_data and chat_data.acp_session_id
-      local open_chat_for_session = find_open_chat_by_session_id(session_id)
+      local open_chat_for_session = registry.find_session(session_id)
       if open_chat_for_session and open_chat(open_chat_for_session) then
         if ok_chat_fns then
           chat_fns.after_restore(open_chat_for_session, restore_context)
@@ -699,7 +594,7 @@ local function patch_history_ui()
       end
 
       self._lpke_restore_context = restore_context
-      local existing_chat = find_open_chat_by_save_id(save_id)
+      local existing_chat = registry.find_save(save_id)
       local result = original_handle_on_select(self, save_id, ...)
       local restore_applied = false
       if ok_chat_fns and existing_chat then
@@ -707,7 +602,7 @@ local function patch_history_ui()
         restore_applied = true
       end
       if not existing_chat then
-        local restored_chat = find_open_chat_by_save_id(save_id)
+        local restored_chat = registry.find_save(save_id)
         if restored_chat then
           chat_fns.after_restore(restored_chat, restore_context)
           restore_applied = true

@@ -54,8 +54,17 @@ require('codecompanion.interactions.chat.helpers').create_acp_connection = funct
   callback
 )
   chat.acp_connection = {
+    is_ready = function()
+      return true
+    end,
+    is_connected = function()
+      return true
+    end,
     session_id = 'fixture-' .. chat.bufnr,
     get_models = function()
+      return {}
+    end,
+    build_name_map = function()
       return {}
     end,
     get_config_options = function()
@@ -224,7 +233,7 @@ local interventions = {
     target.cycle = target.cycle + 1
   end,
   adapter = function(target)
-    target:change_adapter('ollama')
+    target:change_adapter({ adapter = 'ollama' })
   end,
   readonly = function(target)
     vim.bo[target.bufnr].modifiable = false

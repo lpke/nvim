@@ -1,4 +1,6 @@
 local M = {}
+local registry = require('lpke.plugins.ai.helpers.chat_registry')
+local requests = require('lpke.plugins.ai.helpers.request_state')
 
 local ai_config = require('lpke.plugins.ai.helpers.config')
 local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
@@ -16,40 +18,6 @@ end
 local function normalize_space(value)
   value = tostring(value or ''):gsub('%s+', ' ')
   return vim.trim(value)
-end
-
-local function is_codecompanion_buffer(bufnr)
-  if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
-    return false
-  end
-
-  local ok, filetype = pcall(function()
-    return vim.bo[bufnr].filetype
-  end)
-
-  return ok and filetype == 'codecompanion'
-end
-
-local function registry_entries()
-  local registry = require('codecompanion.interactions.shared.registry')
-  local entries = vim.tbl_filter(function(entry)
-    return entry.interaction == 'chat' and is_codecompanion_buffer(entry.bufnr)
-  end, registry.list())
-
-  table.sort(entries, function(a, b)
-    return a.bufnr < b.bufnr
-  end)
-
-  return entries
-end
-
-local function chat_for_buf(bufnr)
-  local ok, codecompanion = pcall(require, 'codecompanion')
-  if not ok or type(codecompanion.buf_get_chat) ~= 'function' then
-    return nil
-  end
-
-  return codecompanion.buf_get_chat(bufnr)
 end
 
 local function adapter_display(adapter)
@@ -85,20 +53,6 @@ local function chat_title(chat, entry, index)
   return title
 end
 
-local function chat_is_processing(chat)
-  if not chat then
-    return false
-  end
-
-  if chat.current_request then
-    return true
-  end
-
-  local ok, spinner = pcall(require, 'lpke.plugins.ai.helpers.chat_spinner')
-  local state = ok and spinner.buffers and spinner.buffers[chat.bufnr]
-  return state and state.processing == true
-end
-
 local function display_line(item)
   return string.format(
     '%d%s %s / %s: %s',
@@ -113,16 +67,18 @@ end
 function M.build_entries()
   local items = {}
 
-  for _, entry in ipairs(registry_entries()) do
-    local chat = chat_for_buf(entry.bufnr)
+  for _, chat in ipairs(registry.list()) do
+    local entry = require('codecompanion.interactions.shared.registry').get(
+      chat.bufnr
+    ) or {}
     if chat then
       local index = #items + 1
       local item = {
         index = index,
-        bufnr = entry.bufnr,
+        bufnr = chat.bufnr,
         chat = chat,
         registry_entry = entry,
-        processing = chat_is_processing(chat),
+        processing = requests.busy(chat),
         adapter = adapter_display(chat.adapter),
         adapter_type = adapter_type(chat.adapter),
         title = chat_title(chat, entry, index),
@@ -169,7 +125,7 @@ function M.open_selected(item, source_chat)
     notify(string.format('Chat %d/%d', item.index, #M.build_entries()))
   end
 
-  local chat = chat_for_buf(item.bufnr)
+  local chat = registry.get(item.bufnr)
   if not chat or not chat.ui then
     notify('Chat is no longer available', vim.log.levels.WARN)
     return
@@ -262,9 +218,9 @@ local function delete_items(items)
   end
 
   for _, item in ipairs(items) do
-    local chat = chat_for_buf(item.bufnr)
+    local chat = registry.get(item.bufnr)
     if chat then
-      chat_fns.delete_current_chat(chat)
+      chat_fns.delete_current_chat(chat, { hidden = true })
     end
   end
 end
@@ -294,7 +250,7 @@ function M.open(opts)
     return
   end
 
-  local source_chat = chat_for_buf(vim.api.nvim_get_current_buf())
+  local source_chat = registry.get(vim.api.nvim_get_current_buf())
 
   actions = require('telescope.actions')
   action_state = require('telescope.actions.state')

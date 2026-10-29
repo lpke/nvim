@@ -357,8 +357,8 @@ local function config()
       '--using='
         .. (
           vim.env.LPKE_NVIM_NODE_VERSION
-          and vim.env.LPKE_NVIM_NODE_VERSION:match('^v')
-          and vim.env.LPKE_NVIM_NODE_VERSION
+            and vim.env.LPKE_NVIM_NODE_VERSION:match('^v')
+            and vim.env.LPKE_NVIM_NODE_VERSION
           or 'v' .. (vim.env.LPKE_NVIM_NODE_VERSION or '24')
         ),
       'node',

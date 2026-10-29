@@ -96,6 +96,7 @@ end
 chat:ready_for_input()
 api.nvim_buf_set_lines(chat.bufnr, -1, -1, false, { 'Draft survives' })
 local original, messages = lines(chat.bufnr), vim.deepcopy(chat.messages)
+local original_header = chat.builder.state.current_header_line
 api.nvim_win_set_cursor(0, { #original, 0 })
 chat.ui.cursor.pos = { #original, 0 }
 local parser = require('codecompanion.interactions.chat.parser')
@@ -110,12 +111,22 @@ local before = vim.uv.hrtime()
 history.compact(chat)
 local elapsed = (vim.uv.hrtime() - before) / 1e6
 local remaining = lines(chat.bufnr)
-assert(#remaining >= 300 and #remaining < 650, 'Buffer did not shrink')
+assert(#remaining >= 300 and #remaining < 600, 'Buffer did not shrink')
 eq(chat.messages, messages, 'Model context changed')
 eq(parser.messages(chat, chat.header_line), draft, 'Draft parsing changed')
 eq(api.nvim_win_get_cursor(0)[1], #remaining, 'Cursor moved off draft')
 eq(chat.ui.cursor.pos[1], #remaining, 'Saved cursor was not shifted')
 local removed = #original - #remaining
+eq(
+  chat.builder.state.current_header_line,
+  original_header - removed,
+  'Builder header was not shifted'
+)
+eq(
+  lines(chat.bufnr)[chat.builder.state.current_header_line + 1],
+  '## ' .. chat.ui.roles.user,
+  'Builder header points outside draft'
+)
 eq(
   api.nvim_buf_get_extmark_by_id(chat.bufnr, marks, retained_mark, {}),
   { #remaining - 5, 0 },
@@ -229,7 +240,7 @@ key('q')
 eq(lines(chat.bufnr), streaming, 'Browsing history changed the live buffer')
 chat.current_request = nil
 chat.status = 'success'
-chat:done({ 'Final answer' })
+chat:done({ output = { 'Final answer' } })
 vim.wait(100, function()
   return false
 end)
@@ -253,7 +264,7 @@ local restored = assert(Chat.new({
 }))
 assert(
   vim.wait(200, function()
-    return api.nvim_buf_line_count(restored.bufnr) < 650
+    return api.nvim_buf_line_count(restored.bufnr) < 600
   end),
   'Restored history was not compacted'
 )
@@ -289,7 +300,7 @@ api.nvim_exec_autocmds('User', {
 })
 assert(
   vim.wait(200, function()
-    return api.nvim_buf_line_count(restored.bufnr) < 650
+    return api.nvim_buf_line_count(restored.bufnr) < 600
   end),
   'ACP replay left older history in the main buffer'
 )

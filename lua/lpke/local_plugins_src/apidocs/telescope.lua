@@ -19,8 +19,8 @@ local function telescope_attach_mappings(prompt_bufnr, map)
     end)
   end
 
-  map('i', '<cr>', open_selection, { buffer = true })
-  map('n', '<cr>', open_selection, { buffer = true })
+  map('i', '<cr>', open_selection)
+  map('n', '<cr>', open_selection)
   map('n', '<leader><CR>', function()
     local entry =
       require('telescope.actions.state').get_selected_entry(prompt_bufnr)

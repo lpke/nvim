@@ -69,7 +69,7 @@ function Lpke_toggle_messages()
 
   -- handle messages window close
   vim.api.nvim_create_autocmd('BufWipeout', {
-    buffer = Lpke_messages_buf_id,
+    buf = Lpke_messages_buf_id,
     callback = function()
       vim.schedule(function()
         -- focus previous window if possible

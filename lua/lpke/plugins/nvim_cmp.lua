@@ -12,6 +12,7 @@ local function deprio(kind)
 end
 
 local function config()
+  require('lpke.plugins.nvim_cmp.compat').setup()
   local cmp = require('cmp')
   local types = require('cmp.types')
   local luasnip = require('luasnip')

@@ -69,7 +69,7 @@ end
 -- latest exchange and the current draft, even when that exchange is large.
 local function trim_range(chat, count)
   local query = vim.treesitter.query.get('markdown', 'chat')
-  local root = chat.chat_parser:parse()[1]:root()
+  local root = chat.parsers.markdown:parse()[1]:root()
   local role = require('codecompanion.interactions.chat.helpers').format_role
   local headers = {}
   for id, node in query:iter_captures(root, chat.bufnr) do
@@ -140,10 +140,8 @@ function M.compact(chat)
     return row < first and row or math.max(first, row - removed)
   end
   for _, key in ipairs({
-    'last_write_start',
-    'last_write_end',
     'current_section_start',
-    'last_section_start',
+    'current_header_line',
   }) do
     local builder = chat.builder and chat.builder.state
     if builder and builder[key] then
@@ -260,7 +258,7 @@ function M.toggle(chat)
         end
       end)
     end,
-    { buffer = state.view, desc = 'Older chat: Search all pages' },
+    { buf = state.view, desc = 'Older chat: Search all pages' },
   }
   for key, direction in pairs({ n = 1, N = -1 }) do
     maps[#maps + 1] = {
@@ -269,7 +267,7 @@ function M.toggle(chat)
       function()
         search(direction)
       end,
-      { buffer = state.view, desc = 'Older chat: Find match' },
+      { buf = state.view, desc = 'Older chat: Find match' },
     }
   end
   for _, key in ipairs({ 'go', 'q', '<Esc>' }) do
@@ -279,7 +277,7 @@ function M.toggle(chat)
       function()
         close_view(state)
       end,
-      { buffer = state.view, desc = 'Older chat: Close' },
+      { buf = state.view, desc = 'Older chat: Close' },
     }
   end
   for key, direction in pairs({ K = -1, J = 1, ['[p'] = -1, [']p'] = 1 }) do
@@ -297,7 +295,7 @@ function M.toggle(chat)
         render_page(state)
         api.nvim_win_set_cursor(float.win, { HEADER_LINES + 1, 0 })
       end,
-      { buffer = state.view, desc = 'Older chat: Change page' },
+      { buf = state.view, desc = 'Older chat: Change page' },
     }
   end
   helpers.keymap_set_multi(maps)

@@ -1,4 +1,5 @@
 local ai_config = require('lpke.plugins.ai.helpers.config')
+local registry = require('lpke.plugins.ai.helpers.chat_registry')
 local model_swap = require('lpke.plugins.ai.helpers.model_swap')
 
 local M = {}
@@ -44,7 +45,7 @@ local function find_option(options, option_config)
 end
 
 function M.get_current_value(kind, bufnr)
-  local chat = model_swap.get_chat_ref(bufnr or 0)
+  local chat = registry.get(bufnr or 0)
   local config = chat and adapter_config(chat.adapter)
   local option_config = config and config.options and config.options[kind]
   if not option_config or not chat.acp_connection then
@@ -80,7 +81,7 @@ function M.show(kind)
     )
   end
 
-  local chat = model_swap.get_chat_ref(0)
+  local chat = registry.get(0)
   local config = chat and adapter_config(chat.adapter)
   if not config then
     return vim.notify(

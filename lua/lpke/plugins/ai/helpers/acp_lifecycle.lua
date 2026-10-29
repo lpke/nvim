@@ -1,349 +1,37 @@
 local M = {}
 
 local api = vim.api
-local uv = vim.uv
+local processes = require('lpke.plugins.ai.helpers.acp_process')
+local registry = require('lpke.plugins.ai.helpers.chat_registry')
+local chat_for_buf = registry.get
 local unpack = unpack or table.unpack
 
 local augroup = api.nvim_create_augroup('LpkeCodeCompanionACPLifecycle', {
   clear = true,
 })
 
-local tracked = {}
 local patched = false
 
 local function is_acp_chat(chat)
   return chat and chat.adapter and chat.adapter.type == 'acp'
 end
 
-local function read_file(path)
-  local fd = uv.fs_open(path, 'r', 438)
-  if not fd then
-    return nil
-  end
-
-  local stat = uv.fs_fstat(fd)
-  if not stat then
-    uv.fs_close(fd)
-    return nil
-  end
-
-  local size = stat.size > 0 and stat.size or 65536
-  local data = uv.fs_read(fd, size, 0)
-  uv.fs_close(fd)
-  return data
-end
-
-local function proc_stat(pid)
-  return read_file('/proc/' .. pid .. '/stat')
-end
-
-local function proc_cmdline(pid)
-  local cmdline = read_file('/proc/' .. pid .. '/cmdline')
-  if not cmdline or cmdline == '' then
-    return nil
-  end
-  return (cmdline:gsub('%z', ' '):gsub('%s+$', ''))
-end
-
-local function proc_start_time(pid)
-  local stat = proc_stat(pid)
-  if not stat then
-    return nil
-  end
-
-  local fields = vim.split(stat:match('^%d+ %b() (.*)$') or '', '%s+', {
-    trimempty = true,
-  })
-  return fields[20]
-end
-
-local function proc_ppid(pid)
-  local stat = proc_stat(pid)
-  if not stat then
-    return nil
-  end
-
-  local fields = vim.split(stat:match('^%d+ %b() (.*)$') or '', '%s+', {
-    trimempty = true,
-  })
-  return tonumber(fields[2])
-end
-
-local function proc_cwd(pid)
-  local ok, cwd = pcall(uv.fs_readlink, '/proc/' .. pid .. '/cwd')
-  return ok and cwd or nil
-end
-
-local function proc_fd_targets(pid)
-  local targets = {}
-  for _, fd in ipairs({ 0, 1, 2 }) do
-    local ok, target = pcall(uv.fs_readlink, '/proc/' .. pid .. '/fd/' .. fd)
-    if ok and target then
-      targets[fd] = target
-    end
-  end
-  return targets
-end
-
-local function handle_pid(handle)
-  if type(handle) ~= 'table' then
-    return nil
-  end
-
-  local ok, pid = pcall(function()
-    return handle.pid
-  end)
-  if ok and type(pid) == 'number' then
-    return pid
-  end
-  return nil
-end
-
-local function connection_handle(conn)
-  return conn and conn._state and conn._state.handle
-end
-
-local function connection_pid(conn)
-  return handle_pid(connection_handle(conn))
-end
-
-local function is_codex_acp_cmd(cmdline)
-  return type(cmdline) == 'string' and cmdline:find('codex%-acp') ~= nil
-end
-
-local function is_native_codex_acp_cmd(cmdline)
-  return is_codex_acp_cmd(cmdline)
-    and cmdline:find('node%s+') == nil
-    and cmdline:find('/bin/codex%-acp') ~= nil
-end
-
-local function proc_entry(pid)
-  local cmdline = proc_cmdline(pid)
-  if not is_codex_acp_cmd(cmdline) then
-    return nil
-  end
-
-  return {
-    cmdline = cmdline,
-    cwd = proc_cwd(pid),
-    fd_targets = proc_fd_targets(pid),
-    start_time = proc_start_time(pid),
-  }
-end
-
-local function list_proc_pids()
-  local pids = {}
-  local dir = uv.fs_scandir('/proc')
-  if not dir then
-    return pids
-  end
-
-  while true do
-    local name, typ = uv.fs_scandir_next(dir)
-    if not name then
-      break
-    end
-    if typ == 'directory' and name:match('^%d+$') then
-      table.insert(pids, tonumber(name))
-    end
-  end
-  return pids
-end
-
-local function current_children_by_parent()
-  local children = {}
-  for _, pid in ipairs(list_proc_pids()) do
-    local ppid = proc_ppid(pid)
-    if ppid then
-      children[ppid] = children[ppid] or {}
-      table.insert(children[ppid], pid)
-    end
-  end
-  return children
-end
-
-local function collect_descendants(root_pid)
-  local children = current_children_by_parent()
-  local descendants = {}
-
-  local function visit(pid)
-    for _, child in ipairs(children[pid] or {}) do
-      table.insert(descendants, child)
-      visit(child)
-    end
-  end
-
-  visit(root_pid)
-  return descendants
-end
-
-local function fd_targets_overlap(a, b)
-  if not a or not b then
-    return false
-  end
-
-  for _, left in pairs(a) do
-    for _, right in pairs(b) do
-      if left == right then
-        return true
-      end
-    end
-  end
-  return false
-end
-
-local function related_codex_pids(root_pid, root_entry)
-  local related = {}
-  if not root_entry then
-    return related
-  end
-
-  for _, pid in ipairs(list_proc_pids()) do
-    if pid ~= root_pid then
-      local entry = proc_entry(pid)
-      if
-        entry and fd_targets_overlap(root_entry.fd_targets, entry.fd_targets)
-      then
-        related[pid] = entry
-      end
-    end
-  end
-
-  return related
-end
-
-local function remember_pid(root_pid, pid, entry)
-  if not entry then
-    return
-  end
-
-  tracked[root_pid] = tracked[root_pid] or {
-    children = {},
-  }
-
-  if pid == root_pid then
-    tracked[root_pid].root = entry
-  else
-    tracked[root_pid].children[pid] = entry
-  end
-end
-
-local function remember_connection(conn)
-  local root_pid = connection_pid(conn)
-  if not root_pid then
-    return nil
-  end
-
-  local root_entry = proc_entry(root_pid)
-  remember_pid(root_pid, root_pid, root_entry)
-  for _, pid in ipairs(collect_descendants(root_pid)) do
-    remember_pid(root_pid, pid, proc_entry(pid))
-  end
-  for pid, entry in pairs(related_codex_pids(root_pid, root_entry)) do
-    remember_pid(root_pid, pid, entry)
-  end
-  return root_pid
-end
-
-local function pid_matches_record(pid, record)
-  if not record then
-    return false
-  end
-
-  if record.start_time and proc_start_time(pid) ~= record.start_time then
-    return false
-  end
-
-  local cmdline = proc_cmdline(pid)
-  return is_codex_acp_cmd(cmdline)
-end
-
-local function parent_is_user_manager(pid)
-  local ppid = proc_ppid(pid)
-  if not ppid then
-    return false
-  end
-
-  local parent_cmd = proc_cmdline(ppid)
-  return type(parent_cmd) == 'string'
-    and parent_cmd:find('systemd', 1, true) ~= nil
-    and parent_cmd:find('%-%-user') ~= nil
-end
-
-local function kill_recorded_pid(pid, record, signal)
-  if not pid_matches_record(pid, record) then
-    return false
-  end
-
-  local ok = pcall(uv.kill, pid, signal)
-  return ok
-end
-
-local function kill_tracked_tree(root_pid, signal)
-  local record = tracked[root_pid]
-  if not record then
-    return
-  end
-
-  for _, pid in ipairs(collect_descendants(root_pid)) do
-    remember_pid(root_pid, pid, proc_entry(pid))
-  end
-  for pid, entry in pairs(related_codex_pids(root_pid, record.root)) do
-    remember_pid(root_pid, pid, entry)
-  end
-
-  for pid, entry in pairs(record.children or {}) do
-    kill_recorded_pid(pid, entry, signal)
-  end
-
-  kill_recorded_pid(root_pid, record.root, signal)
-end
-
-local function prune_tree(root_pid)
-  local record = tracked[root_pid]
-  if not record then
-    return
-  end
-
-  local alive = false
-  if pid_matches_record(root_pid, record.root) then
-    alive = true
-  end
-
-  for pid, entry in pairs(record.children or {}) do
-    if pid_matches_record(pid, entry) then
-      alive = true
-    else
-      record.children[pid] = nil
-    end
-  end
-
-  if not alive then
-    tracked[root_pid] = nil
-  end
-end
-
-local function saved_session_id(chat)
-  return chat
-    and (
-      (chat.acp_connection and chat.acp_connection.session_id)
-      or chat.acp_session_id
-      or (chat.opts and chat.opts.acp_session_id)
-    )
-end
+local saved_session_id = registry.session_id
 
 local function saved_cwd(chat)
   if not chat then
     return nil
   end
 
-  for _, cwd in ipairs({
+  local candidates = {
     chat.opts and chat.opts.cwd,
     chat.cwd,
     chat.project_root,
     chat.opts and chat.opts.project_root,
-  }) do
-    local stat = type(cwd) == 'string' and cwd ~= '' and uv.fs_stat(cwd)
+  }
+  for index = 1, 4 do
+    local cwd = candidates[index]
+    local stat = type(cwd) == 'string' and cwd ~= '' and vim.uv.fs_stat(cwd)
     if stat and stat.type == 'directory' then
       return cwd
     end
@@ -433,9 +121,10 @@ local function exact_load_session(conn, session_id, opts)
     conn:_apply_config_options(loaded_session.configOptions)
   end
 
-  if type(conn.apply_default_config_options) == 'function' then
-    conn:apply_default_config_options()
-  end
+  require('codecompanion.interactions.chat.acp.defaults').apply(
+    conn.adapter,
+    conn
+  )
 
   return true
 end
@@ -464,8 +153,65 @@ function M.remember_session(chat)
   return session_id
 end
 
-function M.get_session_id(chat)
-  return saved_session_id(chat)
+M.get_session_id = registry.session_id
+
+local function owns_connection(chat, conn)
+  return chat.acp_connection == conn and api.nvim_buf_is_valid(chat.bufnr)
+end
+
+local function run_session_step(chat, conn, work, serial)
+  -- A load may run on the main loop and pump callbacks while waiting for RPC.
+  -- Another explicit load in a callback cannot wait for that outer call to
+  -- unwind. Readiness consumers can still share the current transaction.
+  if serial and conn._in_flight and conn._in_flight.lpke_session_ready then
+    return false, 'ACP session is busy; wait for it to finish before resuming'
+  end
+  local failure
+  local function guarded_work()
+    if not owns_connection(chat, conn) then
+      failure = 'ACP connection changed while preparing the session'
+      return false
+    end
+    local token = {}
+    chat._lpke_session_preparing = token
+    local ok, result, err = pcall(work)
+    if chat._lpke_session_preparing == token then
+      chat._lpke_session_preparing = nil
+    end
+    if ok then
+      failure = err
+    else
+      failure = result
+    end
+    return ok and result and owns_connection(chat, conn) or false
+  end
+  local success
+  if conn._run_once then
+    success = conn:_run_once({
+      key = 'lpke_session_ready',
+      work = guarded_work,
+    })
+  else
+    success = guarded_work()
+  end
+  return success, failure
+end
+
+function M.is_preparing(chat)
+  if not is_acp_chat(chat) then
+    return false
+  end
+  if chat._lpke_session_preparing then
+    return true
+  end
+  if saved_session_id(chat) then
+    local conn = chat.acp_connection
+    if conn and type(conn.is_connected) == 'function' then
+      return not conn:is_connected()
+    end
+    return not conn or not conn.session_id
+  end
+  return false
 end
 
 function M.load_session(chat, session_id, opts)
@@ -482,13 +228,24 @@ function M.load_session(chat, session_id, opts)
     return false
   end
 
-  set_connection_cwd(chat)
-  local loaded, err = exact_load_session(conn, session_id, opts)
-  if loaded and conn.session_id == session_id then
+  opts = opts or {}
+  return run_session_step(chat, conn, function()
+    if not conn:can_load_session() then
+      return false, 'ACP adapter cannot load sessions'
+    end
+    set_connection_cwd(chat)
+    local loaded, err = exact_load_session(conn, session_id, opts)
+    if not loaded or conn.session_id ~= session_id then
+      return false, err
+    end
+    if not owns_connection(chat, conn) then
+      return false, 'ACP connection changed while loading the session'
+    end
+    if opts.after_load then
+      opts.after_load()
+    end
     return true
-  end
-
-  return false, err
+  end, true)
 end
 
 function M.track_chat(chat)
@@ -498,57 +255,16 @@ function M.track_chat(chat)
 
   set_connection_cwd(chat)
   M.remember_session(chat)
-  local conn = chat.acp_connection
-  remember_connection(conn)
-  vim.defer_fn(function()
-    remember_connection(conn)
-  end, 1000)
+  processes.observe(chat.acp_connection)
 end
 
 function M.cleanup_stale_orphans()
-  local cwd = vim.fn.getcwd()
-  local killed = 0
-
-  for _, pid in ipairs(list_proc_pids()) do
-    local cmdline = proc_cmdline(pid)
-    if
-      is_native_codex_acp_cmd(cmdline)
-      and proc_cwd(pid) == cwd
-      and parent_is_user_manager(pid)
-    then
-      local entry = proc_entry(pid)
-      if kill_recorded_pid(pid, entry, 15) then
-        killed = killed + 1
-      end
-      vim.defer_fn(function()
-        kill_recorded_pid(pid, entry, 9)
-      end, 300)
-    end
-  end
-
-  return killed
+  return processes.cleanup_orphans(vim.fn.getcwd())
 end
 
 local function disconnect_connection(conn)
-  if not conn then
-    return
-  end
-
-  local root_pid = remember_connection(conn)
-
-  if root_pid then
-    kill_tracked_tree(root_pid, 15)
-  end
-
-  pcall(function()
-    conn:disconnect()
-  end)
-
-  if root_pid then
-    vim.defer_fn(function()
-      kill_tracked_tree(root_pid, 9)
-      prune_tree(root_pid)
-    end, 300)
+  if conn then
+    pcall(conn.disconnect, conn)
   end
 end
 
@@ -560,7 +276,7 @@ function M.suspend_chat(chat, opts)
 
   local conn = chat.acp_connection
   M.remember_session(chat)
-  remember_connection(conn)
+  processes.observe(conn)
 
   if opts.stop_request and chat.current_request then
     pcall(function()
@@ -597,39 +313,8 @@ function M.suspend_chat(chat, opts)
 end
 
 function M.suspend_current_chat(opts)
-  local ok, chat_module = pcall(require, 'codecompanion.interactions.chat')
-  if not ok then
-    return false
-  end
-
-  local chat = chat_module.buf_get_chat(0)
-  if not chat then
-    return false
-  end
-
-  return M.suspend_chat(chat, opts)
-end
-
-local function open_chats()
-  local ok, codecompanion = pcall(require, 'codecompanion')
-  if not ok or type(codecompanion.buf_get_chat) ~= 'function' then
-    return {}
-  end
-
-  local chats = {}
-  for _, item in ipairs(codecompanion.buf_get_chat() or {}) do
-    if item.chat then
-      table.insert(chats, item.chat)
-    end
-  end
-  return chats
-end
-
-local function connection_root_pid(chat)
-  if not is_acp_chat(chat) or not chat.acp_connection then
-    return nil
-  end
-  return remember_connection(chat.acp_connection)
+  local chat = registry.get()
+  return chat and M.suspend_chat(chat, opts) or false
 end
 
 function M.suspend_acp_chats(current_chat, opts)
@@ -637,7 +322,7 @@ function M.suspend_acp_chats(current_chat, opts)
   local include_current = opts.include_current == true
   local keep_root_pid = nil
   if not include_current then
-    keep_root_pid = connection_root_pid(current_chat)
+    keep_root_pid = processes.pid(current_chat and current_chat.acp_connection)
   end
   local sweep_tracked_roots = include_current
     or not is_acp_chat(current_chat)
@@ -650,7 +335,7 @@ function M.suspend_acp_chats(current_chat, opts)
     skipped_tracked_roots = false,
   }
 
-  for _, chat in ipairs(open_chats()) do
+  for _, chat in ipairs(registry.list()) do
     if is_acp_chat(chat) and (include_current or chat ~= current_chat) then
       result.matched = result.matched + 1
       if M.suspend_chat(chat, opts) then
@@ -661,24 +346,10 @@ function M.suspend_acp_chats(current_chat, opts)
     end
   end
 
-  local root_pids = {}
   if sweep_tracked_roots then
-    for root_pid in pairs(tracked) do
-      if root_pid ~= keep_root_pid then
-        table.insert(root_pids, root_pid)
-      end
-    end
+    result.killed_tracked_roots = processes.stop_tracked(keep_root_pid)
   else
     result.skipped_tracked_roots = true
-  end
-
-  for _, root_pid in ipairs(root_pids) do
-    kill_tracked_tree(root_pid, 15)
-    result.killed_tracked_roots = result.killed_tracked_roots + 1
-    vim.defer_fn(function()
-      kill_tracked_tree(root_pid, 9)
-      prune_tree(root_pid)
-    end, 300)
   end
 
   return result
@@ -725,6 +396,22 @@ local function connection_has_session(conn)
   return ok and ready == true and conn.session_id ~= nil
 end
 
+local function readiness_callback(chat, conn, callback, session_required)
+  local adapter = chat.adapter
+  return function()
+    if
+      is_acp_chat(chat)
+      and chat.adapter == adapter
+      and owns_connection(chat, conn)
+      and conn:is_ready()
+      and not chat._lpke_session_preparing
+      and (not session_required or connection_has_session(conn))
+    then
+      return callback()
+    end
+  end
+end
+
 function M.ensure_chat_connection(chat, cb, opts)
   cb = cb or function() end
   opts = opts or {}
@@ -732,16 +419,26 @@ function M.ensure_chat_connection(chat, cb, opts)
     return false
   end
 
+  if not chat.acp_connection then
+    chat.acp_connection = require('codecompanion.acp').new({
+      adapter = chat.adapter,
+      chat = chat,
+    })
+  end
+  local conn = chat.acp_connection
+
   local keep_visible = opts.keep_visible and chat_is_visible(chat)
 
-  local function run_cb()
+  local run_cb = readiness_callback(chat, conn, function()
     if keep_visible and chat.ui and not chat_is_visible(chat) then
       pcall(chat.ui.open, chat.ui)
     end
     cb()
-  end
+  end, true)
 
-  if connection_has_session(chat.acp_connection) then
+  if
+    connection_has_session(chat.acp_connection) and not M.is_preparing(chat)
+  then
     set_connection_cwd(chat)
     M.track_chat(chat)
     run_cb()
@@ -764,8 +461,26 @@ function M.ensure_chat_ready(chat, cb)
     return false
   end
 
+  if not chat.acp_connection then
+    chat.acp_connection = require('codecompanion.acp').new({
+      adapter = chat.adapter,
+      chat = chat,
+    })
+  end
+  local conn = chat.acp_connection
+  local guarded_cb = readiness_callback(chat, conn, cb)
   local function run_cb()
-    cb()
+    if not owns_connection(chat, conn) then
+      return
+    end
+    if chat._lpke_session_preparing then
+      require('codecompanion.interactions.chat.helpers').create_acp_connection(
+        chat,
+        guarded_cb
+      )
+      return
+    end
+    guarded_cb()
   end
 
   if
@@ -779,11 +494,6 @@ function M.ensure_chat_ready(chat, cb)
     return true
   end
 
-  if not chat.acp_connection then
-    chat.acp_connection = require('codecompanion.acp').new({
-      adapter = chat.adapter,
-    })
-  end
   set_connection_cwd(chat)
 
   require('codecompanion.utils.async').sync(function()
@@ -836,8 +546,6 @@ local function link_buffer_to_session(chat)
   end)
 end
 
-local chat_for_buf
-
 local function guard_chat_visible(chat, ms)
   if not is_acp_chat(chat) or not chat_is_visible(chat) then
     return
@@ -873,8 +581,11 @@ local function patch_codecompanion()
   patched = true
 
   local ok_conn, Connection = pcall(require, 'codecompanion.acp')
-  if ok_conn and not Connection._lpke_tree_disconnect then
-    Connection._lpke_tree_disconnect = true
+  if ok_conn then
+    processes.patch(Connection)
+  end
+  if ok_conn and not Connection._lpke_session_context then
+    Connection._lpke_session_context = true
 
     -- Upstream discards RPC errors when resuming the waiting coroutine.
     local original_store_rpc_response = Connection.store_rpc_response
@@ -883,40 +594,6 @@ local function patch_codecompanion()
         self._lpke_session_load_error = response.error.message
       end
       return original_store_rpc_response(self, response)
-    end
-
-    local original_start = Connection.start_agent_process
-    Connection.start_agent_process = function(self, ...)
-      local ok = original_start(self, ...)
-      if ok then
-        remember_connection(self)
-        vim.defer_fn(function()
-          remember_connection(self)
-        end, 250)
-        vim.defer_fn(function()
-          remember_connection(self)
-        end, 1000)
-      end
-      return ok
-    end
-
-    local original_disconnect = Connection.disconnect
-    Connection.disconnect = function(self, ...)
-      local root_pid = remember_connection(self)
-      if root_pid then
-        kill_tracked_tree(root_pid, 15)
-      end
-
-      local _, result = pcall(original_disconnect, self, ...)
-
-      if root_pid then
-        vim.defer_fn(function()
-          kill_tracked_tree(root_pid, 9)
-          prune_tree(root_pid)
-        end, 300)
-      end
-
-      return result
     end
 
     local original_start = Connection.start_agent_process
@@ -967,7 +644,7 @@ local function patch_codecompanion()
     ACPHandler._lpke_resume_session = true
 
     local original_ensure_session = ACPHandler.ensure_session
-    ACPHandler.ensure_session = function(self, ...)
+    local function ensure_session(self, ...)
       local chat = self.chat
       local conn = chat and chat.acp_connection
       local session_id = saved_session_id(chat)
@@ -976,25 +653,30 @@ local function patch_codecompanion()
 
       if
         chat
-        and chat._lpke_acp_connection_only
         and conn
         and not conn.session_id
-        and not session_id
+        and (
+          (chat.opts and chat.opts.acp_connection_only)
+          or (chat._lpke_acp_connection_only and not session_id)
+        )
       then
         return true
       end
 
-      if
-        conn
-        and not conn.session_id
-        and session_id
-        and conn:is_ready()
-        and conn:can_load_session()
-      then
+      if conn and not conn.session_id and session_id and conn:is_ready() then
+        if not conn:can_load_session() then
+          notify_acp_session_unavailable(
+            chat,
+            'ACP agent does not support loading saved sessions'
+          )
+          return false
+        end
         local updates = {}
         local should_restore = chat._lpke_restore_acp_session_updates
             == session_id
-          or (chat.opts and chat.opts.save_id)
+          or (
+            chat.opts and (chat.opts.save_id or chat.opts.restore_acp_session)
+          )
         local load_opts = should_restore
             and {
               on_session_update = function(update)
@@ -1005,11 +687,16 @@ local function patch_codecompanion()
 
         local ok, loaded, err =
           pcall(exact_load_session, conn, session_id, load_opts)
+        if
+          chat.acp_connection ~= conn or not api.nvim_buf_is_valid(chat.bufnr)
+        then
+          return false
+        end
         if ok and loaded and conn.session_id == session_id then
           chat._lpke_acp_session_unavailable_notified = nil
           link_buffer_to_session(chat)
           if should_restore and #updates > 0 then
-            require('codecompanion.interactions.chat.acp.render').restore_session(
+            require('lpke.plugins.ai.helpers.chat_replay').restore(
               chat,
               updates
             )
@@ -1044,6 +731,9 @@ local function patch_codecompanion()
       end
 
       local ok = original_ensure_session(self, ...)
+      if chat.acp_connection ~= conn then
+        return false
+      end
       if ok then
         link_buffer_to_session(chat)
         M.track_chat(chat)
@@ -1051,12 +741,30 @@ local function patch_codecompanion()
       return ok
     end
 
+    ACPHandler.ensure_session = function(self, ...)
+      local chat = self.chat
+      local conn = chat and chat.acp_connection
+      if not conn then
+        return false
+      end
+      local args = { ... }
+      -- The native step shares one result with concurrent callers. Keep the
+      -- entire default/load/replay transaction inside it, not just session/new.
+      return run_session_step(chat, conn, function()
+        return ensure_session(self, unpack(args))
+      end)
+    end
+
     local original_ensure_connection = ACPHandler.ensure_connection
     ACPHandler.ensure_connection = function(self, ...)
       local chat = self.chat
+      if chat and not api.nvim_buf_is_valid(chat.bufnr) then
+        return false
+      end
       if is_acp_chat(chat) and not chat.acp_connection then
         chat.acp_connection = require('codecompanion.acp').new({
           adapter = chat.adapter,
+          chat = chat,
         })
       end
       set_connection_cwd(chat)
@@ -1123,16 +831,8 @@ local function patch_codecompanion()
   end
 end
 
-chat_for_buf = function(bufnr)
-  local ok, chat_module = pcall(require, 'codecompanion.interactions.chat')
-  if not ok then
-    return nil
-  end
-  return chat_module.buf_get_chat(bufnr)
-end
-
 local function scan_open_chats()
-  for _, chat in ipairs(open_chats()) do
+  for _, chat in ipairs(registry.list()) do
     if is_acp_chat(chat) then
       M.track_chat(chat)
     end
@@ -1198,12 +898,7 @@ function M.setup()
     group = augroup,
     callback = function()
       scan_open_chats()
-      for root_pid in pairs(tracked) do
-        kill_tracked_tree(root_pid, 15)
-      end
-      for root_pid in pairs(tracked) do
-        kill_tracked_tree(root_pid, 9)
-      end
+      processes.finish()
     end,
   })
 end

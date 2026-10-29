@@ -192,9 +192,7 @@ function M.setup()
 
   local original_chunk = Handler.handle_message_chunk
   Handler.handle_message_chunk = function(self, content, ...)
-    if
-      self.chat.builder.state.last_type ~= self.chat.MESSAGE_TYPES.LLM_MESSAGE
-    then
+    if self.chat.builder.state.block_type ~= 'llm' then
       self._lpke_assistant_chunks = {}
     end
     self._lpke_assistant_chunks = self._lpke_assistant_chunks or {}
@@ -205,8 +203,7 @@ function M.setup()
   local original_complete = Handler.handle_complete
   Handler.handle_complete = function(self, ...)
     -- ACP output also contains tool text. Only match when assistant text was last.
-    local content = self.chat.builder.state.last_type
-          == self.chat.MESSAGE_TYPES.LLM_MESSAGE
+    local content = self.chat.builder.state.block_type == 'llm'
         and table.concat(self._lpke_assistant_chunks or {}, '')
       or nil
     local result = original_complete(self, ...)

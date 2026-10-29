@@ -219,7 +219,7 @@ end
 local function clear_visible_unused_diagnostics(client)
   local namespace = vim.lsp.diagnostic.get_namespace(client.id)
 
-  for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(client.id)) do
+  for bufnr in pairs(client.attached_buffers) do
     local diagnostics = vim.diagnostic.get(bufnr, { namespace = namespace })
     helpers.arr_filter_inplace(diagnostics, function(diag)
       return not M.unused_diagnostic_codes_lookup[diag.code]

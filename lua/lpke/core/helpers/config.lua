@@ -101,11 +101,11 @@ function M.ft_keymap_set_multi(filetype_pattern, keymaps, cond_func)
       if type(cond_func) == 'function' and (not cond_func(bufnr)) then
         return
       end
-      -- add `buffer` option to every keymap
+      -- add `buf` option to every keymap
       for i, keymap in ipairs(keymaps) do
         local mode, lhs, rhs, opts = table.unpack(keymap)
         opts = opts or {}
-        opts.buffer = bufnr
+        opts.buf = bufnr
         keymaps[i] = { mode, lhs, rhs, opts }
       end
       M.keymap_set_multi(keymaps)

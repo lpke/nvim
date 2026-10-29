@@ -1,4 +1,5 @@
 local M = {}
+local registry = require('lpke.plugins.ai.helpers.chat_registry')
 
 local ai_config = require('lpke.plugins.ai.helpers.config')
 local chat_fns = require('lpke.plugins.ai.helpers.chat_functions')
@@ -17,10 +18,6 @@ local function is_fresh_acp_chat(chat)
     and chat.adapter.type == 'acp'
     and (chat.cycle or 1) <= 1
     and not has_sent_user_message(chat)
-end
-
-local function open_codecompanion_history()
-  chat_fns.open_history()
 end
 
 local function chat_title(chat)
@@ -87,14 +84,8 @@ local function format_session(session)
 end
 
 local function open_chats(current_chat)
-  local ok, codecompanion = pcall(require, 'codecompanion')
-  if not ok or type(codecompanion.buf_get_chat) ~= 'function' then
-    return {}
-  end
-
   local entries = {}
-  for _, item in ipairs(codecompanion.buf_get_chat() or {}) do
-    local chat = item.chat
+  for _, chat in ipairs(registry.list()) do
     if
       chat
       and chat ~= current_chat
@@ -264,28 +255,16 @@ local function open_acp_resume_chat(source_chat, cb, restore_context)
   end
 
   vim.g.lpke_cc_chat_create_notified = true
-  vim.cmd('CodeCompanionChat')
+  local chat = require('codecompanion').chat({
+    params = { adapter = ai_config.defaults.chat_adapter },
+  })
   vim.notify('ACP resume chat opened', vim.log.levels.INFO, {
     title = 'CodeCompanion',
   })
 
-  local chat = require('codecompanion.interactions.chat').buf_get_chat(0)
-  if not chat then
-    return
-  end
-
-  local adapter = ai_config.defaults.chat_adapter
-  if chat.adapter and chat.adapter.type == 'acp' then
+  if chat then
     cb(chat, restore_context)
-    return
   end
-
-  chat:change_adapter(adapter, function()
-    require('lpke.plugins.ai.helpers.chat_functions').remove_http_tool_context(
-      chat.bufnr
-    )
-    cb(chat, restore_context)
-  end)
 end
 
 local choices = {
@@ -316,7 +295,7 @@ local function handle_choice(chat, choice)
     end
     run_resume(chat, restore_context)
   elseif value == 'history' then
-    open_codecompanion_history()
+    chat_fns.open_history()
   elseif value == 'drafts' then
     require('lpke.plugins.ai.helpers.drafts').open_picker(chat)
   end

@@ -107,19 +107,19 @@ local function configure_buf(bufnr)
       'n',
       'q',
       '<cmd>close<cr>',
-      { buffer = bufnr, desc = 'Close custom help' },
+      { buf = bufnr, desc = 'Close custom help' },
     },
     {
       'n',
       '<CR>',
       jump_to_help_tag,
-      { buffer = bufnr, desc = 'Jump to help tag' },
+      { buf = bufnr, desc = 'Jump to help tag' },
     },
     {
       'n',
       'gO',
       '<cmd>help lpke-contents<cr>',
-      { buffer = bufnr, desc = 'Go to custom help contents' },
+      { buf = bufnr, desc = 'Go to custom help contents' },
     },
   })
 end

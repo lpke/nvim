@@ -1,4 +1,5 @@
 local M = {}
+local chats = require('lpke.plugins.ai.helpers.chat_registry')
 
 local trigger = require('codecompanion.triggers').mappings.slash_commands
 
@@ -35,7 +36,7 @@ function M.patch_cmp()
 
     local bufnr = item.context and item.context.bufnr
       or vim.api.nvim_get_current_buf()
-    local chat = require('codecompanion').buf_get_chat(bufnr)
+    local chat = chats.get(bufnr)
 
     require('codecompanion.interactions.chat.slash_commands').run(item, chat)
 

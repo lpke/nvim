@@ -96,6 +96,14 @@ local function config()
     )
   end
 
+  local function open_jump_diagnostic(_, bufnr)
+    vim.diagnostic.open_float({
+      bufnr = bufnr,
+      scope = 'cursor',
+      focus = false,
+    })
+  end
+
   -- stylua: ignore start
   -- keymaps
   helpers.keymap_set_multi({
@@ -133,8 +141,8 @@ local function config()
 
     -- 'l'sp navigation
     { 'nC', '<leader>l', 'Telescope diagnostics bufnr=0', { desc = 'Show buffer diagnostics' }, },
-    { 'n', '[l', function() vim.diagnostic.jump({ count = -1, float = true }) end, { square_repeat = true, desc = 'Go to previous diagnostic' }, },
-    { 'n', ']l', function() vim.diagnostic.jump({ count = 1, float = true }) end, { square_repeat = true, desc = 'Go to next diagnostic' }, },
+    { 'n', '[l', function() vim.diagnostic.jump({ count = -1, on_jump = open_jump_diagnostic }) end, { square_repeat = true, desc = 'Go to previous diagnostic' }, },
+    { 'n', ']l', function() vim.diagnostic.jump({ count = 1, on_jump = open_jump_diagnostic }) end, { square_repeat = true, desc = 'Go to next diagnostic' }, },
 
     -- jump/list related code
     { 'nC', '<leader>*', 'Telescope lsp_references', { desc = 'Show LSP references' }, },
@@ -156,7 +164,7 @@ return {
   dependencies = {
     {
       'hrsh7th/cmp-nvim-lsp',
-      commit = 'a8912b88ce488f411177fc8aed358b04dc246d7b',
+      commit = 'cbc7b02bb99fae35cb42f514762b89b5126651ef',
     }, -- completions
   },
   config = config,
