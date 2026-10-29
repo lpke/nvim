@@ -639,7 +639,8 @@ return {
     },
     {
       'nvim-treesitter/nvim-treesitter',
-      commit = '42fc28ba918343ebfd5565147a42a26580579482',
+      branch = 'main',
+      commit = 'a2f694478be07f89c2d03cc17858a8745a400c4b',
     },
     -- optionals
     {

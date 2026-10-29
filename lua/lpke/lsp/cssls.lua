@@ -122,7 +122,7 @@ return {
   end,
   on_init = function(client)
     if client.config._lpke_tailwind_css_settings then
-      client.notify('workspace/didChangeConfiguration', {
+      client:notify('workspace/didChangeConfiguration', {
         settings = client.config.settings,
       })
     end

@@ -29,6 +29,7 @@ local function config()
   -- See `:Mason` for list of installed tools and their target filetypes
   mason_tool_installer.setup({
     ensure_installed = {
+      'tree-sitter-cli', -- parser builds for nvim-treesitter on Neovim 0.12
       -- linters
       'pylint', -- python
       -- formatters

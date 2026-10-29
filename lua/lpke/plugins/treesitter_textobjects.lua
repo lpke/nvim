@@ -1,18 +1,13 @@
 local function config()
   -- options
-  require('nvim-treesitter.configs').setup({
+  require('nvim-treesitter-textobjects').setup({
     -- config
   })
 end
 
 return {
   'nvim-treesitter/nvim-treesitter-textobjects',
-  commit = '71385f191ec06ffc60e80e6b0c9a9d5daed4824c',
-  dependencies = {
-    {
-      'nvim-treesitter/nvim-treesitter-textobjects',
-      commit = '71385f191ec06ffc60e80e6b0c9a9d5daed4824c',
-    },
-  },
+  branch = 'main',
+  commit = '5c7b0263797dfd1bd6202f2b219f3b53a80b2187',
   config = config,
 }

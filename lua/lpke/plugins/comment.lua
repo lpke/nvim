@@ -1,4 +1,15 @@
 local function config()
+  local ft = require('Comment.ft')
+  local calculate = ft.calculate
+  -- Comment.nvim is frozen and assumes missing parsers throw before Nvim 0.12.
+  ft.calculate = function(ctx)
+    local ok, parser = pcall(vim.treesitter.get_parser, 0)
+    if not ok or not parser then
+      return ft.get(vim.bo.filetype, ctx.ctype)
+    end
+    return calculate(ctx)
+  end
+
   require('Comment').setup({
     padding = true, -- add a space b/w comment and the line
     sticky = true, -- whether the cursor should stay at its position

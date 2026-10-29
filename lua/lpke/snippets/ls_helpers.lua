@@ -93,6 +93,7 @@ local function has_ts_ancestor(node_type)
     local parser_ok, parser = pcall(vim.treesitter.get_parser, 0)
     if
       not parser_ok
+      or not parser
       or not pcall(parser.parse, parser, { pos[1], pos[2], pos[1], pos[2] })
     then
       return false

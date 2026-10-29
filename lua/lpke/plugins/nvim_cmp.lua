@@ -292,7 +292,7 @@ end
 
 return {
   'hrsh7th/nvim-cmp',
-  commit = 'b5311ab3ed9c846b585c0c15b7559be131ec4be9',
+  commit = '7d850f3daf38462c4760adae9cfdbd3417bbc01c',
   event = 'VeryLazy',
   dependencies = {
     {

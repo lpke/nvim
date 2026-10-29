@@ -85,7 +85,7 @@ return {
   commit = '23320e75953ac82e559c610bec5a90d9c6dfa743',
   event = 'InsertEnter',
   dependencies = {
-    { 'hrsh7th/nvim-cmp', commit = 'b5311ab3ed9c846b585c0c15b7559be131ec4be9' },
+    { 'hrsh7th/nvim-cmp', commit = '7d850f3daf38462c4760adae9cfdbd3417bbc01c' },
   },
   config = config,
 }

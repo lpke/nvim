@@ -391,13 +391,14 @@ end
 
 return {
   'stevearc/aerial.nvim',
-  commit = '5c0df1679bf7c814c924dc6646cc5291daca8363',
+  commit = 'f93dceed41e2f926074944fdf94c93c747bb7d19',
   config = config,
   -- optional dependencies
   dependencies = {
     {
       'nvim-treesitter/nvim-treesitter',
-      commit = '42fc28ba918343ebfd5565147a42a26580579482',
+      branch = 'main',
+      commit = 'a2f694478be07f89c2d03cc17858a8745a400c4b',
     },
     {
       'nvim-tree/nvim-web-devicons',

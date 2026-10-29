@@ -11,6 +11,6 @@ end
 
 return {
   'JoosepAlviste/nvim-ts-context-commentstring',
-  commit = '1b212c2eee76d787bbea6aa5e92a2b534e7b4f8f',
+  commit = '0e8937ba5a50120309eb63ea6b60387112d52115',
   config = config,
 }

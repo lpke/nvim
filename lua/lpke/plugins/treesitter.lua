@@ -1,44 +1,17 @@
 local function config()
   local helpers = require('lpke.core.helpers')
-  local ts_install = require('nvim-treesitter.install')
-  local ts_configs = require('nvim-treesitter.configs')
   local tc = Lpke_theme_colors
 
-  -- update/install parsers
-  pcall(ts_install.update({ with_sync = true }))
-  ts_install.compilers = { 'clang' }
-  helpers.clear_last_message('All parsers are up-to-date!') -- clear annoying message on startup
-
-  ts_configs.setup({
-    -- stylua: ignore start
-    ensure_installed = {
-      'vimdoc', 'vim', 'luadoc', 'lua', 'javascript', 'jsdoc', 'typescript',
-      'html', 'css', 'json', 'jsonc', 'yaml', 'graphql', 'bash', 'gitignore',
-      'gitcommit', 'gitattributes', 'git_rebase', 'git_config', 'yaml', 'toml',
-      'markdown', 'markdown_inline', 'python', 'rust', 'c', 'c_sharp', 'cpp',
-      'regex'
-    },
-    -- stylua: ignore end
-    sync_install = false, -- install parsers synchronously
-    auto_install = true, -- automatically install missing parsers when entering buffer
-    highlight = {
-      enable = true,
-      disable = {},
-
-      -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-      -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
-      -- Using this option may slow down your editor, and you may see some duplicate highlights.
-      -- Instead of true it can also be a list of languages
-      additional_vim_regex_highlighting = false,
-    },
-    indent = {
-      enable = true,
-      disable = {},
-    },
-    autopairs = {
-      enable = true,
-    },
+  -- update/install parsers, then enable highlighting and indentation
+  -- stylua: ignore start
+  require('lpke.plugins.helpers.treesitter').setup({
+    'vimdoc', 'vim', 'luadoc', 'lua', 'javascript', 'jsdoc', 'typescript',
+    'html', 'css', 'json', 'yaml', 'graphql', 'bash', 'gitignore',
+    'gitcommit', 'gitattributes', 'git_rebase', 'git_config', 'toml',
+    'markdown', 'markdown_inline', 'python', 'rust', 'c', 'c_sharp', 'cpp',
+    'regex'
   })
+  -- stylua: ignore end
 
   -- stylua: ignore start
   -- highlight customisations (top-level groups found in rose-pine config file)
@@ -119,11 +92,14 @@ end
 
 return {
   'nvim-treesitter/nvim-treesitter',
-  commit = '42fc28ba918343ebfd5565147a42a26580579482',
+  branch = 'main',
+  commit = 'a2f694478be07f89c2d03cc17858a8745a400c4b',
+  lazy = false,
   dependencies = {
     {
       'nvim-treesitter/nvim-treesitter-textobjects',
-      commit = '71385f191ec06ffc60e80e6b0c9a9d5daed4824c',
+      branch = 'main',
+      commit = '5c7b0263797dfd1bd6202f2b219f3b53a80b2187',
     },
   },
   config = config,

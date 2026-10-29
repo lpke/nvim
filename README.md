@@ -21,4 +21,4 @@ My Neovim config.
 
 ## Setup
 
-Clone to `~/.config/nvim` and start Neovim. `lazy.nvim` bootstraps itself on first launch.
+Use Neovim 0.12.6. Clone to `~/.config/nvim` and start Neovim. `lazy.nvim` bootstraps itself on first launch. Mason installs the Tree-sitter CLI; parser builds also need `clang` or a compiler selected by `CC`.

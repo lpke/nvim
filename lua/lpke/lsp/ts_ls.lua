@@ -12,7 +12,7 @@ local function set_inferred_project_compiler_options(client)
 
   -- typescript-language-server does not pass moduleDetection through
   -- implicitProjectConfiguration, so send the tsserver request directly.
-  client.request('workspace/executeCommand', {
+  client:request('workspace/executeCommand', {
     command = 'typescript.tsserverRequest',
     arguments = {
       'compilerOptionsForInferredProjects',
@@ -84,7 +84,7 @@ return {
   on_attach = function(client, _bufnr)
     -- for every buffer attach
     vim.defer_fn(function()
-      if not client.is_stopped() then
+      if not client:is_stopped() then
         set_inferred_project_compiler_options(client)
       end
     end, 500)

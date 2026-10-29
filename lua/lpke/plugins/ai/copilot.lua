@@ -94,13 +94,14 @@ end
 
 local function patch_copilot_codecompanion_title_changes()
   local client = require('copilot.client')
+  local changetracking = require('vim.lsp._changetracking')
+  local pending = {}
 
-  local function sync_document_uri(bufnr)
-    if not vim.api.nvim_buf_is_valid(bufnr) then
+  local function attached_chat_client(bufnr)
+    local filetype = vim.bo[bufnr].filetype
+    if filetype ~= 'codecompanion' and filetype ~= 'codecompanion_input' then
       return
     end
-
-    local filetype = vim.bo[bufnr].filetype
     local lsp_client = client.get()
     if
       not lsp_client
@@ -109,34 +110,28 @@ local function patch_copilot_codecompanion_title_changes()
     then
       return
     end
-
-    local new_name = vim.api.nvim_buf_get_name(bufnr)
-    local ok, old_name = pcall(
-      require('vim.lsp._changetracking')._get_and_set_name,
-      lsp_client,
-      bufnr,
-      new_name
-    )
-    if not ok then
-      lsp_client:_text_document_did_open_handler(bufnr)
-      return
-    end
-    if old_name == new_name then
-      return
-    end
-
-    lsp_client:notify('textDocument/didClose', {
-      textDocument = { uri = vim.uri_from_fname(old_name) },
-    })
-    lsp_client:notify('textDocument/didOpen', {
-      textDocument = {
-        version = vim.api.nvim_buf_get_changedtick(bufnr),
-        uri = vim.uri_from_bufnr(bufnr),
-        languageId = lsp_client.get_language_id(bufnr, filetype),
-        text = vim.lsp._buf_get_full_text(bufnr),
-      },
-    })
+    return lsp_client
   end
+
+  -- Neovim 0.12 removed _get_and_set_name. Close while the old URI is still
+  -- available, then reopen after the title changes without detaching Copilot.
+  vim.api.nvim_create_autocmd('BufFilePre', {
+    group = client.augroup,
+    callback = function(args)
+      local lsp_client = attached_chat_client(args.buf)
+      if lsp_client and not pending[args.buf] then
+        changetracking.reset_buf(lsp_client, args.buf)
+        lsp_client:_text_document_did_close_handler(args.buf)
+        pending[args.buf] = lsp_client
+      end
+    end,
+  })
+  vim.api.nvim_create_autocmd('BufWipeout', {
+    group = client.augroup,
+    callback = function(args)
+      pending[args.buf] = nil
+    end,
+  })
 
   for _, autocmd in ipairs(vim.api.nvim_get_autocmds({ event = 'BufFilePost' })) do
     if
@@ -157,7 +152,15 @@ local function patch_copilot_codecompanion_title_changes()
             or filetype == 'codecompanion_input'
           then
             vim.schedule(function()
-              sync_document_uri(args.buf)
+              local lsp_client = pending[args.buf]
+              pending[args.buf] = nil
+              if
+                lsp_client
+                and vim.api.nvim_buf_is_valid(args.buf)
+                and attached_chat_client(args.buf) == lsp_client
+              then
+                lsp_client:_text_document_did_open_handler(args.buf)
+              end
             end)
             return
           end
