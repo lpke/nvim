@@ -105,6 +105,13 @@ local function config()
   setup_submit_scroll_top()
 
   local options = {
+    rules = {
+      opts = {
+        chat = {
+          enabled = false,
+        },
+      },
+    },
     adapters = {
       http = {
         copilot = function()
@@ -656,8 +663,9 @@ return {
         filetypes = {
           codecompanion = {
             prompt_for_file_name = false,
-            template = '[Image]($FILE_PATH)',
+            template = '`$FILE_PATH`',
             use_absolute_path = true,
+            embed_image_as_base64 = false,
           },
         },
       },

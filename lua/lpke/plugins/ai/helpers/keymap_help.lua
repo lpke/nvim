@@ -72,7 +72,10 @@ local sections = {
         modes = { n = 'go' },
       },
       { description = 'Cleanup chats', modes = { n = '<leader>X' } },
-      { description = 'Paste image after cursor', modes = { n = '<leader>I' } },
+      {
+        description = 'Save clipboard image and insert its path after cursor',
+        modes = { n = '<leader>I' },
+      },
       {
         description = 'Insert agent tool',
         modes = { n = { '<A-a>', '<F2>a' }, i = { '<A-a>', '<F2>a' } },
@@ -239,6 +242,7 @@ function M.extra_lines()
     '### LPKE Custom CodeCompanion Help',
     '',
     'Terminal: `c --thread UUID [dir]` opens that Codex thread fullscreen.',
+    'Automatic rule loading is disabled for all chat adapters.',
     'All Codex ACP chats automatically retry capacity endings after 30s.',
     'Retries send only `continue` while idle with an empty draft.',
     'Timestamped notifications remain in `:messages`.',

@@ -506,6 +506,7 @@ Chat buffer keys:
   gX                    Close current chat without deleting saved history.
 
 Models/adapters:
+  Automatic CodeCompanion rule loading is disabled for all chat adapters.
   Default chat is Codex ACP with GPT-6.1 Sol and high reasoning on all devices.
   Inline/cmd generation uses Copilot. Chat titles use Codex GPT-5.6 Luna with
   low reasoning, once from the first typed prompt, without chat context or rules.
@@ -559,7 +560,10 @@ Scheduled prompts:                                          *lpke-send-in*
   Queued times, cancellations and results remain in :messages.
 
 Context/tools inside chats:
-  <leader>I             Paste image.
+  <leader>I             Save clipboard image and insert its absolute path after
+                        the cursor. Sends the path as ordinary text without an
+                        attachment. The agent needs an image-viewing tool to
+                        inspect the file.
                         Images save to stdpath('data')/img-clip-pasted-images.
                         First paste warns if that directory is over 2 GB.
   <F2>a / <A-a>         Insert @{agent} for HTTP chats.

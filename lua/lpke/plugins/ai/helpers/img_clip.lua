@@ -14,7 +14,7 @@ function M.setup_inline_paste()
   local config = require('img-clip.config')
   local insert_markup = markup.insert_markup
 
-  -- img-clip always inserts whole lines. Keep chat image links inline.
+  -- img-clip always inserts whole lines. Keep pasted chat paths inline.
   markup.insert_markup = function(input, is_file_path)
     if vim.bo.filetype ~= 'codecompanion' then
       return insert_markup(input, is_file_path)
