@@ -10,8 +10,8 @@ M.adapters = {
     display = 'Codex',
     default_model = 'gpt_6_1_sol',
     default_reasoning_effort = 'high',
-    model_cycle = Lpke_is_work_device and { 'gpt_5_6_luna', 'gpt_6_1_sol' }
-      or { 'gpt_6_1_sol', 'gpt_6_astra', 'gpt_5_6_sol' },
+    model_cycle = Lpke_is_work_device and { 'gpt_6_1_sol', 'gpt_6_luna' }
+      or { 'gpt_6_1_sol', 'gpt_6_astra', 'gpt_6_luna' },
   },
 }
 M.adapter_cycle = { 'codex', 'copilot' }
@@ -119,6 +119,11 @@ M.models = {
     aliases = { 'sol', 'gpt6.1s', 'gpt6.1' },
     display = 'GPT-6.1s',
   },
+  gpt_6_luna = {
+    id = 'gpt-6-luna',
+    aliases = { 'luna', 'gpt6l' },
+    display = 'GPT-6l',
+  },
   gpt_5_6_sol = {
     id = 'gpt-5.6-sol',
     aliases = { 'gpt5.6s', 'gpt5.6' },
@@ -131,7 +136,7 @@ M.models = {
   },
   gpt_5_6_luna = {
     id = 'gpt-5.6-luna',
-    aliases = { 'luna', 'gpt5.6l' },
+    aliases = { 'gpt5.6l' },
     display = 'GPT-5.6l',
   },
   gpt_5_5 = {

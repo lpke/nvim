@@ -429,8 +429,8 @@ Models:
   Default chat is Codex ACP with GPT-6.1 Sol and high reasoning on all devices.
   Inline prompts use Copilot. In saved history, gr renames the chat.
   <leader>m             Cycle configured models for current adapter.
-                        Codex: GPT-6.1 Sol -> GPT-6 Astra -> GPT-5.6 Sol.
-                        Work devices: GPT-5.6 Luna -> GPT-6.1 Sol.
+                        Codex: GPT-6.1 Sol -> GPT-6 Astra -> GPT-6 Luna.
+                        Work devices: GPT-6.1 Sol -> GPT-6 Luna.
                         Copilot: Sonnet 4.6 -> GPT-5 mini.
   <leader>M             Cycle Codex/Copilot adapters.
                         After reasoning or tool calls, start a new chat to
@@ -440,8 +440,8 @@ Models:
   :Model <model> [...]  Set or cycle son, opus, gpt, astra, sol, terra,
                         luna, gem, or exact model IDs.
                         gpt/astra select GPT-6 Astra; sol selects GPT-6.1 Sol.
-                        gpt5.6s selects GPT-5.6 Sol; terra/luna select the
-                        corresponding GPT-5.6 model.
+                        luna selects GPT-6 Luna; terra selects GPT-5.6 Terra.
+                        gpt5.6s/l select GPT-5.6 Sol/Luna.
   :Adapter codex|copilot sets or cycles adapters.
   :CodexAgents          Choose a source for the read-only subagent dashboard.
                         r refreshes; q closes or returns from a transcript.

@@ -47,8 +47,8 @@ local sections = {
       },
       {
         description = Lpke_is_work_device
-            and 'Cycle models: Codex 5.6 Luna / 6.1 Sol; Copilot Sonnet / GPT mini'
-          or 'Cycle models: Codex 6.1 Sol / 6 Astra / 5.6 Sol; Copilot Sonnet / GPT mini',
+            and 'Cycle models: Codex 6.1 Sol / 6 Luna; Copilot Sonnet / GPT mini'
+          or 'Cycle models: Codex 6.1 Sol / 6 Astra / 6 Luna; Copilot Sonnet / GPT mini',
         modes = { n = '<leader>m' },
       },
       {
