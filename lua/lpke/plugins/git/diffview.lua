@@ -151,6 +151,8 @@ local function config()
   end
 
   function Lpke_diffview_git_ui()
+    local startup_views = vim.env.LPKE_NVIM_DIFFVIEW_VIEWS
+      and vim.json.decode(vim.env.LPKE_NVIM_DIFFVIEW_VIEWS)
     pcall(function()
       require('auto-session').DisableAutoSave()
     end)
@@ -245,7 +247,17 @@ local function config()
 
           if target_tab and vim.api.nvim_tabpage_is_valid(target_tab) then
             vim.api.nvim_set_current_tabpage(target_tab)
-            vim.cmd('silent! tabonly')
+            if startup_views and #startup_views > 1 then
+              for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+                if not require('diffview.lib').tabpage_to_view(tab) then
+                  vim.api.nvim_set_current_tabpage(tab)
+                  vim.cmd('silent! tabclose')
+                end
+              end
+              vim.api.nvim_set_current_tabpage(target_tab)
+            else
+              vim.cmd('silent! tabonly')
+            end
             for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
               if vim.api.nvim_win_is_valid(win) then
                 map_quit(vim.api.nvim_win_get_buf(win))
@@ -256,7 +268,15 @@ local function config()
       end,
     })
 
-    if vim.env.LPKE_NVIM_DIFFVIEW_GIT_UI_MODE == 'history' then
+    if startup_views then
+      for _, view in ipairs(startup_views) do
+        if view.mode == 'history' then
+          diffview.file_history(nil, view.args)
+        else
+          diffview.open(view.args)
+        end
+      end
+    elseif vim.env.LPKE_NVIM_DIFFVIEW_GIT_UI_MODE == 'history' then
       vim.cmd('DiffviewFileHistory')
     else
       diffview_open_or_focus()
