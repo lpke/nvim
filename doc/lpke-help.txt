@@ -263,6 +263,7 @@ Tabs and buffers:
   <F2>n / <A-n>         New blank tab.
   <F2>N / <A-N>         New tab with current buffer.
   <F2><Right>/<Left>    Next/previous tab.
+  <A-Right>/<A-Left>    Next/previous tab (normal, visual, or insert mode).
   <M-S-Right>/<Left>    Move tab right/left.
   [b / ]b               Previous/next buffer.
   QQ                    Quit all.
@@ -360,7 +361,7 @@ Diffview:
   <BS>gc                Current branch history.
   <BS>gH                Start :DiffviewFileHistory with cursor for paths.
   <BS>gs                Stash history.
-  In Diffview history: <leader>I opens the entry in a diffview.
+  In Diffview history: <leader>I opens the commit or file under the cursor in a diffview.
   In Diffview: J/K or <Tab>/<S-Tab> move files.
   In Diffview: - or s stage/unstage selected file, S stage all, U unstage all.
   In Diffview: X restore entry, I intent-to-add, cc commit via Fugitive.

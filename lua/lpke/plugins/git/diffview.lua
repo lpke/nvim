@@ -246,18 +246,19 @@ local function config()
           end
 
           if target_tab and vim.api.nvim_tabpage_is_valid(target_tab) then
-            vim.api.nvim_set_current_tabpage(target_tab)
-            if startup_views and #startup_views > 1 then
-              for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-                if not require('diffview.lib').tabpage_to_view(tab) then
-                  vim.api.nvim_set_current_tabpage(tab)
-                  vim.cmd('silent! tabclose')
-                end
+            -- History loading can yield until after the first user action.
+            -- Remove startup tabs without closing a newly opened commit view.
+            local current_tab = vim.api.nvim_get_current_tabpage()
+            for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+              if not require('diffview.lib').tabpage_to_view(tab) then
+                vim.api.nvim_set_current_tabpage(tab)
+                vim.cmd('silent! tabclose')
               end
-              vim.api.nvim_set_current_tabpage(target_tab)
-            else
-              vim.cmd('silent! tabonly')
             end
+            vim.api.nvim_set_current_tabpage(
+              vim.api.nvim_tabpage_is_valid(current_tab) and current_tab
+                or target_tab
+            )
             for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
               if vim.api.nvim_win_is_valid(win) then
                 map_quit(vim.api.nvim_win_get_buf(win))
