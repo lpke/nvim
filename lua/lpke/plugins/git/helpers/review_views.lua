@@ -45,6 +45,11 @@ function M.open(specs)
         or vim.uv.cwd()
       local adapter = state_view.create_adapter(root)
       local argo = require('diffview.arg_parser').parse(spec.args or {})
+      -- Startup reviews must retain their validated scope. Native interactive
+      -- history keeps its own defaults, including its ordinary entry limit.
+      argo.flags['max-count'] = { 'false' }
+      argo.flags.n = nil
+      argo.flags['diff-merges'] = { 'first-parent' }
       local paths = state_view.literal_paths(spec, argo.args)
       local options = adapter:file_history_options(nil, paths, argo)
       if options then

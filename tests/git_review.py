@@ -360,6 +360,129 @@ vim.cmd('tabclose')
         repo.git('stash', 'push', '-qu', '-m', 'Saved fixture')
         return repo.git('rev-parse', 'refs/stash')
 
+    def test_single_file_history_ignores_unavailable_excluded_changes_and_follows_renames(self):
+        self.other_repos = []
+        for renamed in (False, True):
+            repo = Repo(self.root / ('renamed' if renamed else 'modified'))
+            self.other_repos.append(repo)
+            old, new = 'selected\t*?[x]', 'renamed\nselected*'
+            original = ['selected base'] * 20
+            repo.write(old, '\n'.join(original) + '\n')
+            repo.write('excluded', 'excluded before\n')
+            base = repo.commit()
+            if renamed:
+                repo.git('mv', '--', old, new)
+            else:
+                new = old
+            updated = original + ['selected edit']
+            repo.write(new, '\n'.join(updated) + '\n')
+            repo.write('excluded', 'excluded missing contents\n')
+            tip = repo.commit()
+            oid = repo.git('rev-parse', tip + ':excluded')
+            blob = repo.path / '.git/objects' / oid[:2] / oid[2:]
+            saved = blob.read_bytes()
+            blob.unlink()
+            try:
+                self.assertIn('1\t0\t', repo.git('diff', '--numstat', base, tip, '--', old, new))
+                spec = repo.spec('history', 'History')
+                content = dict(a=original, b=updated)
+                if renamed:
+                    content['oldpath'] = old
+                self.run_views([spec], [self.expect(spec, {new: content}, commits=[tip])],
+                               gview_args=[str(repo.path), 'history', tip + '^!', '--', new])
+            finally:
+                blob.write_bytes(saved)
+            if renamed:
+                repo.write(old, 'separate reused filename\n')
+                latest = updated + ['later selected edit']
+                repo.write(new, '\n'.join(latest) + '\n')
+                tip = repo.commit('Reuse old filename separately')
+                oid = repo.git('rev-parse', tip + ':' + old)
+                blob = repo.path / '.git/objects' / oid[:2] / oid[2:]
+                saved = blob.read_bytes()
+                blob.unlink()
+                try:
+                    self.run_views([spec], [self.expect(spec, {new: dict(a=updated, b=latest)}, commits=[tip])],
+                                   gview_args=[str(repo.path), 'history', tip + '^!', '--', new])
+                finally:
+                    blob.write_bytes(saved)
+
+    def test_single_file_merge_uses_its_first_parent_comparison(self):
+        repo = self.repo
+        repo.write('other', 'base other\n')
+        repo.commit()
+        repo.git('checkout', '-qb', 'side')
+        repo.write('file.txt', 'side\n')
+        repo.commit()
+        repo.git('checkout', '-q', 'main')
+        repo.write('other', 'main\n')
+        first_parent = repo.commit()
+        repo.git('merge', '--no-ff', '-qm', 'merge', 'side')
+        merge = repo.git('rev-parse', 'HEAD')
+        self.assertEqual(repo.git('diff', '--numstat', first_parent, merge, '--', 'file.txt'), '1\t1\tfile.txt')
+        self.assertIn(merge, repo.git('log', '--format=%H', '--follow', '--diff-merges=first-parent', merge + '^!', '--', 'file.txt'))
+        spec = repo.spec('history', 'History')
+        self.run_views([spec], [self.expect(spec, {'file.txt': dict(a=['base'], b=['side'])}, commits=[merge])],
+                       gview_args=[str(repo.path), 'history', merge + '^!', '--', 'file.txt'])
+
+    def test_explicit_ranges_include_all_257_commits_through_legacy_and_plan_routes(self):
+        import base64
+        import json
+        import socket
+        repo = self.repo
+        repo.write('file.txt', 'v0\n')
+        base = repo.commit()
+        ids, versions = [], []
+        for index in range(1, 258):
+            repo.write('file.txt', f'v{index}\n')
+            oid = repo.commit(f'Change {index}')
+            ids.append(oid)
+            version = dict(commit=oid, path='file.txt')
+            if index in (1, 257):
+                version.update(a=[f'v{index - 1}'], b=[f'v{index}'])
+            versions.insert(0, version)
+        revision = base + '..' + ids[-1]
+        self.assertEqual(repo.git('rev-list', revision).splitlines(), list(reversed(ids)))
+        spec = repo.spec('history', 'History')
+        expected = self.expect(spec, {}, commits=ids, versions=versions)
+        self.run_views([spec], [expected], gview_args=[str(repo.path), 'history', revision])
+        self.run_views([spec], [expected], gview_args=[str(repo.path), 'history', revision, '--', 'file.txt'])
+        plan = {'version': 1, 'hosts': {socket.gethostname(): {'repo': str(repo.path),
+                'views': [dict(kind='history', title='History', revisions=[revision])]}}}
+        token = base64.urlsafe_b64encode(json.dumps(plan).encode()).decode().rstrip('=')
+        self.run_views([spec], [expected], gview_args=['--plan', token])
+
+    def test_history_drains_metadata_after_the_git_process_exits(self):
+        import os
+        import shutil
+        from unittest.mock import patch
+        if not hasattr(os, 'fork'):
+            self.skipTest('delayed pipe EOF fixture requires POSIX fork')
+        binary = self.root / 'delayed-git-bin'
+        binary.mkdir()
+        actual_git = shutil.which('git')
+        marker = self.root / 'metadata-flushed'
+        wrapper = binary / 'git'
+        wrapper.write_text('#!' + sys.executable + '\n' + '''import os,subprocess,sys,time
+real = ''' + repr(actual_git) + '''
+args = sys.argv[1:]
+if 'log' in args and any('%x00' in arg for arg in args):
+    data = subprocess.check_output([real, *args])
+    if os.fork():
+        os._exit(0)
+    time.sleep(0.05)
+    os.write(1, data)
+    open(''' + repr(str(marker)) + ''', 'w').write('flushed')
+    os._exit(0)
+os.execv(real, [real, *args])
+''')
+        wrapper.chmod(0o755)
+        spec = self.repo.spec('history', 'History')
+        with patch.dict(os.environ, PATH=str(binary) + os.pathsep + os.environ['PATH']):
+            self.run_views([spec], [self.expect(spec, {'file.txt': dict(a=[''], b=['base'])}, commits=[self.base])],
+                           gview_args=[str(self.repo.path), 'history', self.base + '^!'])
+        self.assertTrue(marker.exists(), 'fixture did not delay Git output until after process exit')
+
     def stash_expected(self, spec):
         return self.expect(spec, {
             'working:file.txt': {'a': ['base'], 'b': ['saved worktree']},

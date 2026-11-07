@@ -90,7 +90,7 @@ vim.api.nvim_create_autocmd('VimEnter', {
       local actual = {}
       local sequence = {}
       if want.commits then
-        if #view.panel.entries < #want.commits then
+        if view.panel.updating or #view.panel.entries < #want.commits then
           assert(tries < 300, 'history never loaded')
           later(function()
             check_view(index)
@@ -101,12 +101,16 @@ vim.api.nvim_create_autocmd('VimEnter', {
         for _, entry in ipairs(view.panel.entries) do
           commits[#commits + 1] = entry.commit.hash
           for _, file in ipairs(entry.files) do
-            sequence[#sequence + 1] = { commit = entry.commit.hash, path = file.path }
+            sequence[#sequence + 1] =
+              { commit = entry.commit.hash, path = file.path }
             if want.versions then
               actual[tostring(#sequence)] = file
             else
-              assert(not actual[file.path],
-                'ambiguous history path; use ordered versions keyed by commit and path: ' .. file.path)
+              assert(
+                not actual[file.path],
+                'ambiguous history path; use ordered versions keyed by commit and path: '
+                  .. file.path
+              )
               actual[file.path] = file
             end
           end
@@ -125,11 +129,19 @@ vim.api.nvim_create_autocmd('VimEnter', {
             and (not view.cur_entry or not view.cur_entry.opened)
           )
         then
-          assert(tries < 300, 'diff never initialized '
-            .. index .. ': initialized=' .. tostring(view.initialized)
-            .. ', files=' .. view.files:len()
-            .. ', current=' .. tostring(view.cur_entry and view.cur_entry.path)
-            .. ', opened=' .. tostring(view.cur_entry and view.cur_entry.opened))
+          assert(
+            tries < 300,
+            'diff never initialized '
+              .. index
+              .. ': initialized='
+              .. tostring(view.initialized)
+              .. ', files='
+              .. view.files:len()
+              .. ', current='
+              .. tostring(view.cur_entry and view.cur_entry.path)
+              .. ', opened='
+              .. tostring(view.cur_entry and view.cur_entry.opened)
+          )
           later(function()
             check_view(index)
           end)
@@ -145,16 +157,23 @@ vim.api.nvim_create_autocmd('VimEnter', {
       end
       if want.versions then
         assert(want.commits, 'versions require explicit commit scope')
-        assert(vim.tbl_isempty(contents), 'use versions or legacy contents, not both')
+        assert(
+          vim.tbl_isempty(contents),
+          'use versions or legacy contents, not both'
+        )
         local wanted_sequence = {}
         for i, version in ipairs(want.versions) do
           local path = vim.base64.decode(version.path_b64)
           wanted_sequence[i] = { commit = version.commit, path = path }
           contents[tostring(i)] = version
         end
-        assert(vim.deep_equal(sequence, wanted_sequence),
-          'wrong history sequence: ' .. vim.inspect(sequence)
-            .. ' expected ' .. vim.inspect(wanted_sequence))
+        assert(
+          vim.deep_equal(sequence, wanted_sequence),
+          'wrong history sequence: '
+            .. vim.inspect(sequence)
+            .. ' expected '
+            .. vim.inspect(wanted_sequence)
+        )
       end
       assert(
         vim.tbl_count(actual) == vim.tbl_count(contents),
@@ -186,6 +205,15 @@ vim.api.nvim_create_autocmd('VimEnter', {
         local data = contents[key]
         if data.oldpath then
           assert(entry.oldpath == data.oldpath, 'wrong rename source')
+        end
+        -- Ordered metadata still checks every version in large histories; only
+        -- versions with content expectations need a buffer opened as well.
+        if
+          not want.readonly
+          and not data.binary
+          and not (data.a or data.b or data.c or data.d)
+        then
+          return check_file(file_index + 1)
         end
         local opened = false
         view:set_file(entry):finally(function()
