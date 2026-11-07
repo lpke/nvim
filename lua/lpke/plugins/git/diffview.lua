@@ -273,6 +273,8 @@ local function config()
       for _, view in ipairs(startup_views) do
         if view.mode == 'history' then
           diffview.file_history(nil, view.args)
+        elseif view.state then
+          require('lpke.plugins.git.helpers.state_view').open(view)
         else
           diffview.open(view.args)
         end

@@ -26,6 +26,15 @@ class DiffviewGitUi(unittest.TestCase):
             probe = root / 'probe.lua'
             probe.write_text('''
 vim.api.nvim_create_autocmd('VimEnter', {once=true, callback=function()
+  local function schedule(fn, delay)
+    vim.defer_fn(function()
+      local ok, err = pcall(fn)
+      if not ok then
+        io.stderr:write(tostring(err) .. '\\n')
+        vim.cmd('cquit 1')
+      end
+    end, delay)
+  end
   local attempts = 0
   local function check()
     attempts = attempts + 1
@@ -33,7 +42,7 @@ vim.api.nvim_create_autocmd('VimEnter', {once=true, callback=function()
     local history = lib.views[1]
     if not history or not history.ready or #history.panel.entries < 3 then
       assert(attempts < 100, 'history did not load')
-      vim.defer_fn(check, 50)
+      schedule(check, 50)
       return
     end
     history.panel:focus()
@@ -42,9 +51,15 @@ vim.api.nvim_create_autocmd('VimEnter', {once=true, callback=function()
       vim.api.nvim_win_set_cursor(history.panel.winid, {line, 0})
       if history.panel:get_item_at_cursor() == entry then break end
     end
-    assert(history.panel:get_item_at_cursor() == entry, 'cursor must be over commit')
+    -- History entries arrive before Diffview's throttled panel render. Only
+    -- press the shortcut once the chosen commit has an actual cursor row.
+    if history.panel:get_item_at_cursor() ~= entry then
+      assert(attempts < 100, 'selected commit row did not render')
+      schedule(check, 50)
+      return
+    end
     vim.fn.maparg('<leader>I', 'n', false, true).callback()
-    vim.defer_fn(function()
+    schedule(function()
       assert(#lib.views == 2, 'first press must retain the new diff view')
       assert(#vim.api.nvim_list_tabpages() == 2, 'both Diffview tabs must survive cleanup')
       local view = lib.get_current_view()
@@ -54,16 +69,19 @@ vim.api.nvim_create_autocmd('VimEnter', {once=true, callback=function()
       vim.cmd('qa!')
     end, 500)
   end
-  vim.defer_fn(check, 100)
+  schedule(check, 100)
 end})
 ''')
             env = dict(os.environ, LPKE_NVIM_NO_SESSION='1', LPKE_NVIM_DIFFVIEW_GIT_UI='1',
                        LPKE_NVIM_DIFFVIEW_GIT_UI_MODE='history', LPKE_TEST_COMMIT=hashes[1],
                        LPKE_TEST_PARENT=hashes[0])
             env.pop('LPKE_NVIM_DIFFVIEW_VIEWS', None)
-            result = subprocess.run(['nvim', '--headless', '-i', 'NONE', '-n', '.', '-c',
-                                     'lua dofile(' + repr(str(probe)) + ')'], cwd=root, env=env,
-                                    capture_output=True, text=True, timeout=15)
+            try:
+                result = subprocess.run(['nvim', '--headless', '-i', 'NONE', '-n', '.', '-c',
+                                         'lua dofile(' + repr(str(probe)) + ')'], cwd=root, env=env,
+                                        capture_output=True, text=True, timeout=15)
+            except subprocess.TimeoutExpired as error:
+                self.fail('Neovim timed out:\n' + (error.stderr or b'').decode(errors='replace'))
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn('DIFFVIEW_PASS', result.stdout + result.stderr)
 
