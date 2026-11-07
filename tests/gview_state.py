@@ -120,7 +120,7 @@ class GviewState(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='gview-state-')
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.repo = self.root / "repo with 'quotes' "
         self.repo.mkdir()
         self.git('init', '-q')

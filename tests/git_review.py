@@ -29,7 +29,7 @@ class GitReview(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='nvim-review-')
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.repo = Repo(self.root / "repo '雪' [x] ")
         self.repo.write('file.txt', 'base\n')
         self.base = self.repo.commit('Root')
