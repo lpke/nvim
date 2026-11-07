@@ -986,6 +986,8 @@ local function config()
       view = {
         -- The `view` bindings are active in the diff buffers, only when the current
         -- tabpage is a Diffview.
+        { 'n', '<A-w>',       toggle_diffview_wrap,                   { desc = 'Diffview: Toggle line wrap' } },
+        { 'n', '<F2>w',       toggle_diffview_wrap,                   { desc = 'Diffview: Toggle line wrap' } },
         { 'n', '<tab>',       actions.select_next_entry,              { desc = 'Diffview: Open the diff for the next file' } },
         { 'n', 'J',           actions.select_next_entry,              { desc = 'Diffview: Open the diff for the next file' } },
         { 'n', '<s-tab>',     actions.select_prev_entry,              { desc = 'Diffview: Open the diff for the previous file' } },
@@ -1102,6 +1104,8 @@ local function config()
       },
 
       file_history_panel = {
+        { 'n', '<A-w>',         toggle_diffview_wrap,                { desc = 'Diffview: Toggle line wrap' } },
+        { 'n', '<F2>w',         toggle_diffview_wrap,                { desc = 'Diffview: Toggle line wrap' } },
         { 'n', 'g!',            actions.options,                     { desc = 'Diffview: Open the option panel' } },
         { 'n', '<leader>I',     actions.open_in_diffview,            { desc = 'Diffview: Open the entry under the cursor in a diffview' } },
         { 'n', 'y',             actions.copy_hash,                   { desc = 'Diffview: Copy the commit hash of the entry under the cursor' } },

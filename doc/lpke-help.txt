@@ -364,6 +364,8 @@ Diffview:
   <BS>gH                Start :DiffviewFileHistory with cursor for paths.
   <BS>gs                Stash history.
   In Diffview history: <leader>I opens the commit or file under the cursor in a diffview.
+  <A-w> / <F2>w        Toggle wrap: history pane includes both diffs;
+                       a diff pane changes only the diff panes.
   In Diffview: J/K or <Tab>/<S-Tab> move files.
   In Diffview: - or s stage/unstage selected file, S stage all, U unstage all.
   In Diffview: X restore entry, I intent-to-add, cc commit via Fugitive.
