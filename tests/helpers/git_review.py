@@ -32,7 +32,8 @@ class Repo:
             raise AssertionError('Fixture Git root differs from its temporary worktree')
         for key, value in [('user.name', 'Review fixture'),
                            ('user.email', 'fixture@example.invalid'),
-                           ('commit.gpgsign', 'false'), ('core.hooksPath', '/dev/null')]:
+                           ('commit.gpgsign', 'false'), ('core.hooksPath', '/dev/null'),
+                           ('gc.auto', '0'), ('maintenance.auto', 'false')]:
             self.git('config', key, value)
 
     def git(self, *args, check=True):

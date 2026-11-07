@@ -463,6 +463,35 @@ vim.cmd('qa!')
             name: {'a': ['literal base'], 'b': ['literal saved']},
         }, commits=[tip])], gview_args=[str(repo.path), 'history', tip + '^!', '--', name])
 
+    def test_general_diff_retains_conflicts_with_ordinary_and_literal_paths(self):
+        repo = self.repo
+        name = 'conflict*?[x]\n.txt'
+        repo.write(name, 'base conflict\n')
+        repo.write('ordinary', 'base ordinary\n')
+        repo.commit()
+        repo.git('checkout', '-qb', 'other')
+        repo.write(name, 'theirs\n')
+        repo.commit()
+        repo.git('checkout', '-q', 'main')
+        repo.write(name, 'ours\n')
+        repo.commit()
+        repo.git('merge', 'other', check=False)
+        repo.write('ordinary', 'ordinary edit\n')
+        self.assertIn('UU ', repo.git('status', '--porcelain'))
+        conflict = {'a': ['ours'], 'b': (repo.path / name).read_text().splitlines(),
+                    'c': ['theirs'], 'd': ['base conflict']}
+        ordinary = {'a': ['base ordinary'], 'b': ['ordinary edit']}
+        general = repo.spec('diff', 'Diff')
+        self.run_views([general], [self.expect(general, {
+            'conflicting:' + name: conflict, 'working:ordinary': ordinary,
+        })], extra="assert(require('diffview.lib').views[1].files:len() == 2)",
+            gview_args=[str(repo.path), 'diff'])
+        filtered = repo.spec('diff', 'Diff', paths_b64=[b64(name)])
+        self.run_views([filtered], [self.expect(filtered, {'conflicting:' + name: conflict})],
+                       gview_args=[str(repo.path), 'diff', '--', name])
+        unstaged = repo.spec('diff', 'Unstaged', state='unstaged', paths_b64=[b64(name), b64('ordinary')])
+        self.run_views([unstaged], [self.expect(unstaged, {'working:ordinary': ordinary})])
+
     def test_raw_byte_root_and_untracked_names(self):
         import os
         import errno

@@ -309,7 +309,7 @@ function M.configure(view, spec)
       end
       local files, merge_files = {}, {}
       for _, change in ipairs(changes) do
-        if spec.state == 'conflicted' then
+        if spec.state == 'conflicted' or (not spec.state and kind == 'working' and change.status == 'U') then
           if change.status == 'U' then
             merge_files[#merge_files + 1] =
               exact_local_buffers(FileEntry.with_layout(opt.merge_layout, {
