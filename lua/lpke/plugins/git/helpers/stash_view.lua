@@ -83,37 +83,7 @@ function M.open(spec)
       files:update_file_trees()
       callback(nil, files)
     end)
-    local function readonly()
-      vim.notify('Stash review is read-only', vim.log.levels.INFO)
-      return false
-    end
-    -- Diffview's stage-all/unstage-all listeners do not guard commit views.
-    -- Protect the adapter too, including calls from the actions API.
-    adapter.add_files = readonly
-    adapter.reset_files = readonly
-    adapter.stage_index_file = readonly
-    local function protect()
-      local helpers = require('lpke.core.helpers')
-      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(view.tabpage)) do
-        local buf = vim.api.nvim_win_get_buf(win)
-        if vim.bo[buf].filetype == 'DiffviewFiles' then
-          for _, key in ipairs({ '-', 's', 'I', 'S', 'U', 'X', 'cc' }) do
-            helpers.keymap_set({
-              'n',
-              key,
-              readonly,
-              { buf = buf, desc = 'Stash review is read-only' },
-            })
-          end
-        end
-        if vim.bo[buf].filetype ~= 'DiffviewFiles' then
-          vim.bo[buf].readonly = true
-          vim.bo[buf].modifiable = false
-        end
-      end
-    end
-    view.emitter:on('file_open_post', protect)
-    view.emitter:on('files_updated', protect)
+    require('lpke.plugins.git.helpers.readonly_view').configure(view, 'Stash')
   end)
 end
 

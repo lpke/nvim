@@ -8,6 +8,20 @@ function M.configure(view, spec)
   local utils = require('diffview.utils')
   local RevType = require('diffview.vcs.rev').RevType
   local LogEntry = require('diffview.vcs.log_entry').LogEntry
+  require('lpke.plugins.git.helpers.readonly_view').configure(view, 'History')
+  -- Navigation can arrive while the initial history file is still loading.
+  -- Native layouts reuse Window.file across awaits; serialize selections so a
+  -- pending reader cannot resume against another entry's buffer.
+  local selection = require('diffview.control').Semaphore(1)
+  local set_file = view._set_file
+  view._set_file = async.void(function(self, ...)
+    local permit = async.await(selection:acquire())
+    local ok, err = async.pawait(set_file, self, ...)
+    permit:forget()
+    if not ok then
+      error(err)
+    end
+  end)
   local run = async.wrap(function(self, args, stdin, callback)
     vim.system(
       utils.vec_join({ self:bin() }, self:args(), args),
@@ -105,9 +119,8 @@ function M.configure(view, spec)
     if not data.left_hash and not empty_tree then
       -- hash-object uses this repository's object format. Without -w it never
       -- adds an object, including in SHA-256 repositories.
-      local result = async.await(
-        run(self, { 'hash-object', '-t', 'tree', '--stdin' }, '')
-      )
+      local result =
+        async.await(run(self, { 'hash-object', '-t', 'tree', '--stdin' }, ''))
       if result.code ~= 0 then
         error(result.stderr)
       end

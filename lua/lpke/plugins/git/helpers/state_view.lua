@@ -82,6 +82,10 @@ function M.open(spec, configure)
   if configure then
     configure(view)
   end
+  local RevType = require('diffview.vcs.rev').RevType
+  if view.left.type == RevType.COMMIT and view.right.type == RevType.COMMIT then
+    require('lpke.plugins.git.helpers.readonly_view').configure(view, 'History')
+  end
   view:open()
   return view
 end
@@ -315,7 +319,10 @@ function M.configure(view, spec)
       end
       local files, merge_files = {}, {}
       for _, change in ipairs(changes) do
-        if spec.state == 'conflicted' or (not spec.state and kind == 'working' and change.status == 'U') then
+        if
+          spec.state == 'conflicted'
+          or (not spec.state and kind == 'working' and change.status == 'U')
+        then
           if change.status == 'U' then
             merge_files[#merge_files + 1] =
               exact_local_buffers(FileEntry.with_layout(opt.merge_layout, {
