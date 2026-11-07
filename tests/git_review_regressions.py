@@ -371,8 +371,8 @@ require('diffview.actions').toggle_stage_entry()
                 self.assertEqual((repo.path / new).read_text(), 'rename contents\n')
 
     def test_stale_file_directory_boundaries_refuse_stage_and_unstage(self):
-        for action in ('add', 'reset', 'index-reset', 'head-reset', 'index-save'):
-            for name in ('selected', 'selected*\n[ab]'):
+        for action in ('add', 'intent', 'reset', 'index-add', 'index-intent', 'index-reset', 'head-reset', 'index-save'):
+            for name in ('selected', 'selected*\n[ab]', 'parent/selected'):
                 with self.subTest(action=action, path=name):
                     repo = Repo(self.root / ('stale-' + str(len(list(self.root.iterdir())))))
                     repo.write(name, 'base\n')
@@ -385,9 +385,10 @@ require('diffview.actions').toggle_stage_entry()
                         target = repo.commit()
                         repo.git('reset', '--hard', original)
                     repo.write(name, 'changed\n')
-                    if action != 'add':
+                    working_action = action in ('add', 'intent', 'index-add', 'index-intent')
+                    if not working_action:
                         repo.git('add', '--', name)
-                    spec = repo.spec('diff', state='staged' if action != 'add' else 'unstaged',
+                    spec = repo.spec('diff', state='unstaged' if working_action else 'staged',
                                      paths_b64=[b64(name)])
                     extra = '''
 local view = require('diffview.lib').views[1]
@@ -398,10 +399,11 @@ local function git(args, input)
   return result.stdout
 end
 local action = ''' + json.dumps(action) + '''
-if action == 'index-reset' or action == 'index-save' then
+if action:find('index-', 1, true) == 1 then
   local oid = vim.trim(git({'rev-parse', ':' .. path}))
   git({'update-index', '--force-remove', '--', path})
-  git({'update-index', '-z', '--index-info'}, '100644 ' .. oid .. ' 0\t' .. path .. '/hidden\\0')
+  local changed = path:find('/', 1, true) and path:match('^([^/]+)') or path .. '/hidden'
+  git({'update-index', '-z', '--index-info'}, '100644 ' .. oid .. ' 0\t' .. changed .. '\\0')
 elseif action == 'head-reset' then
   local fd = assert(vim.uv.fs_open(root .. '/.git/refs/heads/main', 'w', 384))
   assert(vim.uv.fs_write(fd, ''' + json.dumps(target + '\n') + ''', 0))
@@ -418,12 +420,23 @@ local index = vim.fn.readblob(root .. '/.git/index')
 local before = git({'ls-files', '--stage', '-z'})
 local messages, utils = {}, require('diffview.utils')
 local err = utils.err
+local notify = vim.notify
 utils.err = function(message) messages[#messages + 1] = tostring(message) end
+vim.notify = function(message) messages[#messages + 1] = tostring(message) end
 local result
-if action == 'add' then result = view.adapter:add_files({path})
+if action == 'add' or action == 'index-add' then result = view.adapter:add_files({path})
+elseif action == 'intent' or action == 'index-intent' then
+  view.panel:focus()
+  view.panel:set_cur_file(view.cur_entry)
+  view.panel:highlight_cur_file()
+  local mapping = vim.fn.maparg('I', 'n', false, true)
+  assert(type(mapping.callback) == 'function')
+  mapping.callback()
+  result = false
 elseif action == 'index-save' then result = view.adapter:stage_index_file(view.files.working[1].layout.b.file)
 else result = view.adapter:reset_files({path}) end
 utils.err = err
+vim.notify = notify
 assert(result == false, 'stale directory mutation was accepted')
 assert(#messages > 0 and messages[1]:lower():find('refresh', 1, true), 'missing refresh explanation')
 assert(git({'ls-files', '--stage', '-z'}) == before, 'changed hidden index entries')
@@ -760,6 +773,73 @@ assert(not ok and tostring(err):find('parent'), 'unsafe parent was accepted')
                     'working:from/file': dict(a=['base'], b=['worktree'])})], extra, mutation_repo=repo.path)
                 self.assertEqual((target / 'file').read_text(), 'do not overwrite\n')
                 self.assertEqual(repo.git('ls-files', '--stage', '-z'), index)
+
+    def test_restore_and_undo_refuse_new_index_descendants_before_any_write(self):
+        for operation in ('restore', 'undo'):
+            for object_format in ('sha1', 'sha256'):
+                for name in ('selected', 'selected*\n[ab]', 'parent/selected'):
+                    with self.subTest(operation=operation, object_format=object_format, path=name):
+                        repo = Repo(self.root / ('restore-boundary-' + str(len(list(self.root.iterdir())))),
+                                    object_format=object_format)
+                        for path in (name, 'unrelated'):
+                            repo.write(path, 'base\n')
+                        base = repo.commit()
+                        for path in (name, 'unrelated'):
+                            repo.write(path, 'index\n')
+                        repo.git('add', '-A')
+                        repo.write(name, 'worktree\n')
+                        spec = repo.spec('diff', args=[base], paths_b64=[b64(name)])
+                        extra = '''
+local view = require('diffview.lib').views[1]
+local root, path = view.adapter.ctx.toplevel, vim.base64.decode(''' + json.dumps(b64(name)) + ''')
+local operation = ''' + json.dumps(operation) + '''
+local function git(args, input)
+  local result = vim.system(vim.list_extend({'git', '--literal-pathspecs', '-C', root}, args), {stdin=input}):wait()
+  assert(result.code == 0, result.stderr)
+  return result.stdout
+end
+local async = require('diffview.async')
+local function restore()
+  local done, success, command = false, nil, nil
+  async.void(function()
+    success, command = async.await(view.adapter:file_restore(path, 'working', view.left.commit))
+    done = true
+  end)()
+  assert(vim.wait(5000, function() return done end, 10))
+  return success, command
+end
+local command
+if operation == 'undo' then
+  local success
+  success, command = restore()
+  assert(success and command)
+end
+local oid = vim.trim(git({'rev-parse', ':unrelated'}))
+git({'update-index', '--force-remove', '--', path})
+local changed = path:find('/', 1, true) and path:match('^([^/]+)') or path .. '/hidden'
+git({'update-index', '-z', '--index-info'}, '100644 ' .. oid .. ' 0\t' .. changed .. '\\0')
+local index = vim.fn.readblob(root .. '/.git/index')
+local work = vim.fn.readblob(root .. '/' .. path)
+local objects = git({'cat-file', '--batch-all-objects', '--batch-check=%(objectname)'})
+if operation == 'restore' then
+  local utils, messages = require('diffview.utils'), {}
+  local original = utils.err
+  utils.err = function(message) messages[#messages + 1] = tostring(message) end
+  local success = restore()
+  utils.err = original
+  assert(success == false, 'restore accepted undisplayed index descendants')
+  assert(#messages > 0 and messages[1]:lower():find('refresh', 1, true))
+else
+  local ok, err = pcall(vim.cmd, command)
+  assert(not ok and tostring(err):lower():find('refresh', 1, true), 'undo accepted undisplayed index descendants')
+end
+assert(vim.deep_equal(vim.fn.readblob(root .. '/.git/index'), index), 'refusal rewrote index')
+assert(vim.deep_equal(vim.fn.readblob(root .. '/' .. path), work), 'refusal changed worktree')
+assert(git({'cat-file', '--batch-all-objects', '--batch-check=%(objectname)'}) == objects, 'refusal wrote backup objects')
+'''
+                        probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                            'working:' + name: dict(a=['base'], b=['worktree'])})],
+                              extra, mutation_repo=repo.path)
 
     def test_restore_undo_preserves_intent_to_add_including_empty_and_missing_files(self):
         for object_format in ('sha1', 'sha256'):

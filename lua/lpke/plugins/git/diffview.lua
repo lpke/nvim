@@ -830,13 +830,27 @@ local function config()
       return
     end
 
-    local toplevel = item.adapter
-      and item.adapter.ctx
-      and item.adapter.ctx.toplevel
+    local adapter = item.adapter or view.adapter
+    if not (adapter and adapter.ctx and adapter.ctx.toplevel) then
+      return
+    end
+    local valid, err = pcall(
+      require('lpke.plugins.git.helpers.review_scope').validate,
+      adapter,
+      { item.path },
+      'add'
+    )
+    if not valid then
+      vim.notify(
+        'Refresh the review before changing these files: ' .. tostring(err),
+        vim.log.levels.ERROR,
+        { title = 'Diffview: intent to add refused' }
+      )
+      return
+    end
+    local toplevel = adapter.ctx.toplevel
     local path = ':(top,literal)' .. item.path
-    local cmd = toplevel
-        and { 'git', '-C', toplevel, 'add', '-N', '--', path }
-      or { 'git', 'add', '-N', '--', path }
+    local cmd = { 'git', '-C', toplevel, 'add', '-N', '--', path }
     local output = vim.fn.system(cmd)
 
     if vim.v.shell_error ~= 0 then

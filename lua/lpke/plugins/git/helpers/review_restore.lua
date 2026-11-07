@@ -46,9 +46,14 @@ local function safe_path(root, path)
 end
 
 local function index(root, paths)
+  local scope =
+    require('lpke.plugins.git.helpers.review_scope').path_scope(paths)
   local records = git(
     root,
-    utils.vec_join({ 'ls-files', '--stage', '--debug', '-z', '--' }, paths)
+    utils.vec_join(
+      { 'ls-files', '--stage', '--debug', '-z', '--' },
+      scope.queries
+    )
   ).stdout
   local result, position = {}, 1
   while position <= #records do
@@ -56,7 +61,7 @@ local function index(root, paths)
       assert(records:find('\0', position, true), 'Incomplete index path')
     local record = records:sub(position, stop - 1)
     local mode, oid, stage, path = record:match('^(%d+) (%x+) (%d+)\t(.*)$')
-    assert(stage == '0', 'Resolve merge conflicts before restoring this file')
+    local included = scope.includes(path)
     -- --debug emits five metadata lines after the NUL-terminated filename.
     -- Keep those separate so tabs/newlines in filenames cannot mimic flags.
     position = stop + 1
@@ -67,20 +72,23 @@ local function index(root, paths)
         'Incomplete index flags'
       ) + 1
     end
-    local flags = assert(
-      tonumber(
-        records:sub(metadata, position - 1):match('\tflags: (%x+)\n$'),
-        16
-      ),
-      'Unrecognized index flags'
-    )
-    result[path] = {
-      mode = mode,
-      oid = oid,
-      intent = bit.band(flags, 0x20000000) ~= 0,
-      assume = bit.band(flags, 0x8000) ~= 0,
-      skip = bit.band(flags, 0x40000000) ~= 0,
-    }
+    if included then
+      assert(stage == '0', 'Resolve merge conflicts before restoring this file')
+      local flags = assert(
+        tonumber(
+          records:sub(metadata, position - 1):match('\tflags: (%x+)\n$'),
+          16
+        ),
+        'Unrecognized index flags'
+      )
+      result[path] = {
+        mode = mode,
+        oid = oid,
+        intent = bit.band(flags, 0x20000000) ~= 0,
+        assume = bit.band(flags, 0x8000) ~= 0,
+        skip = bit.band(flags, 0x40000000) ~= 0,
+      }
+    end
   end
   return result
 end

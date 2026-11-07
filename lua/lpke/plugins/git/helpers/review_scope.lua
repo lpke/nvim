@@ -2,14 +2,50 @@ local M = {}
 local uv = vim.uv
 local utils = require('diffview.utils')
 
+-- Query top-level literal prefixes so an index file replacing a selected
+-- parent is visible too. Siblings are inspected but never become action paths.
+function M.path_scope(paths)
+  local selected, ancestors, queries, seen = {}, {}, {}, {}
+  for _, path in ipairs(paths) do
+    assert(type(path) == 'string' and path ~= '' and not path:find('%z'))
+    selected[path] = true
+    local parts = vim.split(path, '/', { plain = true })
+    local parent = ''
+    for i, part in ipairs(parts) do
+      assert(part ~= '.' and part ~= '..' and part ~= '', 'Invalid review path')
+      parent = parent == '' and part or parent .. '/' .. part
+      if i < #parts then
+        ancestors[parent] = true
+      end
+    end
+    if not seen[parts[1]] then
+      seen[parts[1]], queries[#queries + 1] = true, parts[1]
+    end
+  end
+  return {
+    queries = queries,
+    includes = function(path)
+      if selected[path] then
+        return true
+      end
+      local message = 'Refresh the review: a selected file boundary changed'
+      assert(not ancestors[path], message)
+      local parent = path:match('^(.*)/[^/]+$')
+      while parent do
+        assert(not selected[parent], message)
+        parent = parent:match('^(.*)/[^/]+$')
+      end
+      return false
+    end,
+  }
+end
+
 -- Literal pathspecs still recurse. Check both Git namespaces and filesystem
 -- boundaries immediately before a live action, rather than trusting the panel.
 function M.validate(adapter, paths, command)
   local root = adapter.ctx.toplevel
-  local selected, gitlinks = {}, {}
+  local scope, gitlinks = M.path_scope(paths), {}
   for _, path in ipairs(paths) do
-    assert(path ~= '' and path:sub(1, 1) ~= '/' and not path:find('%z'))
-    selected[path] = true
     local parent = root
     local parts = vim.split(path, '/', { plain = true })
     for i, part in ipairs(parts) do
@@ -41,14 +77,14 @@ function M.validate(adapter, paths, command)
       else
         mode, path = record:match('^(%d+) %x+ %d+\t(.*)$')
       end
-      assert(mode and selected[path], 'Changed index or reset-target boundary')
-      if mode == '160000' then
+      assert(mode, 'Unrecognized Git file entry')
+      if scope.includes(path) and mode == '160000' then
         gitlinks[path] = true
       end
     end
   end
   inspect(
-    git(utils.vec_join({ 'ls-files', '--stage', '-z', '--' }, paths)).stdout
+    git(utils.vec_join({ 'ls-files', '--stage', '-z', '--' }, scope.queries)).stdout
   )
   local target
   if command == 'reset' then
@@ -56,7 +92,7 @@ function M.validate(adapter, paths, command)
     if head.code == 0 then
       target = vim.trim(head.stdout)
       inspect(
-        git(utils.vec_join({ 'ls-tree', '-rz', target, '--' }, paths)).stdout,
+        git(utils.vec_join({ 'ls-tree', '-rz', target, '--' }, scope.queries)).stdout,
         true
       )
     else
