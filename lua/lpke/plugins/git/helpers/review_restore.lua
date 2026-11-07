@@ -48,13 +48,39 @@ end
 local function index(root, paths)
   local records = git(
     root,
-    utils.vec_join({ 'ls-files', '--stage', '-z', '--' }, paths)
+    utils.vec_join({ 'ls-files', '--stage', '--debug', '-z', '--' }, paths)
   ).stdout
-  local result = {}
-  for record in records:gmatch('([^%z]+)%z') do
+  local result, position = {}, 1
+  while position <= #records do
+    local stop =
+      assert(records:find('\0', position, true), 'Incomplete index path')
+    local record = records:sub(position, stop - 1)
     local mode, oid, stage, path = record:match('^(%d+) (%x+) (%d+)\t(.*)$')
     assert(stage == '0', 'Resolve merge conflicts before restoring this file')
-    result[path] = { mode = mode, oid = oid }
+    -- --debug emits five metadata lines after the NUL-terminated filename.
+    -- Keep those separate so tabs/newlines in filenames cannot mimic flags.
+    position = stop + 1
+    local metadata = position
+    for _ = 1, 5 do
+      position = assert(
+        records:find('\n', position, true),
+        'Incomplete index flags'
+      ) + 1
+    end
+    local flags = assert(
+      tonumber(
+        records:sub(metadata, position - 1):match('\tflags: (%x+)\n$'),
+        16
+      ),
+      'Unrecognized index flags'
+    )
+    result[path] = {
+      mode = mode,
+      oid = oid,
+      intent = bit.band(flags, 0x20000000) ~= 0,
+      assume = bit.band(flags, 0x8000) ~= 0,
+      skip = bit.band(flags, 0x40000000) ~= 0,
+    }
   end
   return result
 end
@@ -171,6 +197,26 @@ function M.undo(token)
       'Invalid saved file type'
     )
     paths[i] = path
+    local previous = saved.index[i]
+    if previous and previous ~= vim.NIL then
+      assert(
+        previous.mode == '100644'
+          or previous.mode == '100755'
+          or previous.mode == '120000'
+          or previous.mode == '160000'
+      )
+      assert(
+        type(previous.oid) == 'string'
+          and previous.oid:match('^%x+$')
+          and #previous.oid == saved.oid_length
+      )
+      for _, flag in ipairs({ 'intent', 'assume', 'skip' }) do
+        assert(
+          previous[flag] == nil or type(previous[flag]) == 'boolean',
+          'Invalid saved index flag'
+        )
+      end
+    end
     if item.kind ~= 'absent' then
       assert(
         type(item.oid) == 'string'
@@ -190,7 +236,7 @@ function M.undo(token)
     end
   end
   unmodified(root, paths)
-  index(root, paths) -- Refuse newly introduced conflicts before any write.
+  local current = index(root, paths) -- Refuse new conflicts before any write.
   if saved.change_index then
     local records = {}
     for i, path in ipairs(paths) do
@@ -200,16 +246,7 @@ function M.undo(token)
         .. path
         .. '\0'
       local previous = saved.index[i]
-      if previous and previous ~= vim.NIL then
-        assert(
-          previous.mode == '100644'
-            or previous.mode == '100755'
-            or previous.mode == '120000'
-            or previous.mode == '160000'
-        )
-        assert(
-          previous.oid:match('^%x+$') and #previous.oid == saved.oid_length
-        )
+      if previous and previous ~= vim.NIL and not previous.intent then
         git(root, { 'cat-file', '-e', previous.oid })
         records[#records + 1] = previous.mode
           .. ' '
@@ -220,6 +257,7 @@ function M.undo(token)
       end
     end
     git(root, { 'update-index', '-z', '--index-info' }, table.concat(records))
+    current = {}
   end
   for i, item in ipairs(saved.work) do
     local absolute = safe_path(root, paths[i])
@@ -237,6 +275,49 @@ function M.undo(token)
         assert(ok == #contents[i], err or 'Incomplete undo write')
         assert(uv.fs_chmod(absolute, item.mode))
       end
+    end
+  end
+  for i, path in ipairs(paths) do
+    local previous = saved.index[i]
+    if previous and previous ~= vim.NIL then
+      if previous.intent and not (current[path] and current[path].intent) then
+        -- add -N only creates intent on an absent index entry. Rebuilding the
+        -- empty blob as a normal entry would silently stage an empty file.
+        git(root, { 'update-index', '--force-remove', '--', path })
+        local absolute = safe_path(root, path)
+        local missing = not uv.fs_lstat(absolute)
+        if missing then
+          vim.fn.mkdir(vim.fs.dirname(absolute), 'p')
+          if previous.mode == '120000' then
+            assert(uv.fs_symlink('.', absolute))
+          else
+            local fd = assert(
+              uv.fs_open(
+                absolute,
+                'wx',
+                previous.mode == '100755' and 493 or 420
+              )
+            )
+            assert(uv.fs_close(fd))
+          end
+        end
+        git(root, { 'add', '-N', '--sparse', '--', path })
+        if missing then
+          assert(uv.fs_unlink(absolute))
+        end
+      end
+      git(root, {
+        'update-index',
+        previous.assume and '--assume-unchanged' or '--no-assume-unchanged',
+        '--',
+        path,
+      })
+      git(root, {
+        'update-index',
+        previous.skip and '--skip-worktree' or '--no-skip-worktree',
+        '--',
+        path,
+      })
     end
   end
   reload(root, paths)
@@ -289,7 +370,7 @@ function M.restore(adapter, entry, kind, commit)
     end
   end
   local undo = undo_command(saved)
-  local args = { 'restore', '--worktree' }
+  local args = { 'restore', '--worktree', '--ignore-skip-worktree-bits' }
   if source then
     vim.list_extend(args, { '--source=' .. source, '--staged' })
   end

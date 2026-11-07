@@ -373,8 +373,9 @@ Diffview:                                                 *lpke-git-review*
   In Diffview: J/K or <Tab>/<S-Tab> move files.
   In Diffview: - or s stage/unstage selected file, S stage all, U unstage all.
   In Diffview: X restore entry, I intent-to-add, cc commit via Fugitive.
-  In scoped live reviews: X restores the selected entry; its shown Undo command
-  restores the previous files and index. Resolve conflicts with the merge keys.
+  In scoped worktree reviews: X restores the selected entry; its shown Undo
+  restores the previous files and index. Index-only reviews use U to unstage;
+  X is unavailable there. Resolve conflicts with the merge keys.
   In Diffview: <leader>b files panel, <leader>e commit/after buffer,
                <F2>s right-side zoom, gw whitespace diff, g<C-x> layout.
   Merge conflicts: [x/]x jump; <leader>co/ct/cb/ca choose ours/theirs/base/all;

@@ -630,6 +630,94 @@ assert(not ok and tostring(err):find('parent'), 'unsafe parent was accepted')
                 self.assertEqual((target / 'file').read_text(), 'do not overwrite\n')
                 self.assertEqual(repo.git('ls-files', '--stage', '-z'), index)
 
+    def test_restore_undo_preserves_intent_to_add_including_empty_and_missing_files(self):
+        for object_format in ('sha1', 'sha256'):
+            for kind in ('content', 'empty', 'removed', 'removed-link', 'sparse'):
+                with self.subTest(object_format=object_format, kind=kind):
+                    repo = Repo(self.root / ('ita-' + object_format + '-' + kind), object_format=object_format)
+                    repo.write('base', 'base\n')
+                    if kind == 'sparse':
+                        repo.write('included/keep', 'included\n')
+                    base = repo.commit()
+                    if kind == 'sparse':
+                        repo.git('sparse-checkout', 'set', '--cone', 'included')
+                    repo.write('already-empty', '')
+                    repo.git('add', '--', 'already-empty')
+                    name = ('outside/' if kind == 'sparse' else '') + 'intent\n*?[ab]'
+                    path = repo.path / name
+                    if kind == 'removed-link':
+                        path.symlink_to('missing-target')
+                        expected = ['missing-target']
+                    else:
+                        repo.write(name, '' if kind == 'empty' else 'worktree\n')
+                        expected = [''] if kind == 'empty' else ['worktree']
+                    repo.git('add', '-N', '--sparse', '--', name)
+                    index = repo.git('ls-files', '--stage', '-z')
+                    cached = repo.git('diff', '--cached', '--raw', '-z')
+                    spec = repo.spec('diff', args=[base], paths_b64=[b64(name)])
+                    extra = 'local path = vim.base64.decode(' + json.dumps(b64(name)) + ')\n'
+                    extra += '''
+local view = require('diffview.lib').views[1]
+local async = require('diffview.async')
+'''
+                    if kind.startswith('removed'):
+                        extra += "assert(vim.uv.fs_unlink(view.adapter.ctx.toplevel .. '/' .. path))\n"
+                    extra += '''
+local done, command = false, nil
+async.void(function()
+  local ok, undo = async.await(view.adapter:file_restore(path, 'working', view.left.commit))
+  assert(ok)
+  command, done = undo, true
+end)()
+assert(vim.wait(5000, function() return done end, 10))
+vim.cmd(command)
+'''
+                    probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                        'working:' + name: dict(a=[''], b=expected)})], extra, mutation_repo=repo.path)
+                    self.assertEqual(repo.git('ls-files', '--stage', '-z'), index)
+                    self.assertEqual(repo.git('diff', '--cached', '--raw', '-z'), cached)
+                    debug = repo.git('--literal-pathspecs', 'ls-files', '--debug', '-z', '--', name)
+                    self.assertTrue(int(debug.rsplit('flags: ', 1)[1], 16) & 0x20000000)
+                    if kind.startswith('removed'):
+                        self.assertFalse(path.exists() or path.is_symlink())
+                    else:
+                        self.assertEqual(path.read_text(), '' if kind == 'empty' else 'worktree\n')
+
+    def test_restore_undo_preserves_assume_unchanged_and_skip_worktree_flags(self):
+        for assume, skip in ((True, False), (False, True), (True, True)):
+            with self.subTest(assume=assume, skip=skip):
+                repo = Repo(self.root / ('flags-' + str(assume) + '-' + str(skip)))
+                repo.write('file', 'base\n')
+                base = repo.commit()
+                repo.write('file', 'index\n')
+                repo.git('add', '--', 'file')
+                repo.write('file', 'worktree\n')
+                index = repo.git('ls-files', '--stage', '-z')
+                spec = repo.spec('diff', args=[base], paths_b64=[b64('file')])
+                extra = '''
+local view = require('diffview.lib').views[1]
+local async = require('diffview.async')
+local flags = ''' + json.dumps(['--assume-unchanged' if assume else '--no-assume-unchanged',
+                               '--skip-worktree' if skip else '--no-skip-worktree']).replace('[', '{').replace(']', '}') + '''
+for _, flag in ipairs(flags) do
+  assert(vim.system({'git', '-C', view.adapter.ctx.toplevel, 'update-index', flag, '--', 'file'}):wait().code == 0)
+end
+local done, command = false, nil
+async.void(function()
+  local ok, undo = async.await(view.adapter:file_restore('file', 'working', view.left.commit))
+  assert(ok)
+  command, done = undo, true
+end)()
+assert(vim.wait(5000, function() return done end, 10))
+vim.cmd(command)
+'''
+                probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                    'working:file': dict(a=['base'], b=['worktree'])})], extra, mutation_repo=repo.path)
+                self.assertEqual(repo.git('ls-files', '--stage', '-z'), index)
+                self.assertEqual((repo.path / 'file').read_text(), 'worktree\n')
+                expected = 's' if assume and skip else 'S' if skip else 'h'
+                self.assertEqual(repo.git('ls-files', '-v'), expected + ' file')
+
 
 if __name__ == '__main__':
     unittest.main()
