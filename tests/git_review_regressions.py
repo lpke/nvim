@@ -215,6 +215,9 @@ end
 local async = require('diffview.async')
 local view = require('diffview.lib').views[1]
 assert(vim.wait(5000, function() return view.cur_entry and view.cur_entry.opened end, 10))
+view.emitter:on('file_open_post', function(_, entry)
+  assert(view.cur_entry == entry, 'completed selection displays a different history entry')
+end)
 for _, entry in ipairs(view.panel.entries) do
   for _, file_entry in ipairs(entry.files) do
     for _, file in ipairs(file_entry.layout:files()) do
