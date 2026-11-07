@@ -833,9 +833,10 @@ local function config()
     local toplevel = item.adapter
       and item.adapter.ctx
       and item.adapter.ctx.toplevel
+    local path = ':(top,literal)' .. item.path
     local cmd = toplevel
-        and { 'git', '-C', toplevel, 'add', '-N', '--', item.path }
-      or { 'git', 'add', '-N', '--', item.path }
+        and { 'git', '-C', toplevel, 'add', '-N', '--', path }
+      or { 'git', 'add', '-N', '--', path }
     local output = vim.fn.system(cmd)
 
     if vim.v.shell_error ~= 0 then

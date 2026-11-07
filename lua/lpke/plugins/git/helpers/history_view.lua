@@ -8,10 +8,10 @@ function M.configure(view, spec)
   local utils = require('diffview.utils')
   local RevType = require('diffview.vcs.rev').RevType
   local LogEntry = require('diffview.vcs.log_entry').LogEntry
-  local run = async.wrap(function(self, args, callback)
+  local run = async.wrap(function(self, args, stdin, callback)
     vim.system(
       utils.vec_join({ self:bin() }, self:args(), args),
-      { cwd = self.ctx.toplevel },
+      { cwd = self.ctx.toplevel, stdin = stdin },
       vim.schedule_wrap(callback)
     )
   end)
@@ -100,9 +100,21 @@ function M.configure(view, spec)
     )
     return stream
   end
+  local empty_tree
   adapter.parse_fh_data = function(self, data, commit, state)
-    local left = data.left_hash and self.Rev(RevType.COMMIT, data.left_hash)
-      or self.Rev.new_null_tree()
+    if not data.left_hash and not empty_tree then
+      -- hash-object uses this repository's object format. Without -w it never
+      -- adds an object, including in SHA-256 repositories.
+      local result = async.await(
+        run(self, { 'hash-object', '-t', 'tree', '--stdin' }, '')
+      )
+      if result.code ~= 0 then
+        error(result.stderr)
+      end
+      empty_tree = vim.trim(result.stdout)
+      assert(empty_tree:match('^%x+$'), 'Invalid empty tree object ID')
+    end
+    local left = self.Rev(RevType.COMMIT, data.left_hash or empty_tree)
     local right = state.prepared_log_opts.base
       or self.Rev(RevType.COMMIT, data.right_hash)
     local args = self:rev_to_args(left, right)

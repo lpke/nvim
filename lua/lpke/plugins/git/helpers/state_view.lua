@@ -95,25 +95,19 @@ function M.configure(view, spec)
   local adapter = view.adapter
   local argo = require('diffview.arg_parser').parse(spec.args or {})
   local patches = {}
-  if view.update_files then
-    local update_files = view.update_files
-    view.update_files = function(self, callback)
-      -- Diffview shares a trailing debounce across all diff views. A hidden
-      -- startup tab must not replace the active tab's pending refresh; the
-      -- plugin checks focus only after that shared timer has already fired.
-      if not self:is_cur_tabpage() then
-        if callback then
-          callback({ 'The update was cancelled.' })
-        end
-        return
-      end
-      return update_files(self, callback)
-    end
-  end
   local function exact_local_buffers(entry)
     for _, file in ipairs(entry.layout:files()) do
       if file.rev.type == RevType.LOCAL then
         local stat = vim.uv.fs_lstat(file.absolute_path)
+        local local_type = stat and stat.type or 'missing'
+        if file._lpke_local_type and file._lpke_local_type ~= local_type then
+          -- Retained entries must recreate their buffer when its representation
+          -- changes between a real file and Git's symlink target text.
+          file:dispose_buffer()
+          file.binary = nil
+        end
+        file._lpke_local_type = local_type
+        file._lpke_state_contents = nil
         if stat and stat.type == 'link' then
           file.binary = false
           file._lpke_state_contents = function()
@@ -159,9 +153,61 @@ function M.configure(view, spec)
     end
     return entry
   end
+  if view.update_files then
+    local update_files = view.update_files
+    view.update_files = function(self, callback)
+      -- Diffview shares a trailing debounce across all diff views. A hidden
+      -- startup tab must not replace the active tab's pending refresh.
+      if not self:is_cur_tabpage() then
+        if callback then
+          callback({ 'The update was cancelled.' })
+        end
+        return
+      end
+      for _, entry in self.files:iter() do
+        exact_local_buffers(entry)
+      end
+      return update_files(self, callback)
+    end
+  end
   view.path_args = M.literal_paths(spec, argo.post_args)
   adapter.ctx.path_args = view.path_args
   view.panel.path_args = view.path_args
+
+  -- Native listeners pass filenames, not pathspecs. U supplies no paths at all;
+  -- restrict that request to this panel's staged comparison (cached reviews put
+  -- their HEAD -> index entries in the working list).
+  adapter.add_files = function(self, paths)
+    if not paths or #paths == 0 then
+      return true
+    end
+    local _, code = self:exec_sync(
+      utils.vec_join({ 'add', '--' }, M.literal_paths({ paths = paths })),
+      self.ctx.toplevel
+    )
+    return code == 0
+  end
+  adapter.reset_files = function(self, paths)
+    if not paths then
+      paths = {}
+      local entries = spec.state == 'staged' and view.files.working
+        or view.files.staged
+      for _, entry in ipairs(entries) do
+        paths[#paths + 1] = entry.path
+        if entry.oldpath then
+          paths[#paths + 1] = entry.oldpath
+        end
+      end
+    end
+    if #paths == 0 then
+      return true
+    end
+    local _, code = self:exec_sync(
+      utils.vec_join({ 'reset', '--' }, M.literal_paths({ paths = paths })),
+      self.ctx.toplevel
+    )
+    return code == 0
+  end
 
   -- Escape display text without changing the paths used by Git or file buffers.
   local render = view.panel.render
@@ -218,13 +264,13 @@ function M.configure(view, spec)
         callback(nil, {}, {})
         return
       end
-      -- Stock Diffview splits tracked paths on tabs/newlines and suppresses
-      -- submodules. NUL records preserve filenames and expose every requested file.
+      -- One NUL-delimited diff provides paths, modes and stats. History calls
+      -- this for every commit: separate queries multiply process startup costs.
       local result = async.await(
         run(
           self,
           utils.vec_join(
-            { 'diff', '--name-status', '-z', '--ignore-submodules=none' },
+            { 'diff', '--raw', '--numstat', '-z', '--ignore-submodules=none' },
             args
           )
         )
@@ -235,9 +281,12 @@ function M.configure(view, spec)
       end
       local records = vim.split(result.stdout, '\0', { plain = true })
       local changes, conflicts = {}, {}
+      local submodules, symlinks, by_path = {}, {}, {}
       local i = 1
-      while i < #records do
-        local status = records[i]:sub(1, 1)
+      while i < #records and records[i]:sub(1, 1) == ':' do
+        local oldmode, newmode, status =
+          records[i]:match('^:(%d+) (%d+) %S+ %S+ (%a)')
+        assert(status, 'Invalid Git raw diff record')
         local path, oldpath = records[i + 1], nil
         i = i + 2
         if status == 'R' or status == 'C' then
@@ -249,63 +298,20 @@ function M.configure(view, spec)
         if status == 'U' then
           conflicts[path] = true
         end
+        submodules[path] = oldmode == '160000' or newmode == '160000'
+        symlinks[path] = { oldmode == '120000', newmode == '120000' }
       end
-      local stats = async.await(
-        run(
-          self,
-          utils.vec_join(
-            { 'diff', '--numstat', '-z', '--ignore-submodules=none' },
-            args
-          )
-        )
-      )
-      if stats.code ~= 0 then
-        callback({ stats.stderr }, nil)
-        return
-      end
-      local numbers = vim.split(stats.stdout, '\0', { plain = true })
-      local by_path = {}
-      i = 1
-      while i < #numbers do
+      while i < #records do
         local additions, deletions, path =
-          numbers[i]:match('^([^\t]+)\t([^\t]+)\t(.*)$')
+          records[i]:match('^([^\t]+)\t([^\t]+)\t(.*)$')
         i = i + 1
         if path == '' then
-          path, i = numbers[i + 1], i + 2
+          path, i = records[i + 1], i + 2
         end
         if path and tonumber(additions) and tonumber(deletions) then
           by_path[path] =
             { additions = tonumber(additions), deletions = tonumber(deletions) }
         end
-      end
-      local raw = async.await(
-        run(
-          self,
-          utils.vec_join(
-            { 'diff', '--raw', '-z', '--ignore-submodules=none' },
-            args
-          )
-        )
-      )
-      if raw.code ~= 0 then
-        callback({ raw.stderr }, nil)
-        return
-      end
-      local raw_records = vim.split(raw.stdout, '\0', { plain = true })
-      local submodules, symlinks = {}, {}
-      i = 1
-      while i < #raw_records do
-        local oldmode, newmode, status =
-          raw_records[i]:match('^:(%d+) (%d+) %S+ %S+ (%a)')
-        local path = raw_records[i + 1]
-        i = i + 2
-        if status == 'R' or status == 'C' then
-          path, i = raw_records[i], i + 1
-        end
-        if oldmode == '160000' or newmode == '160000' then
-          submodules[path] = true
-        end
-        symlinks[path] = { oldmode == '120000', newmode == '120000' }
       end
       local files, merge_files = {}, {}
       for _, change in ipairs(changes) do

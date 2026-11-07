@@ -44,7 +44,7 @@ local readonly = {
   ['for-each-ref'] = true, ['check-attr'] = true, ['check-ignore'] = true,
   ['--exec-path'] = true,
 }
-local function command(program, args)
+local function command(program, args, cwd)
   if type(program) ~= 'string' or vim.fn.fnamemodify(program, ':t') ~= 'git' then
     deny('process ' .. tostring(program))
   end
@@ -52,6 +52,7 @@ local function command(program, args)
   while args[i] do
     local arg = args[i]
     if arg == '-C' or arg == '-c' or arg == '--git-dir' or arg == '--work-tree' then
+      if arg == '-C' then cwd = args[i + 1] end
       i = i + 2
     elseif arg:match('^%-') and not readonly[arg] then
       -- Only global flags emitted by the production adapters/plugin.
@@ -61,27 +62,35 @@ local function command(program, args)
     else
       local config_read = arg == 'config' and args[i + 1] == 'status.showUntrackedFiles'
         and args[i + 2] == nil
-      if not readonly[arg] and not config_read then deny('git command ' .. arg) end
+      local hash_read = arg == 'hash-object' and args[i + 1] == '-t'
+        and args[i + 2] == 'tree' and args[i + 3] == '--stdin' and args[i + 4] == nil
+      local mutation = (arg == 'add' or arg == 'reset')
+        and vim.env.LPKE_REVIEW_MUTATION_REPO
+        and vim.uv.fs_realpath(cwd or vim.uv.cwd()) == vim.env.LPKE_REVIEW_MUTATION_REPO
+        and vim.tbl_contains(args, '--')
+      if not readonly[arg] and not config_read and not hash_read and not mutation then
+        deny('git command ' .. arg)
+      end
       break
     end
   end
 end
 local spawn = vim.uv.spawn
 vim.uv.spawn = function(program, opts, ...)
-  command(program, opts.args or {})
+  command(program, opts.args or {}, opts.cwd)
   return spawn(program, opts, ...)
 end
 local system = vim.system
-vim.system = function(argv, ...)
-  command(argv[1], vim.list_slice(argv, 2))
-  return system(argv, ...)
+vim.system = function(argv, opts, ...)
+  command(argv[1], vim.list_slice(argv, 2), opts and opts.cwd)
+  return system(argv, opts, ...)
 end
 for _, name in ipairs({ 'system', 'systemlist', 'jobstart', 'termopen' }) do
   local original = vim.fn[name]
-  vim.fn[name] = function(argv, ...)
+  vim.fn[name] = function(argv, opts, ...)
     if type(argv) ~= 'table' then deny(name .. ' shell') end
-    command(argv[1], vim.list_slice(argv, 2))
-    return original(argv, ...)
+    command(argv[1], vim.list_slice(argv, 2), type(opts) == 'table' and opts.cwd or nil)
+    return original(argv, opts, ...)
   end
 end
 os.execute = function() deny('os.execute') end

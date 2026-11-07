@@ -68,6 +68,17 @@ vim.api.nvim_create_autocmd('VimEnter', { once = true, callback = function()
               assert(vim.uv.fs_symlink(vim.env.LPKE_TEST_RELINK, path))
               expected['untracked link'][2] = { vim.env.LPKE_TEST_RELINK }
             end
+            if vim.env.LPKE_TEST_REPLACE then
+              local replacement = vim.json.decode(vim.env.LPKE_TEST_REPLACE)
+              local path = view.adapter.ctx.toplevel .. '/' .. replacement.path
+              assert(vim.uv.fs_unlink(path))
+              if replacement.kind == 'link' then
+                assert(vim.uv.fs_symlink(replacement.contents, path))
+              else
+                vim.fn.writefile({ replacement.contents }, path)
+              end
+              expected[replacement.path][2] = { replacement.contents }
+            end
             view:update_files(function()
               vim.defer_fn(check, 100)
             end)
@@ -257,6 +268,30 @@ class GviewState(unittest.TestCase):
         (self.repo / name).symlink_to('both.txt')
         self.env['LPKE_TEST_RELINK'] = 'staged.txt'
         self.open('untracked', {name: [[''], ['both.txt']]}, [name])
+
+    def test_refresh_recreates_local_buffer_for_both_file_type_transitions(self):
+        for mode in ('untracked', 'unstaged'):
+            for initial in ('link', 'file'):
+                with self.subTest(mode=mode, initial=initial):
+                    name = 'type transition ' + mode + initial
+                    path = self.repo / name
+                    if mode == 'unstaged':
+                        path.write_text('committed contents\n')
+                        self.git('add', '--', name)
+                        self.git('commit', '-qm', 'Track transition fixture', '--', name)
+                        path.unlink()
+                    if initial == 'link':
+                        path.symlink_to('both.txt')
+                        before, after, kind = 'both.txt', 'regular contents', 'file'
+                    else:
+                        path.write_text('regular contents\n')
+                        before, after, kind = 'regular contents', 'both.txt', 'link'
+                    self.env['LPKE_TEST_REPLACE'] = json.dumps(
+                        dict(path=name, kind=kind, contents=after))
+                    left = [''] if mode == 'untracked' else ['committed contents']
+                    target_before = (self.repo / 'both.txt').read_bytes()
+                    self.open(mode, {name: [left, [before]]}, [name])
+                    self.assertEqual((self.repo / 'both.txt').read_bytes(), target_before)
 
     def test_submodule_opens_patch(self):
         nested = self.root / 'nested'

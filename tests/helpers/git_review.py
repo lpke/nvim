@@ -24,10 +24,10 @@ def fixture_environment(source=None):
 
 
 class Repo:
-    def __init__(self, path):
+    def __init__(self, path, object_format='sha1'):
         self.path = path
         path.mkdir()
-        self.git('init', '-q', '--initial-branch=main')
+        self.git('init', '-q', '--initial-branch=main', '--object-format=' + object_format)
         if Path(self.git('rev-parse', '--show-toplevel')).resolve() != path.resolve():
             raise AssertionError('Fixture Git root differs from its temporary worktree')
         for key, value in [('user.name', 'Review fixture'),
@@ -39,7 +39,7 @@ class Repo:
     def git(self, *args, check=True):
         result = subprocess.run(['git', '-c', 'core.hooksPath=/dev/null', '-c', 'init.templateDir=',
                                  '-C', str(self.path), *args],
-                                capture_output=True, check=check, env=fixture_environment())
+                                input=b'', capture_output=True, check=check, env=fixture_environment())
         return result.stdout.decode(errors='surrogateescape').removesuffix('\n')
 
     def write(self, name, text):
@@ -163,8 +163,14 @@ class Harness:
     def __exit__(self, *args):
         self.temporary.cleanup()
 
-    def run(self, *, extra_env=None, gview_args=None, gview=None, marker='GIT_REVIEW_PASS', cwd=None):
+    def run(self, *, extra_env=None, gview_args=None, gview=None, marker='GIT_REVIEW_PASS', cwd=None,
+            mutation_repo=None):
         env = dict(self.env, **(extra_env or {}))
+        if mutation_repo is not None:
+            repo = Path(mutation_repo).resolve()
+            assert repo.is_relative_to(self.parent.resolve()), 'mutation fixture outside temporary root'
+            assert (repo / '.git').is_dir(), 'mutation fixture must own its Git directory'
+            env['LPKE_REVIEW_MUTATION_REPO'] = str(repo)
         command = self.command
         if gview_args is not None:
             binary = self.root / 'bin'
@@ -178,7 +184,7 @@ class Harness:
                          / '.local/share/chezmoi/dot_local/bin/executable_gview')))
             command = [sys.executable, str(gview), *gview_args]
         result = subprocess.run(command, cwd=cwd or self.parent, env=env, capture_output=True,
-                                text=True, errors='replace', timeout=50)
+                                text=True, errors='replace', timeout=120)
         diagnostics = ''
         log = self.root / 'cache/nvim/diffview.log'
         if log.exists():
@@ -191,10 +197,12 @@ class Harness:
         return result
 
 
-def probe(root, specs, expected, extra='', *, quit_key=False, gview_args=None, gview=None):
+def probe(root, specs, expected, extra='', *, quit_key=False, gview_args=None, gview=None,
+          mutation_repo=None):
     script = CONFIG / 'tests/helpers/git_review_probe.lua'
     with Harness(root, script) as harness:
         return harness.run(extra_env=dict(
             LPKE_NVIM_DIFFVIEW_GIT_UI='1', LPKE_NVIM_DIFFVIEW_VIEWS=json.dumps(specs),
             LPKE_REVIEW_EXPECTED=json.dumps(encode_expected(expected)), LPKE_REVIEW_EXTRA=extra,
-            LPKE_REVIEW_QUIT='1' if quit_key else ''), gview_args=gview_args, gview=gview)
+            LPKE_REVIEW_QUIT='1' if quit_key else ''), gview_args=gview_args, gview=gview,
+            mutation_repo=mutation_repo)

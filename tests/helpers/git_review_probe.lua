@@ -21,7 +21,12 @@ end
 vim.api.nvim_create_autocmd('VimEnter', {
   once = true,
   callback = function()
-    local tries = 0
+    local started = vim.uv.hrtime()
+    local function before_deadline()
+      -- Process startup is much slower on macOS. Bound elapsed time while still
+      -- requiring the completed stream and exact full commit/file sequence.
+      return (vim.uv.hrtime() - started) / 1e6 < 60000
+    end
     local function check_view(index)
       local want = expected[index]
       local lib = require('diffview.lib')
@@ -50,9 +55,8 @@ vim.api.nvim_create_autocmd('VimEnter', {
         return
       end
       local view = lib.views[index]
-      tries = tries + 1
       if not startup_done or not view or not view.ready then
-        assert(tries < 300, 'view never ready ' .. index)
+        assert(before_deadline(), 'view never ready ' .. index)
         later(function()
           check_view(index)
         end)
@@ -91,7 +95,7 @@ vim.api.nvim_create_autocmd('VimEnter', {
       local sequence = {}
       if want.commits then
         if view.panel.updating or #view.panel.entries < #want.commits then
-          assert(tries < 300, 'history never loaded')
+          assert(before_deadline(), 'history never loaded')
           later(function()
             check_view(index)
           end)
@@ -130,7 +134,7 @@ vim.api.nvim_create_autocmd('VimEnter', {
           )
         then
           assert(
-            tries < 300,
+            before_deadline(),
             'diff never initialized '
               .. index
               .. ': initialized='
@@ -195,7 +199,7 @@ vim.api.nvim_create_autocmd('VimEnter', {
                 .. root
             )
           end
-          tries = 0
+          started = vim.uv.hrtime()
           later(function()
             check_view(index + 1)
           end)
