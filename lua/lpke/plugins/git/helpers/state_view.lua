@@ -123,6 +123,45 @@ end
 
 -- Reuse the literal Git records and buffer handling in history/stash views.
 function M.configure(view, spec)
+  -- Saved file endpoints must not become directory filters during refresh.
+  local exact, initial_directories
+  if spec.exact_paths then
+    local paths = spec.paths_b64
+        and vim.tbl_map(vim.base64.decode, spec.paths_b64)
+      or spec.paths
+      or {}
+    assert(#paths > 0, 'Exact file reviews require paths')
+    exact, initial_directories = {}, {}
+    for _, path in ipairs(paths) do
+      exact[path] = true
+      local stat = vim.uv.fs_lstat(view.adapter.ctx.toplevel .. '/' .. path)
+      initial_directories[path] = stat and stat.type == 'directory' or false
+    end
+  end
+  local scope_error =
+    'Saved file boundary changed; regenerate the review command.'
+  local function current_boundaries()
+    for path in pairs(exact or {}) do
+      local absolute = view.adapter.ctx.toplevel .. '/' .. path
+      local stat = vim.uv.fs_lstat(absolute)
+      if
+        stat
+        and stat.type == 'directory'
+        and not initial_directories[path]
+      then
+        return false
+      end
+      local parent = vim.fs.dirname(absolute)
+      while parent ~= view.adapter.ctx.toplevel do
+        local info = vim.uv.fs_lstat(parent)
+        if info and info.type ~= 'directory' then
+          return false
+        end
+        parent = vim.fs.dirname(parent)
+      end
+    end
+    return true
+  end
   local async = require('diffview.async')
   local FileEntry = require('diffview.scene.file_entry').FileEntry
   local RevType = require('diffview.vcs.rev').RevType
@@ -199,6 +238,12 @@ function M.configure(view, spec)
         end
         return
       end
+      if not current_boundaries() then
+        if callback then
+          callback({ scope_error })
+        end
+        return
+      end
       for _, entry in self.files:iter() do
         exact_local_buffers(entry)
       end
@@ -272,7 +317,14 @@ function M.configure(view, spec)
         run(
           self,
           utils.vec_join(
-            { 'diff', '--raw', '--numstat', '-z', '--ignore-submodules=none' },
+            {
+              'diff',
+              '--raw',
+              '--numstat',
+              '-z',
+              '--find-renames',
+              '--ignore-submodules=none',
+            },
             args
           )
         )
@@ -292,8 +344,18 @@ function M.configure(view, spec)
         local path, oldpath = records[i + 1], nil
         i = i + 2
         if status == 'R' or status == 'C' then
-          oldpath, path = path, records[i]
+          local source = path
+          path = records[i]
           i = i + 1
+          if status == 'R' then
+            oldpath = source
+          else
+            status, oldmode = 'A', '000000'
+          end
+        end
+        if exact and (not exact[path] or (oldpath and not exact[oldpath])) then
+          callback({ scope_error }, nil, nil)
+          return
         end
         changes[#changes + 1] =
           { path = path, oldpath = oldpath, status = status }
@@ -429,6 +491,10 @@ function M.configure(view, spec)
             end
             local files = {}
             for path in result.stdout:gmatch('([^%z]+)%z') do
+              if exact and not exact[path] then
+                callback({ scope_error }, nil)
+                return
+              end
               files[#files + 1] =
                 exact_local_buffers(FileEntry.with_layout(opt.default_layout, {
                   adapter = self,

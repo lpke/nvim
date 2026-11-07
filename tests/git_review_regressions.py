@@ -133,6 +133,63 @@ end
                             mutation_repo=intended.path)
         self.assertEqual(sentinel.snapshot(), before)
 
+    def test_copy_detection_reviews_and_unstages_destination_without_source(self):
+        repo = Repo(self.root / 'copy detection')
+        base = ['line %03d' % i for i in range(100)]
+        repo.write('source', '\n'.join(base) + '\n')
+        repo.commit()
+        repo.git('config', 'status.renames', 'copies')
+        repo.git('config', 'diff.renames', 'copies')
+        changed = base + ['user edit']
+        for path in ('source', 'copy'):
+            repo.write(path, '\n'.join(changed) + '\n')
+        repo.git('add', '-A')
+        self.assertIn('C ', repo.git('status', '--porcelain=v1'))
+        source = repo.git('rev-parse', ':source')
+        spec = repo.spec('diff', state='staged', exact_paths=True, paths_b64=[b64('source'), b64('copy')])
+        extra = '''
+local view = require('diffview.lib').views[1]
+assert(view.adapter:reset_files({'copy'}))
+'''
+        probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+            'working:source': dict(a=base, b=changed), 'working:copy': dict(a=[''], b=changed)})],
+              extra, mutation_repo=repo.path)
+        self.assertEqual(repo.git('rev-parse', ':source'), source)
+        self.assertEqual(repo.git('diff', '--cached', '--name-only'), 'source')
+
+    def test_exact_saved_file_reviews_refuse_directory_replacement_on_refresh(self):
+        for state in ('staged', 'untracked'):
+            with self.subTest(state=state):
+                repo = Repo(self.root / ('refresh-' + state))
+                repo.write('base', 'base\n')
+                if state == 'staged': repo.write('selected', 'base\n')
+                repo.commit()
+                repo.write('selected', 'shown\n')
+                if state == 'staged': repo.git('add', '--', 'selected')
+                spec = repo.spec('diff', state=state, exact_paths=True, paths_b64=[b64('selected')])
+                extra = '''
+local view = require('diffview.lib').views[1]
+local root = view.adapter.ctx.toplevel
+assert(vim.uv.fs_unlink(root .. '/selected'))
+assert(vim.uv.fs_mkdir(root .. '/selected', 448))
+local fd = assert(vim.uv.fs_open(root .. '/selected/private', 'w', 384))
+assert(vim.uv.fs_write(fd, 'undisplayed private contents\\n', 0))
+assert(vim.uv.fs_close(fd))
+if ''' + json.dumps(state) + ''' == 'staged' then
+  assert(vim.system({'git', '-C', root, 'add', '--', 'selected'}):wait().code == 0)
+end
+local index = vim.fn.readblob(root .. '/.git/index')
+local done, failure = false, nil
+view:update_files(function(err) failure, done = err, true end)
+assert(vim.wait(5000, function() return done end, 10), 'refresh did not finish')
+assert(failure and table.concat(failure, ' '):lower():find('file boundary', 1, true), 'refresh accepted widened scope')
+for _, entry in view.files:iter() do assert(entry.path == 'selected', 'private descendant entered review') end
+assert(vim.deep_equal(vim.fn.readblob(root .. '/.git/index'), index), 'refusal changed index')
+'''
+                probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                    'working:selected': dict(a=['base'] if state == 'staged' else [''], b=['shown'])})],
+                      extra, mutation_repo=repo.path)
+
     def test_root_history_uses_repository_object_format_without_writes(self):
         for object_format in ('sha1', 'sha256'):
             with self.subTest(object_format=object_format):
