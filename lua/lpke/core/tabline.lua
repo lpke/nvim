@@ -85,7 +85,15 @@ function Lpke_tabline()
       ['DiffviewFileHistory'] = 'G:DV-History',
     }
     -- filetype dependent titles
-    if filetype_tabtitle_maps[b.file_type] then
+    local explicit_title = vim.t[tab_id].lpke_review_title
+    if type(explicit_title) == 'string' and explicit_title ~= '' then
+      -- Titles are data; escape statusline syntax and visible control bytes.
+      tab_title = explicit_title
+        :gsub('[%z\1-\31\127]', function(char)
+          return string.format('\\x%02x', char:byte())
+        end)
+        :gsub('%%', '%%%%')
+    elseif filetype_tabtitle_maps[b.file_type] then
       tab_title = filetype_tabtitle_maps[b.file_type]
     elseif b.file_type == 'oil' then
       tab_title = (b.custom_buf_type == 'oil_trash' and 'T:' or '')

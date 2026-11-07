@@ -6,6 +6,7 @@ lpke-editing	lpke-help.txt	/*lpke-editing*
 lpke-files	lpke-help.txt	/*lpke-files*
 lpke-filetypes	lpke-help.txt	/*lpke-filetypes*
 lpke-git	lpke-help.txt	/*lpke-git*
+lpke-git-review	lpke-help.txt	/*lpke-git-review*
 lpke-help	lpke-help.txt	/*lpke-help*
 lpke-help.txt	lpke-help.txt	/*lpke-help.txt*
 lpke-lsp	lpke-help.txt	/*lpke-lsp*

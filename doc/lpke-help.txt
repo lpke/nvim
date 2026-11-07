@@ -350,10 +350,13 @@ Fugitive:
   <leader>gds           Current file diff against staging.
   In fugitive: <leader>i closes the fugitive tab/window.
 
-Diffview:
+Diffview:                                                 *lpke-git-review*
   Terminal: g opens changed/staged diffview; gc opens current branch history.
   Terminal: gview /repo history BASE..TIP opens a specific commit history.
   Terminal: gview /repo staged|unstaged|untracked|conflicted opens that state.
+  Terminal: gview --plan PLAN opens the review's named tabs in one process.
+  Stash review shows saved tracked, staged and untracked contents read-only;
+  a dropped stash stays reviewable while its object remains.
   Terminal: gview --host HOST /repo MODE refuses to open on another host.
   Use -- before literal file or directory paths to limit a state view.
   <leader>i             Open/focus changed/staged diffview.

@@ -14,6 +14,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+sys.dont_write_bytecode = True
+from helpers.git_review import fixture_environment
 
 GVIEW = Path(os.environ.get('GVIEW_SOURCE',
     str(Path.home() / '.local/share/chezmoi/dot_local/bin/executable_gview')))
@@ -148,10 +150,12 @@ class GviewState(unittest.TestCase):
                            + ', [' + repr(NVIM) + ', "--headless", "-i", "NONE", "-n", ".", '
                            + '"-c", ' + repr('lua dofile(' + repr(str(self.probe)) + ')') + '])\n')
         wrapper.chmod(0o755)
-        self.env = dict(os.environ, PATH=str(binary) + os.pathsep + os.environ['PATH'])
+        self.env = dict(fixture_environment(), PATH=str(binary) + os.pathsep + os.environ['PATH'])
 
     def git(self, *args):
-        return subprocess.check_output(['git', '-C', str(self.repo), *args])
+        return subprocess.check_output(['git', '-c', 'core.hooksPath=/dev/null',
+                                        '-c', 'commit.gpgsign=false', '-c', 'init.templateDir=',
+                                        '-C', str(self.repo), *args], env=fixture_environment())
 
     def open(self, mode, expected, paths=(), host=None):
         command = [sys.executable, str(GVIEW)]
@@ -267,11 +271,12 @@ class GviewState(unittest.TestCase):
     def test_submodule_opens_patch(self):
         nested = self.root / 'nested'
         nested.mkdir()
-        subprocess.run(['git', '-C', str(nested), 'init', '-q'], check=True)
+        subprocess.run(['git', '-c', 'init.templateDir=', '-C', str(nested), 'init', '-q'], check=True, env=fixture_environment())
         (nested / 'file.txt').write_text('base\n')
-        subprocess.run(['git', '-C', str(nested), 'add', '.'], check=True)
+        subprocess.run(['git', '-C', str(nested), 'add', '.'], check=True, env=fixture_environment())
         subprocess.run(['git', '-C', str(nested), '-c', 'user.name=Fixture',
-                        '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'Base'], check=True)
+                        '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false',
+                        '-c', 'core.hooksPath=/dev/null', 'commit', '-qm', 'Base'], check=True, env=fixture_environment())
         self.git('-c', 'protocol.file.allow=always', 'submodule', 'add', '-q', str(nested), 'nested repo')
         self.git('commit', '-qm', 'Add submodule')
         (self.repo / 'nested repo/file.txt').write_text('changed\n')
@@ -286,7 +291,7 @@ class GviewState(unittest.TestCase):
         loader.exec_module(module)
         argv = ['gview', '--host', 'definitely-wrong.invalid', '/missing/repo', 'unstaged']
         with patch.object(sys, 'argv', argv), patch.object(Path, 'expanduser', side_effect=AssertionError), \
-                patch.object(module.subprocess, 'run', side_effect=AssertionError), \
+                patch.object(subprocess, 'run', side_effect=AssertionError), \
                 patch.object(module.os, 'execvpe', side_effect=AssertionError):
             with self.assertRaises(SystemExit) as caught:
                 module.main()

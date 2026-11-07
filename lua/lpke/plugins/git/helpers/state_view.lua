@@ -1,11 +1,18 @@
 local M = {}
 
--- Scope these overrides to the explicitly requested gview view. Ordinary
--- DiffviewOpen (including g/gc) keeps its combined staged/working file list.
-function M.open(spec)
-  local async = require('diffview.async')
-  local FileEntry = require('diffview.scene.file_entry').FileEntry
-  local RevType = require('diffview.vcs.rev').RevType
+function M.literal_paths(spec, fallback)
+  local paths = spec.paths_b64
+      and vim.tbl_map(vim.base64.decode, spec.paths_b64)
+    or spec.paths
+    or fallback
+    or {}
+  return vim.tbl_map(function(path)
+    return ':(top,literal)' .. (path == '.' and '' or path)
+  end, paths)
+end
+
+-- Keep repository discovery byte-safe for every startup review kind.
+function M.create_adapter(root)
   local utils = require('diffview.utils')
   local GitAdapter = require('diffview.vcs.adapters.git').GitAdapter
   -- This dedicated review process does not track Harpoon offsets. Its BufLeave
@@ -13,8 +20,6 @@ function M.open(spec)
   if package.loaded.harpoon then
     require('harpoon').get_global_settings().save_on_change = false
   end
-  local root = spec.repo_b64 and vim.base64.decode(spec.repo_b64)
-    or vim.uv.cwd()
   -- Plugin discovery trims both paths. Use the known repository root and a
   -- byte-safe git-dir lookup so whitespace and invalid UTF-8 remain filenames.
   local get_dir = GitAdapter.get_dir
@@ -39,8 +44,25 @@ function M.open(spec)
   if err then
     error(err)
   end
-  local options =
-    adapter:diffview_options(require('diffview.arg_parser').parse(spec.args))
+  return adapter
+end
+
+-- Scope overrides to this review. Ordinary DiffviewOpen keeps its file list.
+-- configure runs before opening, so callers can specialize this view safely.
+function M.open(spec, configure)
+  local root = spec.repo_b64 and vim.base64.decode(spec.repo_b64)
+    or vim.uv.cwd()
+  local adapter = M.create_adapter(root)
+  local state_args = {
+    staged = { '--cached', '--untracked-files=no' },
+    unstaged = { '--untracked-files=no' },
+    untracked = { '--untracked-files=all' },
+    conflicted = { '--untracked-files=no' },
+  }
+  local args =
+    vim.list_extend(vim.deepcopy(spec.args or {}), state_args[spec.state] or {})
+  local argo = require('diffview.arg_parser').parse(args)
+  local options = adapter:diffview_options(argo)
   if not options then
     return
   end
@@ -56,7 +78,38 @@ function M.open(spec)
   end
   require('diffview.lib').add_view(view)
 
+  M.configure(view, spec)
+  if configure then
+    configure(view)
+  end
+  view:open()
+  return view
+end
+
+-- Reuse the literal Git records and buffer handling in history/stash views.
+function M.configure(view, spec)
+  local async = require('diffview.async')
+  local FileEntry = require('diffview.scene.file_entry').FileEntry
+  local RevType = require('diffview.vcs.rev').RevType
+  local utils = require('diffview.utils')
+  local adapter = view.adapter
+  local argo = require('diffview.arg_parser').parse(spec.args or {})
   local patches = {}
+  if view.update_files then
+    local update_files = view.update_files
+    view.update_files = function(self, callback)
+      -- Diffview shares a trailing debounce across all diff views. A hidden
+      -- startup tab must not replace the active tab's pending refresh; the
+      -- plugin checks focus only after that shared timer has already fired.
+      if not self:is_cur_tabpage() then
+        if callback then
+          callback({ 'The update was cancelled.' })
+        end
+        return
+      end
+      return update_files(self, callback)
+    end
+  end
   local function exact_local_buffers(entry)
     for _, file in ipairs(entry.layout:files()) do
       if file.rev.type == RevType.LOCAL then
@@ -106,13 +159,7 @@ function M.open(spec)
     end
     return entry
   end
-  local paths = spec.paths_b64
-      and vim.tbl_map(vim.base64.decode, spec.paths_b64)
-    or spec.paths
-    or {}
-  view.path_args = vim.tbl_map(function(path)
-    return ':(top,literal)' .. (path == '.' and '' or path)
-  end, paths)
+  view.path_args = M.literal_paths(spec, argo.post_args)
   adapter.ctx.path_args = view.path_args
   view.panel.path_args = view.path_args
 
@@ -123,7 +170,11 @@ function M.open(spec)
     local add_text = Component.add_text
     local add_line = Component.add_line
     Component.add_text = function(component, text, hl)
-      if text == 'Changes ' and spec.state == 'staged' then
+      if text == 'Changes ' and spec.state == 'stash' then
+        text = 'Saved tracked + untracked '
+      elseif text == 'Staged changes ' and spec.state == 'stash' then
+        text = 'Saved staged '
+      elseif text == 'Changes ' and spec.state == 'staged' then
         text, hl = 'Staged ', 'DiffviewFilePanelStagedTitle'
       elseif text == 'Changes ' and spec.state == 'untracked' then
         text = 'Untracked '
@@ -157,7 +208,12 @@ function M.open(spec)
       -- second collection before it can enter the panel or its navigation list.
       if
         spec.state == 'untracked'
-        or (spec.state ~= 'staged' and kind == 'staged')
+        or (
+          spec.state
+          and spec.state ~= 'staged'
+          and spec.state ~= 'stash'
+          and kind == 'staged'
+        )
       then
         callback(nil, {}, {})
         return
@@ -302,12 +358,20 @@ function M.open(spec)
             end
             local lines =
               vim.split(patch.stdout:gsub('\n$', ''), '\n', { plain = true })
-            patches[change.path] = lines
-            entry_opt.revs =
-              { a = self.Rev(RevType.CUSTOM), b = self.Rev(RevType.CUSTOM) }
+            local patch_key = right:object_name()
+              .. ':'
+              .. kind
+              .. ':'
+              .. change.path
+            patches[patch_key] = lines
+            entry_opt.revs = {
+              a = self.Rev(RevType.CUSTOM),
+              b = right.type == RevType.COMMIT and right
+                or self.Rev(RevType.CUSTOM),
+            }
             entry_opt.nulled = false
             entry_opt.get_data = function()
-              return patches[change.path]
+              return patches[patch_key]
             end
           end
           local entry = FileEntry.with_layout(opt.default_layout, entry_opt)
@@ -332,7 +396,7 @@ function M.open(spec)
     end
   )
 
-  if spec.state == 'untracked' then
+  if not spec.state or spec.state == 'untracked' then
     adapter.untracked_files = async.wrap(
       function(self, left, right, opt, callback)
         -- Diffview's built-in listing is line-delimited and ignores path_args.
@@ -395,8 +459,6 @@ function M.open(spec)
       end
     end
   end)
-  view:open()
-  return view
 end
 
 return M

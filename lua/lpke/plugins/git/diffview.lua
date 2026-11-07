@@ -72,13 +72,17 @@ local function config()
       local original_cmd = vim.cmd
       local future
 
-      vim.cmd = function(command)
-        if command == 'redraw' then
-          return
-        end
-
-        return original_cmd(command)
-      end
+      -- Async file loading can run other plugins here; retain vim.cmd's
+      -- structured command API while suppressing this redundant redraw.
+      vim.cmd = setmetatable({}, {
+        __index = original_cmd,
+        __call = function(_, command)
+          if command == 'redraw' then
+            return
+          end
+          return original_cmd(command)
+        end,
+      })
 
       local ok, err = pcall(function()
         future = DiffView._lpke_set_file_with_pre_swap_redraw(self, file)
@@ -270,15 +274,7 @@ local function config()
     })
 
     if startup_views then
-      for _, view in ipairs(startup_views) do
-        if view.mode == 'history' then
-          diffview.file_history(nil, view.args)
-        elseif view.state then
-          require('lpke.plugins.git.helpers.state_view').open(view)
-        else
-          diffview.open(view.args)
-        end
-      end
+      require('lpke.plugins.git.helpers.review_views').open(startup_views)
     elseif vim.env.LPKE_NVIM_DIFFVIEW_GIT_UI_MODE == 'history' then
       vim.cmd('DiffviewFileHistory')
     else
