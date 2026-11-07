@@ -1,7 +1,7 @@
 local hostname = vim.uv.os_gethostname()
-Lpke_is_work_device = vim.uv.os_uname().sysname == 'Darwin'
-  and type(hostname) == 'string'
-  and hostname:find('Luke-', 1, true) == 1
+-- Match chezmoi's hostname fallback when no shell-rendered role is available.
+Lpke_is_work_device = type(hostname) == 'string'
+  and hostname:find('Luke-Perich', 1, true) == 1
 if vim.env.LPKE_IS_WORK_DEVICE ~= nil then
   Lpke_is_work_device = vim.env.LPKE_IS_WORK_DEVICE == '1'
 end

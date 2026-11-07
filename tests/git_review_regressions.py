@@ -370,6 +370,137 @@ require('diffview.actions').toggle_stage_entry()
                 self.assertNotIn(new, repo.git('ls-files', '-z').split('\0'))
                 self.assertEqual((repo.path / new).read_text(), 'rename contents\n')
 
+    def test_stale_file_directory_boundaries_refuse_stage_and_unstage(self):
+        for action in ('add', 'reset', 'index-reset', 'head-reset', 'index-save'):
+            for name in ('selected', 'selected*\n[ab]'):
+                with self.subTest(action=action, path=name):
+                    repo = Repo(self.root / ('stale-' + str(len(list(self.root.iterdir())))))
+                    repo.write(name, 'base\n')
+                    repo.write('unrelated', 'base\n')
+                    original = repo.commit()
+                    target = original
+                    if action == 'head-reset':
+                        (repo.path / name).unlink()
+                        repo.write(name + '/hidden', 'hidden target\n')
+                        target = repo.commit()
+                        repo.git('reset', '--hard', original)
+                    repo.write(name, 'changed\n')
+                    if action != 'add':
+                        repo.git('add', '--', name)
+                    spec = repo.spec('diff', state='staged' if action != 'add' else 'unstaged',
+                                     paths_b64=[b64(name)])
+                    extra = '''
+local view = require('diffview.lib').views[1]
+local root, path = view.adapter.ctx.toplevel, vim.base64.decode(''' + json.dumps(b64(name)) + ''')
+local function git(args, input)
+  local result = vim.system(vim.list_extend({'git', '--literal-pathspecs', '-C', root}, args), {stdin=input}):wait()
+  assert(result.code == 0, result.stderr)
+  return result.stdout
+end
+local action = ''' + json.dumps(action) + '''
+if action == 'index-reset' or action == 'index-save' then
+  local oid = vim.trim(git({'rev-parse', ':' .. path}))
+  git({'update-index', '--force-remove', '--', path})
+  git({'update-index', '-z', '--index-info'}, '100644 ' .. oid .. ' 0\t' .. path .. '/hidden\\0')
+elseif action == 'head-reset' then
+  local fd = assert(vim.uv.fs_open(root .. '/.git/refs/heads/main', 'w', 384))
+  assert(vim.uv.fs_write(fd, ''' + json.dumps(target + '\n') + ''', 0))
+  assert(vim.uv.fs_close(fd))
+else
+  assert(vim.uv.fs_unlink(root .. '/' .. path))
+  assert(vim.uv.fs_mkdir(root .. '/' .. path, 448))
+  local fd = assert(vim.uv.fs_open(root .. '/' .. path .. '/hidden', 'w', 384))
+  assert(vim.uv.fs_write(fd, 'hidden contents\\n', 0))
+  assert(vim.uv.fs_close(fd))
+  if action == 'reset' then git({'add', '--', path}) end
+end
+local index = vim.fn.readblob(root .. '/.git/index')
+local before = git({'ls-files', '--stage', '-z'})
+local messages, utils = {}, require('diffview.utils')
+local err = utils.err
+utils.err = function(message) messages[#messages + 1] = tostring(message) end
+local result
+if action == 'add' then result = view.adapter:add_files({path})
+elseif action == 'index-save' then result = view.adapter:stage_index_file(view.files.working[1].layout.b.file)
+else result = view.adapter:reset_files({path}) end
+utils.err = err
+assert(result == false, 'stale directory mutation was accepted')
+assert(#messages > 0 and messages[1]:lower():find('refresh', 1, true), 'missing refresh explanation')
+assert(git({'ls-files', '--stage', '-z'}) == before, 'changed hidden index entries')
+assert(vim.deep_equal(vim.fn.readblob(root .. '/.git/index'), index), 'rewrote index on refusal')
+'''
+                    probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                        'working:' + name: dict(a=['base'], b=['changed'])})], extra, mutation_repo=repo.path)
+                    self.assertEqual((repo.path / 'unrelated').read_text(), 'base\n')
+
+    def test_submodule_staging_and_unstaging_remain_exact_directory_endpoints(self):
+        repo = Repo(self.root / 'parent')
+        child = Repo(repo.path / 'module')
+        child.write('file', 'base\n')
+        old = child.commit()
+        repo.write('unrelated', 'base\n')
+        repo.commit()
+        child.write('file', 'changed\n')
+        tip = child.commit()
+        before = child.snapshot()
+        for staged in (False, True):
+            spec = repo.spec('diff', state='staged' if staged else 'unstaged', paths_b64=[b64('module')])
+            patch = repo.git('diff', *(['--cached'] if staged else []), '--submodule=diff',
+                             '--no-ext-diff', '--no-color', '--ignore-submodules=none', '--', 'module').splitlines()
+            extra = '''
+local view = require('diffview.lib').views[1]
+assert(view.adapter:''' + ('reset_files' if staged else 'add_files') + '''({'module'}))
+'''
+            probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                'working:module': dict(a=[''], b=patch)})],
+                  extra, mutation_repo=repo.path)
+            self.assertEqual(repo.git('rev-parse', ':module'), old if staged else tip)
+            self.assertEqual(child.snapshot(), before)
+
+    def test_work_role_fallback_matches_chezmoi_prefix_and_explicit_override(self):
+        script = self.root / 'work-role.lua'
+        script.write_text('''
+local ok, err = pcall(function()
+local hostname = vim.uv.os_gethostname
+local uname = vim.uv.os_uname
+local override = vim.env.LPKE_IS_WORK_DEVICE
+for _, system in ipairs({'Darwin', 'Linux', 'Windows_NT'}) do
+  for _, host in ipairs({'Luke-Perich', 'Luke-Perich-2', 'Luke-Air', 'lpnix', 'luke-perich'}) do
+    vim.uv.os_uname = function() return {sysname=system} end
+    vim.uv.os_gethostname = function() return host end
+    for _, value in ipairs({'unset', '1', '0'}) do
+      if value == 'unset' then vim.env.LPKE_IS_WORK_DEVICE = nil
+      else vim.env.LPKE_IS_WORK_DEVICE = value end
+      dofile(vim.env.XDG_CONFIG_HOME .. '/nvim/lua/lpke/core/globals/globals.lua')
+      local expected = host:sub(1, #'Luke-Perich') == 'Luke-Perich'
+      if value ~= 'unset' then expected = value == '1' end
+      assert(Lpke_is_work_device == expected, system .. '/' .. host .. '/' .. value)
+    end
+  end
+end
+vim.uv.os_gethostname, vim.uv.os_uname = hostname, uname
+vim.env.LPKE_IS_WORK_DEVICE = override
+end)
+if not ok then io.stderr:write(tostring(err) .. '\\n'); vim.cmd('cquit 1') end
+print('GIT_REVIEW_PASS')
+vim.cmd('qa!')
+''')
+        with Harness(self.root, script) as harness:
+            harness.run()
+
+    def test_unborn_scoped_unstage_preserves_unrelated_index_entries(self):
+        for object_format in ('sha1', 'sha256'):
+            with self.subTest(object_format=object_format):
+                repo = Repo(self.root / ('unborn-' + object_format), object_format=object_format)
+                for name in ('selected*', 'unrelated'):
+                    repo.write(name, 'contents\n')
+                repo.git('add', '-A')
+                unrelated = repo.git('rev-parse', ':unrelated')
+                self.mutate(repo, 'staged', ['selected*'], {
+                    'working:selected*': dict(a=[''], b=['contents'])}, 'U')
+                self.assertEqual(repo.git('ls-files'), 'unrelated')
+                self.assertEqual(repo.git('rev-parse', ':unrelated'), unrelated)
+
     def test_saving_index_buffer_preserves_literal_bytes_and_unrelated_staging(self):
         for name in ('file*\n[ab]', '-selected'):
             with self.subTest(path=name):

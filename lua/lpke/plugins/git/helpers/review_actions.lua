@@ -7,6 +7,20 @@ function M.configure(view, spec)
   local async = require('diffview.async')
   local utils = require('diffview.utils')
   local literal = require('lpke.plugins.git.helpers.state_view').literal_paths
+  local function valid_scope(paths, command)
+    local ok, err = pcall(
+      require('lpke.plugins.git.helpers.review_scope').validate,
+      adapter,
+      paths,
+      command
+    )
+    if not ok then
+      utils.err(
+        'Refresh the review before changing these files: ' .. tostring(err)
+      )
+    end
+    return ok, err
+  end
   local function entries(staged)
     if staged then
       return spec.state == 'staged' and view.files.working or view.files.staged
@@ -53,8 +67,20 @@ function M.configure(view, spec)
     if #paths == 0 then
       return true
     end
+    local valid, target = valid_scope(paths, command)
+    if not valid then
+      return false
+    end
+    local args = { command }
+    if command == 'reset' then
+      -- Use the exact tree we just checked. An unborn repository only needs
+      -- its represented entries removed; no mutable HEAD or recursive pathspec.
+      args = target == false and { 'update-index', '--force-remove' }
+        or { 'reset', target }
+    end
     local _, code = adapter:exec_sync(
-      utils.vec_join({ command, '--' }, literal({ paths = paths })),
+      target == false and utils.vec_join(args, { '--' }, paths)
+        or utils.vec_join(args, { '--' }, literal({ paths = paths })),
       adapter.ctx.toplevel
     )
     return code == 0
@@ -112,7 +138,9 @@ function M.configure(view, spec)
   -- Saving an editable index buffer also needs byte-safe index-info framing.
   local stage_index = adapter.stage_index_file
   adapter.stage_index_file = function(self, file)
-    if not represented(file.path) then
+    if
+      not represented(file.path) or not valid_scope({ file.path }, 'index')
+    then
       return false
     end
     local proxy = literal_adapter(self)
