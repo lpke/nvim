@@ -38,6 +38,7 @@ vim.api.nvim_create_autocmd('VimEnter', {
           require('auto-session.config').auto_save == false,
           'review can save a session'
         )
+        Lpke_review_harness_check()
         print('GIT_REVIEW_PASS')
         if vim.env.LPKE_REVIEW_QUIT == '1' then
           local mapping = vim.fn.maparg('Q', 'n', false, true)
@@ -87,6 +88,7 @@ vim.api.nvim_create_autocmd('VimEnter', {
       assert(view.adapter.ctx.toplevel == root, 'wrong adapter repository')
       assert(vim.fn.getcwd(-1, vim.fn.tabpagenr()) == root, 'wrong tab cwd')
       local actual = {}
+      local sequence = {}
       if want.commits then
         if #view.panel.entries < #want.commits then
           assert(tries < 300, 'history never loaded')
@@ -99,7 +101,14 @@ vim.api.nvim_create_autocmd('VimEnter', {
         for _, entry in ipairs(view.panel.entries) do
           commits[#commits + 1] = entry.commit.hash
           for _, file in ipairs(entry.files) do
-            actual[file.path] = file
+            sequence[#sequence + 1] = { commit = entry.commit.hash, path = file.path }
+            if want.versions then
+              actual[tostring(#sequence)] = file
+            else
+              assert(not actual[file.path],
+                'ambiguous history path; use ordered versions keyed by commit and path: ' .. file.path)
+              actual[file.path] = file
+            end
           end
         end
         table.sort(commits)
@@ -133,6 +142,19 @@ vim.api.nvim_create_autocmd('VimEnter', {
       local contents = {}
       for key, value in pairs(want.contents_b64 or {}) do
         contents[vim.base64.decode(key)] = value
+      end
+      if want.versions then
+        assert(want.commits, 'versions require explicit commit scope')
+        assert(vim.tbl_isempty(contents), 'use versions or legacy contents, not both')
+        local wanted_sequence = {}
+        for i, version in ipairs(want.versions) do
+          local path = vim.base64.decode(version.path_b64)
+          wanted_sequence[i] = { commit = version.commit, path = path }
+          contents[tostring(i)] = version
+        end
+        assert(vim.deep_equal(sequence, wanted_sequence),
+          'wrong history sequence: ' .. vim.inspect(sequence)
+            .. ' expected ' .. vim.inspect(wanted_sequence))
       end
       assert(
         vim.tbl_count(actual) == vim.tbl_count(contents),

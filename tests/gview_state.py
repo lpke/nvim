@@ -6,7 +6,6 @@ import errno
 import json
 import os
 from pathlib import Path
-import shutil
 import socket
 import subprocess
 import sys
@@ -15,11 +14,10 @@ import unittest
 from unittest.mock import patch
 
 sys.dont_write_bytecode = True
-from helpers.git_review import fixture_environment
+from helpers.git_review import Harness, fixture_environment
 
 GVIEW = Path(os.environ.get('GVIEW_SOURCE',
     str(Path.home() / '.local/share/chezmoi/dot_local/bin/executable_gview')))
-NVIM = shutil.which('nvim')
 
 PROBE = r'''
 vim.api.nvim_create_autocmd('VimEnter', { once = true, callback = function()
@@ -74,6 +72,7 @@ vim.api.nvim_create_autocmd('VimEnter', { once = true, callback = function()
               vim.defer_fn(check, 100)
             end)
           else
+            Lpke_review_harness_check()
             print('GVIEW_STATE_PASS')
             vim.cmd('qa!')
           end
@@ -143,14 +142,7 @@ class GviewState(unittest.TestCase):
             (self.repo / name).write_text('NEW ' + name.replace('\n', ' ') + '\n')
         self.probe = self.root / 'probe.lua'
         self.probe.write_text(PROBE)
-        binary = self.root / 'bin'
-        binary.mkdir()
-        wrapper = binary / 'nvim'
-        wrapper.write_text('#!' + sys.executable + '\nimport os\nos.execv(' + repr(NVIM)
-                           + ', [' + repr(NVIM) + ', "--headless", "-i", "NONE", "-n", ".", '
-                           + '"-c", ' + repr('lua dofile(' + repr(str(self.probe)) + ')') + '])\n')
-        wrapper.chmod(0o755)
-        self.env = dict(fixture_environment(), PATH=str(binary) + os.pathsep + os.environ['PATH'])
+        self.env = fixture_environment()
 
     def git(self, *args):
         return subprocess.check_output(['git', '-c', 'core.hooksPath=/dev/null',
@@ -167,11 +159,9 @@ class GviewState(unittest.TestCase):
         encoded = {base64.b64encode(os.fsencode(path)).decode('ascii'): value
                    for path, value in expected.items()}
         env = dict(self.env, LPKE_TEST_EXPECTED=json.dumps(encoded), LPKE_TEST_MODE=mode)
-        result = subprocess.run(command, cwd='/', env=env, capture_output=True, text=True, timeout=25)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn('GVIEW_STATE_PASS', result.stdout + result.stderr)
-        for error in ('Error in ', 'vim.schedule callback:', 'Failed to create diff buffer'):
-            self.assertNotIn(error, result.stdout + result.stderr)
+        with Harness(self.root, self.probe) as harness:
+            harness.run(extra_env={key: value for key, value in env.items() if key.startswith('LPKE_TEST_')},
+                        gview_args=command[2:], gview=GVIEW, marker='GVIEW_STATE_PASS', cwd='/')
 
     def test_staged_has_only_head_to_index(self):
         self.open('staged', {

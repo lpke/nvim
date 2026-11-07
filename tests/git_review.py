@@ -6,7 +6,7 @@ import sys
 
 sys.dont_write_bytecode = True
 
-from helpers.git_review import Repo, b64, fixture_environment, probe
+from helpers.git_review import CONFIG, Harness, Repo, b64, fixture_environment, probe
 
 
 class GitReview(unittest.TestCase):
@@ -41,8 +41,132 @@ class GitReview(unittest.TestCase):
     def run_views(self, specs, expected, **kwargs):
         repos = [self.repo, *getattr(self, 'other_repos', [])]
         before = [repo.snapshot() for repo in repos]
-        probe(self.root, specs, expected, **kwargs)
-        self.assertEqual(before, [repo.snapshot() for repo in repos], 'review changed repository')
+        try:
+            return probe(self.root, specs, expected, **kwargs)
+        finally:
+            self.assertEqual(before, [repo.snapshot() for repo in repos], 'review changed repository')
+
+    def test_range_preserves_every_version_and_rejects_ambiguous_oracles(self):
+        repo = self.repo
+        versions = []
+        previous = 'base'
+        for number in range(1, 4):
+            current = 'saved version ' + str(number)
+            repo.write('file.txt', current + '\n')
+            oid = repo.commit('Successive edit ' + str(number))
+            versions.insert(0, dict(commit=oid, path='file.txt', a=[previous], b=[current]))
+            previous = current
+        spec = repo.spec('history', 'Three versions % literal',
+                         args=['--range=' + self.base + '..' + versions[0]['commit']])
+        want = self.expect(spec, {}, commits=[v['commit'] for v in versions], versions=versions)
+        self.run_views([spec], [want])
+        # Prove the oracle checks an earlier commit rather than only the tip.
+        from copy import deepcopy
+        wrong = deepcopy(want)
+        wrong['versions'][-1]['b'] = ['wrong earlier version']
+        with self.assertRaisesRegex(AssertionError, 'wrong b'):
+            self.run_views([spec], [wrong])
+        wrong = deepcopy(want)
+        wrong['versions'].reverse()
+        with self.assertRaisesRegex(AssertionError, 'wrong history sequence'):
+            self.run_views([spec], [wrong])
+        with self.assertRaisesRegex(AssertionError, 'ambiguous history path'):
+            self.run_views([spec], [self.expect(spec, {
+                'file.txt': dict(a=['saved version 2'], b=['saved version 3'])
+            }, commits=[v['commit'] for v in versions])])
+
+    def test_hostile_environment_and_concurrent_boots_leave_sources_untouched(self):
+        import os
+        import shutil
+        from concurrent.futures import ThreadPoolExecutor
+        from unittest.mock import patch
+        from helpers import git_review as helper
+        hostile = self.root / 'foreign-user'
+        hostile.mkdir()
+        source = self.root / 'source-copy'
+        shutil.copytree(CONFIG, source, ignore=shutil.ignore_patterns('.git', '__pycache__'))
+        # A broad production Lazy import would run this destructive startup hook.
+        (source / 'lua/lpke/plugins/hostile_probe.lua').write_text(
+            "return {'hostile/plugin', lazy=false, init=function() error('UNRELATED STARTUP') end}\n")
+        for relative in ('data/nvim/mason/registries/github/mason-org/mason-registry/registry.json',
+                         'data/nvim/harpoon/marks', 'data/nvim/sessions/sentinel',
+                         'state/nvim/shada/main.shada', 'cache/nvim/sentinel',
+                         'config/foreign/init.lua', 'config/nvim-local/init.lua'):
+            target = hostile / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text('hostile sentinel: invalid registry and startup contents\n')
+        trap = hostile / 'bin'
+        trap.mkdir()
+        for name in ('curl', 'wget', 'ssh', 'xclip', 'xsel', 'wl-copy', 'wl-paste', 'pbcopy', 'pbpaste'):
+            path = trap / name
+            path.write_text('#!/bin/sh\nprintf touched >> ' + str(hostile / 'external-activity') + '\nexit 91\n')
+            path.chmod(0o755)
+        def snapshot(path):
+            return {str(p.relative_to(path)): (p.stat().st_mode, p.stat().st_mtime_ns, p.read_bytes())
+                    for p in path.rglob('*') if p.is_file()}
+        plugin_copy = hostile / 'installed-plugins'
+        for name in helper.PLUGINS:
+            shutil.copytree(helper.plugin_source() / name, plugin_copy / name,
+                            ignore=shutil.ignore_patterns('.git', '__pycache__'), symlinks=False)
+        before = snapshot(hostile), snapshot(source)
+        script = self.root / 'isolation.lua'
+        script.write_text("""
+vim.fn.setreg('+', {'private plus'})
+vim.fn.setreg('*', {'private star'})
+assert(vim.fn.getreg('+') == 'private plus\\n')
+assert(vim.fn.getreg('*') == 'private star\\n')
+assert(vim.g.loaded_python3_provider == 0 and vim.g.loaded_node_provider == 0)
+for _, kind in ipairs({'data', 'cache', 'state', 'config'}) do
+  vim.fn.writefile({'private write'}, vim.fn.stdpath(kind) .. '/harness-sentinel')
+end
+Lpke_review_harness_check()
+print('ISOLATION_PASS')
+vim.cmd('qa!')
+""")
+        env = dict(os.environ, HOME=str(hostile), NVIM_APPNAME='foreign',
+                   VIMINIT='lua error("FOREIGN VIMINIT")', SSH_CONNECTION='hostile ssh session',
+                   DISPLAY=':hostile', WAYLAND_DISPLAY='hostile-wayland',
+                   LPKE_NVIM_DIFFVIEW_VIEWS='invalid inherited plan',
+                   LPKE_NVIM_NO_SESSION='0', XDG_DATA_HOME=str(hostile / 'data'),
+                   XDG_CONFIG_HOME=str(hostile / 'config'), XDG_CACHE_HOME=str(hostile / 'cache'),
+                   XDG_STATE_HOME=str(hostile / 'state'),
+                   PATH=str(trap) + os.pathsep + os.environ['PATH'])
+        def boot(number):
+            with Harness(self.root / ('boot-' + str(number)), script, env=env) as harness:
+                private = harness.root
+                result = harness.run(marker='ISOLATION_PASS')
+                self.assertTrue((harness.config / 'harness-sentinel').is_file())
+                self.assertFalse((private / 'data/nvim/mason').exists())
+                self.assertFalse((private / 'data/nvim/harpoon').exists())
+            self.assertFalse(private.exists(), 'private boot was not cleaned')
+            return result
+        with patch.object(helper, 'CONFIG', source), patch.dict(os.environ,
+                GIT_REVIEW_NVIM_PLUGINS=str(plugin_copy)):
+            with ThreadPoolExecutor(max_workers=3) as workers:
+                list(workers.map(boot, range(3)))
+        self.assertEqual(before, (snapshot(hostile), snapshot(source)))
+
+    def test_forbidden_activity_fails_even_when_caught_and_cleans_up(self):
+        actions = {
+            'process': "vim.system({'curl', 'https://example.invalid'})",
+            'git config mutation': "vim.system({'git', 'config', 'user.name', 'rogue'})",
+            'git network': "vim.system({'git', 'fetch', 'https://example.invalid'})",
+            'libuv network': "vim.uv.new_tcp()",
+            'Mason refresh': "require('mason-registry').refresh()",
+            'Harpoon startup': "require('harpoon')",
+        }
+        for label, action in actions.items():
+            with self.subTest(label=label):
+                script = self.root / 'forbidden.lua'
+                script.write_text("pcall(function() " + action + " end)\n"
+                                  "local ok, err = pcall(Lpke_review_harness_check)\n"
+                                  "assert(not ok, 'guard did not record forbidden activity')\n"
+                                  "io.stderr:write(tostring(err))\nvim.cmd('cquit 1')\n")
+                with self.assertRaisesRegex(AssertionError, 'process curl|git command fetch|git command config|network new_tcp|unrelated module'):
+                    with Harness(self.root, script) as harness:
+                        private = harness.root
+                        harness.run()
+                self.assertFalse(private.exists())
 
     def test_real_cli_mixed_plan(self):
         import base64
@@ -283,8 +407,6 @@ end
     def test_stash_missing_or_non_stash_is_rejected(self):
         # The startup helper throws a clear error, exercised in a real process
         # without asking the normal probe to wait for a view that must not open.
-        from helpers.git_review import CONFIG
-        import subprocess
         removed = self.make_stash()
         self.repo.git('stash', 'drop', '-q')
         self.repo.git('reflog', 'expire', '--expire=now', '--all')
@@ -292,9 +414,6 @@ end
         before = self.repo.snapshot()
         script = self.root / 'reject.lua'
         script.write_text('''
-vim.opt.rtp:prepend(vim.env.REVIEW_CONFIG)
-vim.opt.rtp:prepend(vim.fn.expand('~/.local/share/nvim/lazy/diffview.nvim'))
-require('diffview').setup({})
 local stash = require('lpke.plugins.git.helpers.stash_view')
 local raw = 'raw' .. string.char(255, 9, 10) .. '[ab]*? |name'
 local paths = require('lpke.plugins.git.helpers.state_view').literal_paths({paths_b64={vim.base64.encode(raw)}})
@@ -303,17 +422,13 @@ for _, test in ipairs({{string.rep('0',40), 'unavailable'}, {vim.env.REVIEW_BASE
   local ok, err = pcall(stash.open, {repo_b64=vim.base64.encode(vim.env.REVIEW_REPO), stash_oid=test[1]})
   assert(not ok and tostring(err):find(test[2],1,true), tostring(err))
 end
+Lpke_review_harness_check()
 print('REJECTION_PASS')
 vim.cmd('qa!')
 ''')
-        import os
-        result = subprocess.run(['nvim', '--headless', '-u', 'NONE', '-i', 'NONE', '-n', '-l', str(script)],
-                                env=dict(fixture_environment(), REVIEW_CONFIG=str(CONFIG), REVIEW_BASE=self.base,
-                                         REVIEW_REPO=str(self.repo.path), REVIEW_MISSING=removed,
-                                         XDG_STATE_HOME=str(self.root / 'state'),
-                                         XDG_CACHE_HOME=str(self.root / 'cache')), capture_output=True, text=True, timeout=15)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn('REJECTION_PASS', result.stderr + result.stdout)
+        with Harness(self.root, script) as harness:
+            harness.run(extra_env=dict(REVIEW_BASE=self.base, REVIEW_REPO=str(self.repo.path),
+                                       REVIEW_MISSING=removed), marker='REJECTION_PASS')
         self.assertEqual(before, self.repo.snapshot())
 
     def test_literal_explicit_diff_paths_and_conflicts(self):
