@@ -64,11 +64,12 @@ local function command(program, args, cwd)
         and args[i + 2] == nil
       local hash_read = arg == 'hash-object' and args[i + 1] == '-t'
         and args[i + 2] == 'tree' and args[i + 3] == '--stdin' and args[i + 4] == nil
-      local mutation = (arg == 'add' or arg == 'reset' or arg == 'checkout'
+      local mutation = (arg == 'add' or arg == 'reset' or arg == 'checkout' or arg == 'restore'
         or arg == 'rm' or arg == 'hash-object' or arg == 'update-index')
         and vim.env.LPKE_REVIEW_MUTATION_REPO
         and vim.uv.fs_realpath(cwd or vim.uv.cwd()) == vim.env.LPKE_REVIEW_MUTATION_REPO
-        and (vim.tbl_contains(args, '--') or (arg == 'update-index'
+        and (vim.tbl_contains(args, '--') or (arg == 'hash-object' and args[i + 1] == '-w'
+          and args[i + 2] == '--stdin' and args[i + 3] == nil) or (arg == 'update-index'
           and args[i + 1] == '-z' and args[i + 2] == '--index-info'))
       if not readonly[arg] and not config_read and not hash_read and not mutation then
         deny('git command ' .. arg)

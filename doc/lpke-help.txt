@@ -357,6 +357,7 @@ Diffview:                                                 *lpke-git-review*
   Terminal: gview --plan PLAN opens the review's named tabs in one process.
   Stash review shows saved tracked, staged and untracked contents read-only;
   a dropped stash stays reviewable while its object remains.
+  gview history and commit-only diffs are read-only, including child diff views.
   Terminal: gview --host HOST /repo MODE refuses to open on another host.
   Use -- before literal file or directory paths to limit a state view.
   <leader>i             Open/focus changed/staged diffview.
@@ -372,6 +373,8 @@ Diffview:                                                 *lpke-git-review*
   In Diffview: J/K or <Tab>/<S-Tab> move files.
   In Diffview: - or s stage/unstage selected file, S stage all, U unstage all.
   In Diffview: X restore entry, I intent-to-add, cc commit via Fugitive.
+  In scoped live reviews: X restores the selected entry; its shown Undo command
+  restores the previous files and index. Resolve conflicts with the merge keys.
   In Diffview: <leader>b files panel, <leader>e commit/after buffer,
                <F2>s right-side zoom, gw whitespace diff, g<C-x> layout.
   Merge conflicts: [x/]x jump; <leader>co/ct/cb/ca choose ours/theirs/base/all;

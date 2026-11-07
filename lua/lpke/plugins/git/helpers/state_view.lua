@@ -89,6 +89,15 @@ function M.open(spec, configure)
   if not options then
     return
   end
+  local RevType = require('diffview.vcs.rev').RevType
+  for _, side in ipairs({ 'left', 'right' }) do
+    if
+      options[side].type == RevType.COMMIT
+      and options[side].commit == adapter.Rev.NULL_TREE_SHA
+    then
+      options[side] = adapter.Rev(RevType.COMMIT, M.empty_tree_oid(adapter))
+    end
+  end
   local view = require('diffview.scene.views.diff.diff_view').DiffView({
     adapter = adapter,
     path_args = {},
@@ -105,7 +114,6 @@ function M.open(spec, configure)
   if configure then
     configure(view)
   end
-  local RevType = require('diffview.vcs.rev').RevType
   if view.left.type == RevType.COMMIT and view.right.type == RevType.COMMIT then
     require('lpke.plugins.git.helpers.readonly_view').configure(view, 'History')
   end

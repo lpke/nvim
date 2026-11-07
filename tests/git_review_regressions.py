@@ -5,12 +5,13 @@ Only explicitly opted-in temporary repositories permit Git mutations.
 """
 import json
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
 
 sys.dont_write_bytecode = True
-from helpers.git_review import Harness, Repo, b64, probe
+from helpers.git_review import Harness, Repo, b64, fixture_environment, probe
 
 
 class GitReviewRegressions(unittest.TestCase):
@@ -454,6 +455,180 @@ vim.api.nvim_buf_call(file.bufnr, function() vim.cmd('write') end)
             'working:untracked': dict(a=[''], b=['saved untracked']),
         })])
         self.assertEqual(repo.snapshot(), before)
+
+    def test_symlink_restore_and_undo_never_store_external_target_contents(self):
+        sentinel = self.root / 'external-private-file'
+        sentinel.write_bytes(b'EXTERNAL SENTINEL: never store this content\x00\xff')
+        external_dir = self.root / 'external-directory'
+        external_dir.mkdir()
+        outside = sentinel.read_bytes(), sentinel.stat().st_mtime_ns
+        for target in (sentinel, external_dir, self.root / 'missing-target'):
+            for tracked in (False, True):
+                with self.subTest(target=target.name, tracked=tracked):
+                    repo = Repo(self.root / ('link-restore-' + str(len(list(self.root.iterdir())))))
+                    repo.write('base', 'base\n')
+                    link = repo.path / 'link*\n[ab]'
+                    if tracked:
+                        link.symlink_to('original-target')
+                    repo.commit()
+                    if tracked:
+                        link.unlink()
+                    link.symlink_to(target)
+                    secret_oid = repo.git('hash-object', str(sentinel))
+                    index = repo.git('ls-files', '--stage', '-z')
+                    spec = repo.spec('diff', state='unstaged' if tracked else 'untracked',
+                                     paths_b64=[b64(link.name)])
+                    extra = '''
+local view = require('diffview.lib').views[1]
+local async = require('diffview.async')
+local original = view.adapter.file_restore
+local undo
+view.adapter.file_restore = async.wrap(function(self, path, kind, commit, callback)
+  local ok, command = async.await(original(self, path, kind, commit))
+  undo = command
+  callback(ok, command)
+end)
+view.panel:focus()
+view.panel:set_cur_file(view.cur_entry)
+view.panel:highlight_cur_file()
+require('diffview.actions').restore_entry()
+assert(vim.wait(5000, function() return undo ~= nil end, 10), 'restore did not return Undo')
+local path = view.adapter.ctx.toplevel .. '/' .. view.cur_entry.path
+''' + ("assert(vim.uv.fs_readlink(path) == 'original-target')\n" if tracked else
+       "assert(vim.uv.fs_lstat(path) == nil)\n") + '''
+vim.cmd(undo)
+'''
+                    probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                        'working:' + link.name: dict(a=['original-target'] if tracked else [''], b=[str(target)])})],
+                        extra, mutation_repo=repo.path)
+                    self.assertTrue(link.is_symlink())
+                    self.assertEqual(str(link.readlink()), str(target))
+                    self.assertEqual(repo.git('ls-files', '--stage', '-z'), index)
+                    found = subprocess.run(['git', '-C', str(repo.path), 'cat-file', '-e', secret_oid],
+                                           capture_output=True, env=fixture_environment())
+                    self.assertNotEqual(found.returncode, 0, 'external contents entered Git object storage')
+                    self.assertEqual((sentinel.read_bytes(), sentinel.stat().st_mtime_ns), outside)
+
+    def test_staged_rename_restore_and_undo_restore_both_endpoints_and_index(self):
+        for file_kind in ('file', 'link', 'binary'):
+            with self.subTest(file_kind=file_kind):
+                repo = Repo(self.root / ('restore-rename-' + file_kind))
+                old, new = 'from/old\n*', 'to/new\t[ab]'
+                (repo.path / old).parent.mkdir()
+                if file_kind == 'link':
+                    (repo.path / old).symlink_to('missing-target')
+                    text = 'missing-target'
+                elif file_kind == 'binary':
+                    repo.write(old, b'\x00\xffbinary data\n')
+                else:
+                    repo.write(old, 'rename contents\n')
+                    (repo.path / old).chmod(0o755)
+                    text = 'rename contents'
+                repo.write('unrelated', 'base\n')
+                repo.commit()
+                (repo.path / new).parent.mkdir()
+                repo.git('mv', '--', old, new)
+                repo.write('unrelated', 'keep staged\n')
+                repo.git('add', '--', 'unrelated')
+                index = repo.git('ls-files', '--stage', '-z')
+                spec = repo.spec('diff', paths_b64=[b64(old), b64(new)])
+                extra = '''
+local view = require('diffview.lib').views[1]
+local async = require('diffview.async')
+local original = view.adapter.file_restore
+local undo
+view.adapter.file_restore = async.wrap(function(self, path, kind, commit, callback)
+  local ok, command = async.await(original(self, path, kind, commit))
+  undo = command
+  callback(ok, command)
+end)
+view.panel:focus()
+view.panel:set_cur_file(view.files.staged[1])
+view.panel:highlight_cur_file()
+require('diffview.actions').restore_entry()
+assert(vim.wait(5000, function() return undo ~= nil end, 10))
+''' + 'local old = view.adapter.ctx.toplevel .. "/" .. vim.base64.decode(' + json.dumps(b64(old)) + ')\n' + \
+      'local new = view.adapter.ctx.toplevel .. "/" .. vim.base64.decode(' + json.dumps(b64(new)) + ')\n' + '''
+assert(vim.uv.fs_lstat(old) ~= nil and vim.uv.fs_lstat(new) == nil, 'rename endpoints not restored')
+local result = vim.system({'git', '-C', view.adapter.ctx.toplevel, 'diff', '--cached', '--name-only'}):wait()
+assert(result.stdout == 'unrelated\\n', 'rename left a staged deletion')
+vim.cmd(undo)
+'''
+                expected = dict(binary=True, oldpath=old) if file_kind == 'binary' else dict(a=[text], b=[text], oldpath=old)
+                probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                    'staged:' + new: expected})], extra, mutation_repo=repo.path)
+                self.assertEqual(repo.git('ls-files', '--stage', '-z'), index)
+                self.assertFalse((repo.path / old).exists() or (repo.path / old).is_symlink())
+                if file_kind == 'link':
+                    self.assertEqual(str((repo.path / new).readlink()), text)
+                elif file_kind == 'binary':
+                    self.assertEqual((repo.path / new).read_bytes(), b'\x00\xffbinary data\n')
+                else:
+                    self.assertEqual((repo.path / new).read_text(), text + '\n')
+                    self.assertEqual((repo.path / new).stat().st_mode & 0o777, 0o755)
+
+    def test_sha256_unborn_staged_and_explicit_root_diff_use_correct_empty_tree(self):
+        repo = Repo(self.root / 'sha256 ordinary diff', object_format='sha256')
+        repo.write('file', 'root contents\n')
+        repo.git('add', '--', 'file')
+        spec = repo.spec('diff', state='staged', paths_b64=[b64('file')])
+        before = repo.snapshot()
+        probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], title='Staged [live]', contents={
+            'working:file': dict(a=[''], b=['root contents'])})],
+            gview_args=[str(repo.path), 'staged', '--', 'file'])
+        self.assertEqual(repo.snapshot(), before)
+        root = repo.commit()
+        spec = repo.spec('diff', args=[root + '^!'])
+        before = repo.snapshot()
+        probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], title='Diff', readonly=True, contents={
+            'working:file': dict(a=[''], b=['root contents'])})],
+            gview_args=[str(repo.path), 'diff', root + '^!'])
+        self.assertEqual(repo.snapshot(), before)
+
+    def test_unborn_unstage_keeps_other_index_entries_on_both_object_formats(self):
+        for object_format in ('sha1', 'sha256'):
+            with self.subTest(object_format=object_format):
+                repo = Repo(self.root / ('unborn unstage ' + object_format), object_format=object_format)
+                for name in ('selected', 'unrelated'):
+                    repo.write(name, 'index\n')
+                repo.git('add', '-A')
+                unrelated = repo.git('rev-parse', ':unrelated')
+                self.mutate(repo, 'staged', ['selected'], {'working:selected': dict(a=[''], b=['index'])}, 'U')
+                self.assertEqual(repo.git('ls-files'), 'unrelated')
+                self.assertEqual(repo.git('rev-parse', ':unrelated'), unrelated)
+
+    def test_undo_refuses_changed_symlink_parents_inside_and_outside_the_repo(self):
+        for outside in (False, True):
+            with self.subTest(outside=outside):
+                repo = Repo(self.root / ('undo-parent-' + str(outside)))
+                repo.write('from/file', 'base\n')
+                repo.commit()
+                repo.write('from/file', 'worktree\n')
+                target = self.root / ('outside-' + str(outside)) if outside else repo.path / 'hidden'
+                target.mkdir()
+                (target / 'file').write_text('do not overwrite\n')
+                index = repo.git('ls-files', '--stage', '-z')
+                spec = repo.spec('diff', state='unstaged', paths_b64=[b64('from/file')])
+                extra = '''
+local view = require('diffview.lib').views[1]
+local async = require('diffview.async')
+local done, command = false, nil
+async.void(function()
+  local ok, undo = async.await(view.adapter:file_restore('from/file', 'working'))
+  assert(ok)
+  command, done = undo, true
+end)()
+assert(vim.wait(5000, function() return done end, 10))
+local parent = view.adapter.ctx.toplevel .. '/from'
+''' + 'assert(vim.uv.fs_rename(parent, ' + json.dumps(str(self.root / ('held-parent-' + str(outside)))) + '))\n' + \
+      'assert(vim.uv.fs_symlink(' + json.dumps(str(target)) + ', parent))\n' + '''
+local ok, err = pcall(vim.cmd, command)
+assert(not ok and tostring(err):find('parent'), 'unsafe parent was accepted')
+'''
+                probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                    'working:from/file': dict(a=['base'], b=['worktree'])})], extra, mutation_repo=repo.path)
+                self.assertEqual((target / 'file').read_text(), 'do not overwrite\n')
+                self.assertEqual(repo.git('ls-files', '--stage', '-z'), index)
 
 
 if __name__ == '__main__':

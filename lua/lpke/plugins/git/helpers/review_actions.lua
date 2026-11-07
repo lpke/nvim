@@ -81,9 +81,6 @@ function M.configure(view, spec)
       end,
     }, { __index = self })
   end
-  -- Keep Diffview's undo/buffer handling, but make every Git path literal.
-  -- A per-call proxy leaves the reader's explicit :(literal) scopes unchanged.
-  local restore = adapter.file_restore
   adapter.file_restore = async.wrap(function(self, path, kind, commit, callback)
     local entry = represented(path)
     if not entry then
@@ -97,8 +94,13 @@ function M.configure(view, spec)
       callback(false)
       return
     end
-    local ok, success, undo =
-      async.pawait(restore, literal_adapter(self), path, kind, commit)
+    local ok, success, undo = pcall(
+      require('lpke.plugins.git.helpers.review_restore').restore,
+      self,
+      entry,
+      kind,
+      commit
+    )
     if not ok then
       utils.err(success)
       callback(false)
