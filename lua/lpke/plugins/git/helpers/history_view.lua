@@ -2,7 +2,8 @@ local M = {}
 
 -- Keep the native history UI, with complete metadata and literal file readers.
 function M.configure(view, spec)
-  require('lpke.plugins.git.helpers.state_view').configure(view, spec)
+  local state_view = require('lpke.plugins.git.helpers.state_view')
+  state_view.configure(view, spec)
   local adapter = view.adapter
   local async = require('diffview.async')
   local utils = require('diffview.utils')
@@ -22,10 +23,10 @@ function M.configure(view, spec)
       error(err)
     end
   end)
-  local run = async.wrap(function(self, args, stdin, callback)
+  local run = async.wrap(function(self, args, callback)
     vim.system(
       utils.vec_join({ self:bin() }, self:args(), args),
-      { cwd = self.ctx.toplevel, stdin = stdin },
+      { cwd = self.ctx.toplevel },
       vim.schedule_wrap(callback)
     )
   end)
@@ -117,15 +118,7 @@ function M.configure(view, spec)
   local empty_tree
   adapter.parse_fh_data = function(self, data, commit, state)
     if not data.left_hash and not empty_tree then
-      -- hash-object uses this repository's object format. Without -w it never
-      -- adds an object, including in SHA-256 repositories.
-      local result =
-        async.await(run(self, { 'hash-object', '-t', 'tree', '--stdin' }, ''))
-      if result.code ~= 0 then
-        error(result.stderr)
-      end
-      empty_tree = vim.trim(result.stdout)
-      assert(empty_tree:match('^%x+$'), 'Invalid empty tree object ID')
+      empty_tree = state_view.empty_tree_oid(self)
     end
     local left = self.Rev(RevType.COMMIT, data.left_hash or empty_tree)
     local right = state.prepared_log_opts.base

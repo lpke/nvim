@@ -49,6 +49,8 @@ function M.open(spec)
     local saved = adapter.Rev(RevType.COMMIT, oid)
     local index = adapter.Rev(RevType.COMMIT, parents[3])
     local untracked = parents[4] and adapter.Rev(RevType.COMMIT, parents[4])
+    local empty = untracked
+      and adapter.Rev(RevType.COMMIT, state.empty_tree_oid(adapter))
     -- Use the plugin's per-view file-list hook. Every side is an immutable
     -- commit/tree, including the saved index; no live index buffer is involved.
     view.get_updated_files = async.wrap(function(self, callback)
@@ -71,9 +73,7 @@ function M.open(spec)
       files:set_working(collect(base, saved, 'working'))
       files:set_staged(collect(base, index, 'staged'))
       if untracked then
-        for _, entry in
-          ipairs(collect(adapter.Rev.new_null_tree(), untracked, 'working'))
-        do
+        for _, entry in ipairs(collect(empty, untracked, 'working')) do
           entry.status = '?'
           entry.layout.b.file.winbar = ' SAVED UNTRACKED - '
             .. entry.path:gsub('\n', '\\n')

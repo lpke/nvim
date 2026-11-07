@@ -1,5 +1,28 @@
 local M = {}
 
+-- Compute the repository-format-specific empty tree without storing an object.
+function M.empty_tree_oid(adapter)
+  local utils = require('diffview.utils')
+  local result = vim
+    .system(
+      utils.vec_join(adapter:get_command(), {
+        'hash-object',
+        '-t',
+        'tree',
+        '--stdin',
+      }),
+      { cwd = adapter.ctx.toplevel, stdin = '' }
+    )
+    :wait()
+  assert(result.code == 0, result.stderr)
+  local oid = vim.trim(result.stdout)
+  assert(
+    (#oid == 40 or #oid == 64) and oid:match('^%x+$'),
+    'Invalid empty tree object ID'
+  )
+  return oid
+end
+
 function M.literal_paths(spec, fallback)
   local paths = spec.paths_b64
       and vim.tbl_map(vim.base64.decode, spec.paths_b64)
@@ -178,40 +201,7 @@ function M.configure(view, spec)
   adapter.ctx.path_args = view.path_args
   view.panel.path_args = view.path_args
 
-  -- Native listeners pass filenames, not pathspecs. U supplies no paths at all;
-  -- restrict that request to this panel's staged comparison (cached reviews put
-  -- their HEAD -> index entries in the working list).
-  adapter.add_files = function(self, paths)
-    if not paths or #paths == 0 then
-      return true
-    end
-    local _, code = self:exec_sync(
-      utils.vec_join({ 'add', '--' }, M.literal_paths({ paths = paths })),
-      self.ctx.toplevel
-    )
-    return code == 0
-  end
-  adapter.reset_files = function(self, paths)
-    if not paths then
-      paths = {}
-      local entries = spec.state == 'staged' and view.files.working
-        or view.files.staged
-      for _, entry in ipairs(entries) do
-        paths[#paths + 1] = entry.path
-        if entry.oldpath then
-          paths[#paths + 1] = entry.oldpath
-        end
-      end
-    end
-    if #paths == 0 then
-      return true
-    end
-    local _, code = self:exec_sync(
-      utils.vec_join({ 'reset', '--' }, M.literal_paths({ paths = paths })),
-      self.ctx.toplevel
-    )
-    return code == 0
-  end
+  require('lpke.plugins.git.helpers.review_actions').configure(view, spec)
 
   -- Escape display text without changing the paths used by Git or file buffers.
   local render = view.panel.render

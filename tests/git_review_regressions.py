@@ -1,7 +1,7 @@
 """Real-repository regression tests using the shared isolated Neovim harness.
 
 Run: python3 tests/git_review_regressions.py
-Only explicitly opted-in temporary repositories permit add/reset commands.
+Only explicitly opted-in temporary repositories permit Git mutations.
 """
 import json
 from pathlib import Path
@@ -281,6 +281,178 @@ require('diffview.actions').unstage_all()
 '''
         probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], readonly=True,
               contents={'working:file': dict(a=['base'], b=['committed'])})], extra)
+        self.assertEqual(repo.snapshot(), before)
+
+    def test_restore_key_preserves_literal_hidden_collisions_and_index(self):
+        for name, collision in (('file*', 'file-other'), ('file[ab]', 'filea'),
+                                (':(glob)*', 'unrelated'), ('line\n*', 'line\nother')):
+            with self.subTest(path=name):
+                repo = Repo(self.root / ('restore-' + str(len(list(self.root.iterdir())))))
+                for path in (name, collision):
+                    repo.write(path, 'base\n')
+                repo.commit()
+                for path in (name, collision):
+                    repo.write(path, 'index\n')
+                repo.git('add', '-A')
+                for path in (name, collision):
+                    repo.write(path, 'worktree\n')
+                index = {path: repo.git('rev-parse', ':' + path) for path in (name, collision)}
+                self.mutate(repo, 'unstaged', [name], {
+                    'working:' + name: dict(a=['index'], b=['worktree'])}, 'X')
+                self.assertEqual((repo.path / name).read_text(), 'index\n')
+                self.assertEqual((repo.path / collision).read_text(), 'worktree\n')
+                self.assertEqual({path: repo.git('rev-parse', ':' + path) for path in index}, index)
+
+    def test_tree_directory_actions_expand_only_represented_files(self):
+        for staged in (False, True):
+            with self.subTest(staged=staged):
+                repo = Repo(self.root / ('directory-' + str(staged)))
+                paths = ('dir/selected', 'dir/unselected')
+                for path in paths:
+                    repo.write(path, 'base\n')
+                repo.commit()
+                for path in paths:
+                    repo.write(path, 'changed\n')
+                if staged:
+                    repo.git('add', '-A')
+                spec = repo.spec('diff', paths_b64=[b64(paths[0])])
+                prefix = 'staged:' if staged else 'working:'
+                extra = '''
+local view = require('diffview.lib').views[1]
+view.panel.listing_style = 'tree'
+view.panel:render()
+view.panel:redraw()
+view.panel:focus()
+local found = false
+for row = 1, vim.api.nvim_buf_line_count(view.panel.bufid) do
+  vim.api.nvim_win_set_cursor(view.panel.winid, {row, 0})
+  local item = view.panel:get_item_at_cursor()
+  if item and item.path == 'dir' and type(item.collapsed) == 'boolean' then
+    found = true
+    break
+  end
+end
+assert(found, 'missing native directory row')
+require('diffview.actions').toggle_stage_entry()
+'''
+                probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                    prefix + paths[0]: dict(a=['base'], b=['changed'])})], extra, mutation_repo=repo.path)
+                self.assertEqual(repo.git('diff', '--cached', '--name-only'), paths[1] if staged else paths[0])
+                self.assertEqual([(repo.path / p).read_text() for p in paths], ['changed\n'] * 2)
+
+    def test_individual_rename_unstage_includes_both_endpoints(self):
+        for old, new in (('old', 'new'), ('from/old*', 'to/new[ab]'), ('old\nname', 'new\nname')):
+            with self.subTest(old=old, new=new):
+                repo = Repo(self.root / ('rename-' + str(len(list(self.root.iterdir())))))
+                repo.write(old, 'rename contents\n')
+                repo.write('unrelated', 'base\n')
+                repo.commit()
+                (repo.path / new).parent.mkdir(parents=True, exist_ok=True)
+                repo.git('mv', '--', old, new)
+                repo.write('unrelated', 'keep staged\n')
+                repo.git('add', '--', 'unrelated')
+                unrelated = repo.git('rev-parse', ':unrelated')
+                spec = repo.spec('diff', paths_b64=[b64(old), b64(new)])
+                extra = '''
+local view = require('diffview.lib').views[1]
+view.panel:focus()
+view.panel:set_cur_file(view.files.staged[1])
+view.panel:highlight_cur_file()
+require('diffview.actions').toggle_stage_entry()
+'''
+                probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                    'staged:' + new: dict(a=['rename contents'], b=['rename contents'], oldpath=old)})],
+                    extra, mutation_repo=repo.path)
+                self.assertEqual(repo.git('diff', '--cached', '--name-only'), 'unrelated')
+                self.assertEqual(repo.git('rev-parse', ':unrelated'), unrelated)
+                self.assertIn(old, repo.git('ls-files', '-z').split('\0'))
+                self.assertNotIn(new, repo.git('ls-files', '-z').split('\0'))
+                self.assertEqual((repo.path / new).read_text(), 'rename contents\n')
+
+    def test_saving_index_buffer_preserves_literal_bytes_and_unrelated_staging(self):
+        for name in ('file*\n[ab]', '-selected'):
+            with self.subTest(path=name):
+                repo = Repo(self.root / ('index-save-' + str(len(list(self.root.iterdir())))))
+                for path in (name, 'file-other'):
+                    repo.write(path, 'base\n')
+                repo.commit()
+                for path in (name, 'file-other'):
+                    repo.write(path, 'staged\n')
+                repo.git('add', '-A')
+                unrelated = repo.git('rev-parse', ':file-other')
+                spec = repo.spec('diff', paths_b64=[b64(name)])
+                extra = '''
+local view = require('diffview.lib').views[1]
+local file = view.files.staged[1].layout.b.file
+assert(vim.bo[file.bufnr].modifiable)
+vim.api.nvim_buf_set_lines(file.bufnr, 0, -1, false, {'edited index'})
+vim.api.nvim_buf_set_mark(file.bufnr, '[', 1, 0, {})
+vim.api.nvim_buf_set_mark(file.bufnr, ']', 1, 0, {})
+vim.api.nvim_buf_call(file.bufnr, function() vim.cmd('write') end)
+'''
+                probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], contents={
+                    'staged:' + name: dict(a=['base'], b=['staged'])})], extra, mutation_repo=repo.path)
+                self.assertEqual(repo.git('show', ':' + name), 'edited index')
+                self.assertEqual(repo.git('rev-parse', ':file-other'), unrelated)
+                self.assertEqual((repo.path / name).read_text(), 'staged\n')
+
+    def test_staged_review_stage_all_does_not_include_unrepresented_worktree_edits(self):
+        repo = Repo(self.root / 'cached stage no-op')
+        repo.write('selected', 'base\n')
+        repo.commit()
+        repo.write('selected', 'index\n')
+        repo.git('add', '--', 'selected')
+        repo.write('selected', 'worktree\n')
+        before = repo.snapshot()
+        self.mutate(repo, 'staged', ['selected'], {
+            'working:selected': dict(a=['base'], b=['index'])}, 'S')
+        self.assertEqual(repo.snapshot(), before)
+
+    def test_untracked_restore_removes_only_the_selected_literal_file(self):
+        repo = Repo(self.root / 'untracked restore')
+        repo.write('base', 'base\n')
+        repo.commit()
+        repo.write('literal*', 'selected\n')
+        repo.write('literal-other', 'preserved\n')
+        self.mutate(repo, 'untracked', ['literal*'], {
+            'working:literal*': dict(a=[''], b=['selected'])}, 'X')
+        self.assertFalse((repo.path / 'literal*').exists())
+        self.assertEqual((repo.path / 'literal-other').read_text(), 'preserved\n')
+
+    def test_conflict_restore_refuses_an_ambiguous_index_without_mutating_it(self):
+        repo = Repo(self.root / 'conflict restore')
+        repo.write('file', 'base\n')
+        repo.commit()
+        repo.git('checkout', '-qb', 'side')
+        repo.write('file', 'theirs\n')
+        repo.commit()
+        repo.git('checkout', '-q', 'main')
+        repo.write('file', 'ours\n')
+        repo.commit()
+        repo.git('merge', 'side', check=False)
+        self.assertIn('UU file', repo.git('status', '--porcelain'))
+        before = repo.snapshot()
+        self.mutate(repo, 'conflicted', ['file'], {'conflicting:file': {}}, 'X')
+        self.assertEqual(repo.snapshot(), before)
+
+    def test_sha256_dropped_stash_includes_saved_untracked_without_writes(self):
+        repo = Repo(self.root / 'sha256 stash', object_format='sha256')
+        repo.write('file', 'base\n')
+        repo.commit()
+        repo.write('file', 'saved index\n')
+        repo.git('add', '--', 'file')
+        repo.write('file', 'saved worktree\n')
+        repo.write('untracked', 'saved untracked\n')
+        repo.git('stash', 'push', '-qu')
+        oid = repo.git('rev-parse', 'refs/stash')
+        repo.git('stash', 'drop', '-q')
+        spec = repo.spec('stash', stash_oid=oid)
+        before = repo.snapshot()
+        probe(self.root, [spec], [dict(repo_b64=spec['repo_b64'], readonly=True, contents={
+            'working:file': dict(a=['base'], b=['saved worktree']),
+            'staged:file': dict(a=['base'], b=['saved index']),
+            'working:untracked': dict(a=[''], b=['saved untracked']),
+        })])
         self.assertEqual(repo.snapshot(), before)
 
 
