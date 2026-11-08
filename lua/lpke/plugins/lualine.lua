@@ -146,6 +146,15 @@ local function config()
         return str
       end
 
+      local review_title = vim.b.lpke_review_title
+      if type(review_title) == 'string' and review_title ~= '' then
+        return review_title
+          :gsub('[%z\1-\31\127]', function(c)
+            return string.format('\\x%02x', c:byte())
+          end)
+          :gsub('%%', '%%%%')
+      end
+
       -- filetype dependent naming
       local filetype_bufname_maps = {
         ['qf'] = 'Quickfix List',

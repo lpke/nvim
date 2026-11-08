@@ -252,6 +252,60 @@ assert(cancelled, 'hidden update should report cancellation')
         token = base64.urlsafe_b64encode(json.dumps(plan).encode()).decode().rstrip('=')
         self.run_views(specs, expected, gview_args=['--plan', token])
 
+    def test_review_buffer_titles_are_unique_and_render_literally(self):
+        self.repo.write('file.txt', 'worktree\n')
+        title = '%{execute("let g:injected=1")} | tabonly\n雪 / ../../scheme://evil'
+        specs = [self.repo.spec('history', '1 new commit', args=['--range=' + self.base + '^!']),
+                 self.repo.spec('history', '1 new commit', args=['--range=' + self.base + '^!']),
+                 self.repo.spec('diff', title, state='unstaged'),
+                 self.repo.spec('diff', state='unstaged')]
+        expected = [self.expect(spec, {'file.txt': {'a': [''], 'b': ['base']}}, commits=[self.base])
+                    for spec in specs[:2]]
+        expected += [self.expect(spec, {'working:file.txt': {'a': ['base'], 'b': ['worktree']}})
+                     for spec in specs[2:]]
+        self.run_views(specs, expected, extra=r'''
+local lib = require('diffview.lib')
+local first, second = lib.views[1].panel, lib.views[2].panel
+assert(first.bufid ~= second.bufid)
+assert(vim.api.nvim_buf_get_name(first.bufid) ~= vim.api.nvim_buf_get_name(second.bufid))
+assert(vim.api.nvim_buf_is_valid(first.bufid) and vim.api.nvim_buf_is_valid(second.bufid))
+-- Load the actual statusline config, capturing its options without starting its
+-- unrelated components or requiring AI providers in the isolated review boot.
+for _, name in ipairs({'lualine_spinner', 'config', 'acp_session_options', 'chat_functions', 'model_swap'}) do
+  package.loaded['lpke.plugins.ai.helpers.' .. name] = {}
+end
+local lualine = require('lualine')
+local setup, captured = lualine.setup
+lualine.setup = function(opts) captured = opts end
+require('lpke.plugins.lualine').config()
+lualine.setup = setup
+local filename
+for _, section in pairs(captured.sections) do
+  for _, component in ipairs(section) do
+    if type(component) == 'table' and component[1] == 'filename' then filename = component end
+  end
+end
+assert(filename and filename.fmt, 'missing real buffer-name formatter')
+for index, view in ipairs(lib.views) do
+  vim.api.nvim_set_current_tabpage(view.tabpage)
+  vim.api.nvim_set_current_win(view.panel.winid)
+  local label = filename.fmt('raw buffer')
+  if index < 4 then
+    local expected = vim.b.lpke_review_title:gsub('[%z\1-\31\127]', function(c)
+      return string.format('\\x%02x', c:byte())
+    end)
+    assert(vim.api.nvim_eval_statusline(label, {}).str == expected, 'wrong visible buffer title')
+    Lpke_format_bufname = false
+    assert(filename.fmt('raw buffer') == 'raw buffer', 'raw-name toggle changed')
+    Lpke_format_bufname = true
+  else
+    assert(vim.b.lpke_review_title == nil, 'legacy review inherited a buffer title')
+    assert(label == 'Diffview Files (:DiffviewOpen)', 'legacy statusline changed')
+  end
+end
+assert(vim.g.injected == nil, 'buffer title executed statusline syntax')
+''')
+
     def test_mixed_repositories_titles_and_legacy(self):
         repo = self.repo
         repo.write('file.txt', 'index\n')

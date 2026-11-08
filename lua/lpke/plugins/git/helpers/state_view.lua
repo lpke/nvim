@@ -123,6 +123,19 @@ end
 
 -- Reuse the literal Git records and buffer handling in history/stash views.
 function M.configure(view, spec)
+  if type(spec.title) == 'string' and spec.title ~= '' then
+    -- Keep Diffview's unique panel URI; the prefix also prevents titles from
+    -- being interpreted as absolute paths or URI schemes by its panel loader.
+    view.panel.bufname = 'Review - '
+      .. spec.title:gsub('[%z\1-\31\127/\\%%]', function(c)
+        return string.format('%%%02X', c:byte())
+      end)
+    view.panel:on_autocmd('BufNew', {
+      callback = function()
+        vim.b[view.panel.bufid].lpke_review_title = spec.title
+      end,
+    })
+  end
   -- Saved file endpoints must not become directory filters during refresh.
   local exact, initial_directories
   if spec.exact_paths then

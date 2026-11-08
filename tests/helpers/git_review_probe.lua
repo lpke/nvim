@@ -73,11 +73,32 @@ vim.api.nvim_create_autocmd('VimEnter', {
             .. ' expected '
             .. vim.inspect(want.title)
         )
-        local title = want.title
-          :gsub('[%z\1-\31\127]', function(c)
-            return string.format('\\x%02x', c:byte())
-          end)
-          :gsub('%%', '%%%%')
+        local title = want.title:gsub('[%z\1-\31\127]', function(c)
+          return string.format('\\x%02x', c:byte())
+        end)
+        if title ~= '' then
+          assert(
+            vim.b[view.panel.bufid].lpke_review_title == want.title,
+            'wrong review buffer title'
+          )
+          local name = vim.api.nvim_buf_get_name(view.panel.bufid)
+          assert(
+            name:match('^diffview:///panels/%d+/'),
+            'lost unique panel URI'
+          )
+          assert(
+            name:find(
+              'Review - '
+                .. want.title:gsub('[%z\1-\31\127/\\%%]', function(c)
+                  return string.format('%%%02X', c:byte())
+                end),
+              1,
+              true
+            ),
+            'wrong panel buffer name: ' .. name
+          )
+        end
+        title = title:gsub('%%', '%%%%')
         assert(
           Lpke_tabline():find(title, 1, true),
           'title not rendered literally'
