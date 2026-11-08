@@ -9,6 +9,7 @@ local function set_context(view, spec)
     assert(type(spec.title) == 'string', 'Git review title must be text')
     vim.t[view.tabpage].lpke_review_title = spec.title
   end
+  require('lpke.plugins.git.helpers.review_labels').configure(view)
   local root = view.adapter.ctx.toplevel
   -- Structured command arguments preserve whitespace/control bytes. tcd only
   -- affects this tab; lcd also overrides inherited window-local directories.

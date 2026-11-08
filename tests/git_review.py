@@ -252,6 +252,135 @@ assert(cancelled, 'hidden update should report cancellation')
         token = base64.urlsafe_b64encode(json.dumps(plan).encode()).decode().rstrip('=')
         self.run_views(specs, expected, gview_args=['--plan', token])
 
+    def test_empty_review_panes_keep_the_title_without_inventing_a_file(self):
+        spec = self.repo.spec('diff', 'Clean review', state='unstaged')
+        self.run_views([spec], [self.expect(spec, {})], extra=r'''
+local view = require('diffview.lib').views[1]
+for _, win in ipairs(view.cur_layout.windows) do
+  vim.api.nvim_set_current_win(win.id)
+  assert(require('lpke.plugins.git.helpers.review_labels').current() == 'Clean review')
+end
+''')
+
+    def test_diff_labels_follow_shared_buffers_and_disambiguate_filenames(self):
+        repo = self.repo
+        for folder in ('left', 'right'):
+            repo.write(folder + '/same.txt', 'base\n')
+        repo.commit()
+        repo.write('file.txt', 'index\n')
+        repo.git('add', '--', 'file.txt')
+        repo.write('file.txt', 'worktree\n')
+        for folder in ('left', 'right'):
+            repo.write(folder + '/same.txt', folder + '\n')
+        name = 'literal%{execute("let g:injected=1")}\n雪.txt'
+        repo.write(name, 'literal\n')
+        title = '%{execute("let g:injected=1")}\nTitle'
+        specs = [repo.spec('diff', 'Index', state='staged', paths=['file.txt']),
+                 repo.spec('diff', 'Worktree', state='unstaged', paths=['file.txt']),
+                 repo.spec('diff', 'Another review', state='unstaged', paths=['file.txt']),
+                 repo.spec('diff', 'Duplicate names', state='unstaged', paths=['left/same.txt', 'right/same.txt']),
+                 repo.spec('diff', title, state='untracked', paths_b64=[b64(name)])]
+        expected = [self.expect(specs[0], {'working:file.txt': dict(a=['base'], b=['index'], labels={
+                        'a': 'BEFORE: file.txt | Index', 'b': 'AFTER: file.txt | Index'})}),
+                    self.expect(specs[1], {'working:file.txt': dict(a=['index'], b=['worktree'], labels={
+                        'a': 'BEFORE: file.txt | Worktree', 'b': 'AFTER: file.txt | Worktree'})}),
+                    self.expect(specs[2], {'working:file.txt': dict(a=['index'], b=['worktree'], labels={
+                        'a': 'BEFORE: file.txt | Another review', 'b': 'AFTER: file.txt | Another review'})}),
+                    self.expect(specs[3], {'working:' + folder + '/same.txt': dict(a=['base'], b=[folder], labels={
+                        'a': 'BEFORE: ' + folder + '/same.txt | Duplicate names',
+                        'b': 'AFTER: ' + folder + '/same.txt | Duplicate names'}) for folder in ('left', 'right')}),
+                    self.expect(specs[4], {'working:' + name: dict(a=[''], b=['literal'], labels={
+                        'a': 'BEFORE: ' + name + ' | ' + title, 'b': 'AFTER: ' + name + ' | ' + title})})]
+        self.run_views(specs, expected, extra=r'''
+local views = require('diffview.lib').views
+assert(views[1].cur_layout.b.file.bufnr == views[2].cur_layout.a.file.bufnr, 'index not actually shared')
+local live = views[2].cur_layout.b.file.bufnr
+assert(live == views[3].cur_layout.b.file.bufnr, 'worktree not actually shared')
+local labels = require('lpke.plugins.git.helpers.review_labels')
+local filename = dofile(vim.fn.stdpath('config') .. '/tests/helpers/git_review_statusline.lua')
+for _, view in ipairs(views) do
+  vim.api.nvim_set_current_tabpage(view.tabpage)
+  for _, win in ipairs(view.cur_layout.windows) do
+    vim.api.nvim_set_current_win(win.id)
+    local label = assert(labels.current())
+    local visible = label:gsub('[%z\1-\31\127]', function(c) return string.format('\\x%02x', c:byte()) end)
+    assert(vim.api.nvim_eval_statusline(filename('native filename'), {maxwidth=10000}).str == visible)
+    Lpke_format_bufname = false
+    assert(filename('native filename') == 'native filename')
+    Lpke_format_bufname = true
+  end
+end
+local native = vim.api.nvim_buf_get_name(live)
+assert(native == views[2].adapter.ctx.toplevel .. '/file.txt', 'live save target changed')
+vim.cmd('tabnew')
+vim.api.nvim_win_set_buf(0, live)
+assert(labels.current() == nil, 'review label leaked into ordinary file window')
+assert(filename('native filename') == 'native filename')
+vim.cmd('tabclose')
+vim.api.nvim_set_current_tabpage(views[2].tabpage)
+local win = views[2].cur_layout.b.id
+vim.api.nvim_set_current_win(win)
+vim.api.nvim_win_set_buf(win, vim.api.nvim_create_buf(false, true))
+assert(labels.current() == nil, 'review label remained after opening another buffer')
+vim.api.nvim_win_set_buf(win, live)
+assert(labels.current() == 'AFTER: file.txt | Worktree')
+assert(vim.g.injected == nil)
+''')
+
+    def test_renamed_file_diff_labels_use_the_correct_side_filename(self):
+        self.repo.git('mv', '--', 'file.txt', 'renamed.txt')
+        spec = self.repo.spec('diff', 'Rename', state='staged')
+        self.run_views([spec], [self.expect(spec, {'working:renamed.txt': dict(
+            a=['base'], b=['base'], oldpath='file.txt', labels={
+                'a': 'BEFORE: file.txt | Rename', 'b': 'AFTER: renamed.txt | Rename'})})])
+
+    def test_diff_label_filename_ambiguity_refreshes_with_the_real_file_list(self):
+        repo = self.repo
+        repo.write('left/same.txt', 'left\n')
+        repo.write('right/same.txt', 'right\n')
+        before = repo.snapshot()
+        after_files = dict(before[0])
+        after_files.pop('right/same.txt')
+        after_files.pop('left/same.txt')
+        spec = repo.spec('diff', 'Refresh', state='untracked')
+        expected = self.expect(spec, {'working:' + folder + '/same.txt': dict(a=[''], b=[folder])
+                                      for folder in ('left', 'right')})
+        probe(self.root, [spec], [expected], extra=r'''
+local view = require('diffview.lib').views[1]
+local labels = require('lpke.plugins.git.helpers.review_labels')
+local target
+for _, entry in view.files:iter() do if entry.path == 'left/same.txt' then target = entry end end
+local opened = false
+view:set_file(assert(target)):finally(function() opened = true end)
+assert(vim.wait(15000, function() return opened end, 20))
+vim.api.nvim_set_current_win(view.cur_layout.a.id)
+assert(labels.current() == 'BEFORE: left/same.txt | Refresh')
+local root = view.adapter.ctx.toplevel
+assert(vim.fn.delete(root .. '/right/same.txt') == 0)
+vim.fn.writefile({'other'}, root .. '/other.txt')
+local updated = false
+view:update_files(function(err) assert(not err, vim.inspect(err)); updated = true end)
+assert(vim.wait(15000, function() return updated end, 20), 'refresh did not complete')
+assert(view.files:len() == 2, 'refresh must retain the same file count')
+assert(view.cur_entry == target, 'refresh should retain the selected entry')
+vim.api.nvim_set_current_win(view.cur_layout.a.id)
+assert(labels.current() == 'BEFORE: same.txt | Refresh', 'cached ambiguity survived refresh')
+assert(vim.fn.delete(root .. '/left/same.txt') == 0)
+assert(vim.fn.delete(root .. '/other.txt') == 0)
+updated = false
+view:update_files(function(err) assert(not err, vim.inspect(err)); updated = true end)
+assert(vim.wait(15000, function() return updated end, 20))
+assert(view.files:len() == 0 and view.nulled, 'review did not become empty')
+for _, win in ipairs(view.cur_layout.windows) do
+  vim.api.nvim_set_current_win(win.id)
+  assert(labels.current() == 'Refresh', 'empty review retained the previous filename')
+end
+''')
+        actual = repo.snapshot()
+        self.assertEqual(actual[0], after_files, 'refresh changed other repository files/index')
+        self.assertEqual(actual[2:], before[2:], 'refresh changed refs or stash state')
+        self.assertEqual(repo.git('ls-files', '--others', '--exclude-standard'), '')
+
     def test_review_buffer_titles_are_unique_and_render_literally(self):
         self.repo.write('file.txt', 'worktree\n')
         title = '%{execute("let g:injected=1")} | tabonly\n雪 / ../../scheme://evil'
@@ -269,23 +398,7 @@ local first, second = lib.views[1].panel, lib.views[2].panel
 assert(first.bufid ~= second.bufid)
 assert(vim.api.nvim_buf_get_name(first.bufid) ~= vim.api.nvim_buf_get_name(second.bufid))
 assert(vim.api.nvim_buf_is_valid(first.bufid) and vim.api.nvim_buf_is_valid(second.bufid))
--- Load the actual statusline config, capturing its options without starting its
--- unrelated components or requiring AI providers in the isolated review boot.
-for _, name in ipairs({'lualine_spinner', 'config', 'acp_session_options', 'chat_functions', 'model_swap'}) do
-  package.loaded['lpke.plugins.ai.helpers.' .. name] = {}
-end
-local lualine = require('lualine')
-local setup, captured = lualine.setup
-lualine.setup = function(opts) captured = opts end
-require('lpke.plugins.lualine').config()
-lualine.setup = setup
-local filename
-for _, section in pairs(captured.sections) do
-  for _, component in ipairs(section) do
-    if type(component) == 'table' and component[1] == 'filename' then filename = component end
-  end
-end
-assert(filename and filename.fmt, 'missing real buffer-name formatter')
+local filename = {fmt = dofile(vim.fn.stdpath('config') .. '/tests/helpers/git_review_statusline.lua')}
 for index, view in ipairs(lib.views) do
   vim.api.nvim_set_current_tabpage(view.tabpage)
   vim.api.nvim_set_current_win(view.panel.winid)

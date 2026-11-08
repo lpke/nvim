@@ -356,6 +356,8 @@ Diffview:                                                 *lpke-git-review*
   Terminal: gview /repo staged|unstaged|untracked|conflicted opens that state.
   Terminal: gview --plan PLAN opens the review's named tabs in one process.
   Review panel buffers and statusline names use the same review title.
+  Diff pane labels add BEFORE/AFTER and the filename; conflicts name each role.
+  Stash labels distinguish saved index, worktree and untracked contents.
   Stash review shows saved tracked, staged and untracked contents read-only;
   a dropped stash stays reviewable while its object remains.
   gview history and commit-only diffs are read-only, including child diff views.

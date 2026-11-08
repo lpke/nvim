@@ -146,7 +146,8 @@ local function config()
         return str
       end
 
-      local review_title = vim.b.lpke_review_title
+      local review_title = require('lpke.plugins.git.helpers.review_labels').current()
+        or vim.b.lpke_review_title
       if type(review_title) == 'string' and review_title ~= '' then
         return review_title
           :gsub('[%z\1-\31\127]', function(c)

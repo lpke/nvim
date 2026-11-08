@@ -279,6 +279,61 @@ vim.api.nvim_create_autocmd('VimEnter', {
           if data.binary then
             assert(entry.layout.b.file.binary, 'binary shown as text')
           end
+          if type(want.title) == 'string' and want.title ~= '' then
+            for _, side in ipairs({ 'a', 'b', 'c', 'd' }) do
+              local win = view.cur_layout[side]
+              if win and win.id and vim.api.nvim_win_is_valid(win.id) then
+                local buf = vim.api.nvim_win_get_buf(win.id)
+                local native_name = vim.api.nvim_buf_get_name(buf)
+                local label = vim.api.nvim_win_call(win.id, function()
+                  return require('lpke.plugins.git.helpers.review_labels').current()
+                end)
+                local role = side == 'a' and 'BEFORE' or 'AFTER'
+                if entry.kind == 'conflicting' then
+                  role = (
+                    { a = 'OURS', b = 'RESULT', c = 'THEIRS', d = 'BASE' }
+                  )[side]
+                elseif
+                  side == 'b' and view.adapter._lpke_readonly_label == 'Stash'
+                then
+                  role = entry.kind == 'staged' and 'AFTER (INDEX)'
+                    or entry.status == '?' and 'AFTER (UNTRACKED)'
+                    or 'AFTER (WORKTREE)'
+                end
+                assert(
+                  type(label) == 'string',
+                  'missing file-pane label: ' .. key .. ' ' .. side
+                )
+                assert(
+                  label:sub(1, #role + 2) == role .. ': ',
+                  'wrong side label: ' .. label
+                )
+                assert(
+                  label:sub(-#want.title - 3) == ' | ' .. want.title,
+                  'wrong review title: ' .. label
+                )
+                local path = side == 'a' and entry.oldpath or entry.path
+                assert(
+                  label:find(path:match('[^/]+$'), 1, true),
+                  'wrong filename: ' .. label
+                )
+                if data.labels and data.labels[side] then
+                  assert(
+                    label == data.labels[side],
+                    'wrong exact pane label: ' .. label
+                  )
+                end
+                assert(
+                  vim.api.nvim_buf_get_name(buf) == native_name,
+                  'file buffer was renamed'
+                )
+                assert(
+                  vim.b[buf].lpke_review_title == nil,
+                  'review title leaked into shared file buffer'
+                )
+              end
+            end
+          end
           check_file(file_index + 1)
         end
         later(loaded)
