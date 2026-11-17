@@ -1,5 +1,9 @@
 local M = {}
 
+-- Languages whose treesitter indentexpr overrides `formatoptions+=n` list
+-- indentation when formatting with `gw`/`gq`.
+local skip_indent = { markdown = true }
+
 function M.setup(languages)
   local treesitter = require('nvim-treesitter')
   treesitter.setup({ install_dir = vim.fn.stdpath('data') .. '/site' })
@@ -16,7 +20,7 @@ function M.setup(languages)
       return
     end
     vim.treesitter.start(bufnr, lang)
-    if vim.treesitter.query.get(lang, 'indents') then
+    if not skip_indent[lang] and vim.treesitter.query.get(lang, 'indents') then
       vim.bo[bufnr].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
     end
   end
