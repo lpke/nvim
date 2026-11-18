@@ -10,6 +10,7 @@ local Chat = require('codecompanion.interactions.chat')
 local lifecycle = require('lpke.plugins.ai.helpers.acp_lifecycle')
 local models = require('lpke.plugins.ai.helpers.model_swap')
 local ai = require('lpke.plugins.ai.helpers.config')
+local default_model = ai.adapter_default_model('codex')
 local draft = require('lpke.plugins.ai.helpers.chat_draft')
 local fixture = vim.fn.tempname()
 vim.fn.mkdir(fixture, 'p')
@@ -73,7 +74,7 @@ config.adapters.http.copilot = function()
   })
 end
 -- The peer advertises Sol/Other. Keep the actual leader-m callback and cycle logic.
-ai.adapters.codex.model_cycle = { 'gpt_6_2_sol', 'other' }
+ai.adapters.codex.model_cycle = { default_model, 'other' }
 title_request.request = function()
   error('Model-control tests must not invoke a title model')
 end
@@ -131,7 +132,7 @@ local function final_choice(chat, path, prompt, session)
   equal(rows[1].params, {
     sessionId = session or chat.acp_connection.session_id,
     configId = 'model',
-    value = 'gpt-6.2-sol',
+    value = default_model,
   }, 'configured default model is first')
   local defaults = {}
   for index = 2, 3 do
@@ -226,7 +227,7 @@ local function run()
   end)
   equal(
     models.get_cur_model(chat.bufnr),
-    'gpt-6.2-sol',
+    default_model,
     'latest pending model command wins'
   )
   check(
@@ -275,7 +276,7 @@ local function run()
   vim.notify = original_notify
   equal(
     models.get_cur_model(chat.bufnr),
-    'gpt-6.2-sol',
+    default_model,
     'late unavailable model retains configured default'
   )
   check(
@@ -330,7 +331,7 @@ local function run()
   )
   equal(
     models.get_cur_model(chat.bufnr),
-    'gpt-6.2-sol',
+    default_model,
     'old choice cannot mutate replacement connection'
   )
   check(

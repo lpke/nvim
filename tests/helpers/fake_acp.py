@@ -7,6 +7,7 @@ import time
 
 log_path = sys.argv[1]
 profile = sys.argv[2] if len(sys.argv) > 2 else "normal"
+default_model = json.loads(os.environ["CODEX_CONFIG"])["model"]
 options = [
     {
         "id": "model",
@@ -16,7 +17,7 @@ options = [
         "currentValue": "other",
         "options": [
             {"value": "other", "name": "Other"},
-            {"value": "gpt-6.2-sol", "name": "Sol"},
+            {"value": default_model, "name": "Sol"},
         ],
     },
     {

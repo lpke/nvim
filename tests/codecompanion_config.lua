@@ -26,6 +26,8 @@ local config = require('codecompanion.config')
 local adapters = require('codecompanion.adapters')
 local Chat = require('codecompanion.interactions.chat')
 local ai = require('lpke.plugins.ai.helpers.config')
+local default_sol = Lpke_is_work_device and 'gpt-6.1-sol' or 'gpt-6.2-sol'
+local alternate_model = Lpke_is_work_device and 'gpt-6-luna' or 'gpt-6.2-astra'
 local notices, title_prompts = {}, {}
 vim.notify = function(message)
   notices[#notices + 1] = message
@@ -45,7 +47,17 @@ vim.fn.writefile({ 'RULE_CONTEXT_MUST_NOT_APPEAR' }, root .. '/AGENTS.md')
 vim.cmd.cd(root)
 local disconnections = 0
 local function new_connection(chat)
-  local model = 'gpt-6.2-sol'
+  local model = default_sol
+  local available_models = {
+    { modelId = default_sol, name = 'Sol' },
+    { modelId = 'gpt-6-luna', name = 'Luna' },
+  }
+  if not Lpke_is_work_device then
+    table.insert(
+      available_models,
+      { modelId = 'gpt-6.2-astra', name = 'Astra' }
+    )
+  end
   return {
     session_id = 'config-fixture-' .. root .. '-' .. chat.bufnr,
     is_connected = function()
@@ -57,11 +69,7 @@ local function new_connection(chat)
     get_models = function()
       return {
         currentModelId = model,
-        availableModels = {
-          { modelId = 'gpt-6.2-sol', name = 'Sol' },
-          { modelId = 'gpt-6.2-astra', name = 'Astra' },
-          { modelId = 'gpt-6-luna', name = 'Luna' },
-        },
+        availableModels = available_models,
       }
     end,
     set_model = function(_, value)
@@ -111,11 +119,17 @@ local function new_chat(adapter)
 end
 local chat = new_chat()
 eq(config.interactions.chat.adapter, 'codex', 'Default adapter')
-eq(ai.adapter_default_model('codex'), 'gpt-6.2-sol', 'Default Codex model')
+eq(ai.adapter_default_model('codex'), default_sol, 'Default Codex model')
+eq(
+  ai.adapter_model_cycle('codex'),
+  Lpke_is_work_device and { 'gpt-6.1-sol', 'gpt-6-luna' }
+    or { 'gpt-6.2-sol', 'gpt-6.2-astra', 'gpt-6-luna' },
+  'Configured cycle for this device'
+)
 for alias, expected in pairs({
   gpt = 'gpt-6.2-astra',
   astra = 'gpt-6.2-astra',
-  sol = 'gpt-6.2-sol',
+  sol = default_sol,
   ['gpt6.2a'] = 'gpt-6.2-astra',
   ['gpt6.2s'] = 'gpt-6.2-sol',
   ['gpt6.2'] = 'gpt-6.2-sol',
@@ -260,7 +274,7 @@ eq(codex.env.CODEX_API_KEY, nil, 'No literal Codex key placeholder')
 eq(codex.defaults.auth_method, 'chat-gpt', 'ChatGPT login method')
 eq(
   vim.json.decode(codex.env.CODEX_CONFIG()).model,
-  'gpt-6.2-sol',
+  default_sol,
   'Codex model environment'
 )
 eq(
@@ -350,11 +364,11 @@ eq(
   'HTTP cycle skips unavailable models'
 )
 eq(choice_calls, 2, 'One availability lookup plus native model application')
-next_adapter, next_model = 'codex', 'gpt-6.2-astra'
+next_adapter, next_model = 'codex', alternate_model
 ga(picker_chat)
 flush()
 eq(picker_chat.adapter.name, 'codex', 'ga changed adapter')
-eq(models.get_cur_model(), 'gpt-6.2-astra', 'ga native ACP model picker')
+eq(models.get_cur_model(), alternate_model, 'ga native ACP model picker')
 local connection, current_model =
   picker_chat.acp_connection, models.get_cur_model()
 picker_chat:add_message({
@@ -404,7 +418,7 @@ eq(
 vim.cmd('Model sol')
 eq(
   models.get_cur_model(),
-  'gpt-6.2-sol',
+  default_sol,
   'Same-adapter model still changes after reasoning'
 )
 config.display.chat.show_settings = true
@@ -454,7 +468,7 @@ flush()
 eq(switched.adapter.name, 'codex', 'leader-M switches back to Codex')
 eq(
   models.get_cur_model(),
-  'gpt-6.2-sol',
+  default_sol,
   'Switch applies configured Codex default'
 )
 if not Lpke_is_work_device then
@@ -464,7 +478,7 @@ end
 cycle()
 eq(models.get_cur_model(), 'gpt-6-luna', 'Codex cycle visits Luna')
 cycle()
-eq(models.get_cur_model(), 'gpt-6.2-sol', 'Codex cycle returns to Sol')
+eq(models.get_cur_model(), default_sol, 'Codex cycle returns to Sol')
 local callbacks = {}
 models.change_adapter(switched, 'copilot', function()
   callbacks[#callbacks + 1] = 'stale-http'

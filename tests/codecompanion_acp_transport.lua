@@ -1,5 +1,7 @@
 -- Run with the complete config: nvim --headless -i NONE -c "lua dofile('tests/codecompanion_acp_transport.lua')"
 local api = vim.api
+local default_model =
+  require('lpke.plugins.ai.helpers.config').adapter_default_model('codex')
 local config = require('codecompanion.config')
 local Chat = require('codecompanion.interactions.chat')
 local fixture = vim.fn.tempname()
@@ -83,7 +85,7 @@ local function run()
     'all configured defaults, model first'
   )
   check(
-    chat.acp_connection:get_models().currentModelId == 'gpt-6.2-sol',
+    chat.acp_connection:get_models().currentModelId == default_model,
     'configured model'
   )
   local function full_access(connection)
@@ -103,7 +105,7 @@ local function run()
   local spawn = rows[1]
   local settings = vim.json.decode(spawn.config)
   check(
-    settings.model == 'gpt-6.2-sol'
+    settings.model == default_model
       and settings.model_reasoning_effort == 'high',
     'launcher configuration reaches actual child'
   )
@@ -285,7 +287,7 @@ local function run()
       'option selection waits for whole session transaction'
     )
     check(
-      loading.acp_connection:get_models().currentModelId == 'gpt-6.2-sol',
+      loading.acp_connection:get_models().currentModelId == default_model,
       'model defaults precede option selection'
     )
     loading.acp_connection:set_config_option('thought_level', 'low')

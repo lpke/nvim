@@ -4,6 +4,8 @@ vim.opt.rtp:prepend(vim.fn.getcwd())
 vim.o.loadplugins = true
 dofile('init.lua')
 local api = vim.api
+local default_model =
+  require('lpke.plugins.ai.helpers.config').adapter_default_model('codex')
 local cc, config = require('codecompanion'), require('codecompanion.config')
 local lifecycle = require('lpke.plugins.ai.helpers.acp_lifecycle')
 local startup = require('lpke.plugins.ai.helpers.startup_codex')
@@ -137,7 +139,7 @@ local function run()
   )
   equal(
     chat.acp_connection:get_models().currentModelId,
-    'gpt-6.2-sol',
+    default_model,
     'startup keeps configured model'
   )
   equal(#requests(path, 'session/prompt'), 0, 'startup replay sends no prompt')

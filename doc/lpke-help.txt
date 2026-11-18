@@ -443,11 +443,12 @@ Chat buffer keys:
   gX                    Close current chat without deleting saved history.
 
 Models:
-  Default chat is Codex ACP with GPT-6.2 Sol and high reasoning on all devices.
+  Default chat is Codex ACP with high reasoning. Personal devices start on
+  GPT-6.2 Sol and work devices start on GPT-6.1 Sol.
   Inline prompts use Copilot. In saved history, gr renames the chat.
   <leader>m             Cycle configured models for current adapter.
                         Codex: GPT-6.2 Sol -> GPT-6.2 Astra -> GPT-6 Luna.
-                        Work devices: GPT-6.2 Sol -> GPT-6 Luna.
+                        Work devices: GPT-6.1 Sol -> GPT-6 Luna.
                         Copilot: Sonnet 4.6 -> GPT-5 mini.
   <leader>M             Cycle Codex/Copilot adapters.
                         After reasoning or tool calls, start a new chat to
@@ -457,7 +458,8 @@ Models:
   :Model <model> [...]  Set or cycle son, opus, gpt, astra, sol, terra,
                         luna, gem, or exact model IDs.
                         gpt/astra (gpt6.2a) selects GPT-6.2 Astra.
-                        sol (gpt6.2s) selects GPT-6.2 Sol.
+                        sol selects the device's default Sol.
+                        gpt6.1s and gpt6.2s select a specific Sol version.
                         luna selects GPT-6 Luna; terra selects GPT-5.6 Terra.
                         gpt5.6s/l select GPT-5.6 Sol/Luna.
   :Adapter codex|copilot sets or cycles adapters.
