@@ -94,8 +94,8 @@ local session_options = {
     category = 'model',
     currentValue = 'gpt-5.6-sol',
     options = {
-      { value = 'gpt-6.1-sol', name = 'GPT-6.1 Sol' },
-      { value = 'gpt-6-astra', name = 'GPT-6 Astra' },
+      { value = 'gpt-6.2-sol', name = 'GPT-6.2 Sol' },
+      { value = 'gpt-6.2-astra', name = 'GPT-6.2 Astra' },
       { value = 'gpt-5.6-sol', name = 'GPT-5.6 Sol' },
     },
   },
@@ -231,13 +231,13 @@ chat.acp_connection = new_connection(chat, 'original-session')
 local conn = chat.acp_connection
 eq(swap.get_cur_model(0), 'gpt-5.6-sol', 'ACP current model')
 swap.select({ 'sol', 'astra' })
-eq(swap.get_cur_model(0), 'gpt-6.1-sol', 'First available cycle model')
+eq(swap.get_cur_model(0), 'gpt-6.2-sol', 'First available cycle model')
 swap.select({ 'sol', 'missing-model', 'astra' })
-eq(swap.get_cur_model(0), 'gpt-6-astra', 'Skip unavailable cycle model')
+eq(swap.get_cur_model(0), 'gpt-6.2-astra', 'Skip unavailable cycle model')
 swap.select('missing-model')
 eq(
   swap.get_cur_model(0),
-  'gpt-6-astra',
+  'gpt-6.2-astra',
   'Unavailable exact model retained current model'
 )
 eq(
@@ -303,7 +303,7 @@ eq(
   'model',
   'Default model applied before other config'
 )
-eq(swap.get_cur_model(0), 'gpt-6.1-sol', 'Loaded session default model')
+eq(swap.get_cur_model(0), 'gpt-6.2-sol', 'Loaded session default model')
 eq(swap.get_cur_acp_mode(0), 'Full Access', 'Loaded session default mode')
 eq(
   acp_options.get_current_value('reasoning', 0),

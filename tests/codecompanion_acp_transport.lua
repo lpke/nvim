@@ -83,7 +83,7 @@ local function run()
     'all configured defaults, model first'
   )
   check(
-    chat.acp_connection:get_models().currentModelId == 'gpt-6.1-sol',
+    chat.acp_connection:get_models().currentModelId == 'gpt-6.2-sol',
     'configured model'
   )
   local function full_access(connection)
@@ -103,7 +103,7 @@ local function run()
   local spawn = rows[1]
   local settings = vim.json.decode(spawn.config)
   check(
-    settings.model == 'gpt-6.1-sol'
+    settings.model == 'gpt-6.2-sol'
       and settings.model_reasoning_effort == 'high',
     'launcher configuration reaches actual child'
   )
@@ -285,7 +285,7 @@ local function run()
       'option selection waits for whole session transaction'
     )
     check(
-      loading.acp_connection:get_models().currentModelId == 'gpt-6.1-sol',
+      loading.acp_connection:get_models().currentModelId == 'gpt-6.2-sol',
       'model defaults precede option selection'
     )
     loading.acp_connection:set_config_option('thought_level', 'low')

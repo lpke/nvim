@@ -73,7 +73,7 @@ config.adapters.http.copilot = function()
   })
 end
 -- The peer advertises Sol/Other. Keep the actual leader-m callback and cycle logic.
-ai.adapters.codex.model_cycle = { 'gpt_6_1_sol', 'other' }
+ai.adapters.codex.model_cycle = { 'gpt_6_2_sol', 'other' }
 title_request.request = function()
   error('Model-control tests must not invoke a title model')
 end
@@ -131,7 +131,7 @@ local function final_choice(chat, path, prompt, session)
   equal(rows[1].params, {
     sessionId = session or chat.acp_connection.session_id,
     configId = 'model',
-    value = 'gpt-6.1-sol',
+    value = 'gpt-6.2-sol',
   }, 'configured default model is first')
   local defaults = {}
   for index = 2, 3 do
@@ -226,7 +226,7 @@ local function run()
   end)
   equal(
     models.get_cur_model(chat.bufnr),
-    'gpt-6.1-sol',
+    'gpt-6.2-sol',
     'latest pending model command wins'
   )
   check(
@@ -275,7 +275,7 @@ local function run()
   vim.notify = original_notify
   equal(
     models.get_cur_model(chat.bufnr),
-    'gpt-6.1-sol',
+    'gpt-6.2-sol',
     'late unavailable model retains configured default'
   )
   check(
@@ -330,7 +330,7 @@ local function run()
   )
   equal(
     models.get_cur_model(chat.bufnr),
-    'gpt-6.1-sol',
+    'gpt-6.2-sol',
     'old choice cannot mutate replacement connection'
   )
   check(

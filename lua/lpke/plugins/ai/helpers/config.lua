@@ -8,10 +8,10 @@ M.adapters = {
   },
   codex = {
     display = 'Codex',
-    default_model = 'gpt_6_1_sol',
+    default_model = 'gpt_6_2_sol',
     default_reasoning_effort = 'high',
-    model_cycle = Lpke_is_work_device and { 'gpt_6_1_sol', 'gpt_6_luna' }
-      or { 'gpt_6_1_sol', 'gpt_6_astra', 'gpt_6_luna' },
+    model_cycle = Lpke_is_work_device and { 'gpt_6_2_sol', 'gpt_6_luna' }
+      or { 'gpt_6_2_sol', 'gpt_6_2_astra', 'gpt_6_luna' },
   },
 }
 M.adapter_cycle = { 'codex', 'copilot' }
@@ -67,7 +67,7 @@ M.preferred_models = {
   son = 'sonnet_4_6',
   sonnet = 'sonnet_4_6',
   haiku = 'haiku_4_5',
-  gpt = 'gpt_6_astra',
+  gpt = 'gpt_6_2_astra',
   gem = 'gemini_3_1_pro',
   gemini = 'gemini_3_1_pro',
   grok = 'grok_code_fast_1',
@@ -109,15 +109,24 @@ M.models = {
     aliases = { 'haiku4.5' },
     display = 'haiku-4.5',
   },
-  gpt_6_astra = {
-    id = 'gpt-6-astra',
-    aliases = { 'astra' },
-    display = 'GPT-6a',
+  gpt_6_2_astra = {
+    id = 'gpt-6.2-astra',
+    aliases = { 'astra', 'gpt6.2a' },
+    display = 'GPT-6.2a',
+  },
+  gpt_6_2_sol = {
+    id = 'gpt-6.2-sol',
+    aliases = { 'sol', 'gpt6.2s', 'gpt6.2' },
+    display = 'GPT-6.2s',
   },
   gpt_6_1_sol = {
     id = 'gpt-6.1-sol',
-    aliases = { 'sol', 'gpt6.1s', 'gpt6.1' },
+    aliases = { 'gpt6.1s', 'gpt6.1' },
     display = 'GPT-6.1s',
+  },
+  gpt_6_astra = {
+    id = 'gpt-6-astra',
+    display = 'GPT-6a',
   },
   gpt_6_luna = {
     id = 'gpt-6-luna',

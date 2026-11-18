@@ -45,7 +45,7 @@ vim.fn.writefile({ 'RULE_CONTEXT_MUST_NOT_APPEAR' }, root .. '/AGENTS.md')
 vim.cmd.cd(root)
 local disconnections = 0
 local function new_connection(chat)
-  local model = 'gpt-6.1-sol'
+  local model = 'gpt-6.2-sol'
   return {
     session_id = 'config-fixture-' .. root .. '-' .. chat.bufnr,
     is_connected = function()
@@ -58,8 +58,9 @@ local function new_connection(chat)
       return {
         currentModelId = model,
         availableModels = {
-          { modelId = 'gpt-6.1-sol', name = 'Sol' },
-          { modelId = 'gpt-6-astra', name = 'Astra' },
+          { modelId = 'gpt-6.2-sol', name = 'Sol' },
+          { modelId = 'gpt-6.2-astra', name = 'Astra' },
+          { modelId = 'gpt-6-luna', name = 'Luna' },
         },
       }
     end,
@@ -110,7 +111,20 @@ local function new_chat(adapter)
 end
 local chat = new_chat()
 eq(config.interactions.chat.adapter, 'codex', 'Default adapter')
-eq(ai.adapter_default_model('codex'), 'gpt-6.1-sol', 'Default Codex model')
+eq(ai.adapter_default_model('codex'), 'gpt-6.2-sol', 'Default Codex model')
+for alias, expected in pairs({
+  gpt = 'gpt-6.2-astra',
+  astra = 'gpt-6.2-astra',
+  sol = 'gpt-6.2-sol',
+  ['gpt6.2a'] = 'gpt-6.2-astra',
+  ['gpt6.2s'] = 'gpt-6.2-sol',
+  ['gpt6.2'] = 'gpt-6.2-sol',
+  ['gpt6.1s'] = 'gpt-6.1-sol',
+}) do
+  eq(ai.model_id(alias), expected, ':Model ' .. alias .. ' resolves')
+end
+eq(ai.lualine_model_name('gpt-6.2-sol'), 'GPT-6.2s', 'Sol statusline label')
+eq(ai.lualine_model_name('gpt-6.2-astra'), 'GPT-6.2a', 'Astra statusline label')
 eq(config.interactions.inline.adapter, 'copilot', 'Inline adapter preserved')
 eq(config.interactions.cmd.adapter, 'copilot', 'Command adapter preserved')
 eq(
@@ -246,7 +260,7 @@ eq(codex.env.CODEX_API_KEY, nil, 'No literal Codex key placeholder')
 eq(codex.defaults.auth_method, 'chat-gpt', 'ChatGPT login method')
 eq(
   vim.json.decode(codex.env.CODEX_CONFIG()).model,
-  'gpt-6.1-sol',
+  'gpt-6.2-sol',
   'Codex model environment'
 )
 eq(
@@ -336,11 +350,11 @@ eq(
   'HTTP cycle skips unavailable models'
 )
 eq(choice_calls, 2, 'One availability lookup plus native model application')
-next_adapter, next_model = 'codex', 'gpt-6-astra'
+next_adapter, next_model = 'codex', 'gpt-6.2-astra'
 ga(picker_chat)
 flush()
 eq(picker_chat.adapter.name, 'codex', 'ga changed adapter')
-eq(models.get_cur_model(), 'gpt-6-astra', 'ga native ACP model picker')
+eq(models.get_cur_model(), 'gpt-6.2-astra', 'ga native ACP model picker')
 local connection, current_model =
   picker_chat.acp_connection, models.get_cur_model()
 picker_chat:add_message({
@@ -390,7 +404,7 @@ eq(
 vim.cmd('Model sol')
 eq(
   models.get_cur_model(),
-  'gpt-6.1-sol',
+  'gpt-6.2-sol',
   'Same-adapter model still changes after reasoning'
 )
 config.display.chat.show_settings = true
@@ -425,24 +439,32 @@ eq(
   'Switch preserves typed prompt'
 )
 local leader = vim.g.mapleader or '\\'
-local map = vim.fn.maparg(leader .. 'm', 'n', false, true)
-assert(type(map.callback) == 'function', 'Model cycle keymap missing')
-map.callback()
+local cycle = vim.fn.maparg(leader .. 'm', 'n', false, true).callback
+assert(type(cycle) == 'function', 'Model cycle keymap missing')
+cycle()
 eq(
   models.get_cur_model(),
   'gpt-5-mini',
   'leader-m cycles current adapter models'
 )
-map = vim.fn.maparg(leader .. 'M', 'n', false, true)
+local map = vim.fn.maparg(leader .. 'M', 'n', false, true)
 assert(type(map.callback) == 'function', 'Adapter cycle keymap missing')
 map.callback()
 flush()
 eq(switched.adapter.name, 'codex', 'leader-M switches back to Codex')
 eq(
   models.get_cur_model(),
-  'gpt-6.1-sol',
+  'gpt-6.2-sol',
   'Switch applies configured Codex default'
 )
+if not Lpke_is_work_device then
+  cycle()
+  eq(models.get_cur_model(), 'gpt-6.2-astra', 'Personal cycle visits Astra')
+end
+cycle()
+eq(models.get_cur_model(), 'gpt-6-luna', 'Codex cycle visits Luna')
+cycle()
+eq(models.get_cur_model(), 'gpt-6.2-sol', 'Codex cycle returns to Sol')
 local callbacks = {}
 models.change_adapter(switched, 'copilot', function()
   callbacks[#callbacks + 1] = 'stale-http'

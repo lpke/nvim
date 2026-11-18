@@ -137,7 +137,7 @@ local function run()
   )
   equal(
     chat.acp_connection:get_models().currentModelId,
-    'gpt-6.1-sol',
+    'gpt-6.2-sol',
     'startup keeps configured model'
   )
   equal(#requests(path, 'session/prompt'), 0, 'startup replay sends no prompt')

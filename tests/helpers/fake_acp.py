@@ -16,7 +16,7 @@ options = [
         "currentValue": "other",
         "options": [
             {"value": "other", "name": "Other"},
-            {"value": "gpt-6.1-sol", "name": "Sol"},
+            {"value": "gpt-6.2-sol", "name": "Sol"},
         ],
     },
     {
